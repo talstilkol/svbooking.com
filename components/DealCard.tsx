@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Deal {
   hotel: {
@@ -23,9 +24,11 @@ export default function DealCard({ deal }: { deal: Deal }) {
   return (
     <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
       <div className="relative">
-        <img
+        <Image
           src={deal.hotel.image}
           alt={deal.hotel.name}
+          width={400}
+          height={160}
           className="w-full h-40 object-cover"
         />
         <div className="absolute top-2 right-2 px-2 py-1 bg-emerald-600 text-white text-xs font-bold rounded">

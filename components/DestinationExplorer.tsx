@@ -60,7 +60,7 @@ export default function DestinationExplorer() {
             className={`px-5 py-3 rounded-xl text-sm font-medium transition-all ${
               selectedContinent === continent.id
                 ? 'bg-blue-600 text-white shadow-lg scale-105'
-                : 'bg-white text-zinc-700 border border-zinc-200 hover:border-blue-300 hover:bg-blue-50:bg-zinc-700'
+                : 'bg-white text-zinc-700 border border-zinc-200 hover:border-blue-300 hover:bg-blue-50'
             }`}
           >
             <span className="mr-2">{continent.emoji}</span>
@@ -80,7 +80,7 @@ export default function DestinationExplorer() {
               className={`px-4 py-2 rounded-lg text-sm transition-all ${
                 selectedCountry === country.name
                   ? 'bg-amber-500 text-white'
-                  : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200:bg-zinc-700'
+                  : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
               }`}
             >
               {country.name}

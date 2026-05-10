@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useFavorites } from '@/lib/useLocalStorage';
 
 export default function FavoritesPage() {
@@ -33,7 +34,7 @@ export default function FavoritesPage() {
                 key={fav.hotelKey}
                 className="bg-white rounded-lg shadow-md border border-zinc-200 overflow-hidden"
               >
-                <img src={fav.image} alt={fav.name} className="w-full h-48 object-cover" />
+                <Image src={fav.image} alt={fav.name} width={400} height={192} className="w-full h-48 object-cover" />
                 <div className="p-5">
                   <h2 className="text-xl font-bold text-zinc-900">{fav.name}</h2>
                   <p className="text-sm text-zinc-500 mb-1">
@@ -57,7 +58,7 @@ export default function FavoritesPage() {
                     </Link>
                     <button
                       onClick={() => removeFavorite(fav.hotelKey)}
-                      className="px-3 py-2 bg-zinc-200 text-zinc-700 rounded-lg hover:bg-zinc-300:bg-zinc-600 text-sm"
+                      className="px-3 py-2 bg-zinc-200 text-zinc-700 rounded-lg hover:bg-zinc-300 text-sm"
                     >
                       ✕
                     </button>

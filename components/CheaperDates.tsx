@@ -106,7 +106,7 @@ export default function CheaperDates({ hotelKey, checkIn, checkOut }: Props) {
                 className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                   activeTab === tab.key
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300:bg-zinc-600'
+                    : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300'
                 }`}
               >
                 {tab.label}

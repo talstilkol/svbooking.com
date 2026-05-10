@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import HotelCard, { CatalogHotel } from '@/components/HotelCard';
+import { CardGridSkeleton } from '@/components/Skeleton';
+import { useDebounce } from '@/lib/useDebounce';
 
 function SearchInner() {
   const router = useRouter();
@@ -20,24 +22,29 @@ function SearchInner() {
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     (async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/compare');
+        const res = await fetch('/api/compare', { signal: controller.signal });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to load catalog');
         setAllHotels(data.hotels || []);
         setCities(data.cities || []);
       } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return;
         setError(err instanceof Error ? err.message : 'Failed to load');
       } finally {
         setLoading(false);
       }
     })();
+    return () => controller.abort();
   }, []);
 
-  const filtered = city
-    ? allHotels.filter((h) => h.city.toLowerCase().includes(city.toLowerCase()))
+  const debouncedCity = useDebounce(city, 200);
+
+  const filtered = debouncedCity
+    ? allHotels.filter((h) => h.city.toLowerCase().includes(debouncedCity.toLowerCase()))
     : allHotels;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -85,7 +92,7 @@ function SearchInner() {
         )}
 
         {loading ? (
-          <div className="text-center text-zinc-600 py-12">Loading hotels...</div>
+          <CardGridSkeleton count={6} />
         ) : filtered.length === 0 ? (
           <div className="text-center text-zinc-600 py-12">
             No hotels found in &quot;{city}&quot;. Try: {cities.slice(0, 5).join(', ')}

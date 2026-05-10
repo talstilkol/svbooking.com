@@ -2,7 +2,9 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import CheaperDates from '@/components/CheaperDates';
+import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
   hotelKey: string;
@@ -84,9 +86,10 @@ function CompareInner() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
     (async () => {
       try {
-        const res = await fetch('/api/compare');
+        const res = await fetch('/api/compare', { signal: controller.signal });
         const data = await res.json();
         setCities(data.cities || []);
         setHotels(data.hotels || []);
@@ -101,12 +104,13 @@ function CompareInner() {
             setTimeout(() => compareHotelDirect(hotel, ci, co), 100);
           }
         }
-      } catch {
-        setError('Failed to load catalog');
+      } catch (err) {
+        if (err instanceof Error && err.name !== 'AbortError') setError('Failed to load catalog');
       } finally {
         setLoading(false);
       }
     })();
+    return () => controller.abort();
   }, []);
 
   const filteredHotels = selectedCity
@@ -215,7 +219,9 @@ function CompareInner() {
         )}
 
         {loading ? (
-          <div className="text-center text-zinc-600 py-12">Loading hotels...</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => <CompareCardSkeleton key={i} />)}
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredHotels.map((hotel) => {
@@ -226,7 +232,7 @@ function CompareInner() {
                   key={hotel.hotelKey}
                   className="bg-white rounded-lg shadow-md border border-zinc-200 overflow-hidden"
                 >
-                  <img src={hotel.image} alt={hotel.name} className="w-full h-48 object-cover" />
+                  <Image src={hotel.image} alt={hotel.name} width={600} height={192} className="w-full h-48 object-cover" />
                   <div className="p-5">
                     <h2 className="text-xl font-bold text-zinc-900">{hotel.name}</h2>
                     <p className="text-sm text-zinc-500 mb-3">

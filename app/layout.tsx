@@ -14,8 +14,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SV Booking - Find Your Perfect Stay",
-  description: "Compare hotel prices across providers, find cheaper dates, and get AI-powered booking recommendations",
+  title: {
+    default: "SV Booking - Hotel Price Comparison",
+    template: "%s | SV Booking",
+  },
+  description: "Compare hotel prices from Booking.com, Expedia, Hotels.com, Agoda & more. Find cheaper dates and get AI-powered recommendations across 10 cities worldwide.",
+  keywords: ["hotel comparison", "cheap hotels", "booking", "expedia", "price comparison", "travel", "hotel deals"],
+  openGraph: {
+    title: "SV Booking - Hotel Price Comparison",
+    description: "Compare hotel prices from 8+ providers. Find the best deals across 10 cities worldwide.",
+    type: "website",
+    locale: "en_US",
+    siteName: "SV Booking",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SV Booking - Hotel Price Comparison",
+    description: "Compare hotel prices from Booking.com, Expedia, Hotels.com & more",
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({

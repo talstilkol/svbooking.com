@@ -27,6 +27,7 @@ export default function ExplorePage() {
   useEffect(() => {
     if (!selectedContinent && !selectedCountry) return;
 
+    const controller = new AbortController();
     setLoading(true);
     const params = new URLSearchParams();
     if (selectedCountry) params.set('country', selectedCountry);
@@ -34,11 +35,13 @@ export default function ExplorePage() {
     if (checkIn) params.set('checkIn', checkIn);
     if (checkOut) params.set('checkOut', checkOut);
 
-    fetch(`/api/deals?${params.toString()}`)
+    fetch(`/api/deals?${params.toString()}`, { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => setDeals(data.deals || []))
-      .catch(() => setDeals([]))
+      .catch((err) => { if (err.name !== 'AbortError') setDeals([]); })
       .finally(() => setLoading(false));
+
+    return () => controller.abort();
   }, [selectedContinent, selectedCountry, checkIn, checkOut]);
 
   const selectedContinentData = CONTINENTS.find((c) => c.id === selectedContinent);
@@ -118,7 +121,7 @@ export default function ExplorePage() {
                 className={`px-5 py-3 rounded-lg text-sm font-medium transition-all ${
                   selectedCountry === country.name
                     ? 'bg-amber-500 text-white shadow-md'
-                    : 'bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-50:bg-zinc-700'
+                    : 'bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-50'
                 }`}
               >
                 {country.name}

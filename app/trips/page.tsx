@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTrips, SavedTrip } from '@/lib/useLocalStorage';
 import CheaperDates from '@/components/CheaperDates';
 
@@ -61,10 +62,12 @@ function TripsInner() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/api/compare')
+    const controller = new AbortController();
+    fetch('/api/compare', { signal: controller.signal })
       .then((r) => r.json())
       .then((d) => setHotels(d.hotels || []))
       .catch(() => {});
+    return () => controller.abort();
   }, []);
 
   const handleAdd = (e: React.FormEvent) => {
@@ -214,7 +217,7 @@ function TripsInner() {
                   className="bg-white rounded-lg shadow-md border border-zinc-200 overflow-hidden"
                 >
                   <div className="flex flex-col md:flex-row">
-                    <img src={trip.image} alt={trip.hotelName} className="w-full md:w-64 h-48 md:h-auto object-cover" />
+                    <Image src={trip.image} alt={trip.hotelName} width={256} height={192} className="w-full md:w-64 h-48 md:h-auto object-cover" />
                     <div className="p-5 flex-1">
                       <div className="flex justify-between items-start gap-2">
                         <div>
@@ -225,7 +228,7 @@ function TripsInner() {
                         </div>
                         <button
                           onClick={() => removeTrip(trip.id)}
-                          className="px-2 py-1 text-red-500 hover:bg-red-50:bg-red-950 rounded text-sm"
+                          className="px-2 py-1 text-red-500 hover:bg-red-50 rounded text-sm"
                         >
                           Delete
                         </button>

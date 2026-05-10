@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useFavorites } from '@/lib/useLocalStorage';
 
 export interface CatalogHotel {
@@ -18,7 +19,7 @@ export default function HotelCard({ hotel }: { hotel: CatalogHotel }) {
   return (
     <div className="bg-white rounded-lg shadow-md border border-zinc-200 overflow-hidden flex flex-col">
       <div className="relative">
-        <img src={hotel.image} alt={hotel.name} className="w-full h-48 object-cover" />
+        <Image src={hotel.image} alt={hotel.name} width={400} height={192} className="w-full h-48 object-cover" />
         <button
           onClick={() => toggleFavorite(hotel)}
           aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
