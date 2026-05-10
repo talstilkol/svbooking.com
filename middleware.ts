@@ -1,6 +1,7 @@
 import { withAuth } from "@kinde-oss/kinde-auth-nextjs/middleware";
+import type { NextRequest } from "next/server";
 
-export default withAuth(async function middleware(req) {}, {
+export default withAuth(async function middleware(_req: NextRequest) {}, {
   publicPaths: [
     "/",
     "/search",

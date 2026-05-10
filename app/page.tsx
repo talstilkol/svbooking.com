@@ -1,6 +1,7 @@
 import {RegisterLink, LoginLink} from "@kinde-oss/kinde-auth-nextjs/components";
 import SearchBar from "@/components/SearchBar";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export default function Home() {
   return (
@@ -10,7 +11,9 @@ export default function Home() {
           <h1 className="text-5xl font-bold mb-4">Find Your Perfect Stay</h1>
           <p className="text-xl mb-8">Discover amazing places at unbeatable prices</p>
           <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg shadow-xl max-w-3xl mx-auto">
-            <SearchBar />
+            <Suspense fallback={<div className="h-12" />}>
+              <SearchBar />
+            </Suspense>
           </div>
         </div>
       </div>

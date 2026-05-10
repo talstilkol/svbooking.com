@@ -4,13 +4,13 @@ import { isValidObjectId, ValidationError, errorResponse } from '@/lib/validatio
 
 export async function GET(request, { params }) {
   try {
-    await connectDB();
     const { id } = await params;
 
     if (!isValidObjectId(id)) {
       throw new ValidationError('Invalid listing id');
     }
 
+    await connectDB();
     const listing = await Listing.findById(id);
     if (!listing) {
       return Response.json({ error: 'Listing not found' }, { status: 404 });

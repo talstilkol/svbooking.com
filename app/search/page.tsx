@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SearchBar from '@/components/SearchBar';
 import ListingCard from '@/components/ListingCard';
@@ -15,7 +15,7 @@ interface Listing {
   description?: string;
 }
 
-export default function SearchResults() {
+function SearchResultsInner() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -66,5 +66,13 @@ export default function SearchResults() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SearchResults() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-50 dark:bg-black p-8 text-center text-zinc-600">Loading...</div>}>
+      <SearchResultsInner />
+    </Suspense>
   );
 }

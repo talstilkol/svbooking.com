@@ -23,7 +23,6 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    await connectDB();
     const body = await request.json();
     const { listingId, guestName, checkIn, checkOut, guests } = body || {};
 
@@ -48,6 +47,7 @@ export async function POST(request) {
       throw new ValidationError('Check-in must be before check-out');
     }
 
+    await connectDB();
     const listing = await Listing.findById(listingId);
     if (!listing) {
       return Response.json({ error: 'Listing not found' }, { status: 404 });

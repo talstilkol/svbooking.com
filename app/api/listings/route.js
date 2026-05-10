@@ -4,7 +4,6 @@ import { parseNonNegativeNumber, ValidationError, errorResponse } from '@/lib/va
 
 export async function GET(request) {
   try {
-    await connectDB();
     const { searchParams } = new URL(request.url);
     const location = searchParams.get('location');
     const minPrice = parseNonNegativeNumber(searchParams.get('minPrice'), 'minPrice');
@@ -14,6 +13,7 @@ export async function GET(request) {
       throw new ValidationError('minPrice cannot be greater than maxPrice');
     }
 
+    await connectDB();
     const filter = {};
     if (location && location.trim() !== '') {
       filter.location = { $regex: location.trim(), $options: 'i' };
