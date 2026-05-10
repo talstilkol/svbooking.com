@@ -1,5 +1,6 @@
 import SearchBar from "@/components/SearchBar";
 import DestinationExplorer from "@/components/DestinationExplorer";
+import TopDeals from "@/components/TopDeals";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -30,8 +31,15 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Top Deals */}
+      <div className="max-w-7xl mx-auto px-4 pt-16 pb-8">
+        <Suspense fallback={null}>
+          <TopDeals />
+        </Suspense>
+      </div>
+
       {/* Destination Explorer */}
-      <div className="max-w-7xl mx-auto px-4 py-16">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <DestinationExplorer />
       </div>
 

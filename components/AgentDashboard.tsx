@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useFavorites, useTrips } from '@/lib/useLocalStorage';
 import DealCard from './DealCard';
 
@@ -218,9 +219,11 @@ export default function AgentDashboard() {
                 key={i}
                 className="flex items-center gap-4 p-4 bg-white border border-zinc-200 rounded-lg"
               >
-                <img
+                <Image
                   src={rec.hotel.image}
                   alt={rec.hotel.name}
+                  width={64}
+                  height={64}
                   className="w-16 h-16 rounded-lg object-cover"
                 />
                 <div className="flex-1 min-w-0">
