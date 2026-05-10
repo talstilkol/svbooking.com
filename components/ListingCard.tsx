@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Listing {
   _id: string;
@@ -19,9 +20,11 @@ export default function ListingCard({ listing }: ListingCardProps) {
     <Link href={`/book/${listing._id}`}>
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border border-zinc-200">
         {listing.images && listing.images.length > 0 ? (
-          <img
+          <Image
             src={listing.images[0]}
             alt={listing.title}
+            width={400}
+            height={192}
             className="w-full h-48 object-cover"
           />
         ) : (

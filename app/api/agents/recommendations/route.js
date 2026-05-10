@@ -1,6 +1,5 @@
 import { getRates } from '@/lib/xotelo';
 import { HOTELS, findHotel } from '@/lib/hotels-catalog';
-import { CONTINENTS } from '@/lib/destinations';
 
 function addDays(dateStr, days) {
   const d = new Date(dateStr);

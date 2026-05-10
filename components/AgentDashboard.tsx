@@ -259,6 +259,7 @@ export default function AgentDashboard() {
         </p>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
           <select
+            aria-label="Select hotel"
             value={availHotel}
             onChange={(e) => setAvailHotel(e.target.value)}
             className="border border-zinc-300 rounded-lg px-3 py-2 text-sm"
@@ -270,18 +271,18 @@ export default function AgentDashboard() {
           </select>
           <input
             type="date"
+            aria-label="Check-in date"
             value={availCheckIn}
             onChange={(e) => setAvailCheckIn(e.target.value)}
             className="border border-zinc-300 rounded-lg px-3 py-2 text-sm"
-            placeholder="Check-in"
           />
           <input
             type="date"
+            aria-label="Check-out date"
             value={availCheckOut}
             min={availCheckIn}
             onChange={(e) => setAvailCheckOut(e.target.value)}
             className="border border-zinc-300 rounded-lg px-3 py-2 text-sm"
-            placeholder="Check-out"
           />
           <button
             onClick={checkAvailability}

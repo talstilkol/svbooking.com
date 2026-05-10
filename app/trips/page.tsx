@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useTrips, SavedTrip } from '@/lib/useLocalStorage';
 import CheaperDates from '@/components/CheaperDates';
@@ -135,8 +134,9 @@ function TripsInner() {
           <h2 className="text-xl font-bold text-zinc-900 mb-4">Plan a New Trip</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Hotel</label>
+              <label htmlFor="trip-hotel" className="block text-sm font-medium text-zinc-700 mb-1">Hotel</label>
               <select
+                id="trip-hotel"
                 value={hotelKey}
                 onChange={(e) => setHotelKey(e.target.value)}
                 className="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white text-zinc-900"
@@ -150,8 +150,9 @@ function TripsInner() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Check-in</label>
+              <label htmlFor="trip-checkin" className="block text-sm font-medium text-zinc-700 mb-1">Check-in</label>
               <input
+                id="trip-checkin"
                 type="date"
                 value={checkIn}
                 onChange={(e) => setCheckIn(e.target.value)}
@@ -159,8 +160,9 @@ function TripsInner() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Check-out</label>
+              <label htmlFor="trip-checkout" className="block text-sm font-medium text-zinc-700 mb-1">Check-out</label>
               <input
+                id="trip-checkout"
                 type="date"
                 value={checkOut}
                 onChange={(e) => setCheckOut(e.target.value)}
@@ -168,8 +170,9 @@ function TripsInner() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Guests</label>
+              <label htmlFor="trip-guests" className="block text-sm font-medium text-zinc-700 mb-1">Guests</label>
               <input
+                id="trip-guests"
                 type="number"
                 min="1"
                 value={guests}
@@ -178,8 +181,9 @@ function TripsInner() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Notes (optional)</label>
+              <label htmlFor="trip-notes" className="block text-sm font-medium text-zinc-700 mb-1">Notes (optional)</label>
               <input
+                id="trip-notes"
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}

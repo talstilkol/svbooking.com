@@ -28,17 +28,19 @@ export default function BookingForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchListing = async () => {
       try {
-        const res = await fetch(`/api/listings/${id}`);
+        const res = await fetch(`/api/listings/${id}`, { signal: controller.signal });
         if (!res.ok) throw new Error('Not found');
         const data = await res.json();
         setListing(data);
-      } catch {
-        setError('Hotel not found');
+      } catch (err) {
+        if (err instanceof Error && err.name !== 'AbortError') setError('Hotel not found');
       }
     };
     fetchListing();
+    return () => controller.abort();
   }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,8 +126,9 @@ export default function BookingForm() {
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Your Name</label>
+              <label htmlFor="book-name" className="block text-sm font-medium text-zinc-700 mb-1">Your Name</label>
               <input
+                id="book-name"
                 name="guestName"
                 placeholder="Enter your name"
                 value={form.guestName}
@@ -136,8 +139,9 @@ export default function BookingForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Check-in Date</label>
+              <label htmlFor="book-checkin" className="block text-sm font-medium text-zinc-700 mb-1">Check-in Date</label>
               <input
+                id="book-checkin"
                 type="date"
                 name="checkIn"
                 value={form.checkIn}
@@ -148,8 +152,9 @@ export default function BookingForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Check-out Date</label>
+              <label htmlFor="book-checkout" className="block text-sm font-medium text-zinc-700 mb-1">Check-out Date</label>
               <input
+                id="book-checkout"
                 type="date"
                 name="checkOut"
                 value={form.checkOut}
@@ -160,8 +165,9 @@ export default function BookingForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">Number of Guests</label>
+              <label htmlFor="book-guests" className="block text-sm font-medium text-zinc-700 mb-1">Number of Guests</label>
               <input
+                id="book-guests"
                 type="number"
                 name="guests"
                 min="1"

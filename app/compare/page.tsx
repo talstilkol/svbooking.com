@@ -117,7 +117,7 @@ function CompareInner() {
     ? hotels.filter((h) => h.city === selectedCity)
     : hotels;
 
-  const compareHotelDirect = async (hotel: Hotel, ci: string, co: string) => {
+  async function compareHotelDirect(hotel: Hotel, ci: string, co: string) {
     setComparing(hotel.hotelKey);
     setComparison(null);
     setError('');
@@ -132,7 +132,7 @@ function CompareInner() {
     } finally {
       setComparing(null);
     }
-  };
+  }
 
   const compareHotel = async (hotel: Hotel) => {
     setComparing(hotel.hotelKey);

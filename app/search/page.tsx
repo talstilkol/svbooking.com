@@ -67,6 +67,7 @@ function SearchInner() {
             ref={inputRef}
             list="cities-list"
             type="text"
+            aria-label="Search by city"
             placeholder="City (e.g. Tel Aviv, Paris, NYC)"
             value={city}
             onChange={(e) => setCity(e.target.value)}

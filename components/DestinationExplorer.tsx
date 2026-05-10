@@ -24,6 +24,7 @@ export default function DestinationExplorer() {
   useEffect(() => {
     if (!selectedContinent && !selectedCountry) return;
 
+    const controller = new AbortController();
     setLoading(true);
     const params = new URLSearchParams();
     if (selectedCountry) {
@@ -32,13 +33,15 @@ export default function DestinationExplorer() {
       params.set('continent', selectedContinent);
     }
 
-    fetch(`/api/deals?${params.toString()}`)
+    fetch(`/api/deals?${params.toString()}`, { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
         setDeals(data.deals || []);
       })
-      .catch(() => setDeals([]))
+      .catch((err) => { if (err.name !== 'AbortError') setDeals([]); })
       .finally(() => setLoading(false));
+
+    return () => controller.abort();
   }, [selectedContinent, selectedCountry]);
 
   const selectedContinentData = CONTINENTS.find((c) => c.id === selectedContinent);
