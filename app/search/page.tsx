@@ -48,7 +48,7 @@ function SearchInner() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black p-8">
+    <div className="min-h-screen p-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-2">Find a Hotel</h1>
         <p className="text-zinc-600 dark:text-zinc-400 mb-6">
@@ -109,7 +109,7 @@ function SearchInner() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-zinc-50 dark:bg-black p-8 text-center text-zinc-600">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen p-8 text-center text-zinc-600">Loading...</div>}>
       <SearchInner />
     </Suspense>
   );

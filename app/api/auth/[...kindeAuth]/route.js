@@ -1,3 +1,7 @@
-import {handleAuth} from "@kinde-oss/kinde-auth-nextjs/server";
+export const dynamic = 'force-dynamic';
 
-export const GET = handleAuth();
+export async function GET(request) {
+  const { handleAuth } = await import("@kinde-oss/kinde-auth-nextjs/server");
+  const handler = handleAuth();
+  return handler(request);
+}

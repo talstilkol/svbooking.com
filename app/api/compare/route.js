@@ -1,4 +1,4 @@
-import { getRates } from '@/lib/xotelo';
+import { getHotelRates } from '@/lib/hotel-pricing';
 import { HOTELS, listCities, getHotelsByCity, findHotel } from '@/lib/hotels-catalog';
 
 // GET /api/compare
@@ -23,7 +23,14 @@ export async function GET(request) {
         );
       }
       const hotel = findHotel(hotelKey);
-      const result = await getRates({ hotelKey, checkIn, checkOut, currency });
+      const result = await getHotelRates({
+        hotelKey,
+        hotelName: hotel?.name,
+        city: hotel?.city,
+        checkIn,
+        checkOut,
+        currency,
+      });
       const rates = (result?.rates || [])
         .map((r) => ({
           provider: r.name,

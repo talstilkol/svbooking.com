@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import CheaperDates from '@/components/CheaperDates';
 
 interface Hotel {
   hotelKey: string;
@@ -33,25 +35,45 @@ interface Comparison {
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
-  'Booking.com': 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300',
-  'Expedia': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
-  'Hotels.com': 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300',
-  'Agoda.com': 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300',
-  'Vio.com': 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300',
+  'Booking.com': 'bg-blue-100 text-blue-800',
+  'Expedia': 'bg-yellow-100 text-yellow-800',
+  'Hotels.com': 'bg-red-100 text-red-800',
+  'Agoda.com': 'bg-purple-100 text-purple-800',
+  'Vio.com': 'bg-green-100 text-green-800',
+  'Trip.com': 'bg-sky-100 text-sky-800',
+  'Fairfield Inn': 'bg-orange-100 text-orange-800',
 };
 
-function tomorrow(offsetDays = 0) {
+function getBookingUrl(provider: string, hotelName: string, city: string, checkIn: string, checkOut: string) {
+  const query = encodeURIComponent(`${hotelName} ${city}`);
+  const urls: Record<string, string> = {
+    'Booking.com': `https://www.booking.com/searchresults.html?ss=${query}&checkin=${checkIn}&checkout=${checkOut}`,
+    'Expedia': `https://www.expedia.com/Hotel-Search?destination=${query}&startDate=${checkIn}&endDate=${checkOut}`,
+    'Hotels.com': `https://www.hotels.com/search.do?q-destination=${query}&q-check-in=${checkIn}&q-check-out=${checkOut}`,
+    'Agoda.com': `https://www.agoda.com/search?city=${encodeURIComponent(city)}&checkIn=${checkIn}&checkOut=${checkOut}`,
+    'Vio.com': `https://www.vio.com/hotels?q=${query}&checkIn=${checkIn}&checkOut=${checkOut}`,
+    'Trip.com': `https://www.trip.com/hotels/?city=${encodeURIComponent(city)}&checkin=${checkIn}&checkout=${checkOut}`,
+  };
+  return urls[provider] || `https://www.google.com/travel/hotels?q=${query}`;
+}
+
+function futureDate(offsetDays: number) {
   const d = new Date();
-  d.setDate(d.getDate() + 1 + offsetDays);
+  d.setDate(d.getDate() + offsetDays);
   return d.toISOString().slice(0, 10);
 }
 
-export default function ComparePage() {
+function CompareInner() {
+  const searchParams = useSearchParams();
+  const urlHotelKey = searchParams.get('hotelKey') || '';
+  const urlCheckIn = searchParams.get('checkIn') || '';
+  const urlCheckOut = searchParams.get('checkOut') || '';
+
   const [cities, setCities] = useState<string[]>([]);
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [selectedCity, setSelectedCity] = useState('');
-  const [checkIn, setCheckIn] = useState(tomorrow(0));
-  const [checkOut, setCheckOut] = useState(tomorrow(2));
+  const [checkIn, setCheckIn] = useState(urlCheckIn || futureDate(5));
+  const [checkOut, setCheckOut] = useState(urlCheckOut || futureDate(7));
   const [comparing, setComparing] = useState<string | null>(null);
   const [comparison, setComparison] = useState<Comparison | null>(null);
   const [error, setError] = useState('');
@@ -64,6 +86,17 @@ export default function ComparePage() {
         const data = await res.json();
         setCities(data.cities || []);
         setHotels(data.hotels || []);
+
+        if (urlHotelKey) {
+          const hotel = (data.hotels || []).find((h: Hotel) => h.hotelKey === urlHotelKey);
+          if (hotel) {
+            const ci = urlCheckIn || futureDate(5);
+            const co = urlCheckOut || futureDate(7);
+            setCheckIn(ci);
+            setCheckOut(co);
+            setTimeout(() => compareHotelDirect(hotel, ci, co), 100);
+          }
+        }
       } catch {
         setError('Failed to load catalog');
       } finally {
@@ -75,6 +108,23 @@ export default function ComparePage() {
   const filteredHotels = selectedCity
     ? hotels.filter((h) => h.city === selectedCity)
     : hotels;
+
+  const compareHotelDirect = async (hotel: Hotel, ci: string, co: string) => {
+    setComparing(hotel.hotelKey);
+    setComparison(null);
+    setError('');
+    try {
+      const params = new URLSearchParams({ hotelKey: hotel.hotelKey, checkIn: ci, checkOut: co });
+      const res = await fetch(`/api/compare?${params}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch');
+      setComparison(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to compare');
+    } finally {
+      setComparing(null);
+    }
+  };
 
   const compareHotel = async (hotel: Hotel) => {
     setComparing(hotel.hotelKey);
@@ -98,7 +148,7 @@ export default function ComparePage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black p-8">
+    <div className="min-h-screen p-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-zinc-900 dark:text-white mb-2">
           Hotel Price Comparison
@@ -205,31 +255,43 @@ export default function ComparePage() {
                     {result && result.rates.length > 0 && (
                       <div className="space-y-2 mb-3">
                         {result.rates.map((rate, idx) => (
-                          <div
+                          <a
                             key={rate.code}
-                            className="flex justify-between items-center p-2 rounded border border-zinc-200 dark:border-zinc-800"
+                            href={getBookingUrl(rate.provider, hotel.name, hotel.city, checkIn, checkOut)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex justify-between items-center p-2 rounded border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-colors cursor-pointer group"
                           >
                             <span
                               className={`px-2 py-1 rounded text-xs font-medium ${
                                 PROVIDER_COLORS[rate.provider] ||
-                                'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300'
+                                'bg-slate-100 text-slate-800'
                               }`}
                             >
                               {rate.provider}
                               {idx === 0 && ' ⭐'}
                             </span>
-                            <span className="font-semibold text-zinc-900 dark:text-white">
-                              {rate.currency} {rate.total.toFixed(2)}
+                            <span className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-900">
+                                {rate.currency} {rate.total.toFixed(2)}
+                              </span>
+                              <span className="text-blue-500 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                Book ↗
+                              </span>
                             </span>
-                          </div>
+                          </a>
                         ))}
                       </div>
                     )}
 
                     {result && result.rates.length === 0 && (
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3">
-                        No rates found for these dates
-                      </p>
+                      <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-950/30 rounded border border-amber-200 dark:border-amber-900 text-sm">
+                        <p className="text-amber-800 dark:text-amber-200 font-medium">No rates available</p>
+                        <p className="text-amber-700 dark:text-amber-300 mt-1">
+                          This hotel has no live pricing data for the selected dates. Try adjusting dates or check directly on{' '}
+                          <a href={`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(hotel.name + ' ' + hotel.city)}`} target="_blank" rel="noopener noreferrer" className="underline">Booking.com</a>
+                        </p>
+                      </div>
                     )}
 
                     <button
@@ -239,6 +301,10 @@ export default function ComparePage() {
                     >
                       {isComparing ? 'Comparing...' : result ? 'Refresh prices' : 'Compare prices'}
                     </button>
+
+                    {result && result.rates.length > 0 && (
+                      <CheaperDates hotelKey={hotel.hotelKey} checkIn={checkIn} checkOut={checkOut} />
+                    )}
                   </div>
                 </div>
               );
@@ -247,5 +313,13 @@ export default function ComparePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ComparePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen p-8 text-center text-zinc-500">Loading...</div>}>
+      <CompareInner />
+    </Suspense>
   );
 }

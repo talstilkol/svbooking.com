@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTrips, SavedTrip } from '@/lib/useLocalStorage';
+import CheaperDates from '@/components/CheaperDates';
 
 interface CatalogHotel {
   hotelKey: string;
@@ -109,11 +110,11 @@ function TripsInner() {
   };
 
   if (!hydrated) {
-    return <div className="min-h-screen bg-zinc-50 dark:bg-black p-8 text-center text-zinc-600">Loading...</div>;
+    return <div className="min-h-screen p-8 text-center text-zinc-600">Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black p-8">
+    <div className="min-h-screen p-8">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-4xl font-bold text-zinc-900 dark:text-white mb-2">My Trips</h1>
         <p className="text-zinc-600 dark:text-zinc-400 mb-6">
@@ -242,13 +243,16 @@ function TripsInner() {
                       {trip.notes && (
                         <p className="mt-2 text-sm italic text-zinc-600 dark:text-zinc-400">&quot;{trip.notes}&quot;</p>
                       )}
-                      <button
-                        onClick={() => askAgent(trip)}
-                        disabled={loading}
-                        className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 text-sm"
-                      >
-                        {loading ? 'Agent analyzing...' : result ? '🤖 Re-analyze' : '🤖 Ask AI Agent'}
-                      </button>
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        <button
+                          onClick={() => askAgent(trip)}
+                          disabled={loading}
+                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 text-sm"
+                        >
+                          {loading ? 'Agent analyzing...' : result ? '🤖 Re-analyze' : '🤖 Ask AI Agent'}
+                        </button>
+                      </div>
+                      <CheaperDates hotelKey={trip.hotelKey} checkIn={trip.checkIn} checkOut={trip.checkOut} />
                     </div>
                   </div>
 
@@ -326,7 +330,7 @@ function TripsInner() {
 
 export default function TripsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-zinc-50 dark:bg-black p-8 text-center text-zinc-600">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen p-8 text-center text-zinc-600">Loading...</div>}>
       <TripsInner />
     </Suspense>
   );

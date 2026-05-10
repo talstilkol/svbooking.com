@@ -23,6 +23,8 @@ export default function SearchBar() {
     }
     const params = new URLSearchParams();
     if (location.trim()) params.set('city', location.trim());
+    if (minPrice) params.set('minPrice', minPrice);
+    if (maxPrice) params.set('maxPrice', maxPrice);
     router.push(`/search${params.toString() ? `?${params.toString()}` : ''}`);
   };
 

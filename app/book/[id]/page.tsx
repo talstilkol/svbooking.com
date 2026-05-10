@@ -29,9 +29,14 @@ export default function BookingForm() {
 
   useEffect(() => {
     const fetchListing = async () => {
-      const res = await fetch(`/api/listings/${id}`);
-      const data = await res.json();
-      setListing(data);
+      try {
+        const res = await fetch(`/api/listings/${id}`);
+        if (!res.ok) throw new Error('Not found');
+        const data = await res.json();
+        setListing(data);
+      } catch {
+        setError('Hotel not found');
+      }
     };
     fetchListing();
   }, [id]);
@@ -99,10 +104,10 @@ export default function BookingForm() {
     }
   };
 
-  if (!listing) return <div className="min-h-screen bg-zinc-50 dark:bg-black p-8">Loading...</div>;
+  if (!listing) return <div className="min-h-screen p-8">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black p-8">
+    <div className="min-h-screen p-8">
       <div className="max-w-2xl mx-auto">
         <Link href="/search" className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
           ← Back to search

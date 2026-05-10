@@ -1,21 +1,49 @@
-import { withAuth } from "@kinde-oss/kinde-auth-nextjs/middleware";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-export default withAuth(async function middleware(_req: NextRequest) {}, {
-  publicPaths: [
-    "/",
-    "/search",
-    "/compare",
-    "/book",
-    "/api/listings",
-    "/api/bookings",
-    "/api/compare",
-    "/api/health",
-    "/api/agent",
-    "/favorites",
-    "/trips",
-  ],
-});
+const PUBLIC_PATHS = [
+  "/",
+  "/search",
+  "/compare",
+  "/book",
+  "/explore",
+  "/agents",
+  "/api/listings",
+  "/api/bookings",
+  "/api/compare",
+  "/api/health",
+  "/api/agent",
+  "/api/cheaper-dates",
+  "/api/deals",
+  "/api/agents/deals",
+  "/api/agents/health-check",
+  "/api/agents/recommendations",
+  "/favorites",
+  "/trips",
+];
+
+export default async function middleware(req: NextRequest) {
+  const path = req.nextUrl.pathname;
+
+  if (PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"))) {
+    return NextResponse.next();
+  }
+
+  if (!process.env.KINDE_ISSUER_URL) {
+    return NextResponse.next();
+  }
+
+  try {
+    const mod = await import("@kinde-oss/kinde-auth-nextjs/middleware");
+    const result = mod.withAuth(async function () {}, { publicPaths: PUBLIC_PATHS });
+    if (typeof result === "function") {
+      return await (result as Function)(req);
+    }
+    return await result;
+  } catch {
+    return NextResponse.next();
+  }
+}
 
 export const config = {
   matcher: [
