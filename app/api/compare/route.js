@@ -71,11 +71,11 @@ export async function GET(request) {
       });
     }
 
-    // Mode 3: catalog
-    return Response.json({
-      cities: listCities(),
-      hotels: HOTELS,
-    });
+    // Mode 3: catalog (cacheable for 5 minutes)
+    return Response.json(
+      { cities: listCities(), hotels: HOTELS },
+      { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } }
+    );
   } catch (err) {
     console.error('GET /api/compare error:', err);
     const message = err instanceof Error ? err.message : 'Server error';
