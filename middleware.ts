@@ -11,6 +11,9 @@ export default withAuth(async function middleware(_req: NextRequest) {}, {
     "/api/bookings",
     "/api/compare",
     "/api/health",
+    "/api/agent",
+    "/favorites",
+    "/trips",
   ],
 });
 

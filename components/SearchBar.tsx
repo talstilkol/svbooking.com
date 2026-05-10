@@ -22,10 +22,8 @@ export default function SearchBar() {
       return;
     }
     const params = new URLSearchParams();
-    if (location.trim()) params.set('location', location.trim());
-    if (minPrice) params.set('minPrice', minPrice);
-    if (maxPrice) params.set('maxPrice', maxPrice);
-    router.push(`/search?${params.toString()}`);
+    if (location.trim()) params.set('city', location.trim());
+    router.push(`/search${params.toString() ? `?${params.toString()}` : ''}`);
   };
 
   return (

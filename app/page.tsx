@@ -39,19 +39,25 @@ export default function Home() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8 text-center">
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center gap-3 flex-wrap">
+          <Link href="/search" className="px-6 py-3 bg-zinc-800 text-white rounded-lg hover:bg-zinc-900 transition-colors">
+            Browse Hotels
+          </Link>
+          <Link href="/compare" className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
+            Compare Prices
+          </Link>
+          <Link href="/trips" className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+            🤖 My Trips + AI Agent
+          </Link>
+          <Link href="/favorites" className="px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors">
+            ♥ Favorites
+          </Link>
           <LoginLink className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             Sign in
           </LoginLink>
           <RegisterLink className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
             Sign up
           </RegisterLink>
-          <Link href="/search" className="px-6 py-3 bg-zinc-800 text-white rounded-lg hover:bg-zinc-900 transition-colors">
-            Browse All Listings
-          </Link>
-          <Link href="/compare" className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
-            Compare Hotel Prices
-          </Link>
         </div>
       </div>
     </div>
