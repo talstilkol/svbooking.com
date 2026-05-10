@@ -112,83 +112,83 @@ export default function BookingForm() {
         <Link href="/search" className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
           ← Back to search
         </Link>
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-4">Book: {listing.title}</h1>
-        <p className="text-zinc-600 dark:text-zinc-400 mb-2">{listing.location}</p>
+        <h1 className="text-3xl font-bold text-zinc-900 mb-4">Book: {listing.title}</h1>
+        <p className="text-zinc-600 mb-2">{listing.location}</p>
         <p className="text-2xl font-bold text-blue-600 mb-6">${listing.pricePerNight}/night</p>
         {listing.description && (
-          <p className="text-zinc-600 dark:text-zinc-400 mb-6">{listing.description}</p>
+          <p className="text-zinc-600 mb-6">{listing.description}</p>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-zinc-900 rounded-lg p-6 shadow-md border border-zinc-200 dark:border-zinc-800">
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-4">Booking Details</h2>
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg p-6 shadow-md border border-zinc-200">
+          <h2 className="text-xl font-semibold text-zinc-900 mb-4">Booking Details</h2>
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Your Name</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Your Name</label>
               <input
                 name="guestName"
                 placeholder="Enter your name"
                 value={form.guestName}
                 onChange={handleChange}
                 required
-                className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white text-zinc-900"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Check-in Date</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Check-in Date</label>
               <input
                 type="date"
                 name="checkIn"
                 value={form.checkIn}
                 onChange={handleChange}
                 required
-                className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white text-zinc-900"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Check-out Date</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Check-out Date</label>
               <input
                 type="date"
                 name="checkOut"
                 value={form.checkOut}
                 onChange={handleChange}
                 required
-                className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white text-zinc-900"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Number of Guests</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Number of Guests</label>
               <input
                 type="number"
                 name="guests"
                 min="1"
                 value={form.guests}
                 onChange={handleChange}
-                className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white text-zinc-900"
               />
             </div>
 
             {nights > 0 && (
-              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 bg-zinc-50 dark:bg-zinc-800">
-                <div className="flex justify-between text-sm text-zinc-600 dark:text-zinc-400">
+              <div className="border border-zinc-200 rounded-lg p-4 bg-zinc-50">
+                <div className="flex justify-between text-sm text-zinc-600">
                   <span>Nights</span>
                   <span>{nights}</span>
                 </div>
-                <div className="flex justify-between text-sm text-zinc-600 dark:text-zinc-400">
+                <div className="flex justify-between text-sm text-zinc-600">
                   <span>${listing.pricePerNight} × {nights} nights</span>
                   <span>${totalPrice}</span>
                 </div>
-                <div className="flex justify-between font-bold text-lg text-zinc-900 dark:text-white mt-2 pt-2 border-t border-zinc-300 dark:border-zinc-700">
+                <div className="flex justify-between font-bold text-lg text-zinc-900 mt-2 pt-2 border-t border-zinc-300">
                   <span>Total</span>
                   <span>${totalPrice}</span>
                 </div>
               </div>
             )}
 
-            {error && <p className="text-red-600 dark:text-red-400">{error}</p>}
+            {error && <p className="text-red-600">{error}</p>}
 
             <button
               type="submit"

@@ -45,7 +45,7 @@ export default function DestinationExplorer() {
 
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-6 text-center">
+      <h2 className="text-2xl font-bold text-zinc-900 mb-6 text-center">
         Explore by Destination
       </h2>
 
@@ -60,7 +60,7 @@ export default function DestinationExplorer() {
             className={`px-5 py-3 rounded-xl text-sm font-medium transition-all ${
               selectedContinent === continent.id
                 ? 'bg-blue-600 text-white shadow-lg scale-105'
-                : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-zinc-700'
+                : 'bg-white text-zinc-700 border border-zinc-200 hover:border-blue-300 hover:bg-blue-50:bg-zinc-700'
             }`}
           >
             <span className="mr-2">{continent.emoji}</span>
@@ -80,7 +80,7 @@ export default function DestinationExplorer() {
               className={`px-4 py-2 rounded-lg text-sm transition-all ${
                 selectedCountry === country.name
                   ? 'bg-amber-500 text-white'
-                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                  : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200:bg-zinc-700'
               }`}
             >
               {country.name}

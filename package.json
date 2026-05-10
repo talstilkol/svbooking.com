@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@kinde-oss/kinde-auth-nextjs": "^2.12.1",
+    "lightningcss": "^1.32.0",
+    "lightningcss-darwin-arm64": "^1.32.0",
     "mongoose": "^9.6.2",
     "next": "^16.2.6",
     "react": "19.2.4",

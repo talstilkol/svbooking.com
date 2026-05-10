@@ -57,10 +57,14 @@ function getBookingUrl(provider: string, hotelName: string, city: string, checkI
   return urls[provider] || `https://www.google.com/travel/hotels?q=${query}`;
 }
 
-function futureDate(offsetDays: number) {
+function localDate(offsetDays: number) {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function todayStr() {
+  return localDate(0);
 }
 
 function CompareInner() {
@@ -72,8 +76,8 @@ function CompareInner() {
   const [cities, setCities] = useState<string[]>([]);
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [selectedCity, setSelectedCity] = useState('');
-  const [checkIn, setCheckIn] = useState(urlCheckIn || futureDate(5));
-  const [checkOut, setCheckOut] = useState(urlCheckOut || futureDate(7));
+  const [checkIn, setCheckIn] = useState(urlCheckIn || localDate(5));
+  const [checkOut, setCheckOut] = useState(urlCheckOut || localDate(7));
   const [comparing, setComparing] = useState<string | null>(null);
   const [comparison, setComparison] = useState<Comparison | null>(null);
   const [error, setError] = useState('');
@@ -90,8 +94,8 @@ function CompareInner() {
         if (urlHotelKey) {
           const hotel = (data.hotels || []).find((h: Hotel) => h.hotelKey === urlHotelKey);
           if (hotel) {
-            const ci = urlCheckIn || futureDate(5);
-            const co = urlCheckOut || futureDate(7);
+            const ci = urlCheckIn || localDate(5);
+            const co = urlCheckOut || localDate(7);
             setCheckIn(ci);
             setCheckOut(co);
             setTimeout(() => compareHotelDirect(hotel, ci, co), 100);
@@ -150,23 +154,24 @@ function CompareInner() {
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-zinc-900 dark:text-white mb-2">
+        <h1 className="text-4xl font-bold text-zinc-900 mb-2">
           Hotel Price Comparison
         </h1>
-        <p className="text-zinc-600 dark:text-zinc-400 mb-6">
-          Real-time prices from Booking.com, Expedia, Hotels.com, Agoda, Vio &amp; more — powered by Xotelo (free, no auth)
+        <p className="text-slate-600 mb-6">
+          Real-time prices from Booking.com, Expedia, Hotels.com, Agoda, Vio & more — powered by Xotelo (free, no auth)
         </p>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-lg p-6 shadow-md border border-zinc-200 dark:border-zinc-800 mb-6">
+        <div className="bg-white rounded-lg p-6 shadow-md border border-slate-200 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              <label htmlFor="compare-city" className="block text-sm font-medium text-slate-700 mb-1">
                 City
               </label>
               <select
+                id="compare-city"
                 value={selectedCity}
                 onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900"
               >
                 <option value="">All cities</option>
                 {cities.map((c) => (
@@ -175,38 +180,42 @@ function CompareInner() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              <label htmlFor="compare-checkin" className="block text-sm font-medium text-slate-700 mb-1">
                 Check-in
               </label>
               <input
+                id="compare-checkin"
                 type="date"
                 value={checkIn}
+                min={todayStr()}
                 onChange={(e) => setCheckIn(e.target.value)}
-                className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              <label htmlFor="compare-checkout" className="block text-sm font-medium text-slate-700 mb-1">
                 Check-out
               </label>
               <input
+                id="compare-checkout"
                 type="date"
                 value={checkOut}
+                min={checkIn || todayStr()}
                 onChange={(e) => setCheckOut(e.target.value)}
-                className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900"
               />
             </div>
           </div>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg text-red-700 dark:text-red-300">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             <strong>Error:</strong> {error}
           </div>
         )}
 
         {loading ? (
-          <div className="text-center text-zinc-600 dark:text-zinc-400 py-12">Loading hotels...</div>
+          <div className="text-center text-zinc-600 py-12">Loading hotels...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredHotels.map((hotel) => {
@@ -215,26 +224,26 @@ function CompareInner() {
               return (
                 <div
                   key={hotel.hotelKey}
-                  className="bg-white dark:bg-zinc-900 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+                  className="bg-white rounded-lg shadow-md border border-zinc-200 overflow-hidden"
                 >
                   <img src={hotel.image} alt={hotel.name} className="w-full h-48 object-cover" />
                   <div className="p-5">
-                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white">{hotel.name}</h2>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-3">
+                    <h2 className="text-xl font-bold text-zinc-900">{hotel.name}</h2>
+                    <p className="text-sm text-zinc-500 mb-3">
                       {hotel.city}, {hotel.country}
                     </p>
 
                     {result && result.rates.length > 0 && (
-                      <div className="mb-3 p-3 bg-green-50 dark:bg-green-950 rounded border border-green-200 dark:border-green-900">
+                      <div className="mb-3 p-3 bg-green-50 rounded border border-green-200">
                         <div className="flex justify-between items-start">
                           <div>
-                            <div className="text-xs text-green-700 dark:text-green-300 uppercase">
+                            <div className="text-xs text-green-700 uppercase">
                               Cheapest
                             </div>
-                            <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+                            <div className="text-2xl font-bold text-green-700">
                               {result.cheapest?.currency} {result.cheapest?.total.toFixed(2)}
                             </div>
-                            <div className="text-sm text-green-700 dark:text-green-300">
+                            <div className="text-sm text-green-700">
                               on {result.cheapest?.provider}
                             </div>
                           </div>
@@ -243,7 +252,7 @@ function CompareInner() {
                               <div className="inline-block px-2 py-1 bg-green-600 text-white text-xs font-bold rounded">
                                 SAVE {result.savingsPct}%
                               </div>
-                              <div className="text-xs text-green-700 dark:text-green-300 mt-1">
+                              <div className="text-xs text-green-700 mt-1">
                                 ${result.savingsAmount} less
                               </div>
                             </div>
@@ -285,9 +294,9 @@ function CompareInner() {
                     )}
 
                     {result && result.rates.length === 0 && (
-                      <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-950/30 rounded border border-amber-200 dark:border-amber-900 text-sm">
-                        <p className="text-amber-800 dark:text-amber-200 font-medium">No rates available</p>
-                        <p className="text-amber-700 dark:text-amber-300 mt-1">
+                      <div className="mb-3 p-3 bg-amber-50 rounded border border-amber-200 text-sm">
+                        <p className="text-amber-800 font-medium">No rates available</p>
+                        <p className="text-amber-700 mt-1">
                           This hotel has no live pricing data for the selected dates. Try adjusting dates or check directly on{' '}
                           <a href={`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(hotel.name + ' ' + hotel.city)}`} target="_blank" rel="noopener noreferrer" className="underline">Booking.com</a>
                         </p>

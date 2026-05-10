@@ -31,10 +31,32 @@ interface Recommendation {
   priority: string;
 }
 
+interface AvailabilityResult {
+  provider: string;
+  url: string;
+  status: number;
+  available: boolean;
+  note: string;
+}
+
+interface AvailabilityCheck {
+  hotel: { name: string; city: string; country: string };
+  dates: { checkIn: string; checkOut: string };
+  results: AvailabilityResult[];
+  summary: string;
+  bookingLinks: { provider: string; url: string }[];
+}
+
 export default function AgentDashboard() {
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [topDeals, setTopDeals] = useState<TopDeal[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [availability, setAvailability] = useState<AvailabilityCheck | null>(null);
+  const [availLoading, setAvailLoading] = useState(false);
+  const [availHotel, setAvailHotel] = useState('');
+  const [availCheckIn, setAvailCheckIn] = useState('');
+  const [availCheckOut, setAvailCheckOut] = useState('');
+  const [hotels, setHotels] = useState<{ hotelKey: string; name: string; city: string }[]>([]);
   const [loading, setLoading] = useState({ health: false, deals: false, recs: false });
   const { favorites } = useFavorites();
   const { trips } = useTrips();
@@ -74,9 +96,32 @@ export default function AgentDashboard() {
     setLoading((l) => ({ ...l, recs: false }));
   };
 
+  const fetchHotels = async () => {
+    try {
+      const res = await fetch('/api/compare');
+      const data = await res.json();
+      setHotels((data.hotels || []).map((h: any) => ({ hotelKey: h.hotelKey, name: h.name, city: h.city })));
+    } catch {}
+  };
+
+  const checkAvailability = async () => {
+    if (!availHotel || !availCheckIn || !availCheckOut) return;
+    setAvailLoading(true);
+    setAvailability(null);
+    try {
+      const params = new URLSearchParams({ hotelKey: availHotel, checkIn: availCheckIn, checkOut: availCheckOut });
+      const res = await fetch(`/api/agents/availability?${params}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setAvailability(data);
+    } catch {}
+    setAvailLoading(false);
+  };
+
   useEffect(() => {
     fetchHealth();
     fetchDeals();
+    fetchHotels();
   }, []);
 
   useEffect(() => {
@@ -88,11 +133,11 @@ export default function AgentDashboard() {
   return (
     <div className="space-y-8">
       {/* Health Status */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6">
+      <div className="bg-white border border-zinc-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full ${statusColor} ${!health ? 'animate-pulse' : ''}`} />
-            <h3 className="font-semibold text-zinc-900 dark:text-white">System Health</h3>
+            <h3 className="font-semibold text-zinc-900">System Health</h3>
           </div>
           <button
             onClick={fetchHealth}
@@ -106,14 +151,14 @@ export default function AgentDashboard() {
           <div className="space-y-2">
             {Object.entries(health.checks).map(([key, check]) => (
               <div key={key} className="flex items-center justify-between text-sm">
-                <span className="text-zinc-600 dark:text-zinc-400">{key}</span>
+                <span className="text-zinc-600">{key}</span>
                 <span className={check.ok ? 'text-emerald-600' : 'text-red-500'}>
                   {check.ok ? `OK${check.latencyMs ? ` (${check.latencyMs}ms)` : ''}` : check.error || 'Failed'}
                 </span>
               </div>
             ))}
             {health.suggestions.length > 0 && (
-              <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded text-sm text-amber-800 dark:text-amber-200">
+              <div className="mt-3 p-3 bg-amber-50 rounded text-sm text-amber-800">
                 {health.suggestions.map((s, i) => <p key={i}>{s}</p>)}
               </div>
             )}
@@ -124,7 +169,7 @@ export default function AgentDashboard() {
       {/* Top Deals */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-zinc-900 dark:text-white">Top Deals Found</h3>
+          <h3 className="text-xl font-bold text-zinc-900">Top Deals Found</h3>
           <button
             onClick={fetchDeals}
             disabled={loading.deals}
@@ -164,14 +209,14 @@ export default function AgentDashboard() {
       {/* Personalized Recommendations */}
       {recommendations.length > 0 && (
         <div>
-          <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-4">
+          <h3 className="text-xl font-bold text-zinc-900 mb-4">
             Personalized Recommendations
           </h3>
           <div className="space-y-3">
             {recommendations.map((rec, i) => (
               <div
                 key={i}
-                className="flex items-center gap-4 p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg"
+                className="flex items-center gap-4 p-4 bg-white border border-zinc-200 rounded-lg"
               >
                 <img
                   src={rec.hotel.image}
@@ -181,14 +226,14 @@ export default function AgentDashboard() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-                      rec.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
-                      rec.priority === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
-                      'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                      rec.priority === 'high' ? 'bg-red-100 text-red-700' :
+                      rec.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                      'bg-zinc-100 text-zinc-600'
                     }`}>
                       {rec.type.replace('_', ' ')}
                     </span>
                   </div>
-                  <p className="font-medium text-zinc-900 dark:text-white text-sm mt-1">{rec.title}</p>
+                  <p className="font-medium text-zinc-900 text-sm mt-1">{rec.title}</p>
                   <p className="text-xs text-zinc-500 mt-0.5 truncate">{rec.description}</p>
                 </div>
                 <a
@@ -202,6 +247,80 @@ export default function AgentDashboard() {
           </div>
         </div>
       )}
+
+      {/* Availability Checker Agent */}
+      <div className="bg-white border border-zinc-200 rounded-lg p-6">
+        <h3 className="font-semibold text-zinc-900 mb-4">Hotel Availability Agent</h3>
+        <p className="text-sm text-zinc-500 mb-4">
+          Checks booking sites directly (no API) to verify a hotel is available for your dates.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+          <select
+            value={availHotel}
+            onChange={(e) => setAvailHotel(e.target.value)}
+            className="border border-zinc-300 rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="">Select hotel...</option>
+            {hotels.map((h) => (
+              <option key={h.hotelKey} value={h.hotelKey}>{h.name} ({h.city})</option>
+            ))}
+          </select>
+          <input
+            type="date"
+            value={availCheckIn}
+            onChange={(e) => setAvailCheckIn(e.target.value)}
+            className="border border-zinc-300 rounded-lg px-3 py-2 text-sm"
+            placeholder="Check-in"
+          />
+          <input
+            type="date"
+            value={availCheckOut}
+            min={availCheckIn}
+            onChange={(e) => setAvailCheckOut(e.target.value)}
+            className="border border-zinc-300 rounded-lg px-3 py-2 text-sm"
+            placeholder="Check-out"
+          />
+          <button
+            onClick={checkAvailability}
+            disabled={availLoading || !availHotel || !availCheckIn || !availCheckOut}
+            className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 disabled:opacity-50"
+          >
+            {availLoading ? 'Checking...' : 'Check Availability'}
+          </button>
+        </div>
+
+        {availability && (
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-zinc-700">{availability.summary}</p>
+            <div className="space-y-2">
+              {availability.results.map((r, i) => (
+                <div key={i} className="flex items-center justify-between p-2 bg-zinc-50 rounded text-sm">
+                  <span className="font-medium text-zinc-700">{r.provider}</span>
+                  <span className={r.available ? 'text-emerald-600' : 'text-zinc-400'}>
+                    {r.available ? 'Reachable' : r.note}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 pt-3 border-t border-zinc-200">
+              <p className="text-xs text-zinc-500 mb-2">Direct booking links:</p>
+              <div className="flex flex-wrap gap-2">
+                {availability.bookingLinks.map((link, i) => (
+                  <a
+                    key={i}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded-lg hover:bg-blue-100"
+                  >
+                    {link.provider} ↗
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {favorites.length === 0 && trips.length === 0 && (
         <div className="text-center py-6 text-zinc-500">

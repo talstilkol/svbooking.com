@@ -54,21 +54,21 @@ export default function ExplorePage() {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Date Filter */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 mb-8">
+        <div className="bg-white border border-zinc-200 rounded-lg p-4 mb-8">
           <div className="flex flex-wrap items-center gap-4">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Optional dates:</span>
+            <span className="text-sm font-medium text-zinc-700">Optional dates:</span>
             <input
               type="date"
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
-              className="px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+              className="px-3 py-2 border border-zinc-300 rounded-lg text-sm bg-white text-zinc-900"
               placeholder="Check-in"
             />
             <input
               type="date"
               value={checkOut}
               onChange={(e) => setCheckOut(e.target.value)}
-              className="px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+              className="px-3 py-2 border border-zinc-300 rounded-lg text-sm bg-white text-zinc-900"
               placeholder="Check-out"
             />
             {(checkIn || checkOut) && (
@@ -94,7 +94,7 @@ export default function ExplorePage() {
               className={`flex flex-col items-center p-6 rounded-xl transition-all min-w-[140px] ${
                 selectedContinent === continent.id
                   ? 'bg-indigo-600 text-white shadow-xl scale-105'
-                  : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-indigo-300 hover:shadow-md'
+                  : 'bg-white text-zinc-700 border border-zinc-200 hover:border-indigo-300 hover:shadow-md'
               }`}
             >
               <span className="text-3xl mb-2">{continent.emoji}</span>
@@ -118,7 +118,7 @@ export default function ExplorePage() {
                 className={`px-5 py-3 rounded-lg text-sm font-medium transition-all ${
                   selectedCountry === country.name
                     ? 'bg-amber-500 text-white shadow-md'
-                    : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700'
+                    : 'bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-50:bg-zinc-700'
                 }`}
               >
                 {country.name}

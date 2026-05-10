@@ -40,7 +40,11 @@ interface AgentResponse {
 function todayPlus(days: number) {
   const d = new Date();
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function todayStr() {
+  return todayPlus(0);
 }
 
 function TripsInner() {
@@ -116,23 +120,23 @@ function TripsInner() {
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-4xl font-bold text-zinc-900 dark:text-white mb-2">My Trips</h1>
-        <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+        <h1 className="text-4xl font-bold text-zinc-900 mb-2">My Trips</h1>
+        <p className="text-zinc-600 mb-6">
           Plan future vacations and let our AI agent find the best price across providers.
         </p>
 
         <form
           onSubmit={handleAdd}
-          className="bg-white dark:bg-zinc-900 rounded-lg p-6 shadow-md border border-zinc-200 dark:border-zinc-800 mb-8"
+          className="bg-white rounded-lg p-6 shadow-md border border-zinc-200 mb-8"
         >
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-4">Plan a New Trip</h2>
+          <h2 className="text-xl font-bold text-zinc-900 mb-4">Plan a New Trip</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Hotel</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Hotel</label>
               <select
                 value={hotelKey}
                 onChange={(e) => setHotelKey(e.target.value)}
-                className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                className="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white text-zinc-900"
               >
                 <option value="">— Select a hotel —</option>
                 {hotels.map((h) => (
@@ -143,46 +147,46 @@ function TripsInner() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Check-in</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Check-in</label>
               <input
                 type="date"
                 value={checkIn}
                 onChange={(e) => setCheckIn(e.target.value)}
-                className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                className="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white text-zinc-900"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Check-out</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Check-out</label>
               <input
                 type="date"
                 value={checkOut}
                 onChange={(e) => setCheckOut(e.target.value)}
-                className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                className="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white text-zinc-900"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Guests</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Guests</label>
               <input
                 type="number"
                 min="1"
                 value={guests}
                 onChange={(e) => setGuests(Number(e.target.value))}
-                className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                className="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white text-zinc-900"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Notes (optional)</label>
+              <label className="block text-sm font-medium text-zinc-700 mb-1">Notes (optional)</label>
               <input
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Anniversary trip, work travel, etc."
-                className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                className="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white text-zinc-900"
               />
             </div>
           </div>
           {error && (
-            <div className="mt-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded text-red-700 dark:text-red-300 text-sm">
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
               {error}
             </div>
           )}
@@ -191,13 +195,13 @@ function TripsInner() {
           </button>
         </form>
 
-        <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
+        <h2 className="text-2xl font-bold text-zinc-900 mb-4">
           Saved Trips ({trips.length})
         </h2>
 
         {trips.length === 0 ? (
-          <div className="bg-white dark:bg-zinc-900 rounded-lg p-12 text-center border border-zinc-200 dark:border-zinc-800">
-            <p className="text-zinc-600 dark:text-zinc-400">No trips planned yet. Add your first trip above!</p>
+          <div className="bg-white rounded-lg p-12 text-center border border-zinc-200">
+            <p className="text-zinc-600">No trips planned yet. Add your first trip above!</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -207,41 +211,41 @@ function TripsInner() {
               return (
                 <div
                   key={trip.id}
-                  className="bg-white dark:bg-zinc-900 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+                  className="bg-white rounded-lg shadow-md border border-zinc-200 overflow-hidden"
                 >
                   <div className="flex flex-col md:flex-row">
                     <img src={trip.image} alt={trip.hotelName} className="w-full md:w-64 h-48 md:h-auto object-cover" />
                     <div className="p-5 flex-1">
                       <div className="flex justify-between items-start gap-2">
                         <div>
-                          <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{trip.hotelName}</h3>
-                          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                          <h3 className="text-xl font-bold text-zinc-900">{trip.hotelName}</h3>
+                          <p className="text-sm text-zinc-500">
                             {trip.city}, {trip.country}
                           </p>
                         </div>
                         <button
                           onClick={() => removeTrip(trip.id)}
-                          className="px-2 py-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded text-sm"
+                          className="px-2 py-1 text-red-500 hover:bg-red-50:bg-red-950 rounded text-sm"
                         >
                           Delete
                         </button>
                       </div>
                       <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
                         <div>
-                          <div className="text-zinc-500 dark:text-zinc-400">Check-in</div>
-                          <div className="font-medium text-zinc-900 dark:text-white">{trip.checkIn}</div>
+                          <div className="text-zinc-500">Check-in</div>
+                          <div className="font-medium text-zinc-900">{trip.checkIn}</div>
                         </div>
                         <div>
-                          <div className="text-zinc-500 dark:text-zinc-400">Check-out</div>
-                          <div className="font-medium text-zinc-900 dark:text-white">{trip.checkOut}</div>
+                          <div className="text-zinc-500">Check-out</div>
+                          <div className="font-medium text-zinc-900">{trip.checkOut}</div>
                         </div>
                         <div>
-                          <div className="text-zinc-500 dark:text-zinc-400">Guests</div>
-                          <div className="font-medium text-zinc-900 dark:text-white">{trip.guests}</div>
+                          <div className="text-zinc-500">Guests</div>
+                          <div className="font-medium text-zinc-900">{trip.guests}</div>
                         </div>
                       </div>
                       {trip.notes && (
-                        <p className="mt-2 text-sm italic text-zinc-600 dark:text-zinc-400">&quot;{trip.notes}&quot;</p>
+                        <p className="mt-2 text-sm italic text-zinc-600">&quot;{trip.notes}&quot;</p>
                       )}
                       <div className="flex flex-wrap gap-2 mt-4">
                         <button
@@ -257,18 +261,18 @@ function TripsInner() {
                   </div>
 
                   {result && (
-                    <div className="border-t border-zinc-200 dark:border-zinc-800 p-5 bg-zinc-50 dark:bg-zinc-950">
+                    <div className="border-t border-zinc-200 p-5 bg-zinc-50">
                       {result.recommended ? (
                         <>
                           <div className="flex flex-col md:flex-row gap-4">
-                            <div className="md:w-1/3 p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border-2 border-purple-500">
-                              <div className="text-xs text-purple-700 dark:text-purple-300 uppercase font-bold">
+                            <div className="md:w-1/3 p-4 bg-purple-50 rounded-lg border-2 border-purple-500">
+                              <div className="text-xs text-purple-700 uppercase font-bold">
                                 🤖 Agent recommends
                               </div>
-                              <div className="text-2xl font-bold text-purple-700 dark:text-purple-300 mt-1">
+                              <div className="text-2xl font-bold text-purple-700 mt-1">
                                 {result.recommended.provider}
                               </div>
-                              <div className="text-3xl font-bold text-zinc-900 dark:text-white mt-1">
+                              <div className="text-3xl font-bold text-zinc-900 mt-1">
                                 {result.recommended.currency} {result.recommended.total.toFixed(2)}
                               </div>
                               <div className="text-xs text-zinc-500 mt-1">
@@ -276,10 +280,10 @@ function TripsInner() {
                               </div>
                             </div>
                             <div className="flex-1">
-                              <p className="text-sm text-zinc-700 dark:text-zinc-300 mb-3">
+                              <p className="text-sm text-zinc-700 mb-3">
                                 <strong>Why?</strong> {result.reasoning}
                               </p>
-                              <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">
+                              <div className="text-xs text-zinc-500 mb-2">
                                 All offers ({result.providerCount}, sorted by agent score):
                               </div>
                               <div className="space-y-1">
@@ -288,8 +292,8 @@ function TripsInner() {
                                     key={r.code}
                                     className={`flex justify-between items-center text-sm p-2 rounded ${
                                       i === 0
-                                        ? 'bg-purple-100 dark:bg-purple-900 font-semibold'
-                                        : 'bg-white dark:bg-zinc-800'
+                                        ? 'bg-purple-100 font-semibold'
+                                        : 'bg-white'
                                     }`}
                                   >
                                     <span>
@@ -306,7 +310,7 @@ function TripsInner() {
                                 ))}
                               </div>
                               {result.savingsPct > 0 && (
-                                <p className="mt-3 text-xs text-green-700 dark:text-green-400">
+                                <p className="mt-3 text-xs text-green-700">
                                   💰 Spread: ${result.savingsVsExpensive.toFixed(2)} ({result.savingsPct}%) between cheapest and most expensive provider
                                 </p>
                               )}
@@ -314,7 +318,7 @@ function TripsInner() {
                           </div>
                         </>
                       ) : (
-                        <p className="text-zinc-600 dark:text-zinc-400">{result.reasoning}</p>
+                        <p className="text-zinc-600">{result.reasoning}</p>
                       )}
                     </div>
                   )}

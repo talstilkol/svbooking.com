@@ -21,7 +21,7 @@ interface Deal {
 
 export default function DealCard({ deal }: { deal: Deal }) {
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
       <div className="relative">
         <img
           src={deal.hotel.image}
@@ -33,15 +33,15 @@ export default function DealCard({ deal }: { deal: Deal }) {
         </div>
       </div>
       <div className="p-4">
-        <h3 className="font-semibold text-zinc-900 dark:text-white text-sm truncate">
+        <h3 className="font-semibold text-zinc-900 text-sm truncate">
           {deal.hotel.name}
         </h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+        <p className="text-xs text-zinc-500 mt-1">
           {deal.hotel.city}, {deal.hotel.country}
         </p>
         <div className="mt-2 flex items-center justify-between">
           <div>
-            <p className="text-lg font-bold text-zinc-900 dark:text-white">
+            <p className="text-lg font-bold text-zinc-900">
               ${deal.bestPrice.toFixed(0)}
             </p>
             <p className="text-xs text-zinc-500">

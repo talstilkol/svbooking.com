@@ -16,13 +16,13 @@ export default function HotelCard({ hotel }: { hotel: CatalogHotel }) {
   const fav = hydrated && isFavorite(hotel.hotelKey);
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col">
+    <div className="bg-white rounded-lg shadow-md border border-zinc-200 overflow-hidden flex flex-col">
       <div className="relative">
         <img src={hotel.image} alt={hotel.name} className="w-full h-48 object-cover" />
         <button
           onClick={() => toggleFavorite(hotel)}
           aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
-          className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 dark:bg-zinc-900/90 flex items-center justify-center shadow-md hover:scale-110 transition"
+          className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-md hover:scale-110 transition"
         >
           <span className={`text-2xl ${fav ? 'text-red-500' : 'text-zinc-400'}`}>
             {fav ? '♥' : '♡'}
@@ -30,8 +30,8 @@ export default function HotelCard({ hotel }: { hotel: CatalogHotel }) {
         </button>
       </div>
       <div className="p-5 flex-1 flex flex-col">
-        <h2 className="text-xl font-bold text-zinc-900 dark:text-white">{hotel.name}</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+        <h2 className="text-xl font-bold text-zinc-900">{hotel.name}</h2>
+        <p className="text-sm text-zinc-500 mb-4">
           {hotel.city}, {hotel.country}
         </p>
         <div className="mt-auto flex gap-2">

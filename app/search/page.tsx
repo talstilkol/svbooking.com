@@ -50,12 +50,12 @@ function SearchInner() {
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-2">Find a Hotel</h1>
-        <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+        <h1 className="text-3xl font-bold text-zinc-900 mb-2">Find a Hotel</h1>
+        <p className="text-zinc-600 mb-6">
           Real hotels with live prices from Booking.com, Expedia, Hotels.com, Agoda &amp; more
         </p>
 
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-zinc-900 p-4 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-800 mb-6 flex gap-3 flex-wrap">
+        <form onSubmit={handleSubmit} className="bg-white p-4 rounded-lg shadow-md border border-zinc-200 mb-6 flex gap-3 flex-wrap">
           <input
             ref={inputRef}
             list="cities-list"
@@ -63,7 +63,7 @@ function SearchInner() {
             placeholder="City (e.g. Tel Aviv, Paris, NYC)"
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="flex-1 min-w-[240px] px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
+            className="flex-1 min-w-[240px] px-4 py-2 border border-zinc-300 rounded-lg bg-white text-zinc-900"
           />
           <datalist id="cities-list">
             {cities.map((c) => <option key={c} value={c} />)}
@@ -72,27 +72,27 @@ function SearchInner() {
             Search
           </button>
           {city && (
-            <button type="button" onClick={() => setCity('')} className="px-4 py-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg">
+            <button type="button" onClick={() => setCity('')} className="px-4 py-2 bg-zinc-200 rounded-lg">
               Clear
             </button>
           )}
         </form>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg text-red-700 dark:text-red-300">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             <strong>Error:</strong> {error}
           </div>
         )}
 
         {loading ? (
-          <div className="text-center text-zinc-600 dark:text-zinc-400 py-12">Loading hotels...</div>
+          <div className="text-center text-zinc-600 py-12">Loading hotels...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center text-zinc-600 dark:text-zinc-400 py-12">
+          <div className="text-center text-zinc-600 py-12">
             No hotels found in &quot;{city}&quot;. Try: {cities.slice(0, 5).join(', ')}
           </div>
         ) : (
           <>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+            <p className="text-sm text-zinc-500 mb-4">
               Showing {filtered.length} of {allHotels.length} hotels
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
