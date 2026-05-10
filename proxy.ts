@@ -23,7 +23,7 @@ const PUBLIC_PATHS = [
   "/trips",
 ];
 
-export default async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
   if (PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"))) {
