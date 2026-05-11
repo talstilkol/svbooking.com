@@ -96,3 +96,28 @@ export function useTrips() {
 
   return { trips, addTrip, removeTrip, hydrated };
 }
+
+export interface RecentlyViewedHotel {
+  hotelKey: string;
+  name: string;
+  city: string;
+  country: string;
+  image: string;
+  viewedAt: string;
+}
+
+export function useRecentlyViewed() {
+  const [items, setItems, hydrated] = useLocalStorage<RecentlyViewedHotel[]>('svbooking:recent', []);
+
+  const addRecentlyViewed = useCallback(
+    (hotel: Omit<RecentlyViewedHotel, 'viewedAt'>) => {
+      setItems((prev) => {
+        const filtered = prev.filter((h) => h.hotelKey !== hotel.hotelKey);
+        return [{ ...hotel, viewedAt: new Date().toISOString() }, ...filtered].slice(0, 10);
+      });
+    },
+    [setItems]
+  );
+
+  return { items, addRecentlyViewed, hydrated };
+}

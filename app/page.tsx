@@ -1,6 +1,8 @@
 import SearchAutocomplete from "@/components/SearchAutocomplete";
 import DestinationExplorer from "@/components/DestinationExplorer";
 import TopDeals from "@/components/TopDeals";
+import ProviderLogos from "@/components/ProviderLogos";
+import RecentlyViewed from "@/components/RecentlyViewed";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -26,13 +28,19 @@ export default function Home() {
               <Suspense fallback={<div className="h-14 bg-slate-100 rounded-xl animate-pulse" />}>
                 <SearchAutocomplete />
               </Suspense>
+              <ProviderLogos className="mt-4 justify-center" />
             </div>
           </div>
         </div>
       </div>
 
+      {/* Recently Viewed */}
+      <Suspense fallback={null}>
+        <RecentlyViewed />
+      </Suspense>
+
       {/* Top Deals */}
-      <div className="max-w-7xl mx-auto px-4 pt-16 pb-8">
+      <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
         <Suspense fallback={null}>
           <TopDeals />
         </Suspense>
@@ -50,7 +58,7 @@ export default function Home() {
             <div className="text-center">
               <div className="w-16 h-16 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-3xl mx-auto mb-4">&#127960;</div>
               <h3 className="text-lg font-semibold text-slate-800 mb-2">Wide Selection</h3>
-              <p className="text-slate-500">Properties across 10 cities in 9 countries worldwide</p>
+              <p className="text-slate-500">63 hotels across 20 cities in 15+ countries worldwide</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto mb-4">&#128176;</div>

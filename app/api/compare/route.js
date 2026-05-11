@@ -16,11 +16,11 @@ export async function GET(request) {
 
     // Mode 1: compare prices for a specific hotel
     if (hotelKey) {
+      // If no dates, return just hotel catalog info (for detail page header)
       if (!checkIn || !checkOut) {
-        return Response.json(
-          { error: 'checkIn and checkOut are required when hotelKey is provided' },
-          { status: 400 }
-        );
+        const hotel = findHotel(hotelKey);
+        if (!hotel) return Response.json({ error: 'Hotel not found' }, { status: 404 });
+        return Response.json({ hotel }, { headers: { 'Cache-Control': 'public, s-maxage=300' } });
       }
       const hotel = findHotel(hotelKey);
       const result = await getHotelRates({
