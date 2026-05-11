@@ -24,6 +24,7 @@ import CountdownDeal from '@/components/CountdownDeal';
 import ReviewHighlights from '@/components/ReviewHighlights';
 import LastUpdated from '@/components/LastUpdated';
 import ComparisonMeta from '@/components/ComparisonMeta';
+import LoadingOverlay from '@/components/LoadingOverlay';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -326,12 +327,8 @@ export default function HotelDetailPage() {
           </div>
         )}
 
-        {/* Loading skeleton */}
-        {loading && (
-          <div className="space-y-4">
-            <CompareCardSkeleton />
-          </div>
-        )}
+        {/* Loading overlay with provider animation */}
+        <LoadingOverlay active={loading} className="mb-6" />
 
         {/* Date summary + countdown */}
         {data && (

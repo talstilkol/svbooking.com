@@ -68,6 +68,50 @@ body {
   animation: fade-in 0.3s ease-out;
 }
 
+/* Toast slide-in from right */
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* High contrast mode */
+.high-contrast {
+  --background: #000000;
+  --foreground: #ffffff;
+}
+.high-contrast body {
+  background: #000 !important;
+  color: #fff !important;
+}
+.high-contrast .bg-white {
+  background: #111 !important;
+  color: #fff !important;
+}
+.high-contrast .text-slate-600,
+.high-contrast .text-slate-500,
+.high-contrast .text-slate-400,
+.high-contrast .text-zinc-500,
+.high-contrast .text-zinc-600 {
+  color: #ccc !important;
+}
+.high-contrast .border-slate-200,
+.high-contrast .border-zinc-200 {
+  border-color: #444 !important;
+}
+
+/* Force reduced motion */
+.force-reduced-motion *,
+.force-reduced-motion *::before,
+.force-reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
 /* Print styles */
 @media print {
   nav, footer, .back-to-top, .cookie-consent, .mobile-bottom-bar {

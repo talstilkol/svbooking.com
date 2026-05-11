@@ -10,6 +10,8 @@ import RouteProgress from "@/components/RouteProgress";
 import { WebsiteJsonLd } from "@/components/JsonLd";
 import MobileBottomBar from "@/components/MobileBottomBar";
 import SocialProof from "@/components/SocialProof";
+import AccessibilityPanel from "@/components/AccessibilityPanel";
+import { ToastProvider } from "@/components/Toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -62,6 +64,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
       <body className="min-h-full flex flex-col bg-gradient-to-b from-sky-50 via-white to-amber-50/30">
+        <ToastProvider>
         {/* Skip to main content — accessibility */}
         <a
           href="#main-content"
@@ -78,7 +81,9 @@ export default function RootLayout({
         <BackToTop />
         <MobileBottomBar />
         <SocialProof />
+        <AccessibilityPanel />
         <CookieConsent />
+        </ToastProvider>
       </body>
     </html>
   );
