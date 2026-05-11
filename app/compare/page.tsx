@@ -3,7 +3,9 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import CheaperDates from '@/components/CheaperDates';
+import RatingBadge from '@/components/RatingBadge';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -232,12 +234,17 @@ function CompareInner() {
                   key={hotel.hotelKey}
                   className="bg-white rounded-lg shadow-md border border-zinc-200 overflow-hidden"
                 >
-                  <Image src={hotel.image} alt={hotel.name} width={600} height={192} className="w-full h-48 object-cover" />
+                  <Link href={`/hotel/${hotel.hotelKey}`}>
+                    <Image src={hotel.image} alt={hotel.name} width={600} height={192} className="w-full h-48 object-cover hover:opacity-90 transition-opacity" />
+                  </Link>
                   <div className="p-5">
-                    <h2 className="text-xl font-bold text-zinc-900">{hotel.name}</h2>
-                    <p className="text-sm text-zinc-500 mb-3">
-                      {hotel.city}, {hotel.country}
+                    <Link href={`/hotel/${hotel.hotelKey}`} className="hover:text-blue-600 transition-colors">
+                      <h2 className="text-xl font-bold text-zinc-900">{hotel.name}</h2>
+                    </Link>
+                    <p className="text-sm text-zinc-500 mt-0.5 mb-1">
+                      📍 {hotel.city}, {hotel.country}
                     </p>
+                    <RatingBadge hotelKey={hotel.hotelKey} size="sm" className="mb-3" />
 
                     {result && result.rates.length > 0 && (
                       <div className="mb-3 p-3 bg-green-50 rounded border border-green-200">

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import RatingBadge from '@/components/RatingBadge';
 
 interface Deal {
   hotel: {
@@ -21,41 +22,43 @@ interface Deal {
 }
 
 export default function DealCard({ deal }: { deal: Deal }) {
+  const currency = deal.currency || 'USD';
   return (
-    <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-      <div className="relative">
+    <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-blue-200 transition-all group">
+      <Link href={`/hotel/${deal.hotel.hotelKey}`} className="block relative">
         <Image
           src={deal.hotel.image}
           alt={deal.hotel.name}
           width={400}
           height={160}
-          className="w-full h-40 object-cover"
+          className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        <div className="absolute top-2 right-2 px-2 py-1 bg-emerald-600 text-white text-xs font-bold rounded">
-          ${deal.pricePerNight}/night
+        <div className="absolute top-2 right-2 px-2.5 py-1 bg-emerald-600 text-white text-xs font-bold rounded-lg shadow">
+          {currency} {deal.pricePerNight.toFixed(0)}/night
         </div>
-      </div>
+      </Link>
       <div className="p-4">
-        <h3 className="font-semibold text-zinc-900 text-sm truncate">
-          {deal.hotel.name}
-        </h3>
-        <p className="text-xs text-zinc-500 mt-1">
-          {deal.hotel.city}, {deal.hotel.country}
+        <Link href={`/hotel/${deal.hotel.hotelKey}`} className="hover:text-blue-600 transition-colors">
+          <h3 className="font-semibold text-zinc-900 text-sm truncate">{deal.hotel.name}</h3>
+        </Link>
+        <p className="text-xs text-zinc-500 mt-0.5 mb-2">
+          📍 {deal.hotel.city}, {deal.hotel.country}
         </p>
-        <div className="mt-2 flex items-center justify-between">
+        <RatingBadge hotelKey={deal.hotel.hotelKey} size="sm" className="mb-3" />
+        <div className="flex items-center justify-between">
           <div>
             <p className="text-lg font-bold text-zinc-900">
-              ${deal.bestPrice.toFixed(0)}
+              {currency} {deal.bestPrice.toFixed(0)}
             </p>
             <p className="text-xs text-zinc-500">
-              {deal.nights} nights · {deal.bestProvider}
+              {deal.nights} night{deal.nights !== 1 ? 's' : ''} · via {deal.bestProvider}
             </p>
           </div>
           <Link
-            href={`/compare?hotelKey=${deal.hotel.hotelKey}&checkIn=${deal.checkIn}&checkOut=${deal.checkOut}`}
-            className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+            href={`/hotel/${deal.hotel.hotelKey}`}
+            className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
-            View Deal
+            See prices →
           </Link>
         </div>
       </div>
