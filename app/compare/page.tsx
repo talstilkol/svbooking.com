@@ -7,6 +7,8 @@ import Link from 'next/link';
 import CheaperDates from '@/components/CheaperDates';
 import RatingBadge from '@/components/RatingBadge';
 import ComparisonSummary from '@/components/ComparisonSummary';
+import UrgencyBadge from '@/components/UrgencyBadge';
+import RecentlyCompared, { addToRecentlyCompared } from '@/components/RecentlyCompared';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -130,6 +132,15 @@ function CompareInner() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fetch');
       setComparison(data);
+      // Track recently compared
+      if (data.cheapest) {
+        addToRecentlyCompared({
+          hotelKey: hotel.hotelKey,
+          name: hotel.name,
+          city: hotel.city,
+          cheapest: { provider: data.cheapest.provider, total: data.cheapest.total, currency: data.cheapest.currency },
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to compare');
     } finally {
@@ -151,6 +162,15 @@ function CompareInner() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fetch');
       setComparison(data);
+      // Track recently compared
+      if (data.cheapest) {
+        addToRecentlyCompared({
+          hotelKey: hotel.hotelKey,
+          name: hotel.name,
+          city: hotel.city,
+          cheapest: { provider: data.cheapest.provider, total: data.cheapest.total, currency: data.cheapest.currency },
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to compare');
     } finally {
@@ -215,6 +235,8 @@ function CompareInner() {
           </div>
         </div>
 
+        <RecentlyCompared />
+
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             <strong>Error:</strong> {error}
@@ -246,6 +268,12 @@ function CompareInner() {
                       📍 {hotel.city}, {hotel.country}
                     </p>
                     <RatingBadge hotelKey={hotel.hotelKey} size="sm" className="mb-3" />
+
+                    {result && result.rates.length > 0 && (
+                      <div className="mb-3">
+                        <UrgencyBadge hotelKey={hotel.hotelKey} providerCount={result.providerCount} />
+                      </div>
+                    )}
 
                     {result && result.rates.length > 0 && (
                       <div className="mb-3 p-3 bg-green-50 rounded border border-green-200">
