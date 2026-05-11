@@ -1,5 +1,5 @@
-import { getRates } from '@/lib/xotelo';
-import { HOTELS, getHotelsByCity, getHotelsByCountry, getHotelsByCities } from '@/lib/hotels-catalog';
+import { getRates, getHeatmap } from '@/lib/xotelo';
+import { HOTELS, getHotelsByCity, getHotelsByCountry, getHotelsByCities, findHotel } from '@/lib/hotels-catalog';
 import { CONTINENTS } from '@/lib/destinations';
 
 function addDays(dateStr, days) {
@@ -46,6 +46,49 @@ async function fetchDealForHotel(hotel, checkIn, checkOut) {
   }
 }
 
+// Build 30-day price trend using heatmap API
+async function buildPriceTrend(hotelKey, nights) {
+  const today = new Date();
+  const trendPoints = [];
+
+  // Sample ~30 checkout dates (every 1 day) from tomorrow to +30 days
+  const promises = [];
+  for (let i = 1; i <= 30; i++) {
+    const checkOut = new Date(today);
+    checkOut.setDate(today.getDate() + i + nights);
+    const checkOutStr = checkOut.toISOString().split('T')[0];
+    const checkIn = new Date(today);
+    checkIn.setDate(today.getDate() + i);
+    const checkInStr = checkIn.toISOString().split('T')[0];
+    promises.push(
+      getHeatmap({ hotelKey, checkOut: checkOutStr })
+        .then((result) => {
+          if (!result) return null;
+          // The heatmap result contains rates for different check-in dates
+          const dateKey = checkInStr;
+          const rates = result.rates || result.data || [];
+          const entry = Array.isArray(rates)
+            ? rates.find((r) => r.chk_in === checkInStr || r.date === checkInStr)
+            : null;
+          const price = entry
+            ? Number(entry.rate || entry.price || entry.min_rate || 0) / nights
+            : 0;
+          if (price <= 0) return null;
+          const d = new Date(checkInStr);
+          const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          return { date: dateKey, price: Math.round(price), label };
+        })
+        .catch(() => null)
+    );
+  }
+
+  const results = await Promise.allSettled(promises);
+  for (const r of results) {
+    if (r.status === 'fulfilled' && r.value) trendPoints.push(r.value);
+  }
+  return trendPoints.sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -55,6 +98,18 @@ export async function GET(request) {
     const checkIn = searchParams.get('checkIn');
     const checkOut = searchParams.get('checkOut');
     const limit = Math.min(Number(searchParams.get('limit') || '10'), 15);
+    const hotelKey = searchParams.get('hotelKey');
+    const nights = Math.max(1, Number(searchParams.get('nights') || '1'));
+
+    // Price trend mode for a single hotel
+    if (hotelKey) {
+      const hotel = findHotel(hotelKey);
+      const trend = await buildPriceTrend(hotelKey, nights).catch(() => []);
+      return Response.json(
+        { hotel, trend },
+        { headers: { 'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600' } }
+      );
+    }
 
     let hotels = HOTELS;
 

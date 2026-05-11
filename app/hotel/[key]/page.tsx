@@ -5,6 +5,8 @@ import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useFavorites, useRecentlyViewed } from '@/lib/useLocalStorage';
+import { useCurrency } from '@/components/CurrencySelector';
+import PriceTrend from '@/components/PriceTrend';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -81,6 +83,7 @@ export default function HotelDetailPage() {
 
   const { isFavorite, toggleFavorite, hydrated } = useFavorites();
   const { addRecentlyViewed } = useRecentlyViewed();
+  const { currency } = useCurrency();
 
   // Fetch hotel info from catalog to track recently viewed
   useEffect(() => {
@@ -110,7 +113,7 @@ export default function HotelDetailPage() {
     setSearched(true);
     try {
       const res = await fetch(
-        `/api/compare?hotelKey=${hotelKey}&checkIn=${checkIn}&checkOut=${checkOut}`
+        `/api/compare?hotelKey=${hotelKey}&checkIn=${checkIn}&checkOut=${checkOut}&currency=${currency}`
       );
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load prices');
@@ -348,6 +351,11 @@ export default function HotelDetailPage() {
             <p className="text-lg">Select dates above to compare live prices from 8+ providers</p>
           </div>
         )}
+
+        {/* 30-day price trend chart */}
+        <div className="mt-8">
+          <PriceTrend hotelKey={hotelKey} nights={nights || 1} currency={currency} />
+        </div>
       </div>
     </div>
   );
