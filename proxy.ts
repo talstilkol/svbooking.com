@@ -6,6 +6,7 @@ const PUBLIC_PATHS = [
   "/search",
   "/compare",
   "/compare-hotels",
+  "/deals",
   "/book",
   "/explore",
   "/agents",

@@ -12,6 +12,8 @@ import ProviderLogos from '@/components/ProviderLogos';
 import PriceAlert from '@/components/PriceAlert';
 import CheaperDates from '@/components/CheaperDates';
 import SimilarHotels from '@/components/SimilarHotels';
+import BestTimeToBook from '@/components/BestTimeToBook';
+import PhotoGallery from '@/components/PhotoGallery';
 import Breadcrumb from '@/components/Breadcrumb';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
@@ -217,6 +219,15 @@ export default function HotelDetailPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Photo Gallery */}
+        {displayHotel && (
+          <PhotoGallery
+            mainImage={displayHotel.image}
+            hotelName={displayHotel.name}
+            city={displayHotel.city}
+          />
+        )}
+
         {/* Breadcrumb */}
         {displayHotel && (
           <Breadcrumb
@@ -418,6 +429,11 @@ export default function HotelDetailPage() {
             <div className="text-5xl mb-4">📅</div>
             <p className="text-lg">Select dates above to compare live prices from 8+ providers</p>
           </div>
+        )}
+
+        {/* Best time to book */}
+        {displayHotel && (
+          <BestTimeToBook hotelKey={hotelKey} hotelName={displayHotel.name} />
         )}
 
         {/* 30-day price trend chart */}

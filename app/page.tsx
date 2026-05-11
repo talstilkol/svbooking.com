@@ -101,6 +101,9 @@ export default function Home() {
           <Link href="/compare" className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium shadow-sm">
             Compare Prices
           </Link>
+          <Link href="/deals" className="px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors font-medium shadow-sm">
+            Today&apos;s Deals
+          </Link>
           <Link href="/explore" className="px-6 py-3 bg-white text-slate-700 rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all font-medium">
             Explore Destinations
           </Link>

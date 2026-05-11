@@ -6,9 +6,9 @@ import { useState, useEffect, useCallback } from 'react';
 import CurrencySelector from '@/components/CurrencySelector';
 
 const NAV_LINKS = [
-  { href: '/', label: 'Home' },
   { href: '/search', label: 'Search' },
   { href: '/compare', label: 'Compare' },
+  { href: '/deals', label: 'Deals' },
   { href: '/explore', label: 'Explore' },
   { href: '/trips', label: 'Trips' },
   { href: '/favorites', label: 'Favorites' },

@@ -8,6 +8,7 @@ export default function Footer() {
       { href: '/search', label: 'Browse Hotels' },
       { href: '/compare', label: 'Compare Prices' },
       { href: '/compare-hotels', label: 'Side-by-Side Compare' },
+      { href: '/deals', label: 'Today\'s Deals' },
       { href: '/explore', label: 'Explore Destinations' },
     ],
     Tools: [
