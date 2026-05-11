@@ -1,3 +1,7 @@
+export default function Skeleton({ className = '' }: { className?: string }) {
+  return <div className={`bg-slate-200 rounded animate-pulse ${className}`} />;
+}
+
 export function CardSkeleton() {
   return (
     <div className="bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden animate-pulse">
