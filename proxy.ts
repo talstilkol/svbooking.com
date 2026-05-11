@@ -27,6 +27,10 @@ const PUBLIC_PATHS = [
   "/api/og",
   "/favorites",
   "/trips",
+  "/about",
+  "/contact",
+  "/privacy",
+  "/terms",
 ];
 
 export async function proxy(req: NextRequest) {

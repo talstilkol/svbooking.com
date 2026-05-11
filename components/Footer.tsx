@@ -16,6 +16,12 @@ export default function Footer() {
       { href: '/favorites', label: 'Favorites' },
       { href: '/agents', label: 'AI Agents' },
     ],
+    Company: [
+      { href: '/about', label: 'About Us' },
+      { href: '/contact', label: 'Contact' },
+      { href: '/privacy', label: 'Privacy Policy' },
+      { href: '/terms', label: 'Terms of Service' },
+    ],
     Top: [
       { href: '/city/Paris', label: 'Hotels in Paris' },
       { href: '/city/London', label: 'Hotels in London' },
@@ -29,7 +35,7 @@ export default function Footer() {
   return (
     <footer className="bg-slate-900 text-slate-400 mt-16" role="contentinfo">
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 text-white font-bold text-xl mb-3">
