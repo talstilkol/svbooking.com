@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { CONTINENTS } from '@/lib/destinations';
 import DealCard from '@/components/DealCard';
+import WorldMap from '@/components/WorldMap';
 
 interface Deal {
   hotel: { hotelKey: string; name: string; city: string; country: string; image: string };
@@ -18,18 +19,20 @@ interface Deal {
 export default function ExplorePage() {
   const [selectedContinent, setSelectedContinent] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!selectedContinent && !selectedCountry) return;
+    if (!selectedContinent && !selectedCountry && !selectedCity) return;
 
     const controller = new AbortController();
     setLoading(true);
     const params = new URLSearchParams();
-    if (selectedCountry) params.set('country', selectedCountry);
+    if (selectedCity) params.set('city', selectedCity);
+    else if (selectedCountry) params.set('country', selectedCountry);
     else if (selectedContinent) params.set('continent', selectedContinent);
     if (checkIn) params.set('checkIn', checkIn);
     if (checkOut) params.set('checkOut', checkOut);
@@ -41,7 +44,13 @@ export default function ExplorePage() {
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, [selectedContinent, selectedCountry, checkIn, checkOut]);
+  }, [selectedContinent, selectedCountry, selectedCity, checkIn, checkOut]);
+
+  function handleMapCity(city: string) {
+    setSelectedCity(city === selectedCity ? null : city);
+    setSelectedCountry(null);
+    setSelectedContinent(null);
+  }
 
   const selectedContinentData = CONTINENTS.find((c) => c.id === selectedContinent);
 
@@ -82,6 +91,29 @@ export default function ExplorePage() {
               </button>
             )}
           </div>
+        </div>
+
+        {/* World map */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-slate-700 mb-3">
+            📍 Click a city on the map
+            {selectedCity && (
+              <span className="ml-2 text-sm font-normal text-indigo-600">
+                Showing deals in {selectedCity}
+                <button
+                  onClick={() => setSelectedCity(null)}
+                  className="ml-2 text-red-500 hover:text-red-600 text-xs"
+                >
+                  ✕ Clear
+                </button>
+              </span>
+            )}
+          </h2>
+          <WorldMap
+            onCitySelect={handleMapCity}
+            selectedCity={selectedCity || undefined}
+            className="w-full"
+          />
         </div>
 
         {/* Continent Selection */}
@@ -144,14 +176,16 @@ export default function ExplorePage() {
               <DealCard key={deal.hotel.hotelKey} deal={deal} />
             ))}
           </div>
-        ) : (selectedContinent || selectedCountry) ? (
+        ) : (selectedContinent || selectedCountry || selectedCity) ? (
           <div className="text-center py-12 text-zinc-500">
-            <p className="text-lg">No deals available for this selection.</p>
-            <p className="text-sm mt-2">Try selecting a different region or clearing date filters.</p>
+            <div className="text-4xl mb-3">🔍</div>
+            <p className="text-lg">No deals available right now.</p>
+            <p className="text-sm mt-2">Try a different region or clear date filters.</p>
           </div>
         ) : (
-          <div className="text-center py-12 text-zinc-500">
-            <p className="text-lg">Select a continent above to explore deals</p>
+          <div className="text-center py-12 text-zinc-400">
+            <div className="text-4xl mb-3">🗺️</div>
+            <p className="text-lg">Click a city on the map or a continent below to explore deals</p>
           </div>
         )}
       </div>
