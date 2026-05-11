@@ -46,6 +46,9 @@ import HotelBadges from '@/components/HotelBadges';
 import PriceComparisonChart from '@/components/PriceComparisonChart';
 import FloatingCTA from '@/components/FloatingCTA';
 import FlightEstimate from '@/components/FlightEstimate';
+import PriceHistory from '@/components/PriceHistory';
+import HotelQuickFacts from '@/components/HotelQuickFacts';
+import ProviderTrustScore from '@/components/ProviderTrustScore';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -375,6 +378,16 @@ export default function HotelDetailPage() {
         {/* Amenities */}
         <HotelAmenities hotelKey={hotelKey} className="mb-6" />
 
+        {/* Quick facts */}
+        {displayHotel && (
+          <HotelQuickFacts
+            hotelKey={hotelKey}
+            hotelName={displayHotel.name}
+            city={displayHotel.city}
+            className="mb-6"
+          />
+        )}
+
         {/* Loyalty banner */}
         <LoyaltyBanner className="mb-6" />
 
@@ -590,6 +603,14 @@ export default function HotelDetailPage() {
             <div className="text-5xl mb-4">📅</div>
             <p className="text-lg">Select dates above to compare live prices from 8+ providers</p>
           </div>
+        )}
+
+        {/* Price history chart */}
+        <PriceHistory hotelKey={hotelKey} className="mt-8" />
+
+        {/* Provider trust score for cheapest */}
+        {data?.cheapest && (
+          <ProviderTrustScore provider={data.cheapest.provider} className="mt-6" />
         )}
 
         {/* Price calendar heatmap */}
