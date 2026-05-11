@@ -25,6 +25,8 @@ import ReviewHighlights from '@/components/ReviewHighlights';
 import LastUpdated from '@/components/LastUpdated';
 import ComparisonMeta from '@/components/ComparisonMeta';
 import LoadingOverlay from '@/components/LoadingOverlay';
+import BookingTimeline from '@/components/BookingTimeline';
+import TripCostCalculator from '@/components/TripCostCalculator';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -459,6 +461,24 @@ export default function HotelDetailPage() {
                 checkOut={data.checkOut}
               />
             </div>
+
+            {/* Trip cost calculator */}
+            {data.cheapest && (
+              <TripCostCalculator
+                hotelPricePerNight={data.cheapest.total / nights}
+                nights={nights}
+                currency={data.currency}
+                className="mt-4"
+              />
+            )}
+
+            {/* Booking timeline */}
+            <BookingTimeline
+              checkIn={data.checkIn}
+              checkOut={data.checkOut}
+              hasCompared={true}
+              className="mt-4"
+            />
           </div>
         )}
 

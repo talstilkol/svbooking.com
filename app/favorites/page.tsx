@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useFavorites } from '@/lib/useLocalStorage';
 import RatingBadge from '@/components/RatingBadge';
+import PriceAlertsDashboard from '@/components/PriceAlertsDashboard';
 import { useState } from 'react';
 
 interface QuickPrice {
@@ -84,6 +85,8 @@ export default function FavoritesPage() {
             </div>
           )}
         </div>
+
+        <PriceAlertsDashboard className="mb-6" />
 
         {favorites.length === 0 ? (
           <div className="bg-white rounded-2xl p-16 text-center border border-slate-200">
