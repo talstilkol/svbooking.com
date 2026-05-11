@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useFavorites } from '@/lib/useLocalStorage';
+import RatingBadge from '@/components/RatingBadge';
 
 export interface CatalogHotel {
   hotelKey: string;
@@ -34,9 +35,10 @@ export default function HotelCard({ hotel }: { hotel: CatalogHotel }) {
         <Link href={`/hotel/${hotel.hotelKey}`} className="hover:text-blue-600 transition-colors">
           <h2 className="text-lg font-bold text-zinc-900 leading-snug">{hotel.name}</h2>
         </Link>
-        <p className="text-sm text-zinc-500 mt-0.5 mb-4">
+        <p className="text-sm text-zinc-500 mt-0.5 mb-2">
           📍 {hotel.city}, {hotel.country}
         </p>
+        <RatingBadge hotelKey={hotel.hotelKey} size="sm" className="mb-3" />
         <div className="mt-auto flex gap-2">
           <Link
             href={`/hotel/${hotel.hotelKey}`}

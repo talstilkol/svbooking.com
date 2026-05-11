@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { useFavorites, useRecentlyViewed } from '@/lib/useLocalStorage';
 import { useCurrency } from '@/components/CurrencySelector';
 import PriceTrend from '@/components/PriceTrend';
+import RatingBadge from '@/components/RatingBadge';
+import ProviderLogos from '@/components/ProviderLogos';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -166,6 +168,7 @@ export default function HotelDetailPage() {
                 <p className="text-white/80 mt-1 text-lg">
                   📍 {hotel.city}, {hotel.country}
                 </p>
+                <RatingBadge hotelKey={hotel.hotelKey} size="sm" className="mt-2 [&>span:first-child]:!bg-white/20 [&>span:last-child]:!text-white/70" />
               </div>
               {hydrated && (
                 <button
@@ -192,6 +195,7 @@ export default function HotelDetailPage() {
           <h2 className="text-lg font-semibold text-slate-800 mb-4">
             {searched ? 'Change dates' : 'Check availability & prices'}
           </h2>
+          <ProviderLogos className="mb-4" />
           <div className="flex flex-wrap gap-4 items-end">
             <div className="flex-1 min-w-[140px]">
               <label htmlFor="hotel-checkin" className="block text-sm font-medium text-slate-600 mb-1">
