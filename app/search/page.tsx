@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import HotelCard, { CatalogHotel } from '@/components/HotelCard';
 import QuickSearchChips from '@/components/QuickSearchChips';
 import MapView from '@/components/MapView';
+import FilterDrawer from '@/components/FilterDrawer';
 import { CardGridSkeleton } from '@/components/Skeleton';
 import { useDebounce } from '@/lib/useDebounce';
 
@@ -163,6 +164,22 @@ function SearchInner() {
 
         {/* Quick search chips */}
         <QuickSearchChips className="mb-4" />
+
+        {/* Mobile filter drawer */}
+        <FilterDrawer
+          countries={countries}
+          activeCountry={activeCountry}
+          onCountryChange={setActiveCountry}
+          sortOptions={[
+            { label: 'A → Z', value: 'name-asc' },
+            { label: 'Z → A', value: 'name-desc' },
+            { label: 'By City', value: 'city-asc' },
+          ]}
+          activeSort={sort}
+          onSortChange={(s) => setSort(s as SortOption)}
+          resultCount={filtered.length}
+          className="mb-4"
+        />
 
         {/* Country filter pills */}
         {!loading && (

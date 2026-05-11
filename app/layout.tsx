@@ -9,6 +9,7 @@ import CookieConsent from "@/components/CookieConsent";
 import RouteProgress from "@/components/RouteProgress";
 import { WebsiteJsonLd } from "@/components/JsonLd";
 import MobileBottomBar from "@/components/MobileBottomBar";
+import SocialProof from "@/components/SocialProof";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -76,6 +77,7 @@ export default function RootLayout({
         <Footer />
         <BackToTop />
         <MobileBottomBar />
+        <SocialProof />
         <CookieConsent />
       </body>
     </html>

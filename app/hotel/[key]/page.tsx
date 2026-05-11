@@ -21,6 +21,9 @@ import ProviderInfo from '@/components/ProviderInfo';
 import Breadcrumb from '@/components/Breadcrumb';
 import StickyCompareBar from '@/components/StickyCompareBar';
 import CountdownDeal from '@/components/CountdownDeal';
+import ReviewHighlights from '@/components/ReviewHighlights';
+import LastUpdated from '@/components/LastUpdated';
+import ComparisonMeta from '@/components/ComparisonMeta';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -338,6 +341,19 @@ export default function HotelDetailPage() {
           </div>
         )}
 
+        {/* Comparison meta + last updated */}
+        {!loading && data && data.rates.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <ComparisonMeta
+              providerCount={data.providerCount}
+              checkIn={data.checkIn}
+              checkOut={data.checkOut}
+              currency={data.currency}
+            />
+            <LastUpdated />
+          </div>
+        )}
+
         {/* Results */}
         {!loading && data && data.rates.length > 0 && (
           <div id="price-results" className="space-y-6">
@@ -475,6 +491,15 @@ export default function HotelDetailPage() {
         <div className="mt-8">
           <PriceTrend hotelKey={hotelKey} nights={nights || 1} currency={currency} />
         </div>
+
+        {/* Guest reviews */}
+        {displayHotel && (
+          <ReviewHighlights
+            hotelKey={hotelKey}
+            hotelName={displayHotel.name}
+            className="mt-8"
+          />
+        )}
 
         {/* Similar hotels */}
         {displayHotel && (
