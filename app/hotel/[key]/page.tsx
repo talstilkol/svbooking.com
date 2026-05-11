@@ -42,6 +42,7 @@ import LoyaltyBanner from '@/components/LoyaltyBanner';
 import { HotelOfferJsonLd } from '@/components/SchemaOrg';
 import UserReviewForm from '@/components/UserReviewForm';
 import ViewTracker from '@/components/ViewTracker';
+import HotelBadges from '@/components/HotelBadges';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -298,6 +299,9 @@ export default function HotelDetailPage() {
             ]}
           />
         )}
+
+        {/* Hotel badges */}
+        <HotelBadges hotelKey={hotelKey} className="mb-3" />
 
         {/* View tracker */}
         <ViewTracker hotelKey={hotelKey} className="mb-4" />

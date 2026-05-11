@@ -7,6 +7,7 @@ import QuickSearchChips from '@/components/QuickSearchChips';
 import MapView from '@/components/MapView';
 import FilterDrawer from '@/components/FilterDrawer';
 import RecentSearches, { addRecentSearch } from '@/components/RecentSearches';
+import SearchSuggestions from '@/components/SearchSuggestions';
 import { CardGridSkeleton } from '@/components/Skeleton';
 import { useDebounce } from '@/lib/useDebounce';
 
@@ -168,6 +169,9 @@ function SearchInner() {
 
         {/* Recent searches */}
         <RecentSearches className="mb-4" />
+
+        {/* Search suggestions */}
+        <SearchSuggestions currentCity={debouncedQuery} className="mb-4" />
 
         {/* Quick search chips */}
         <QuickSearchChips className="mb-4" />
