@@ -1,17 +1,16 @@
-import SearchAutocomplete from "@/components/SearchAutocomplete";
+import HomeHero from "@/components/home/HomeHero";
+import HomeStats from "@/components/home/HomeStats";
+import HomeHowItWorks from "@/components/home/HomeHowItWorks";
+import HomeTrending from "@/components/home/HomeTrending";
 import DestinationExplorer from "@/components/DestinationExplorer";
 import TopDeals from "@/components/TopDeals";
-import ProviderLogos from "@/components/ProviderLogos";
 import RecentlyViewed from "@/components/RecentlyViewed";
-import HowItWorks from "@/components/HowItWorks";
-import StatsBar from "@/components/StatsBar";
+import TrustBadges from "@/components/TrustBadges";
 import Testimonials from "@/components/Testimonials";
 import Newsletter from "@/components/Newsletter";
 import FAQ from "@/components/FAQ";
-import TrustBadges from "@/components/TrustBadges";
 import PopularCities from "@/components/PopularCities";
 import WhyChooseUs from "@/components/WhyChooseUs";
-import TrendingHotels from "@/components/TrendingHotels";
 import CityWeatherGrid from "@/components/CityWeatherGrid";
 import FeatureHighlight from "@/components/FeatureHighlight";
 import LazySection from "@/components/LazySection";
@@ -21,50 +20,30 @@ import { Suspense } from "react";
 export default function Home() {
   return (
     <div className="min-h-screen">
-      {/* Hero with background image */}
-      <div className="relative overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80)' }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/60 via-blue-800/40 to-sky-50" />
-        <div className="relative py-24 px-4">
-          <div className="max-w-7xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
-              Find Your Perfect Stay
-            </h1>
-            <p className="text-xl text-white/90 mb-10 drop-shadow">
-              Compare prices from Booking.com, Expedia, Hotels.com, Agoda & more
-            </p>
-            <div className="bg-white/95 backdrop-blur p-6 rounded-2xl shadow-2xl max-w-3xl mx-auto">
-              <Suspense fallback={<div className="h-14 bg-slate-100 rounded-xl animate-pulse" />}>
-                <SearchAutocomplete />
-              </Suspense>
-              <ProviderLogos className="mt-4 justify-center" />
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Animated hero with rotating cities + parallax */}
+      <Suspense fallback={<div className="min-h-[640px] bg-gradient-to-b from-blue-900 to-sky-50" />}>
+        <HomeHero />
+      </Suspense>
 
       {/* Trust badges */}
       <div className="bg-white border-b border-slate-100 py-6">
         <TrustBadges />
       </div>
 
-      {/* Stats bar */}
-      <StatsBar />
+      {/* Animated stats with counters */}
+      <Suspense fallback={null}>
+        <HomeStats />
+      </Suspense>
 
       {/* Recently Viewed */}
       <Suspense fallback={null}>
         <RecentlyViewed />
       </Suspense>
 
-      {/* Trending Hotels */}
-      <div className="max-w-7xl mx-auto px-4 pt-10">
-        <Suspense fallback={null}>
-          <TrendingHotels />
-        </Suspense>
-      </div>
+      {/* Trending Hotels — large image cards with hover */}
+      <Suspense fallback={null}>
+        <HomeTrending />
+      </Suspense>
 
       {/* Top Deals */}
       <div className="max-w-7xl mx-auto px-4 pt-10 pb-8">
@@ -73,8 +52,8 @@ export default function Home() {
         </Suspense>
       </div>
 
-      {/* How it works */}
-      <HowItWorks />
+      {/* How it works — animated step cards */}
+      <HomeHowItWorks />
 
       {/* Popular Cities */}
       <PopularCities />

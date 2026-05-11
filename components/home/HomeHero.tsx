@@ -5,8 +5,9 @@ import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import SearchAutocomplete from '@/components/SearchAutocomplete';
+import ProviderLogos from '@/components/ProviderLogos';
 
-const ROTATING_CITIES = ['Tel Aviv', 'Paris', 'Tokyo', 'New York', 'Dubai', 'Barcelona', 'Rome'];
+const ROTATING_CITIES = ['Tel Aviv', 'Paris', 'Tokyo', 'New York', 'Dubai', 'Barcelona', 'Rome', 'London'];
 
 const HERO_BG_IMAGES = [
   'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=1600&q=80',
@@ -48,7 +49,7 @@ export default function HomeHero() {
       ))}
       <motion.div
         style={{ opacity }}
-        className="absolute inset-0 bg-linear-to-b from-transparent via-zinc-50/40 to-zinc-50 dark:via-black/60 dark:to-black"
+        className="absolute inset-0 bg-gradient-to-b from-blue-900/60 via-blue-800/40 to-sky-50"
       />
 
       <div className="relative max-w-7xl mx-auto px-4 py-20 w-full">
@@ -62,13 +63,13 @@ export default function HomeHero() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 text-xs font-semibold mb-6"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur text-white text-xs font-semibold mb-6"
           >
             <Sparkles className="w-3 h-3" />
             AI-powered hotel price comparison
           </motion.div>
 
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05] text-zinc-900 dark:text-white">
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05] text-white drop-shadow-lg">
             Find the best hotel deal in{' '}
             <span className="relative inline-block">
               <motion.span
@@ -77,13 +78,13 @@ export default function HomeHero() {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -60, opacity: 0 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                className="bg-linear-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent inline-block"
+                className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent inline-block"
               >
                 {ROTATING_CITIES[cityIdx]}
               </motion.span>
             </span>
           </h1>
-          <p className="mt-6 text-lg md:text-xl text-zinc-700 dark:text-zinc-300 max-w-2xl">
+          <p className="mt-6 text-lg md:text-xl text-white/90 max-w-2xl drop-shadow">
             Compare live prices from Booking.com, Expedia, Hotels.com, Agoda &amp; more — let our AI agent pick the
             winner.
           </p>
@@ -92,9 +93,10 @@ export default function HomeHero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="mt-10 max-w-2xl"
+            className="mt-10 max-w-2xl bg-white/95 backdrop-blur p-5 rounded-2xl shadow-2xl"
           >
             <SearchAutocomplete />
+            <ProviderLogos className="mt-3 justify-center" />
           </motion.div>
 
           <motion.div
@@ -103,7 +105,7 @@ export default function HomeHero() {
             transition={{ delay: 0.6 }}
             className="mt-5 flex flex-wrap gap-2"
           >
-            <span className="text-sm text-zinc-600 dark:text-zinc-400 mr-1">Popular:</span>
+            <span className="text-sm text-white/80 mr-1">Popular:</span>
             {POPULAR_CHIPS.map((c, i) => (
               <motion.button
                 key={c}
@@ -112,7 +114,7 @@ export default function HomeHero() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.7 + i * 0.05 }}
                 whileHover={{ scale: 1.05 }}
-                className="px-3 py-1 rounded-full text-xs font-medium bg-white/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-indigo-400"
+                className="px-3 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur border border-white/30 text-white hover:bg-white/30 transition"
               >
                 {c}
               </motion.button>
