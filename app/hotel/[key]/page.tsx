@@ -11,6 +11,8 @@ import RatingBadge from '@/components/RatingBadge';
 import ProviderLogos from '@/components/ProviderLogos';
 import PriceAlert from '@/components/PriceAlert';
 import CheaperDates from '@/components/CheaperDates';
+import SimilarHotels from '@/components/SimilarHotels';
+import Breadcrumb from '@/components/Breadcrumb';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -215,6 +217,18 @@ export default function HotelDetailPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        {displayHotel && (
+          <Breadcrumb
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'Search', href: '/search' },
+              { label: displayHotel.city, href: `/search?city=${encodeURIComponent(displayHotel.city)}` },
+              { label: displayHotel.name },
+            ]}
+          />
+        )}
+
         {/* Date picker */}
         <form
           onSubmit={handleCompare}
@@ -410,6 +424,15 @@ export default function HotelDetailPage() {
         <div className="mt-8">
           <PriceTrend hotelKey={hotelKey} nights={nights || 1} currency={currency} />
         </div>
+
+        {/* Similar hotels */}
+        {displayHotel && (
+          <SimilarHotels
+            currentHotelKey={hotelKey}
+            city={displayHotel.city}
+            country={displayHotel.country}
+          />
+        )}
       </div>
     </div>
   );

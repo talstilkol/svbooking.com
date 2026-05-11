@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ScrollToTop from "@/components/ScrollToTop";
 import { WebsiteJsonLd } from "@/components/JsonLd";
 
 const geistSans = Geist({
@@ -49,6 +50,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-gradient-to-b from-sky-50 via-white to-amber-50/30">
         <WebsiteJsonLd />
+        <ScrollToTop />
         <Navbar />
         <main className="pt-16 flex-1">{children}</main>
         <Footer />
