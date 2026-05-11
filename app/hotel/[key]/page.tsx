@@ -19,6 +19,8 @@ import PriceGuarantee from '@/components/PriceGuarantee';
 import DateSummary from '@/components/DateSummary';
 import ProviderInfo from '@/components/ProviderInfo';
 import Breadcrumb from '@/components/Breadcrumb';
+import StickyCompareBar from '@/components/StickyCompareBar';
+import CountdownDeal from '@/components/CountdownDeal';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -163,6 +165,18 @@ export default function HotelDetailPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Sticky compare bar */}
+      {displayHotel && data?.cheapest && (
+        <StickyCompareBar
+          hotelName={displayHotel.name}
+          cheapestProvider={data.cheapest.provider}
+          cheapestPrice={data.cheapest.total}
+          currency={data.currency}
+          nights={nights}
+          visible={searched}
+        />
+      )}
+
       {/* Hero */}
       <div className="relative h-72 md:h-96 bg-zinc-900 overflow-hidden">
         {displayHotel ? (
@@ -316,12 +330,17 @@ export default function HotelDetailPage() {
           </div>
         )}
 
-        {/* Date summary */}
-        {data && <DateSummary checkIn={data.checkIn} checkOut={data.checkOut} className="mb-4" />}
+        {/* Date summary + countdown */}
+        {data && (
+          <div className="space-y-3 mb-4">
+            <DateSummary checkIn={data.checkIn} checkOut={data.checkOut} />
+            <CountdownDeal checkIn={data.checkIn} />
+          </div>
+        )}
 
         {/* Results */}
         {!loading && data && data.rates.length > 0 && (
-          <div className="space-y-6">
+          <div id="price-results" className="space-y-6">
             {/* Summary banner */}
             {data.savingsPct > 0 && (
               <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">

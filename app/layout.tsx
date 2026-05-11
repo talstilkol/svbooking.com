@@ -8,6 +8,7 @@ import BackToTop from "@/components/BackToTop";
 import CookieConsent from "@/components/CookieConsent";
 import RouteProgress from "@/components/RouteProgress";
 import { WebsiteJsonLd } from "@/components/JsonLd";
+import MobileBottomBar from "@/components/MobileBottomBar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -71,9 +72,10 @@ export default function RootLayout({
         <RouteProgress />
         <ScrollToTop />
         <Navbar />
-        <main id="main-content" className="pt-16 flex-1">{children}</main>
+        <main id="main-content" className="pt-16 flex-1 pb-14 md:pb-0">{children}</main>
         <Footer />
         <BackToTop />
+        <MobileBottomBar />
         <CookieConsent />
       </body>
     </html>

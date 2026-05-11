@@ -4,10 +4,12 @@ import { Suspense, useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import HotelCard, { CatalogHotel } from '@/components/HotelCard';
 import QuickSearchChips from '@/components/QuickSearchChips';
+import MapView from '@/components/MapView';
 import { CardGridSkeleton } from '@/components/Skeleton';
 import { useDebounce } from '@/lib/useDebounce';
 
 type SortOption = 'name-asc' | 'name-desc' | 'city-asc';
+type ViewMode = 'grid' | 'map';
 
 function SearchInner() {
   const router = useRouter();
@@ -22,6 +24,7 @@ function SearchInner() {
   const [sort, setSort] = useState<SortOption>('name-asc');
   const [activeCountry, setActiveCountry] = useState('');
   const [page, setPage] = useState(1);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const PAGE_SIZE = 18;
 
   const debouncedQuery = useDebounce(query, 200);
@@ -124,6 +127,29 @@ function SearchInner() {
             <option value="city-asc">Sort: City</option>
           </select>
 
+          <div className="flex items-center border border-zinc-300 rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`px-3 py-2 text-sm font-medium transition ${
+                viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'
+              }`}
+              aria-label="Grid view"
+            >
+              ▦
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('map')}
+              className={`px-3 py-2 text-sm font-medium transition ${
+                viewMode === 'map' ? 'bg-blue-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'
+              }`}
+              aria-label="Map view"
+            >
+              🗺
+            </button>
+          </div>
+
           <button type="submit" className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
             Search
           </button>
@@ -177,6 +203,12 @@ function SearchInner() {
             <p className="text-lg font-medium">No hotels found for &quot;{query}&quot;</p>
             <p className="text-sm mt-2">Try: {cities.slice(0, 5).join(', ')}</p>
           </div>
+        ) : viewMode === 'map' ? (
+          <MapView
+            hotels={filtered}
+            selectedCity={activeCountry ? undefined : query || undefined}
+            onCitySelect={(city) => setQuery(city)}
+          />
         ) : (
           <>
             <p className="text-sm text-zinc-500 mb-4">
