@@ -184,9 +184,17 @@ function CompareInner() {
         <h1 className="text-4xl font-bold text-zinc-900 mb-2">
           Hotel Price Comparison
         </h1>
-        <p className="text-slate-600 mb-6">
-          Real-time prices from Booking.com, Expedia, Hotels.com, Agoda, Vio & more — powered by Xotelo (free, no auth)
-        </p>
+        <div className="flex flex-wrap items-center gap-4 mb-6">
+          <p className="text-slate-600 flex-1">
+            Real-time prices from Booking.com, Expedia, Hotels.com, Agoda, Vio & more
+          </p>
+          <Link
+            href="/compare-hotels"
+            className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 text-sm font-medium transition shrink-0"
+          >
+            &#9878;&#65039; Side-by-side comparison
+          </Link>
+        </div>
 
         <div className="bg-white rounded-lg p-6 shadow-md border border-slate-200 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

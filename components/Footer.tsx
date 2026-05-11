@@ -7,6 +7,7 @@ export default function Footer() {
     Explore: [
       { href: '/search', label: 'Browse Hotels' },
       { href: '/compare', label: 'Compare Prices' },
+      { href: '/compare-hotels', label: 'Side-by-Side Compare' },
       { href: '/explore', label: 'Explore Destinations' },
     ],
     Tools: [
