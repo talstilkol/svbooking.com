@@ -6,6 +6,7 @@ import HotelCard, { CatalogHotel } from '@/components/HotelCard';
 import QuickSearchChips from '@/components/QuickSearchChips';
 import MapView from '@/components/MapView';
 import FilterDrawer from '@/components/FilterDrawer';
+import RecentSearches, { addRecentSearch } from '@/components/RecentSearches';
 import { CardGridSkeleton } from '@/components/Skeleton';
 import { useDebounce } from '@/lib/useDebounce';
 
@@ -85,7 +86,10 @@ function SearchInner() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (query.trim()) params.set('city', query.trim());
+    if (query.trim()) {
+      params.set('city', query.trim());
+      addRecentSearch(query.trim(), filtered.length);
+    }
     router.push(`/search${params.toString() ? `?${params}` : ''}`);
   };
 
@@ -161,6 +165,9 @@ function SearchInner() {
             </button>
           )}
         </form>
+
+        {/* Recent searches */}
+        <RecentSearches className="mb-4" />
 
         {/* Quick search chips */}
         <QuickSearchChips className="mb-4" />
