@@ -6,6 +6,8 @@ import RecentlyViewed from "@/components/RecentlyViewed";
 import HowItWorks from "@/components/HowItWorks";
 import StatsBar from "@/components/StatsBar";
 import Testimonials from "@/components/Testimonials";
+import Newsletter from "@/components/Newsletter";
+import FAQ from "@/components/FAQ";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -69,6 +71,9 @@ export default function Home() {
       {/* Testimonials */}
       <Testimonials />
 
+      {/* Newsletter */}
+      <Newsletter />
+
       {/* Features */}
       <div className="bg-white border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-4 py-16">
@@ -91,6 +96,9 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* FAQ */}
+      <FAQ />
 
       {/* Quick Links */}
       <div className="max-w-7xl mx-auto px-4 py-12 text-center">

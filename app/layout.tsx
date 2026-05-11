@@ -4,6 +4,9 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
+import BackToTop from "@/components/BackToTop";
+import CookieConsent from "@/components/CookieConsent";
+import RouteProgress from "@/components/RouteProgress";
 import { WebsiteJsonLd } from "@/components/JsonLd";
 
 const geistSans = Geist({
@@ -50,10 +53,13 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-gradient-to-b from-sky-50 via-white to-amber-50/30">
         <WebsiteJsonLd />
+        <RouteProgress />
         <ScrollToTop />
         <Navbar />
         <main className="pt-16 flex-1">{children}</main>
         <Footer />
+        <BackToTop />
+        <CookieConsent />
       </body>
     </html>
   );
