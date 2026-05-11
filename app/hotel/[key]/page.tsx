@@ -35,6 +35,10 @@ import WeatherWidget from '@/components/WeatherWidget';
 import ShareModal from '@/components/ShareModal';
 import PrintButton from '@/components/PrintButton';
 import DeepLink from '@/components/DeepLink';
+import RoomTypeSelector from '@/components/RoomTypeSelector';
+import HotelPolicies from '@/components/HotelPolicies';
+import PriceBreakdown from '@/components/PriceBreakdown';
+import LoyaltyBanner from '@/components/LoyaltyBanner';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -331,6 +335,9 @@ export default function HotelDetailPage() {
         {/* Amenities */}
         <HotelAmenities hotelKey={hotelKey} className="mb-6" />
 
+        {/* Loyalty banner */}
+        <LoyaltyBanner className="mb-6" />
+
         {/* Price Guarantee */}
         <PriceGuarantee className="mb-6" />
 
@@ -463,6 +470,26 @@ export default function HotelDetailPage() {
               />
             </div>
 
+            {/* Price breakdown */}
+            {data.cheapest && (
+              <PriceBreakdown
+                pricePerNight={data.cheapest.total / nights}
+                nights={nights}
+                provider={data.cheapest.provider}
+                currency={data.currency === 'USD' ? '$' : data.currency + ' '}
+                className="mt-4"
+              />
+            )}
+
+            {/* Room type selector */}
+            {data.cheapest && (
+              <RoomTypeSelector
+                basePrice={Math.round(data.cheapest.total / nights)}
+                currency={data.currency === 'USD' ? '$' : data.currency + ' '}
+                className="mt-6"
+              />
+            )}
+
             {/* Price alert */}
             {data.cheapest && (
               <div className="mt-4">
@@ -554,6 +581,9 @@ export default function HotelDetailPage() {
             className="mt-8"
           />
         )}
+
+        {/* Hotel policies */}
+        <HotelPolicies hotelKey={hotelKey} className="mt-8" />
 
         {/* Travel checklist */}
         <TravelChecklist hotelKey={hotelKey} className="mt-8" />

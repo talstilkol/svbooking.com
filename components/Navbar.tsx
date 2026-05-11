@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import CurrencySelector from '@/components/CurrencySelector';
+import NotificationBell from '@/components/NotificationBell';
 
 const NAV_LINKS = [
   { href: '/search', label: 'Search' },
@@ -65,8 +66,9 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* Currency selector (desktop) */}
-        <div className="hidden md:block">
+        {/* Currency selector + notifications (desktop) */}
+        <div className="hidden md:flex items-center gap-2">
+          <NotificationBell />
           <CurrencySelector />
         </div>
 
