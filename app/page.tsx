@@ -1,4 +1,4 @@
-import SearchBar from "@/components/SearchBar";
+import SearchAutocomplete from "@/components/SearchAutocomplete";
 import DestinationExplorer from "@/components/DestinationExplorer";
 import TopDeals from "@/components/TopDeals";
 import Link from "next/link";
@@ -23,8 +23,8 @@ export default function Home() {
               Compare prices from Booking.com, Expedia, Hotels.com, Agoda & more
             </p>
             <div className="bg-white/95 backdrop-blur p-6 rounded-2xl shadow-2xl max-w-3xl mx-auto">
-              <Suspense fallback={<div className="h-12" />}>
-                <SearchBar />
+              <Suspense fallback={<div className="h-14 bg-slate-100 rounded-xl animate-pulse" />}>
+                <SearchAutocomplete />
               </Suspense>
             </div>
           </div>

@@ -20,8 +20,9 @@ export const CONTINENTS: Continent[] = [
     nameHe: 'המזרח התיכון',
     emoji: '🏜️',
     countries: [
-      { code: 'IL', name: 'Israel', nameHe: 'ישראל', cities: ['Tel Aviv', 'Jerusalem'] },
-      { code: 'AE', name: 'UAE', nameHe: 'איחוד האמירויות', cities: ['Dubai'] },
+      { code: 'IL', name: 'Israel',  nameHe: 'ישראל',               cities: ['Tel Aviv', 'Jerusalem'] },
+      { code: 'AE', name: 'UAE',     nameHe: 'איחוד האמירויות',      cities: ['Dubai'] },
+      { code: 'TR', name: 'Turkey',  nameHe: 'טורקיה',               cities: ['Istanbul'] },
     ],
   },
   {
@@ -30,8 +31,10 @@ export const CONTINENTS: Continent[] = [
     nameHe: 'אסיה',
     emoji: '🏯',
     countries: [
-      { code: 'TH', name: 'Thailand', nameHe: 'תאילנד', cities: ['Phuket'] },
-      { code: 'JP', name: 'Japan', nameHe: 'יפן', cities: ['Tokyo'] },
+      { code: 'TH', name: 'Thailand',  nameHe: 'תאילנד',    cities: ['Bangkok', 'Phuket'] },
+      { code: 'JP', name: 'Japan',     nameHe: 'יפן',       cities: ['Tokyo'] },
+      { code: 'SG', name: 'Singapore', nameHe: 'סינגפור',   cities: ['Singapore'] },
+      { code: 'ID', name: 'Indonesia', nameHe: 'אינדונזיה', cities: ['Bali'] },
     ],
   },
   {
@@ -40,10 +43,13 @@ export const CONTINENTS: Continent[] = [
     nameHe: 'אירופה',
     emoji: '🏰',
     countries: [
-      { code: 'FR', name: 'France', nameHe: 'צרפת', cities: ['Paris'] },
-      { code: 'GB', name: 'UK', nameHe: 'בריטניה', cities: ['London'] },
-      { code: 'IT', name: 'Italy', nameHe: 'איטליה', cities: ['Rome'] },
-      { code: 'ES', name: 'Spain', nameHe: 'ספרד', cities: ['Barcelona'] },
+      { code: 'FR', name: 'France',         nameHe: 'צרפת',        cities: ['Paris'] },
+      { code: 'GB', name: 'UK',             nameHe: 'בריטניה',     cities: ['London'] },
+      { code: 'IT', name: 'Italy',          nameHe: 'איטליה',      cities: ['Rome'] },
+      { code: 'ES', name: 'Spain',          nameHe: 'ספרד',        cities: ['Barcelona'] },
+      { code: 'NL', name: 'Netherlands',    nameHe: 'הולנד',       cities: ['Amsterdam'] },
+      { code: 'CZ', name: 'Czech Republic', nameHe: 'צ׳כיה',       cities: ['Prague'] },
+      { code: 'AT', name: 'Austria',        nameHe: 'אוסטריה',     cities: ['Vienna'] },
     ],
   },
   {
@@ -52,7 +58,16 @@ export const CONTINENTS: Continent[] = [
     nameHe: 'אמריקה',
     emoji: '🗽',
     countries: [
-      { code: 'US', name: 'USA', nameHe: 'ארה"ב', cities: ['New York'] },
+      { code: 'US', name: 'USA', nameHe: 'ארה"ב', cities: ['New York', 'Miami', 'Las Vegas'] },
+    ],
+  },
+  {
+    id: 'oceania',
+    name: 'Oceania',
+    nameHe: 'אוקיאניה',
+    emoji: '🦘',
+    countries: [
+      { code: 'AU', name: 'Australia', nameHe: 'אוסטרליה', cities: ['Sydney'] },
     ],
   },
 ];

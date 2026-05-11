@@ -1,25 +1,27 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import HotelCard, { CatalogHotel } from '@/components/HotelCard';
 import { CardGridSkeleton } from '@/components/Skeleton';
 import { useDebounce } from '@/lib/useDebounce';
 
+type SortOption = 'name-asc' | 'name-desc' | 'city-asc';
+
 function SearchInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const inputRef = useRef<HTMLInputElement>(null);
   const initialCity = searchParams.get('city') || '';
-  const [city, setCity] = useState(initialCity);
+
+  const [query, setQuery] = useState(initialCity);
   const [allHotels, setAllHotels] = useState<CatalogHotel[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [sort, setSort] = useState<SortOption>('name-asc');
+  const [activeCountry, setActiveCountry] = useState('');
 
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+  const debouncedQuery = useDebounce(query, 200);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -28,7 +30,7 @@ function SearchInner() {
         setLoading(true);
         const res = await fetch('/api/compare', { signal: controller.signal });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to load catalog');
+        if (!res.ok) throw new Error(data.error || 'Failed to load');
         setAllHotels(data.hotels || []);
         setCities(data.cities || []);
       } catch (err) {
@@ -41,50 +43,115 @@ function SearchInner() {
     return () => controller.abort();
   }, []);
 
-  const debouncedCity = useDebounce(city, 200);
+  // Derived countries from hotels
+  const countries = useMemo(
+    () => Array.from(new Set(allHotels.map((h) => h.country))).sort(),
+    [allHotels]
+  );
 
-  const filtered = debouncedCity
-    ? allHotels.filter((h) => h.city.toLowerCase().includes(debouncedCity.toLowerCase()))
-    : allHotels;
+  const filtered = useMemo(() => {
+    let list = allHotels;
+    if (debouncedQuery.trim()) {
+      const q = debouncedQuery.toLowerCase();
+      list = list.filter(
+        (h) =>
+          h.name.toLowerCase().includes(q) ||
+          h.city.toLowerCase().includes(q) ||
+          h.country.toLowerCase().includes(q)
+      );
+    }
+    if (activeCountry) {
+      list = list.filter((h) => h.country === activeCountry);
+    }
+    return [...list].sort((a, b) => {
+      if (sort === 'name-asc') return a.name.localeCompare(b.name);
+      if (sort === 'name-desc') return b.name.localeCompare(a.name);
+      if (sort === 'city-asc') return a.city.localeCompare(b.city);
+      return 0;
+    });
+  }, [allHotels, debouncedQuery, activeCountry, sort]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (city.trim()) params.set('city', city.trim());
-    router.push(`/search${params.toString() ? `?${params.toString()}` : ''}`);
+    if (query.trim()) params.set('city', query.trim());
+    router.push(`/search${params.toString() ? `?${params}` : ''}`);
   };
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-zinc-900 mb-2">Find a Hotel</h1>
-        <p className="text-zinc-600 mb-6">
-          Real hotels with live prices from Booking.com, Expedia, Hotels.com, Agoda &amp; more
+        <h1 className="text-3xl font-bold text-zinc-900 mb-1">Find a Hotel</h1>
+        <p className="text-zinc-500 mb-6">
+          {allHotels.length} hotels across {cities.length} cities — compare live prices from 8+ providers
         </p>
 
-        <form onSubmit={handleSubmit} className="bg-white p-4 rounded-lg shadow-md border border-zinc-200 mb-6 flex gap-3 flex-wrap">
-          <input
-            ref={inputRef}
-            list="cities-list"
-            type="text"
-            aria-label="Search by city"
-            placeholder="City (e.g. Tel Aviv, Paris, NYC)"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            className="flex-1 min-w-[240px] px-4 py-2 border border-zinc-300 rounded-lg bg-white text-zinc-900"
-          />
-          <datalist id="cities-list">
-            {cities.map((c) => <option key={c} value={c} />)}
-          </datalist>
-          <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        {/* Search + Sort bar */}
+        <form onSubmit={handleSearch} className="bg-white p-4 rounded-xl shadow-sm border border-zinc-200 mb-4 flex gap-3 flex-wrap items-center">
+          <div className="flex-1 min-w-[220px] relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              list="cities-list"
+              type="text"
+              aria-label="Search hotels or cities"
+              placeholder="Hotel name, city, or country..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-zinc-300 rounded-lg bg-white text-zinc-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            />
+            <datalist id="cities-list">
+              {cities.map((c) => <option key={c} value={c} />)}
+            </datalist>
+          </div>
+
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortOption)}
+            aria-label="Sort hotels"
+            className="px-3 py-2 border border-zinc-300 rounded-lg bg-white text-zinc-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            <option value="name-asc">Sort: A → Z</option>
+            <option value="name-desc">Sort: Z → A</option>
+            <option value="city-asc">Sort: City</option>
+          </select>
+
+          <button type="submit" className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
             Search
           </button>
-          {city && (
-            <button type="button" onClick={() => setCity('')} className="px-4 py-2 bg-zinc-200 rounded-lg">
+          {(query || activeCountry) && (
+            <button type="button" onClick={() => { setQuery(''); setActiveCountry(''); }}
+              className="px-4 py-2 bg-zinc-100 text-zinc-600 rounded-lg hover:bg-zinc-200 text-sm">
               Clear
             </button>
           )}
         </form>
+
+        {/* Country filter pills */}
+        {!loading && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button
+              onClick={() => setActiveCountry('')}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                !activeCountry ? 'bg-blue-600 text-white' : 'bg-white text-zinc-600 border border-zinc-200 hover:border-blue-300'
+              }`}
+            >
+              All countries
+            </button>
+            {countries.map((c) => (
+              <button
+                key={c}
+                onClick={() => setActiveCountry(c === activeCountry ? '' : c)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  activeCountry === c ? 'bg-blue-600 text-white' : 'bg-white text-zinc-600 border border-zinc-200 hover:border-blue-300'
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
@@ -93,15 +160,18 @@ function SearchInner() {
         )}
 
         {loading ? (
-          <CardGridSkeleton count={6} />
+          <CardGridSkeleton count={9} />
         ) : filtered.length === 0 ? (
-          <div className="text-center text-zinc-600 py-12">
-            No hotels found in &quot;{city}&quot;. Try: {cities.slice(0, 5).join(', ')}
+          <div className="text-center text-zinc-500 py-16">
+            <div className="text-5xl mb-4">🔍</div>
+            <p className="text-lg font-medium">No hotels found for &quot;{query}&quot;</p>
+            <p className="text-sm mt-2">Try: {cities.slice(0, 5).join(', ')}</p>
           </div>
         ) : (
           <>
             <p className="text-sm text-zinc-500 mb-4">
-              Showing {filtered.length} of {allHotels.length} hotels
+              Showing <strong>{filtered.length}</strong> of {allHotels.length} hotels
+              {activeCountry && ` in ${activeCountry}`}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered.map((hotel) => (
@@ -117,7 +187,7 @@ function SearchInner() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen p-8 text-center text-zinc-600">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen p-8 text-center text-zinc-500">Loading...</div>}>
       <SearchInner />
     </Suspense>
   );

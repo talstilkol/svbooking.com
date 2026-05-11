@@ -8,6 +8,7 @@ const PUBLIC_PATHS = [
   "/book",
   "/explore",
   "/agents",
+  "/api/search",
   "/api/listings",
   "/api/bookings",
   "/api/compare",
