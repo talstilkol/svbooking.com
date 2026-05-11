@@ -9,10 +9,13 @@ import FilterDrawer from '@/components/FilterDrawer';
 import RecentSearches, { addRecentSearch } from '@/components/RecentSearches';
 import SearchSuggestions from '@/components/SearchSuggestions';
 import { CardGridSkeleton } from '@/components/Skeleton';
+import SearchFilters, { type FilterOptions } from '@/components/SearchFilters';
 import { useDebounce } from '@/lib/useDebounce';
 
 type SortOption = 'name-asc' | 'name-desc' | 'city-asc';
 type ViewMode = 'grid' | 'map';
+
+const DEFAULT_FILTERS: FilterOptions = { stars: [], priceRange: [0, 1000], amenities: [], sort: '' };
 
 function SearchInner() {
   const router = useRouter();
@@ -28,6 +31,8 @@ function SearchInner() {
   const [activeCountry, setActiveCountry] = useState('');
   const [page, setPage] = useState(1);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [filters, setFilters] = useState<FilterOptions>(DEFAULT_FILTERS);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const PAGE_SIZE = 18;
 
   const debouncedQuery = useDebounce(query, 200);
@@ -166,6 +171,16 @@ function SearchInner() {
             </button>
           )}
         </form>
+
+        {/* Advanced filters */}
+        <SearchFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          onClear={() => setFilters(DEFAULT_FILTERS)}
+          isOpen={filtersOpen}
+          onToggle={() => setFiltersOpen(!filtersOpen)}
+          resultCount={filtered.length}
+        />
 
         {/* Recent searches */}
         <RecentSearches className="mb-4" />
