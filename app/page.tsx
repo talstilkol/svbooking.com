@@ -3,6 +3,9 @@ import DestinationExplorer from "@/components/DestinationExplorer";
 import TopDeals from "@/components/TopDeals";
 import ProviderLogos from "@/components/ProviderLogos";
 import RecentlyViewed from "@/components/RecentlyViewed";
+import HowItWorks from "@/components/HowItWorks";
+import StatsBar from "@/components/StatsBar";
+import Testimonials from "@/components/Testimonials";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -34,22 +37,37 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Stats bar */}
+      <StatsBar />
+
       {/* Recently Viewed */}
       <Suspense fallback={null}>
         <RecentlyViewed />
       </Suspense>
 
       {/* Top Deals */}
-      <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
+      <div className="max-w-7xl mx-auto px-4 pt-10 pb-8">
         <Suspense fallback={null}>
           <TopDeals />
         </Suspense>
       </div>
 
+      {/* How it works */}
+      <HowItWorks />
+
       {/* Destination Explorer */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">
+          Explore by destination
+        </h2>
+        <p className="text-center text-slate-500 mb-8">
+          Select a region to see the best deals
+        </p>
         <DestinationExplorer />
       </div>
+
+      {/* Testimonials */}
+      <Testimonials />
 
       {/* Features */}
       <div className="bg-white border-t border-slate-100">
@@ -76,6 +94,7 @@ export default function Home() {
 
       {/* Quick Links */}
       <div className="max-w-7xl mx-auto px-4 py-12 text-center">
+        <h2 className="text-xl font-bold text-slate-800 mb-6">Get started</h2>
         <div className="flex justify-center gap-3 flex-wrap">
           <Link href="/search" className="px-6 py-3 bg-white text-slate-700 rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all font-medium">
             Browse Hotels
