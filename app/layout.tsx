@@ -12,6 +12,9 @@ import MobileBottomBar from "@/components/MobileBottomBar";
 import SocialProof from "@/components/SocialProof";
 import AccessibilityPanel from "@/components/AccessibilityPanel";
 import { ToastProvider } from "@/components/Toast";
+import { OrganizationJsonLd, SearchActionJsonLd } from "@/components/SchemaOrg";
+import OfflineBanner from "@/components/OfflineBanner";
+import PerformanceMonitor from "@/components/PerformanceMonitor";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -73,7 +76,10 @@ export default function RootLayout({
           Skip to main content
         </a>
         <WebsiteJsonLd />
+        <OrganizationJsonLd />
+        <SearchActionJsonLd searchUrl="https://svbooking.com" />
         <RouteProgress />
+        <OfflineBanner />
         <ScrollToTop />
         <Navbar />
         <main id="main-content" className="pt-16 flex-1 pb-14 md:pb-0">{children}</main>
@@ -83,6 +89,7 @@ export default function RootLayout({
         <SocialProof />
         <AccessibilityPanel />
         <CookieConsent />
+        <PerformanceMonitor />
         </ToastProvider>
       </body>
     </html>

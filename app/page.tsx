@@ -14,6 +14,7 @@ import WhyChooseUs from "@/components/WhyChooseUs";
 import TrendingHotels from "@/components/TrendingHotels";
 import CityWeatherGrid from "@/components/CityWeatherGrid";
 import FeatureHighlight from "@/components/FeatureHighlight";
+import LazySection from "@/components/LazySection";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -84,32 +85,44 @@ export default function Home() {
       </div>
 
       {/* Destination Explorer */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">
-          Explore by destination
-        </h2>
-        <p className="text-center text-slate-500 mb-8">
-          Select a region to see the best deals
-        </p>
-        <DestinationExplorer />
-      </div>
+      <LazySection>
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">
+            Explore by destination
+          </h2>
+          <p className="text-center text-slate-500 mb-8">
+            Select a region to see the best deals
+          </p>
+          <DestinationExplorer />
+        </div>
+      </LazySection>
 
       {/* Testimonials */}
-      <Testimonials />
+      <LazySection>
+        <Testimonials />
+      </LazySection>
 
       {/* Newsletter */}
-      <Newsletter />
+      <LazySection>
+        <Newsletter />
+      </LazySection>
 
       {/* Why Choose Us */}
-      <WhyChooseUs />
+      <LazySection>
+        <WhyChooseUs />
+      </LazySection>
 
       {/* Feature Highlight */}
-      <div className="max-w-7xl mx-auto px-4 py-10">
-        <FeatureHighlight />
-      </div>
+      <LazySection>
+        <div className="max-w-7xl mx-auto px-4 py-10">
+          <FeatureHighlight />
+        </div>
+      </LazySection>
 
       {/* FAQ */}
-      <FAQ />
+      <LazySection>
+        <FAQ />
+      </LazySection>
 
       {/* Quick Links */}
       <div className="max-w-7xl mx-auto px-4 py-12 text-center">
