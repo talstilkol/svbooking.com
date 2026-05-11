@@ -15,12 +15,12 @@ export default function Footer() {
       { href: '/agents', label: 'AI Agents' },
     ],
     Top: [
-      { href: '/search?city=Paris', label: 'Hotels in Paris' },
-      { href: '/search?city=London', label: 'Hotels in London' },
-      { href: '/search?city=Tokyo', label: 'Hotels in Tokyo' },
-      { href: '/search?city=Dubai', label: 'Hotels in Dubai' },
-      { href: '/search?city=New York', label: 'Hotels in New York' },
-      { href: '/search?city=Bangkok', label: 'Hotels in Bangkok' },
+      { href: '/city/Paris', label: 'Hotels in Paris' },
+      { href: '/city/London', label: 'Hotels in London' },
+      { href: '/city/Tokyo', label: 'Hotels in Tokyo' },
+      { href: '/city/Dubai', label: 'Hotels in Dubai' },
+      { href: `/city/${encodeURIComponent('New York')}`, label: 'Hotels in New York' },
+      { href: '/city/Bangkok', label: 'Hotels in Bangkok' },
     ],
   };
 

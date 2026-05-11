@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { HOTELS } from '@/lib/hotels-catalog';
+import { HOTELS, listCities } from '@/lib/hotels-catalog';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com';
@@ -23,5 +23,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.85,
   }));
 
-  return [...staticPages, ...hotelPages];
+  // City landing pages
+  const cityPages: MetadataRoute.Sitemap = listCities().map((city) => ({
+    url: `${baseUrl}/city/${encodeURIComponent(city)}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }));
+
+  return [...staticPages, ...cityPages, ...hotelPages];
 }
