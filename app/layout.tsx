@@ -17,6 +17,7 @@ import OfflineBanner from "@/components/OfflineBanner";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
 import CompareWidget from "@/components/CompareWidget";
 import PriceDropAlert from "@/components/PriceDropAlert";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -84,7 +85,9 @@ export default function RootLayout({
         <OfflineBanner />
         <ScrollToTop />
         <Navbar />
+        <ErrorBoundary fallback={<div className="flex-1 flex items-center justify-center p-8 text-center"><div><p className="text-4xl mb-4">Something went wrong</p><a href="/" className="text-blue-600 underline">Go home</a></div></div>}>
         <main id="main-content" className="pt-16 flex-1 pb-14 md:pb-0">{children}</main>
+        </ErrorBoundary>
         <Footer />
         <BackToTop />
         <MobileBottomBar />
