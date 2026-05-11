@@ -30,7 +30,10 @@ export default function Navbar() {
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-1">
           {NAV_LINKS.map((link) => {
-            const active = pathname === link.href;
+            const active =
+              link.href === '/'
+                ? pathname === '/'
+                : pathname === link.href || pathname.startsWith(link.href + '/');
             return (
               <Link
                 key={link.href}
@@ -71,8 +74,14 @@ export default function Navbar() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden bg-white border-t border-slate-200 shadow-lg">
+          <div className="px-6 py-3 border-b border-slate-100">
+            <CurrencySelector className="w-full" />
+          </div>
           {NAV_LINKS.map((link) => {
-            const active = pathname === link.href;
+            const active =
+              link.href === '/'
+                ? pathname === '/'
+                : pathname === link.href || pathname.startsWith(link.href + '/');
             return (
               <Link
                 key={link.href}

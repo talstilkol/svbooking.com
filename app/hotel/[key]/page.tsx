@@ -10,6 +10,7 @@ import PriceTrend from '@/components/PriceTrend';
 import RatingBadge from '@/components/RatingBadge';
 import ProviderLogos from '@/components/ProviderLogos';
 import PriceAlert from '@/components/PriceAlert';
+import CheaperDates from '@/components/CheaperDates';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -79,6 +80,7 @@ export default function HotelDetailPage() {
 
   const [checkIn, setCheckIn] = useState(today());
   const [checkOut, setCheckOut] = useState(tomorrow());
+  const [hotel, setHotel] = useState<Hotel | null>(null);
   const [data, setData] = useState<Comparison | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -88,13 +90,14 @@ export default function HotelDetailPage() {
   const { addRecentlyViewed } = useRecentlyViewed();
   const { currency } = useCurrency();
 
-  // Fetch hotel info from catalog to track recently viewed
+  // Fetch hotel info from catalog immediately (for hero + recently viewed)
   useEffect(() => {
     if (!hotelKey) return;
     fetch(`/api/compare?hotelKey=${hotelKey}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.hotel) {
+          setHotel(d.hotel);
           addRecentlyViewed({
             hotelKey: d.hotel.hotelKey,
             name: d.hotel.name,
@@ -128,21 +131,36 @@ export default function HotelDetailPage() {
     }
   }, [hotelKey, checkIn, checkOut]);
 
+  // Update hotel from comparison data too
+  const displayHotel = data?.hotel || hotel;
   const nights = data
     ? Math.round((new Date(data.checkOut).getTime() - new Date(data.checkIn).getTime()) / 86400000)
     : 0;
 
-  const hotel = data?.hotel;
-  const fav = hydrated && hotel && isFavorite(hotel.hotelKey);
+  const fav = hydrated && displayHotel && isFavorite(displayHotel.hotelKey);
+
+  const handleShare = async () => {
+    if (!displayHotel) return;
+    const url = `${window.location.origin}/hotel/${hotelKey}`;
+    const text = `Check out ${displayHotel.name} in ${displayHotel.city} — compare prices from 8+ providers`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: displayHotel.name, text, url });
+      } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero */}
       <div className="relative h-72 md:h-96 bg-zinc-900 overflow-hidden">
-        {hotel ? (
+        {displayHotel ? (
           <Image
-            src={hotel.image}
-            alt={hotel.name}
+            src={displayHotel.image}
+            alt={displayHotel.name}
             fill
             className="object-cover opacity-80"
             sizes="100vw"
@@ -161,27 +179,36 @@ export default function HotelDetailPage() {
           ← Back
         </button>
 
-        {hotel && (
+        {displayHotel && (
           <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
             <div className="max-w-4xl mx-auto flex items-end justify-between gap-4">
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold drop-shadow-lg">{hotel.name}</h1>
+                <h1 className="text-3xl md:text-4xl font-bold drop-shadow-lg">{displayHotel.name}</h1>
                 <p className="text-white/80 mt-1 text-lg">
-                  📍 {hotel.city}, {hotel.country}
+                  📍 {displayHotel.city}, {displayHotel.country}
                 </p>
-                <RatingBadge hotelKey={hotel.hotelKey} size="sm" className="mt-2 [&>span:first-child]:!bg-white/20 [&>span:last-child]:!text-white/70" />
+                <RatingBadge hotelKey={displayHotel.hotelKey} size="sm" className="mt-2 [&>span:first-child]:!bg-white/20 [&>span:last-child]:!text-white/70" />
               </div>
-              {hydrated && (
+              <div className="flex items-center gap-2 shrink-0">
                 <button
-                  onClick={() => toggleFavorite(hotel)}
-                  aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
-                  className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center hover:scale-110 transition shrink-0"
+                  onClick={handleShare}
+                  aria-label="Share this hotel"
+                  className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center hover:scale-110 transition"
                 >
-                  <span className={`text-2xl ${fav ? 'text-red-400' : 'text-white/70'}`}>
-                    {fav ? '♥' : '♡'}
-                  </span>
+                  <span className="text-xl">🔗</span>
                 </button>
-              )}
+                {hydrated && (
+                  <button
+                    onClick={() => toggleFavorite(displayHotel)}
+                    aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
+                    className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center hover:scale-110 transition"
+                  >
+                    <span className={`text-2xl ${fav ? 'text-red-400' : 'text-white/70'}`}>
+                      {fav ? '♥' : '♡'}
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -350,6 +377,15 @@ export default function HotelDetailPage() {
                 />
               </div>
             )}
+
+            {/* Cheaper dates */}
+            <div className="mt-4">
+              <CheaperDates
+                hotelKey={hotelKey}
+                checkIn={data.checkIn}
+                checkOut={data.checkOut}
+              />
+            </div>
           </div>
         )}
 
