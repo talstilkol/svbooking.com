@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import CheaperDates from '@/components/CheaperDates';
 import RatingBadge from '@/components/RatingBadge';
+import ComparisonSummary from '@/components/ComparisonSummary';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -325,7 +326,18 @@ function CompareInner() {
                     </button>
 
                     {result && result.rates.length > 0 && (
-                      <CheaperDates hotelKey={hotel.hotelKey} checkIn={checkIn} checkOut={checkOut} />
+                      <>
+                        <ComparisonSummary
+                          hotelName={hotel.name}
+                          city={hotel.city}
+                          checkIn={checkIn}
+                          checkOut={checkOut}
+                          rates={result.rates}
+                          cheapest={result.cheapest}
+                          savingsPct={result.savingsPct}
+                        />
+                        <CheaperDates hotelKey={hotel.hotelKey} checkIn={checkIn} checkOut={checkOut} />
+                      </>
                     )}
                   </div>
                 </div>

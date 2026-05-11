@@ -22,6 +22,7 @@ const PUBLIC_PATHS = [
   "/api/agents/health-check",
   "/api/agents/recommendations",
   "/api/agents/availability",
+  "/api/og",
   "/favorites",
   "/trips",
 ];

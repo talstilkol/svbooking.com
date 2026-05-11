@@ -9,6 +9,7 @@ import Testimonials from "@/components/Testimonials";
 import Newsletter from "@/components/Newsletter";
 import FAQ from "@/components/FAQ";
 import TrustBadges from "@/components/TrustBadges";
+import PopularCities from "@/components/PopularCities";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -62,6 +63,9 @@ export default function Home() {
 
       {/* How it works */}
       <HowItWorks />
+
+      {/* Popular Cities */}
+      <PopularCities />
 
       {/* Destination Explorer */}
       <div className="max-w-7xl mx-auto px-4 py-12">

@@ -12,6 +12,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const city = decodeURIComponent(name);
   const hotels = getHotelsByCity(city);
   const count = hotels.length;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking-com.vercel.app';
+  const ogImage = `${baseUrl}/api/og?title=${encodeURIComponent(`${count} Best Hotels in ${city}`)}&subtitle=${encodeURIComponent(`Compare prices from Booking.com, Expedia, Hotels.com & more`)}`;
 
   return {
     title: `Best Hotels in ${city} — Compare Prices | SVBooking`,
@@ -19,6 +21,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `${count} Best Hotels in ${city}`,
       description: `Compare hotel prices in ${city} from 8+ providers`,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: `Hotels in ${city}` }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `Best Hotels in ${city}`,
+      description: `Compare ${count} hotel prices in ${city}`,
+      images: [ogImage],
     },
   };
 }

@@ -32,11 +32,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "SV Booking",
+    images: [{ url: "/api/og", width: 1200, height: 630, alt: "SV Booking" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "SV Booking - Hotel Price Comparison",
     description: "Compare hotel prices from Booking.com, Expedia, Hotels.com & more",
+    images: ["/api/og"],
   },
   robots: { index: true, follow: true },
 };
