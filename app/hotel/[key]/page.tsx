@@ -131,7 +131,7 @@ export default function HotelDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [hotelKey, checkIn, checkOut]);
+  }, [hotelKey, checkIn, checkOut, currency]);
 
   // Update hotel from comparison data too
   const displayHotel = data?.hotel || hotel;
