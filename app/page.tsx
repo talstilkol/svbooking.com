@@ -11,6 +11,9 @@ import FAQ from "@/components/FAQ";
 import TrustBadges from "@/components/TrustBadges";
 import PopularCities from "@/components/PopularCities";
 import WhyChooseUs from "@/components/WhyChooseUs";
+import TrendingHotels from "@/components/TrendingHotels";
+import CityWeatherGrid from "@/components/CityWeatherGrid";
+import FeatureHighlight from "@/components/FeatureHighlight";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -55,6 +58,13 @@ export default function Home() {
         <RecentlyViewed />
       </Suspense>
 
+      {/* Trending Hotels */}
+      <div className="max-w-7xl mx-auto px-4 pt-10">
+        <Suspense fallback={null}>
+          <TrendingHotels />
+        </Suspense>
+      </div>
+
       {/* Top Deals */}
       <div className="max-w-7xl mx-auto px-4 pt-10 pb-8">
         <Suspense fallback={null}>
@@ -67,6 +77,11 @@ export default function Home() {
 
       {/* Popular Cities */}
       <PopularCities />
+
+      {/* City Weather Grid */}
+      <div className="max-w-7xl mx-auto px-4 py-10">
+        <CityWeatherGrid />
+      </div>
 
       {/* Destination Explorer */}
       <div className="max-w-7xl mx-auto px-4 py-12">
@@ -87,6 +102,11 @@ export default function Home() {
 
       {/* Why Choose Us */}
       <WhyChooseUs />
+
+      {/* Feature Highlight */}
+      <div className="max-w-7xl mx-auto px-4 py-10">
+        <FeatureHighlight />
+      </div>
 
       {/* FAQ */}
       <FAQ />
