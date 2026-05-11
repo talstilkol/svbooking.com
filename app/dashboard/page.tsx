@@ -10,6 +10,7 @@ import LoyaltyBanner from '@/components/LoyaltyBanner';
 import RecentlyViewed from '@/components/RecentlyViewed';
 import TopDeals from '@/components/TopDeals';
 import UserPreferences from '@/components/UserPreferences';
+import OnboardingTour from '@/components/OnboardingTour';
 
 export default function DashboardPage() {
   return (
@@ -23,6 +24,9 @@ export default function DashboardPage() {
           </div>
           <UserPreferences />
         </div>
+
+        {/* Onboarding */}
+        <OnboardingTour className="mb-6" />
 
         {/* Loyalty Banner */}
         <LoyaltyBanner className="mb-6" />

@@ -14,6 +14,7 @@ const NAV_LINKS = [
   { href: '/trips', label: 'Trips' },
   { href: '/favorites', label: 'Favorites' },
   { href: '/agents', label: 'AI Agents' },
+  { href: '/dashboard', label: 'Dashboard' },
 ];
 
 export default function Navbar() {
