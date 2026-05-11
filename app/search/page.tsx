@@ -20,6 +20,8 @@ function SearchInner() {
   const [error, setError] = useState('');
   const [sort, setSort] = useState<SortOption>('name-asc');
   const [activeCountry, setActiveCountry] = useState('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 18;
 
   const debouncedQuery = useDebounce(query, 200);
 
@@ -50,6 +52,7 @@ function SearchInner() {
   );
 
   const filtered = useMemo(() => {
+    setPage(1); // reset page on filter change
     let list = allHotels;
     if (debouncedQuery.trim()) {
       const q = debouncedQuery.toLowerCase();
@@ -70,6 +73,9 @@ function SearchInner() {
       return 0;
     });
   }, [allHotels, debouncedQuery, activeCountry, sort]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,14 +176,51 @@ function SearchInner() {
         ) : (
           <>
             <p className="text-sm text-zinc-500 mb-4">
-              Showing <strong>{filtered.length}</strong> of {allHotels.length} hotels
+              Showing{' '}
+              <strong>
+                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)}
+              </strong>{' '}
+              of <strong>{filtered.length}</strong> hotels
               {activeCountry && ` in ${activeCountry}`}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.map((hotel) => (
+              {paginated.map((hotel) => (
                 <HotelCard key={hotel.hotelKey} hotel={hotel} />
               ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-10">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 bg-white border border-zinc-300 rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-zinc-50 transition"
+                >
+                  ← Prev
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`w-9 h-9 rounded-lg text-sm font-medium transition ${
+                      p === page
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white border border-zinc-300 text-zinc-700 hover:bg-zinc-50'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="px-4 py-2 bg-white border border-zinc-300 rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-zinc-50 transition"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

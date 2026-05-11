@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { WebsiteJsonLd } from "@/components/JsonLd";
 
 const geistSans = Geist({
@@ -50,6 +51,7 @@ export default function RootLayout({
         <WebsiteJsonLd />
         <Navbar />
         <main className="pt-16 flex-1">{children}</main>
+        <Footer />
       </body>
     </html>
   );
