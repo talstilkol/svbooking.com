@@ -51,12 +51,25 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="preconnect" href="https://data.xotelo.com" />
+        <link rel="dns-prefetch" href="https://data.xotelo.com" />
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+      </head>
       <body className="min-h-full flex flex-col bg-gradient-to-b from-sky-50 via-white to-amber-50/30">
+        {/* Skip to main content — accessibility */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-medium focus:shadow-lg"
+        >
+          Skip to main content
+        </a>
         <WebsiteJsonLd />
         <RouteProgress />
         <ScrollToTop />
         <Navbar />
-        <main className="pt-16 flex-1">{children}</main>
+        <main id="main-content" className="pt-16 flex-1">{children}</main>
         <Footer />
         <BackToTop />
         <CookieConsent />

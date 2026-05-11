@@ -8,6 +8,7 @@ import StatsBar from "@/components/StatsBar";
 import Testimonials from "@/components/Testimonials";
 import Newsletter from "@/components/Newsletter";
 import FAQ from "@/components/FAQ";
+import TrustBadges from "@/components/TrustBadges";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -37,6 +38,11 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Trust badges */}
+      <div className="bg-white border-b border-slate-100 py-6">
+        <TrustBadges />
       </div>
 
       {/* Stats bar */}

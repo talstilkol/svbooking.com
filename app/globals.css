@@ -29,3 +29,41 @@ body {
 .animate-slide-up {
   animation: slide-up 0.4s ease-out;
 }
+
+/* Focus visible ring for keyboard users */
+*:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Smooth scrolling for those who want it */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Print styles */
+@media print {
+  nav, footer, .back-to-top, .cookie-consent {
+    display: none !important;
+  }
+  main {
+    padding-top: 0 !important;
+  }
+  * {
+    background: white !important;
+    color: black !important;
+  }
+}
