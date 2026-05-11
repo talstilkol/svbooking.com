@@ -31,6 +31,10 @@ import TripCostCalculator from '@/components/TripCostCalculator';
 import PriceCalendar from '@/components/PriceCalendar';
 import NearbyAttractions from '@/components/NearbyAttractions';
 import TravelChecklist from '@/components/TravelChecklist';
+import WeatherWidget from '@/components/WeatherWidget';
+import ShareModal from '@/components/ShareModal';
+import PrintButton from '@/components/PrintButton';
+import DeepLink from '@/components/DeepLink';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -445,6 +449,18 @@ export default function HotelDetailPage() {
               >
                 Save to trip planner →
               </Link>
+              <ShareModal
+                url={typeof window !== 'undefined' ? `${window.location.origin}/hotel/${hotelKey}` : ''}
+                title={data.hotel.name}
+                description={`Compare prices for ${data.hotel.name} in ${data.hotel.city} from 8+ providers`}
+              />
+              <PrintButton />
+              <DeepLink
+                hotelKey={hotelKey}
+                hotelName={data.hotel.name}
+                checkIn={data.checkIn}
+                checkOut={data.checkOut}
+              />
             </div>
 
             {/* Price alert */}
@@ -519,9 +535,15 @@ export default function HotelDetailPage() {
           <PriceTrend hotelKey={hotelKey} nights={nights || 1} currency={currency} />
         </div>
 
-        {/* Nearby attractions */}
+        {/* Nearby attractions + Weather */}
         {displayHotel && (
-          <NearbyAttractions city={displayHotel.city} className="mt-8" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            <NearbyAttractions city={displayHotel.city} />
+            <WeatherWidget
+              city={displayHotel.city}
+              checkIn={data?.checkIn}
+            />
+          </div>
         )}
 
         {/* Guest reviews */}
