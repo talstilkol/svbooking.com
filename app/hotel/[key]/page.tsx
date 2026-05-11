@@ -43,6 +43,9 @@ import { HotelOfferJsonLd } from '@/components/SchemaOrg';
 import UserReviewForm from '@/components/UserReviewForm';
 import ViewTracker from '@/components/ViewTracker';
 import HotelBadges from '@/components/HotelBadges';
+import PriceComparisonChart from '@/components/PriceComparisonChart';
+import FloatingCTA from '@/components/FloatingCTA';
+import FlightEstimate from '@/components/FlightEstimate';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -201,6 +204,16 @@ export default function HotelDetailPage() {
           checkOut={data.checkOut}
           ratingValue={7 + ((displayHotel.hotelKey.charCodeAt(5) || 0) % 25) / 10}
           ratingCount={50 + ((displayHotel.hotelKey.charCodeAt(3) || 0) * 7) % 450}
+        />
+      )}
+
+      {/* Floating mobile CTA */}
+      {displayHotel && data?.cheapest && (
+        <FloatingCTA
+          hotelName={displayHotel.name}
+          cheapestPrice={data.cheapest.total}
+          currency={data.currency}
+          provider={data.cheapest.provider}
         />
       )}
 
@@ -416,6 +429,9 @@ export default function HotelDetailPage() {
               </div>
             )}
 
+            {/* Visual price chart */}
+            <PriceComparisonChart rates={data.rates} nights={nights} className="mb-4" />
+
             {/* Price cards */}
             <div className="space-y-3">
               {data.rates.map((rate, idx) => {
@@ -589,7 +605,7 @@ export default function HotelDetailPage() {
           <PriceTrend hotelKey={hotelKey} nights={nights || 1} currency={currency} />
         </div>
 
-        {/* Nearby attractions + Weather */}
+        {/* Nearby attractions + Weather + Flights */}
         {displayHotel && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
             <NearbyAttractions city={displayHotel.city} />
@@ -597,6 +613,7 @@ export default function HotelDetailPage() {
               city={displayHotel.city}
               checkIn={data?.checkIn}
             />
+            <FlightEstimate city={displayHotel.city} />
           </div>
         )}
 
