@@ -12,6 +12,8 @@ import RecentlyCompared, { addToRecentlyCompared } from '@/components/RecentlyCo
 import DateSummary from '@/components/DateSummary';
 import ProviderInfo from '@/components/ProviderInfo';
 import { CompareCardSkeleton } from '@/components/Skeleton';
+import GuestSelector from '@/components/GuestSelector';
+import ShareBar from '@/components/ShareBar';
 
 interface Hotel {
   hotelKey: string;
@@ -89,6 +91,8 @@ function CompareInner() {
   const [checkOut, setCheckOut] = useState(urlCheckOut || localDate(7));
   const [comparing, setComparing] = useState<string | null>(null);
   const [comparison, setComparison] = useState<Comparison | null>(null);
+  const [guests, setGuests] = useState(2);
+  const [rooms, setRooms] = useState(1);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -242,6 +246,12 @@ function CompareInner() {
                 className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900"
               />
             </div>
+            <GuestSelector
+              guests={guests}
+              rooms={rooms}
+              onGuestsChange={setGuests}
+              onRoomsChange={setRooms}
+            />
           </div>
         </div>
 
@@ -380,6 +390,11 @@ function CompareInner() {
                           savingsPct={result.savingsPct}
                         />
                         <CheaperDates hotelKey={hotel.hotelKey} checkIn={checkIn} checkOut={checkOut} />
+                        <ShareBar
+                          url={`${typeof window !== 'undefined' ? window.location.origin : ''}/compare?hotelKey=${hotel.hotelKey}&checkIn=${checkIn}&checkOut=${checkOut}`}
+                          title={`${hotel.name} from $${result.cheapest?.total.toFixed(0)} on ${result.cheapest?.provider}`}
+                          className="mt-3 pt-3 border-t border-slate-100"
+                        />
                       </>
                     )}
                   </div>
