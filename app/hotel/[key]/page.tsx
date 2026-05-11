@@ -9,6 +9,7 @@ import { useCurrency } from '@/components/CurrencySelector';
 import PriceTrend from '@/components/PriceTrend';
 import RatingBadge from '@/components/RatingBadge';
 import ProviderLogos from '@/components/ProviderLogos';
+import PriceAlert from '@/components/PriceAlert';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -336,6 +337,19 @@ export default function HotelDetailPage() {
                 Save to trip planner →
               </Link>
             </div>
+
+            {/* Price alert */}
+            {data.cheapest && (
+              <div className="mt-4">
+                <PriceAlert
+                  hotelKey={hotelKey}
+                  hotelName={data.hotel.name}
+                  city={data.hotel.city}
+                  currentPrice={data.cheapest.total / nights}
+                  currency={data.currency}
+                />
+              </div>
+            )}
           </div>
         )}
 
