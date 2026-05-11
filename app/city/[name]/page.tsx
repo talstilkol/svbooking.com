@@ -2,6 +2,7 @@ import { HOTELS, listCities, getHotelsByCity } from '@/lib/hotels-catalog';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
+import { BreadcrumbJsonLd } from '@/components/JsonLd';
 
 type Props = {
   params: Promise<{ name: string }>;
@@ -42,8 +43,17 @@ export default async function CityPage({ params }: Props) {
   const hotels = getHotelsByCity(city);
   const country = hotels[0]?.country || '';
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking-com.vercel.app';
+
   return (
     <div className="min-h-screen">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: baseUrl },
+          { name: 'Hotels', url: `${baseUrl}/search` },
+          { name: city, url: `${baseUrl}/city/${encodeURIComponent(city)}` },
+        ]}
+      />
       {/* Hero */}
       <div className="relative h-48 md:h-64 bg-zinc-900 overflow-hidden">
         {hotels[0] && (

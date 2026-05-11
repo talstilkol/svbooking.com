@@ -10,6 +10,7 @@ import Newsletter from "@/components/Newsletter";
 import FAQ from "@/components/FAQ";
 import TrustBadges from "@/components/TrustBadges";
 import PopularCities from "@/components/PopularCities";
+import WhyChooseUs from "@/components/WhyChooseUs";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -84,28 +85,8 @@ export default function Home() {
       {/* Newsletter */}
       <Newsletter />
 
-      {/* Features */}
-      <div className="bg-white border-t border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-3xl mx-auto mb-4">&#127960;</div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-2">Wide Selection</h3>
-              <p className="text-slate-500">63 hotels across 20 cities in 15+ countries worldwide</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto mb-4">&#128176;</div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-2">Best Prices</h3>
-              <p className="text-slate-500">Compare 8+ providers and find cheaper dates automatically</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-3xl mx-auto mb-4">&#129302;</div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-2">AI Agents</h3>
-              <p className="text-slate-500">Smart recommendations, deal scanning & personalized suggestions</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Why Choose Us */}
+      <WhyChooseUs />
 
       {/* FAQ */}
       <FAQ />
