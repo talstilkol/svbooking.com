@@ -3,6 +3,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
+import CityGuide from '@/components/CityGuide';
+import LocalEvents from '@/components/LocalEvents';
+import SafetyInfo from '@/components/SafetyInfo';
+import FlightEstimate from '@/components/FlightEstimate';
+import RatingBadge from '@/components/RatingBadge';
 
 type Props = {
   params: Promise<{ name: string }>;
@@ -106,12 +111,21 @@ export default async function CityPage({ params }: Props) {
               <div className="p-4 flex-1 min-w-0">
                 <h2 className="font-bold text-slate-900 truncate">{hotel.name}</h2>
                 <p className="text-sm text-slate-500 mt-0.5">📍 {hotel.city}, {hotel.country}</p>
-                <p className="text-xs text-blue-600 font-medium mt-3">
+                <RatingBadge hotelKey={hotel.hotelKey} size="sm" className="mt-1.5" />
+                <p className="text-xs text-blue-600 font-medium mt-2">
                   Compare prices →
                 </p>
               </div>
             </Link>
           ))}
+        </div>
+
+        {/* City guide + Travel info */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+          <CityGuide city={city} />
+          <SafetyInfo city={city} />
+          <LocalEvents city={city} />
+          <FlightEstimate city={city} />
         </div>
 
         {/* Cross-links to other cities in same country */}
