@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import HotelCard, { CatalogHotel } from '@/components/HotelCard';
+import QuickSearchChips from '@/components/QuickSearchChips';
 import { CardGridSkeleton } from '@/components/Skeleton';
 import { useDebounce } from '@/lib/useDebounce';
 
@@ -133,6 +134,9 @@ function SearchInner() {
             </button>
           )}
         </form>
+
+        {/* Quick search chips */}
+        <QuickSearchChips className="mb-4" />
 
         {/* Country filter pills */}
         {!loading && (

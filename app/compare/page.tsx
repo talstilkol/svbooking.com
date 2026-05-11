@@ -9,6 +9,8 @@ import RatingBadge from '@/components/RatingBadge';
 import ComparisonSummary from '@/components/ComparisonSummary';
 import UrgencyBadge from '@/components/UrgencyBadge';
 import RecentlyCompared, { addToRecentlyCompared } from '@/components/RecentlyCompared';
+import DateSummary from '@/components/DateSummary';
+import ProviderInfo from '@/components/ProviderInfo';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -243,6 +245,8 @@ function CompareInner() {
           </div>
         </div>
 
+        <DateSummary checkIn={checkIn} checkOut={checkOut} className="mb-4" />
+
         <RecentlyCompared />
 
         {error && (
@@ -321,14 +325,17 @@ function CompareInner() {
                             rel="noopener noreferrer"
                             className="flex justify-between items-center p-2 rounded border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-colors cursor-pointer group"
                           >
-                            <span
-                              className={`px-2 py-1 rounded text-xs font-medium ${
-                                PROVIDER_COLORS[rate.provider] ||
-                                'bg-slate-100 text-slate-800'
-                              }`}
-                            >
-                              {rate.provider}
-                              {idx === 0 && ' ⭐'}
+                            <span className="flex items-center gap-1">
+                              <span
+                                className={`px-2 py-1 rounded text-xs font-medium ${
+                                  PROVIDER_COLORS[rate.provider] ||
+                                  'bg-slate-100 text-slate-800'
+                                }`}
+                              >
+                                {rate.provider}
+                                {idx === 0 && ' ⭐'}
+                              </span>
+                              <ProviderInfo provider={rate.provider} />
                             </span>
                             <span className="flex items-center gap-2">
                               <span className="font-semibold text-slate-900">

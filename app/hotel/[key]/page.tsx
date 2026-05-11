@@ -14,6 +14,10 @@ import CheaperDates from '@/components/CheaperDates';
 import SimilarHotels from '@/components/SimilarHotels';
 import BestTimeToBook from '@/components/BestTimeToBook';
 import PhotoGallery from '@/components/PhotoGallery';
+import HotelAmenities from '@/components/HotelAmenities';
+import PriceGuarantee from '@/components/PriceGuarantee';
+import DateSummary from '@/components/DateSummary';
+import ProviderInfo from '@/components/ProviderInfo';
 import Breadcrumb from '@/components/Breadcrumb';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
@@ -293,6 +297,12 @@ export default function HotelDetailPage() {
           </div>
         </form>
 
+        {/* Amenities */}
+        <HotelAmenities hotelKey={hotelKey} className="mb-6" />
+
+        {/* Price Guarantee */}
+        <PriceGuarantee className="mb-6" />
+
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
             <strong>Error:</strong> {error}
@@ -305,6 +315,9 @@ export default function HotelDetailPage() {
             <CompareCardSkeleton />
           </div>
         )}
+
+        {/* Date summary */}
+        {data && <DateSummary checkIn={data.checkIn} checkOut={data.checkOut} className="mb-4" />}
 
         {/* Results */}
         {!loading && data && data.rates.length > 0 && (
@@ -344,8 +357,11 @@ export default function HotelDetailPage() {
                     )}
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <span className="text-sm font-medium text-slate-500 w-5 shrink-0">{idx + 1}</span>
-                      <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold shrink-0 ${colorClass}`}>
-                        {rate.provider}
+                      <span className="flex items-center gap-1">
+                        <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold shrink-0 ${colorClass}`}>
+                          {rate.provider}
+                        </span>
+                        <ProviderInfo provider={rate.provider} />
                       </span>
                       {isCheapest && (
                         <span className="hidden sm:inline text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
