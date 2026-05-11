@@ -10,6 +10,7 @@ import RecentSearches, { addRecentSearch } from '@/components/RecentSearches';
 import SearchSuggestions from '@/components/SearchSuggestions';
 import { CardGridSkeleton } from '@/components/Skeleton';
 import SearchFilters, { type FilterOptions } from '@/components/SearchFilters';
+import EmptyState from '@/components/EmptyState';
 import { useDebounce } from '@/lib/useDebounce';
 
 type SortOption = 'name-asc' | 'name-desc' | 'city-asc';
@@ -241,11 +242,12 @@ function SearchInner() {
         {loading ? (
           <CardGridSkeleton count={9} />
         ) : filtered.length === 0 ? (
-          <div className="text-center text-zinc-500 py-16">
-            <div className="text-5xl mb-4">🔍</div>
-            <p className="text-lg font-medium">No hotels found for &quot;{query}&quot;</p>
-            <p className="text-sm mt-2">Try: {cities.slice(0, 5).join(', ')}</p>
-          </div>
+          <EmptyState
+            icon="🔍"
+            title={`No hotels found for "${query}"`}
+            description={`Try searching for: ${cities.slice(0, 5).join(', ')}`}
+            action={{ label: 'Browse all hotels', href: '/search' }}
+          />
         ) : viewMode === 'map' ? (
           <MapView
             hotels={filtered}

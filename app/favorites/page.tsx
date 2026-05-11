@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useFavorites } from '@/lib/useLocalStorage';
 import RatingBadge from '@/components/RatingBadge';
 import PriceAlertsDashboard from '@/components/PriceAlertsDashboard';
+import EmptyState from '@/components/EmptyState';
 import { useState } from 'react';
 
 interface QuickPrice {
@@ -89,16 +90,13 @@ export default function FavoritesPage() {
         <PriceAlertsDashboard className="mb-6" />
 
         {favorites.length === 0 ? (
-          <div className="bg-white rounded-2xl p-16 text-center border border-slate-200">
-            <div className="text-6xl mb-4 opacity-60">&#9825;</div>
-            <h2 className="text-xl font-semibold text-slate-800 mb-2">No favorites yet</h2>
-            <p className="text-slate-500 mb-6">
-              Browse hotels and tap the heart icon to save them here
-            </p>
-            <Link href="/search" className="inline-block px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium transition">
-              Browse Hotels
-            </Link>
-          </div>
+          <EmptyState
+            icon="♡"
+            title="No favorites yet"
+            description="Browse hotels and tap the heart icon to save them here"
+            action={{ label: 'Browse Hotels', href: '/search' }}
+            className="bg-white rounded-2xl border border-slate-200"
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {favorites.map((fav) => {
