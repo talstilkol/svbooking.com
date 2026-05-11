@@ -40,6 +40,8 @@ import HotelPolicies from '@/components/HotelPolicies';
 import PriceBreakdown from '@/components/PriceBreakdown';
 import LoyaltyBanner from '@/components/LoyaltyBanner';
 import { HotelOfferJsonLd } from '@/components/SchemaOrg';
+import UserReviewForm from '@/components/UserReviewForm';
+import ViewTracker from '@/components/ViewTracker';
 import { CompareCardSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
@@ -296,6 +298,9 @@ export default function HotelDetailPage() {
             ]}
           />
         )}
+
+        {/* View tracker */}
+        <ViewTracker hotelKey={hotelKey} className="mb-4" />
 
         {/* Date picker */}
         <form
@@ -594,6 +599,15 @@ export default function HotelDetailPage() {
         {/* Guest reviews */}
         {displayHotel && (
           <ReviewHighlights
+            hotelKey={hotelKey}
+            hotelName={displayHotel.name}
+            className="mt-8"
+          />
+        )}
+
+        {/* Write a review */}
+        {displayHotel && (
+          <UserReviewForm
             hotelKey={hotelKey}
             hotelName={displayHotel.name}
             className="mt-8"

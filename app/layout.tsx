@@ -15,6 +15,8 @@ import { ToastProvider } from "@/components/Toast";
 import { OrganizationJsonLd, SearchActionJsonLd } from "@/components/SchemaOrg";
 import OfflineBanner from "@/components/OfflineBanner";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
+import CompareWidget from "@/components/CompareWidget";
+import PriceDropAlert from "@/components/PriceDropAlert";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -87,6 +89,8 @@ export default function RootLayout({
         <BackToTop />
         <MobileBottomBar />
         <SocialProof />
+        <CompareWidget />
+        <PriceDropAlert />
         <AccessibilityPanel />
         <CookieConsent />
         <PerformanceMonitor />
