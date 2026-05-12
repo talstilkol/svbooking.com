@@ -1,4 +1,4 @@
-import { getHeatmap } from '@/lib/xotelo';
+import { getCachedHeatmap } from '@/lib/price-cache';
 import { HOTELS } from '@/lib/hotels-catalog';
 
 function addDays(dateStr, days) {
@@ -25,7 +25,7 @@ async function scanHotelViaHeatmap(hotel, horizonDays) {
 
   for (const { checkOut, label } of checkOuts) {
     try {
-      const result = await getHeatmap({ hotelKey: hotel.hotelKey, checkOut });
+      const result = await getCachedHeatmap({ hotelKey: hotel.hotelKey, checkOut });
       if (!result) continue;
 
       const rates = result.rates || result.data || [];
