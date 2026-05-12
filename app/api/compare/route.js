@@ -1,5 +1,6 @@
 import { getHotelRates } from '@/lib/hotel-pricing';
 import { HOTELS, listCities, getHotelsByCity, findHotel } from '@/lib/hotels-catalog';
+import { kv } from '@/lib/kv';
 
 // GET /api/compare
 //   ?city=Paris                                      -> list hotels in city
@@ -22,6 +23,19 @@ export async function GET(request) {
         if (!hotel) return Response.json({ error: 'Hotel not found' }, { status: 404 });
         return Response.json({ hotel }, { headers: { 'Cache-Control': 'public, s-maxage=300' } });
       }
+
+      // Check price cache first (30-minute TTL)
+      const cacheKey = `compare:${hotelKey}:${checkIn}:${checkOut}:${currency}`;
+      try {
+        const cached = await kv.get(cacheKey);
+        if (cached) {
+          return Response.json(
+            { ...cached, fromCache: true },
+            { headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300' } }
+          );
+        }
+      } catch { /* cache miss */ }
+
       const hotel = findHotel(hotelKey);
       const result = await getHotelRates({
         hotelKey,
@@ -49,7 +63,7 @@ export async function GET(request) {
           ? Math.round(((mostExpensive.total - cheapest.total) / mostExpensive.total) * 100)
           : 0;
 
-      return Response.json({
+      const responseData = {
         hotel: hotel || { hotelKey, name: 'Hotel', city: '', country: '' },
         checkIn: result?.chk_in || checkIn,
         checkOut: result?.chk_out || checkOut,
@@ -60,7 +74,14 @@ export async function GET(request) {
         savingsPct,
         savingsAmount: cheapest && mostExpensive ? Number((mostExpensive.total - cheapest.total).toFixed(2)) : 0,
         providerCount: rates.length,
-      });
+      };
+
+      // Cache the result (fire-and-forget, 30 min TTL)
+      if (rates.length > 0) {
+        kv.setWithTTL(cacheKey, responseData, 1800).catch(() => {});
+      }
+
+      return Response.json(responseData);
     }
 
     // Mode 2: list hotels in a city

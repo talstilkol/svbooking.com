@@ -65,6 +65,20 @@ interface ProviderInfo {
   lastError: { message: string; at: string } | null;
 }
 
+interface BackgroundAgent {
+  name: string;
+  label: string;
+  icon: string;
+  desc: string;
+  status: 'completed' | 'running' | 'error' | 'never-run';
+  startedAt?: string;
+  completedAt?: string;
+  elapsedMs?: number;
+  error?: string;
+  result?: Record<string, unknown>;
+  recentRuns?: Array<{ status: string; startedAt: string; elapsedMs: number }>;
+}
+
 function formatTimestamp(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -87,6 +101,9 @@ export default function AgentDashboard() {
   const [hotels, setHotels] = useState<{ hotelKey: string; name: string; city: string }[]>([]);
   const [dealsScannedAt, setDealsScannedAt] = useState<string | null>(null);
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
+  const [bgAgents, setBgAgents] = useState<BackgroundAgent[]>([]);
+  const [bgLoading, setBgLoading] = useState(false);
+  const [runningAgent, setRunningAgent] = useState<string | null>(null);
   const [loading, setLoading] = useState({ health: false, deals: false, recs: false, providers: false });
   const { favorites } = useFavorites();
   const { trips } = useTrips();
@@ -146,6 +163,25 @@ export default function AgentDashboard() {
     fetchProviders();
   };
 
+  const fetchBgAgents = async () => {
+    setBgLoading(true);
+    try {
+      const res = await fetch('/api/agents/auto/status');
+      const data = await res.json();
+      setBgAgents(data.agents || []);
+    } catch { setBgAgents([]); }
+    setBgLoading(false);
+  };
+
+  const triggerAgent = async (agentName: string) => {
+    setRunningAgent(agentName);
+    try {
+      await fetch(`/api/agents/auto/${agentName}`);
+    } catch { /* ignore */ }
+    setRunningAgent(null);
+    fetchBgAgents();
+  };
+
   const fetchHotels = async () => {
     try {
       const res = await fetch('/api/compare');
@@ -173,6 +209,7 @@ export default function AgentDashboard() {
     fetchDeals();
     fetchHotels();
     fetchProviders();
+    fetchBgAgents();
   }, []);
 
   useEffect(() => {
@@ -282,6 +319,76 @@ export default function AgentDashboard() {
           </div>
         ) : (
           <p className="text-sm text-zinc-500">Loading providers...</p>
+        )}
+      </div>
+
+      {/* Background Agents */}
+      <div className="bg-white border border-zinc-200 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-zinc-900">Background Agents</h3>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={fetchBgAgents}
+              disabled={bgLoading}
+              className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
+            >
+              {bgLoading ? 'Loading...' : 'Refresh'}
+            </button>
+            <button
+              onClick={() => triggerAgent('orchestrate')}
+              disabled={runningAgent !== null}
+              className="text-sm px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {runningAgent === 'orchestrate' ? 'Running...' : 'Run All'}
+            </button>
+          </div>
+        </div>
+        {bgAgents.length > 0 ? (
+          <div className="space-y-3">
+            {bgAgents.map((agent) => (
+              <div key={agent.name} className="flex items-center gap-3 p-3 bg-zinc-50 rounded-lg">
+                <span className="text-xl">{agent.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-zinc-900">{agent.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                      agent.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                      agent.status === 'running' ? 'bg-blue-100 text-blue-700' :
+                      agent.status === 'error' ? 'bg-red-100 text-red-700' :
+                      'bg-zinc-200 text-zinc-500'
+                    }`}>
+                      {agent.status === 'never-run' ? 'Never run' : agent.status}
+                    </span>
+                    {agent.elapsedMs != null && agent.status !== 'never-run' && (
+                      <span className="text-[10px] text-zinc-400">
+                        {agent.elapsedMs < 1000 ? `${agent.elapsedMs}ms` : `${(agent.elapsedMs / 1000).toFixed(1)}s`}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-0.5">{agent.desc}</p>
+                  {agent.completedAt && (
+                    <p className="text-[10px] text-zinc-400 mt-0.5">
+                      Last run: {formatTimestamp(agent.completedAt)}
+                    </p>
+                  )}
+                  {agent.error && (
+                    <p className="text-[10px] text-red-500 mt-0.5 truncate">Error: {agent.error}</p>
+                  )}
+                </div>
+                {agent.name !== 'orchestrator' && (
+                  <button
+                    onClick={() => triggerAgent(agent.name)}
+                    disabled={runningAgent !== null}
+                    className="text-xs px-2 py-1 text-blue-600 hover:bg-blue-50 rounded disabled:opacity-50"
+                  >
+                    {runningAgent === agent.name ? 'Running...' : 'Run'}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-zinc-500">Loading agents...</p>
         )}
       </div>
 

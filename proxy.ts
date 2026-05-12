@@ -49,6 +49,7 @@ const PUBLIC_PATHS = [
   '/api/holidays',
   '/api/destination-intel',
   '/api/agents/providers',
+  '/api/agents/auto',
 ];
 
 function isPublicPath(pathname: string): boolean {

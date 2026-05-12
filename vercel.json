@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/agents/auto/orchestrate",
+      "schedule": "0 */6 * * *"
+    }
+  ]
+}

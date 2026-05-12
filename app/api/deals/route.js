@@ -1,6 +1,7 @@
-import { getRates, getHeatmap } from '@/lib/xotelo';
 import { HOTELS, getHotelsByCity, getHotelsByCountry, getHotelsByCities, findHotel } from '@/lib/hotels-catalog';
 import { CONTINENTS } from '@/lib/destinations';
+import { getCachedRates, getCachedHeatmap } from '@/lib/price-cache';
+import { kv } from '@/lib/kv';
 
 function addDays(dateStr, days) {
   const d = new Date(dateStr);
@@ -31,7 +32,7 @@ async function fetchDealViaHeatmap(hotel, defaultNights = 2) {
 
     for (const checkOutStr of checkOutDates) {
       try {
-        const result = await getHeatmap({ hotelKey: hotel.hotelKey, checkOut: checkOutStr });
+        const result = await getCachedHeatmap({ hotelKey: hotel.hotelKey, checkOut: checkOutStr });
         if (!result) continue;
 
         const rates = result.rates || result.data || [];
@@ -81,7 +82,7 @@ async function fetchDealViaHeatmap(hotel, defaultNights = 2) {
 // Live rate-based deal finder for queries with specific dates
 async function fetchDealForHotel(hotel, checkIn, checkOut) {
   try {
-    const result = await getRates({ hotelKey: hotel.hotelKey, checkIn, checkOut });
+    const result = await getCachedRates({ hotelKey: hotel.hotelKey, checkIn, checkOut });
     const rates = (result?.rates || [])
       .map((r) => ({
         provider: r.name,
@@ -173,6 +174,38 @@ export async function GET(request) {
         { hotel, trend },
         { headers: { 'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600' } }
       );
+    }
+
+    // Check for pre-cached deals from the deal scanner agent
+    if (!hasDates && !city && !country && !continent) {
+      try {
+        const cachedDeals = await kv.get('agent:deals:top');
+        if (cachedDeals && Array.isArray(cachedDeals) && cachedDeals.length > 0) {
+          return Response.json({
+            deals: cachedDeals.slice(0, limit),
+            filter: { continent: null, country: null, city: null },
+            dates: null,
+            strategy: 'cached-agent',
+            totalHotelsScanned: cachedDeals.length,
+          });
+        }
+      } catch { /* cache miss, proceed with live scan */ }
+    }
+
+    // Check for per-city cached deals
+    if (!hasDates && city) {
+      try {
+        const cityDeals = await kv.get(`agent:deals:city:${city.toLowerCase()}`);
+        if (cityDeals && Array.isArray(cityDeals) && cityDeals.length > 0) {
+          return Response.json({
+            deals: cityDeals.slice(0, limit),
+            filter: { continent: null, country: null, city },
+            dates: null,
+            strategy: 'cached-agent',
+            totalHotelsScanned: cityDeals.length,
+          });
+        }
+      } catch { /* cache miss */ }
     }
 
     let hotels = HOTELS;

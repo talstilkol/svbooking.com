@@ -25,6 +25,6 @@ export async function GET(request: Request) {
 
   return Response.json(
     { cities: matchingCities, hotels: matchingHotels },
-    { headers: { 'Cache-Control': 'public, s-maxage=60' } }
+    { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } }
   );
 }
