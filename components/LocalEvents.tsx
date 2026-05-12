@@ -1,4 +1,6 @@
-import { useMemo } from 'react';
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
 
 interface LocalEventsProps {
   city: string;
@@ -10,6 +12,13 @@ interface LocalEvent {
   month: string;
   icon: string;
   description: string;
+}
+
+interface LiveEvent extends LocalEvent {
+  date?: string;
+  priceRange?: string;
+  ticketUrl?: string;
+  venue?: string;
 }
 
 const EVENTS: Record<string, LocalEvent[]> = {
@@ -66,30 +75,115 @@ const EVENTS: Record<string, LocalEvent[]> = {
 };
 
 export default function LocalEvents({ city, className = '' }: LocalEventsProps) {
-  const events = useMemo(() => EVENTS[city] || [], [city]);
+  const staticEvents = useMemo(() => EVENTS[city] || [], [city]);
+  const [liveEvents, setLiveEvents] = useState<LocalEvent[] | null>(null);
+  const [isLive, setIsLive] = useState(false);
+  const [upcomingEvents, setUpcomingEvents] = useState<LiveEvent[]>([]);
 
-  if (events.length === 0) return null;
+  // Fetch annual events from Wikivoyage
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(`/api/travel-guide?city=${encodeURIComponent(city)}&section=events`)
+      .then((res) => res.json())
+      .then((result) => {
+        if (cancelled) return;
+        if (result.data && Array.isArray(result.data) && result.data.length > 0) {
+          setLiveEvents(result.data);
+          setIsLive(true);
+        }
+      })
+      .catch(() => { /* use static fallback */ });
+
+    return () => { cancelled = true; };
+  }, [city]);
+
+  // Fetch upcoming live events from Ticketmaster
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(`/api/events?city=${encodeURIComponent(city)}`)
+      .then((res) => res.json())
+      .then((result) => {
+        if (cancelled) return;
+        if (result.events && result.events.length > 0) {
+          setUpcomingEvents(result.events.slice(0, 5));
+        }
+      })
+      .catch(() => { /* no live events */ });
+
+    return () => { cancelled = true; };
+  }, [city]);
+
+  const events = liveEvents || staticEvents;
+
+  if (events.length === 0 && upcomingEvents.length === 0) return null;
 
   return (
     <div className={`bg-white border border-slate-200 rounded-2xl p-5 ${className}`}>
-      <h3 className="text-sm font-bold text-slate-900 mb-3">🎉 Events in {city}</h3>
-
-      <div className="space-y-3">
-        {events.map((event) => (
-          <div key={event.name} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
-            <span className="text-xl shrink-0">{event.icon}</span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <h4 className="text-xs font-semibold text-slate-800">{event.name}</h4>
-                <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium shrink-0">
-                  {event.month}
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-500 mt-0.5">{event.description}</p>
-            </div>
+      {/* Annual / Notable Events */}
+      {events.length > 0 && (
+        <>
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-bold text-slate-900">Events in {city}</h3>
+            {isLive && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
+                Wikivoyage
+              </span>
+            )}
           </div>
-        ))}
-      </div>
+
+          <div className="space-y-3">
+            {events.map((event) => (
+              <div key={event.name} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
+                <span className="text-xl shrink-0">{event.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-xs font-semibold text-slate-800">{event.name}</h4>
+                    {event.month && (
+                      <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium shrink-0">
+                        {event.month}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-0.5">{event.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Upcoming Live Events (Ticketmaster) */}
+      {upcomingEvents.length > 0 && (
+        <div className={events.length > 0 ? 'mt-4 pt-4 border-t border-slate-100' : ''}>
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-bold text-slate-900">Upcoming Events</h3>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">
+              Live
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {upcomingEvents.map((event) => (
+              <div key={`${event.name}-${event.date}`} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
+                <span className="text-xl shrink-0">{event.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-xs font-semibold text-slate-800 truncate">{event.name}</h4>
+                    {event.month && (
+                      <span className="text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full font-medium shrink-0">
+                        {event.month}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-0.5">{event.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

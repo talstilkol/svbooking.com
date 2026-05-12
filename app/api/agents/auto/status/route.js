@@ -13,7 +13,10 @@ const AGENT_DESCRIPTIONS = {
   [AGENT_NAMES.XOTELO_DISCOVERY]: { label: 'Xotelo Discovery',    icon: '🔎', desc: 'Discovers hotels from Xotelo search (requires RAPIDAPI_KEY)' },
   [AGENT_NAMES.PRICE_CACHE]:      { label: 'Price Cache',         icon: '💰', desc: 'Pre-warms price cache for instant searches' },
   [AGENT_NAMES.DEAL_SCANNER]:     { label: 'Deal Scanner',        icon: '🏷️', desc: 'Scans all hotels for best deals' },
-  [AGENT_NAMES.ORCHESTRATOR]:     { label: 'Orchestrator',        icon: '🎯', desc: 'Runs all 9 agents in sequence (every 6h via cron)' },
+  [AGENT_NAMES.POI_CACHE]:        { label: 'POI Cache',           icon: '📍', desc: 'Pre-warms attractions & restaurants from Overpass + OpenTripMap' },
+  [AGENT_NAMES.TRAVEL_GUIDE]:     { label: 'Travel Guide Cache',  icon: '📚', desc: 'Pre-warms safety, events & dining from Wikivoyage for all cities' },
+  [AGENT_NAMES.EVENTS_CACHE]:     { label: 'Events Cache',        icon: '🎫', desc: 'Pre-warms live events from Ticketmaster (requires API key)' },
+  [AGENT_NAMES.ORCHESTRATOR]:     { label: 'Orchestrator',        icon: '🎯', desc: 'Runs all 12 agents in sequence (every 6h via cron)' },
 };
 
 export async function GET() {

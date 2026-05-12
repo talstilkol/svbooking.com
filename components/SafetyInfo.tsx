@@ -1,4 +1,6 @@
-import { useMemo } from 'react';
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
 
 interface SafetyInfoProps {
   city: string;
@@ -127,7 +129,28 @@ const SAFETY: Record<string, SafetyData> = {
 };
 
 export default function SafetyInfo({ city, className = '' }: SafetyInfoProps) {
-  const data = useMemo(() => SAFETY[city], [city]);
+  const staticData = useMemo(() => SAFETY[city], [city]);
+  const [liveData, setLiveData] = useState<SafetyData | null>(null);
+  const [isLive, setIsLive] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(`/api/travel-guide?city=${encodeURIComponent(city)}&section=safety`)
+      .then((res) => res.json())
+      .then((result) => {
+        if (cancelled) return;
+        if (result.data && result.data.tips && result.data.tips.length > 0) {
+          setLiveData(result.data);
+          setIsLive(true);
+        }
+      })
+      .catch(() => { /* use static fallback */ });
+
+    return () => { cancelled = true; };
+  }, [city]);
+
+  const data = liveData || staticData;
 
   if (!data) return null;
 
@@ -136,7 +159,14 @@ export default function SafetyInfo({ city, className = '' }: SafetyInfoProps) {
   return (
     <div className={`bg-white border border-slate-200 rounded-2xl p-5 ${className}`}>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-slate-900">🛡️ Safety in {city}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-bold text-slate-900">Safety in {city}</h3>
+          {isLive && (
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
+              Wikivoyage
+            </span>
+          )}
+        </div>
         <span className="text-sm" title={`${data.overallRating}/5`}>{stars}</span>
       </div>
 

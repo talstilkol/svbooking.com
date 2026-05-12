@@ -27,6 +27,9 @@ const AGENT_URLS = [
   { name: AGENT_NAMES.XOTELO_DISCOVERY, path: '/api/agents/auto/xotelo-discovery' },
   { name: AGENT_NAMES.PRICE_CACHE,      path: '/api/agents/auto/price-cache' },
   { name: AGENT_NAMES.DEAL_SCANNER,     path: '/api/agents/auto/deal-scanner' },
+  { name: AGENT_NAMES.POI_CACHE,        path: '/api/agents/auto/poi-cache' },
+  { name: AGENT_NAMES.TRAVEL_GUIDE,     path: '/api/agents/auto/travel-guide-cache' },
+  { name: AGENT_NAMES.EVENTS_CACHE,     path: '/api/agents/auto/events-cache' },
 ];
 
 async function runOrchestrator(baseUrl, authHeader) {
