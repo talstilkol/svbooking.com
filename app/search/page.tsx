@@ -65,7 +65,6 @@ function SearchInner() {
   );
 
   const filtered = useMemo(() => {
-    setPage(1); // reset page on filter change
     let list = allHotels;
     if (debouncedQuery.trim()) {
       const q = debouncedQuery.toLowerCase();
@@ -86,6 +85,11 @@ function SearchInner() {
       return 0;
     });
   }, [allHotels, debouncedQuery, activeCountry, sort]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedQuery, activeCountry, sort]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);

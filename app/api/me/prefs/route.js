@@ -6,7 +6,10 @@ function key(uid) {
   return `user:${uid}:prefs`;
 }
 
-const VALID_CURRENCIES = new Set(['USD', 'EUR', 'ILS', 'GBP']);
+const VALID_CURRENCIES = new Set([
+  'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY',
+  'HKD', 'SGD', 'ILS', 'AED', 'THB', 'INR',
+]);
 
 export async function GET() {
   try {

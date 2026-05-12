@@ -34,7 +34,7 @@ export default function PriceDropAlert({ className = '' }: PriceDropAlertProps) 
   const drops = useMemo<PriceDrop[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
-      const favs = JSON.parse(localStorage.getItem('hotel-favorites') || '[]');
+      const favs = JSON.parse(localStorage.getItem('svbooking:favorites') || '[]');
       if (favs.length === 0) return [];
 
       const dayOfYear = Math.floor(

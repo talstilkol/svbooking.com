@@ -50,6 +50,11 @@ const PUBLIC_PATHS = [
   '/api/destination-intel',
   '/api/agents/providers',
   '/api/agents/auto',
+  '/api/pois',
+  '/api/hotel-amenities',
+  '/api/travel-guide',
+  '/api/events',
+  '/api/catalog/stats',
 ];
 
 function isPublicPath(pathname: string): boolean {
@@ -83,8 +88,11 @@ export async function proxy(req: NextRequest) {
     }
     return await handler;
   } catch {
-    // Graceful degradation — allow through if auth service is unreachable
-    return NextResponse.next();
+    // Auth service unreachable — redirect to login instead of allowing through
+    const loginUrl = req.nextUrl.clone();
+    loginUrl.pathname = '/api/auth/login';
+    loginUrl.searchParams.set('post_login_redirect_url', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 }
 
