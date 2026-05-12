@@ -449,6 +449,40 @@ export default function AgentDashboard() {
         )}
       </div>
 
+      {/* Data Sources Overview */}
+      <div className="bg-white border border-zinc-200 rounded-lg p-6">
+        <h3 className="font-semibold text-zinc-900 mb-4">Free Data Sources (No Auth Required)</h3>
+        <p className="text-sm text-zinc-500 mb-4">
+          All external data sources used by SVBooking. Every source is free and requires no API key.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {[
+            { name: 'Xotelo', desc: 'Hotel pricing from 8+ providers', type: 'Pricing', icon: '💰', endpoint: '/api/compare' },
+            { name: 'Open-Meteo', desc: '7-day weather forecast', type: 'Weather', icon: '🌤️', endpoint: '/api/weather' },
+            { name: 'OpenStreetMap Overpass', desc: 'Hotel discovery (1,100+ in Paris alone)', type: 'Discovery', icon: '🗺️', endpoint: '/api/catalog/discover-osm' },
+            { name: 'Nominatim', desc: 'Hotel geocoding & address lookup', type: 'Geocoding', icon: '📍', endpoint: '/api/catalog/discover-osm?source=nominatim' },
+            { name: 'Wikidata SPARQL', desc: 'TripAdvisor/Booking IDs crossref', type: 'Enrichment', icon: '🔗', endpoint: '/api/catalog/discover' },
+            { name: 'Wikipedia', desc: 'City descriptions & images', type: 'Content', icon: '📖', endpoint: '/api/city-info' },
+            { name: 'Open Exchange Rates', desc: '166 currencies, daily updates', type: 'Currency', icon: '💱', endpoint: '/api/exchange-rates' },
+            { name: 'IP-API', desc: 'Visitor geolocation & currency', type: 'Geolocation', icon: '🌐', endpoint: '/api/geo' },
+          ].map((source) => (
+            <div
+              key={source.name}
+              className="flex items-start gap-3 p-3 bg-zinc-50 rounded-lg"
+            >
+              <span className="text-xl mt-0.5">{source.icon}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-zinc-900">{source.name}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">{source.type}</span>
+                </div>
+                <p className="text-xs text-zinc-500 mt-0.5">{source.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {favorites.length === 0 && trips.length === 0 && (
         <div className="text-center py-6 text-zinc-500">
           <p>Add favorites or save trips to get personalized recommendations.</p>

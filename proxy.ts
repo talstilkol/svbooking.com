@@ -40,7 +40,12 @@ const PUBLIC_PATHS = [
   '/api/agents/recommendations',
   '/api/agents/availability',
   '/api/catalog/discover',
+  '/api/catalog/discover-osm',
   '/api/catalog/validate',
+  '/api/exchange-rates',
+  '/api/geo',
+  '/api/weather',
+  '/api/city-info',
   '/api/agents/providers',
 ];
 
