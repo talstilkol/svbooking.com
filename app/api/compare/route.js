@@ -1,5 +1,5 @@
 import { getHotelRates } from '@/lib/hotel-pricing';
-import { HOTELS, listCities, getHotelsByCity, findHotel } from '@/lib/hotels-catalog';
+import { HOTELS, listCities, getHotelsByCity, findHotel, getFullCatalog } from '@/lib/hotels-catalog';
 import { kv } from '@/lib/kv';
 
 // GET /api/compare
@@ -79,6 +79,27 @@ export async function GET(request) {
       // Cache the result (fire-and-forget, 30 min TTL)
       if (rates.length > 0) {
         kv.setWithTTL(cacheKey, responseData, 1800).catch(() => {});
+
+        // Store price snapshot for history (fire-and-forget)
+        if (cheapest) {
+          (async () => {
+            try {
+              const snapshot = {
+                date: new Date().toISOString().split('T')[0],
+                price: cheapest.total,
+                provider: cheapest.provider,
+              };
+              const historyKey = `price-history:${hotelKey}`;
+              const history = (await kv.get(historyKey)) || [];
+              // Dedup: only one entry per day
+              if (!history.length || history[history.length - 1].date !== snapshot.date) {
+                history.push(snapshot);
+                const trimmed = history.slice(-90); // keep last 90 days
+                await kv.setWithTTL(historyKey, trimmed, 90 * 86400);
+              }
+            } catch { /* non-critical */ }
+          })();
+        }
       }
 
       return Response.json(
@@ -95,9 +116,10 @@ export async function GET(request) {
       );
     }
 
-    // Mode 3: catalog (cacheable for 5 minutes)
+    // Mode 3: catalog (cacheable for 5 minutes) — includes KV-discovered hotels
+    const fullCatalog = await getFullCatalog();
     return Response.json(
-      { cities: listCities(), hotels: HOTELS },
+      { cities: listCities(), hotels: fullCatalog },
       { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } }
     );
   } catch (err) {

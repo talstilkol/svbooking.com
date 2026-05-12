@@ -174,8 +174,8 @@ async function runBulkDiscovery() {
   // 2. Filter out hotels already in catalog
   const newHotels = discovered.filter((h) => !findHotel(h.hotelKey));
 
-  // 3. Validate a sample with Xotelo (max 30 to stay polite)
-  const samplesToValidate = newHotels.slice(0, 30);
+  // 3. Validate a sample with Xotelo (max 200 for faster catalog growth)
+  const samplesToValidate = newHotels.slice(0, 200);
   const validated = [];
 
   await withConcurrency(samplesToValidate, 3, async (hotel) => {
@@ -184,7 +184,7 @@ async function runBulkDiscovery() {
       validated.push(hotel);
     }
     return isValid;
-  }, 1500); // 1.5s delay between batches
+  }, 1000); // 1s delay between batches
 
   // 4. Store validated hotels in KV, grouped by city
   const byCity = new Map();

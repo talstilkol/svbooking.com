@@ -10,6 +10,7 @@ interface PriceHistoryProps {
 interface PricePoint {
   date: string;
   price: number;
+  provider?: string;
 }
 
 function hashKey(key: string, seed: number): number {
@@ -20,25 +21,63 @@ function hashKey(key: string, seed: number): number {
   return Math.abs(h);
 }
 
+function generateEstimatedData(hotelKey: string, days: number): PricePoint[] {
+  const points: PricePoint[] = [];
+  const basePrice = 80 + (hashKey(hotelKey, 42) % 200);
+
+  for (let i = days; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const noise = Math.sin(hashKey(hotelKey, i) * 0.01) * 30;
+    const trend = Math.sin(i * 0.05) * 15;
+    const price = Math.max(40, Math.round(basePrice + noise + trend));
+    points.push({ date: dateStr, price });
+  }
+  return points;
+}
+
 export default function PriceHistory({ hotelKey, className = '' }: PriceHistoryProps) {
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
+  const [realData, setRealData] = useState<PricePoint[] | null>(null);
+  const [hasRealData, setHasRealData] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const data = useMemo(() => {
-    const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
-    const points: PricePoint[] = [];
-    const basePrice = 80 + (hashKey(hotelKey, 42) % 200);
+  const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
 
-    for (let i = days; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const noise = Math.sin(hashKey(hotelKey, i) * 0.01) * 30;
-      const trend = Math.sin(i * 0.05) * 15;
-      const price = Math.max(40, Math.round(basePrice + noise + trend));
-      points.push({ date: dateStr, price });
-    }
-    return points;
-  }, [hotelKey, period]);
+  // Fetch real price history
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    fetch(`/api/price-history?hotelKey=${encodeURIComponent(hotelKey)}&period=${days}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        if (d.hasRealData && Array.isArray(d.points) && d.points.length > 0) {
+          setRealData(d.points);
+          setHasRealData(true);
+        } else {
+          setRealData(null);
+          setHasRealData(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRealData(null);
+          setHasRealData(false);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [hotelKey, days]);
+
+  // Use real data if available, otherwise estimated
+  const estimatedData = useMemo(() => generateEstimatedData(hotelKey, days), [hotelKey, days]);
+  const data = hasRealData && realData ? realData : estimatedData;
 
   const minPrice = Math.min(...data.map((d) => d.price));
   const maxPrice = Math.max(...data.map((d) => d.price));
@@ -65,7 +104,19 @@ export default function PriceHistory({ hotelKey, className = '' }: PriceHistoryP
   return (
     <div className={`bg-white border border-slate-200 rounded-2xl p-5 ${className}`}>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-slate-900">📈 Price History</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-bold text-slate-900">&#128200; Price History</h3>
+          {!loading && !hasRealData && (
+            <span className="text-[9px] font-medium bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+              Estimated
+            </span>
+          )}
+          {!loading && hasRealData && (
+            <span className="text-[9px] font-medium bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
+              Real data
+            </span>
+          )}
+        </div>
         <div className="flex gap-1">
           {(['7d', '30d', '90d'] as const).map((p) => (
             <button
@@ -106,50 +157,54 @@ export default function PriceHistory({ hotelKey, className = '' }: PriceHistoryP
       </div>
 
       {/* Chart */}
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-24" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id={`grad-${hotelKey}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={isDown ? '#22C55E' : '#3B82F6'} stopOpacity="0.3" />
-            <stop offset="100%" stopColor={isDown ? '#22C55E' : '#3B82F6'} stopOpacity="0.02" />
-          </linearGradient>
-        </defs>
+      {loading ? (
+        <div className="w-full h-24 bg-slate-100 rounded-lg animate-pulse" />
+      ) : (
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-24" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id={`grad-${hotelKey}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={isDown ? '#22C55E' : '#3B82F6'} stopOpacity="0.3" />
+              <stop offset="100%" stopColor={isDown ? '#22C55E' : '#3B82F6'} stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
 
-        {/* Area fill */}
-        <path d={areaPath} fill={`url(#grad-${hotelKey})`} />
+          {/* Area fill */}
+          <path d={areaPath} fill={`url(#grad-${hotelKey})`} />
 
-        {/* Line */}
-        <path
-          d={linePath}
-          fill="none"
-          stroke={isDown ? '#22C55E' : '#3B82F6'}
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+          {/* Line */}
+          <path
+            d={linePath}
+            fill="none"
+            stroke={isDown ? '#22C55E' : '#3B82F6'}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
 
-        {/* Min dot */}
-        {(() => {
-          const minIdx = data.findIndex((d) => d.price === minPrice);
-          const x = padding + ((W - 2 * padding) / (data.length - 1)) * minIdx;
-          const y = padding + ((H - 2 * padding) * (maxPrice - minPrice)) / range;
-          return <circle cx={x} cy={y} r="3" fill="#22C55E" />;
-        })()}
+          {/* Min dot */}
+          {(() => {
+            const minIdx = data.findIndex((d) => d.price === minPrice);
+            const x = padding + ((W - 2 * padding) / (data.length - 1)) * minIdx;
+            const y = padding + ((H - 2 * padding) * (maxPrice - minPrice)) / range;
+            return <circle cx={x} cy={y} r="3" fill="#22C55E" />;
+          })()}
 
-        {/* Current dot */}
-        {(() => {
-          const x = W - padding;
-          const y = padding + ((H - 2 * padding) * (maxPrice - currentPrice)) / range;
-          return <circle cx={x} cy={y} r="3" fill={isDown ? '#22C55E' : '#3B82F6'} />;
-        })()}
-      </svg>
+          {/* Current dot */}
+          {(() => {
+            const x = W - padding;
+            const y = padding + ((H - 2 * padding) * (maxPrice - currentPrice)) / range;
+            return <circle cx={x} cy={y} r="3" fill={isDown ? '#22C55E' : '#3B82F6'} />;
+          })()}
+        </svg>
+      )}
 
       {/* Verdict */}
       <div className={`mt-3 p-2 rounded-lg text-xs font-medium text-center ${
         isDown ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'
       }`}>
         {isDown
-          ? `💰 Price is ${Math.round(((avgPrice - currentPrice) / avgPrice) * 100)}% below average — good time to book!`
-          : `📊 Price is near or above average — consider flexible dates for savings`}
+          ? `&#128176; Price is ${Math.round(((avgPrice - currentPrice) / avgPrice) * 100)}% below average — good time to book!`
+          : `&#128202; Price is near or above average — consider flexible dates for savings`}
       </div>
     </div>
   );

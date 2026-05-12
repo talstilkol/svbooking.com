@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Sparkles } from 'lucide-react';
 import SearchAutocomplete from '@/components/SearchAutocomplete';
 import ProviderLogos from '@/components/ProviderLogos';
@@ -10,13 +11,17 @@ import ProviderLogos from '@/components/ProviderLogos';
 const ROTATING_CITIES = ['Tel Aviv', 'Paris', 'Tokyo', 'New York', 'Dubai', 'Barcelona', 'Rome', 'London'];
 
 const HERO_BG_IMAGES = [
-  'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=1600&q=80',
-  'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1600&q=80',
-  'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=1600&q=80',
-  'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1600&q=80',
+  'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=1200&q=75',
+  'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=75',
+  'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=1200&q=75',
+  'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200&q=75',
 ];
 
 const POPULAR_CHIPS = ['Tel Aviv', 'Paris', 'Tokyo', 'New York', 'Dubai'];
+
+// Tiny blur placeholder (4x3 gradient matching typical hero aesthetic)
+const BLUR_DATA_URL =
+  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSIzIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjMiIGZpbGw9IiMxZTNhNWYiLz48L3N2Zz4=';
 
 export default function HomeHero() {
   const router = useRouter();
@@ -41,11 +46,23 @@ export default function HomeHero() {
       {HERO_BG_IMAGES.map((src, i) => (
         <motion.div
           key={src}
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${src})`, y }}
+          className="absolute inset-0"
+          style={{ y }}
           animate={{ opacity: i === bgIdx ? 0.35 : 0 }}
           transition={{ duration: 1.6, ease: 'easeInOut' }}
-        />
+        >
+          <Image
+            src={src}
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={i === 0}
+            quality={75}
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
+          />
+        </motion.div>
       ))}
       <motion.div
         style={{ opacity }}

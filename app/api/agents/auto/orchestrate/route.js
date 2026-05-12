@@ -15,7 +15,7 @@
 
 import { runAgent, verifyCronAuth, AGENT_NAMES } from '@/lib/agent-utils';
 import { kv } from '@/lib/kv';
-import { addDiscoveredHotel } from '@/lib/hotels-catalog';
+import { addAndPersistHotel } from '@/lib/hotels-catalog';
 
 const AGENT_URLS = [
   { name: AGENT_NAMES.PROVIDER_MANAGER, path: '/api/agents/auto/provider-manager' },
@@ -71,7 +71,7 @@ async function runOrchestrator(baseUrl, authHeader) {
       for (const hotels of values) {
         if (!Array.isArray(hotels)) continue;
         for (const hotel of hotels) {
-          if (addDiscoveredHotel(hotel)) autoMerged++;
+          if (await addAndPersistHotel(hotel)) autoMerged++;
         }
       }
     }
