@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useTrips, SavedTrip } from '@/lib/useLocalStorage';
 import CheaperDates from '@/components/CheaperDates';
 
@@ -120,12 +121,20 @@ function TripsInner() {
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen">
+      {/* Gradient header */}
+      <div className="bg-linear-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white py-10 px-4 mb-8">
+        <div className="max-w-5xl mx-auto">
+          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">← Home</Link>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">My Trips</h1>
+          <p className="text-white/80">
+            Plan future vacations and let our AI agent find the best price across providers.
+          </p>
+        </div>
+      </div>
+
+      <div className="px-4 pb-8">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-4xl font-bold text-zinc-900 mb-2">My Trips</h1>
-        <p className="text-zinc-600 mb-6">
-          Plan future vacations and let our AI agent find the best price across providers.
-        </p>
 
         <form
           onSubmit={handleAdd}
@@ -334,6 +343,7 @@ function TripsInner() {
             })}
           </div>
         )}
+      </div>
       </div>
     </div>
   );

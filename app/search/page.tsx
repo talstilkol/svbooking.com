@@ -101,12 +101,18 @@ function SearchInner() {
   };
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen">
+      {/* Gradient header */}
+      <div className="bg-linear-to-r from-slate-700 via-slate-800 to-slate-900 text-white py-10 px-4 mb-6">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl md:text-4xl font-bold mb-1">Find a Hotel</h1>
+          <p className="text-white/70">
+            {allHotels.length} hotels across {cities.length} cities — compare live prices from 8+ providers
+          </p>
+        </div>
+      </div>
+      <div className="px-4 pb-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-zinc-900 mb-1">Find a Hotel</h1>
-        <p className="text-zinc-500 mb-6">
-          {allHotels.length} hotels across {cities.length} cities — compare live prices from 8+ providers
-        </p>
 
         {/* Search + Sort bar */}
         <form onSubmit={handleSearch} className="bg-white p-4 rounded-xl shadow-sm border border-zinc-200 mb-4 flex gap-3 flex-wrap items-center">
@@ -304,6 +310,7 @@ function SearchInner() {
             )}
           </>
         )}
+      </div>
       </div>
     </div>
   );

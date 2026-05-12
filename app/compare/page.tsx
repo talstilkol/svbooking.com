@@ -185,22 +185,30 @@ function CompareInner() {
   };
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-zinc-900 mb-2">
-          Hotel Price Comparison
-        </h1>
-        <div className="flex flex-wrap items-center gap-4 mb-6">
-          <p className="text-slate-600 flex-1">
-            Real-time prices from Booking.com, Expedia, Hotels.com, Agoda, Vio & more
-          </p>
-          <Link
-            href="/compare-hotels"
-            className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 text-sm font-medium transition shrink-0"
-          >
-            &#9878;&#65039; Side-by-side comparison
-          </Link>
+    <div className="min-h-screen">
+      {/* Gradient header */}
+      <div className="bg-linear-to-r from-blue-600 via-blue-700 to-cyan-600 text-white py-10 px-4 mb-8">
+        <div className="max-w-6xl mx-auto">
+          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">← Home</Link>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            Hotel Price Comparison
+          </h1>
+          <div className="flex flex-wrap items-center gap-4">
+            <p className="text-white/80 flex-1">
+              Real-time prices from Booking.com, Expedia, Hotels.com, Agoda, Vio & more
+            </p>
+            <Link
+              href="/compare-hotels"
+              className="px-4 py-2 bg-white/20 backdrop-blur text-white rounded-lg hover:bg-white/30 text-sm font-medium transition shrink-0"
+            >
+              &#9878;&#65039; Side-by-side comparison
+            </Link>
+          </div>
         </div>
+      </div>
+
+      <div className="px-4 pb-8">
+      <div className="max-w-6xl mx-auto">
 
         <div className="bg-white rounded-lg p-6 shadow-md border border-slate-200 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -403,6 +411,7 @@ function CompareInner() {
             })}
           </div>
         )}
+      </div>
       </div>
     </div>
   );

@@ -60,15 +60,22 @@ export default function FavoritesPage() {
     : '';
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen">
+      {/* Gradient header */}
+      <div className="bg-linear-to-r from-rose-500 via-pink-500 to-fuchsia-500 text-white py-10 px-4 mb-8">
+        <div className="max-w-6xl mx-auto">
+          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">← Home</Link>
+          <h1 className="text-3xl md:text-4xl font-bold mb-1">My Favorites</h1>
+          <p className="text-white/70">
+            {favorites.length} hotel{favorites.length !== 1 ? 's' : ''} saved locally on your device
+          </p>
+        </div>
+      </div>
+
+      <div className="px-4 pb-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">My Favorites</h1>
-            <p className="text-slate-500 mt-1">
-              {favorites.length} hotel{favorites.length !== 1 ? 's' : ''} saved locally on your device
-            </p>
-          </div>
+          <div></div>
           {favorites.length >= 2 && (
             <div className="flex gap-2">
               <button
@@ -184,6 +191,7 @@ export default function FavoritesPage() {
             })}
           </div>
         )}
+      </div>
       </div>
     </div>
   );

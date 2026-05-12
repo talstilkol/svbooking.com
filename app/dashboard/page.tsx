@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
+import Link from 'next/link';
 import DashboardStats from '@/components/DashboardStats';
 import ActivityFeed from '@/components/ActivityFeed';
 import QuickActions from '@/components/QuickActions';
@@ -15,15 +16,19 @@ import OnboardingTour from '@/components/OnboardingTour';
 export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+      {/* Gradient header */}
+      <div className="bg-linear-to-r from-indigo-600 via-blue-600 to-violet-600 text-white py-10 px-4 mb-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-            <p className="text-sm text-slate-500 mt-1">Your booking command center</p>
+            <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">← Home</Link>
+            <h1 className="text-3xl md:text-4xl font-bold">Dashboard</h1>
+            <p className="text-white/70 mt-1">Your booking command center</p>
           </div>
           <UserPreferences />
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 pb-8">
 
         {/* Onboarding */}
         <OnboardingTour className="mb-6" />

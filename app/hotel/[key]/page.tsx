@@ -125,6 +125,8 @@ export default function HotelDetailPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const { isFavorite, toggleFavorite, hydrated } = useFavorites();
   const { addRecentlyViewed } = useRecentlyViewed();
@@ -145,9 +147,12 @@ export default function HotelDetailPage() {
             country: d.hotel.country,
             image: d.hotel.image,
           });
+        } else if (d.error) {
+          setNotFound(true);
         }
       })
-      .catch(() => {});
+      .catch(() => setNotFound(true))
+      .finally(() => setInitialLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hotelKey]);
 
@@ -192,6 +197,50 @@ export default function HotelDetailPage() {
       alert('Link copied to clipboard!');
     }
   };
+
+  // Hotel not found state
+  if (notFound) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-4">🏨</div>
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">Hotel not found</h1>
+          <p className="text-slate-500 mb-6">
+            We couldn&apos;t find a hotel with this ID in our catalog. It may have been removed or the link is incorrect.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => router.back()}
+              className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:border-blue-300 hover:shadow-sm transition-all font-medium"
+            >
+              ← Go back
+            </button>
+            <Link
+              href="/search"
+              className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium shadow-sm"
+            >
+              Search hotels
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Initial loading skeleton
+  if (initialLoading && !displayHotel) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="relative h-72 md:h-96 bg-slate-200 animate-pulse" />
+        <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
+          <div className="h-6 bg-slate-200 rounded-lg w-48 animate-pulse" />
+          <div className="h-10 bg-slate-200 rounded-lg w-80 animate-pulse" />
+          <div className="h-4 bg-slate-200 rounded-lg w-40 animate-pulse" />
+          <div className="h-48 bg-slate-200 rounded-xl w-full animate-pulse mt-6" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
