@@ -73,7 +73,7 @@ export default function Footer() {
 
         <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs">
-            {`© ${year} SV Booking · Compare prices from 8+ OTA providers · 63 hotels across 20 cities`}
+            {`© ${year} SV Booking · Compare prices from 8+ OTA providers · 133 hotels across 40+ cities`}
           </p>
           <p className="text-xs">
             Prices from{' '}
