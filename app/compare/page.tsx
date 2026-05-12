@@ -11,7 +11,7 @@ import UrgencyBadge from '@/components/UrgencyBadge';
 import RecentlyCompared, { addToRecentlyCompared } from '@/components/RecentlyCompared';
 import DateSummary from '@/components/DateSummary';
 import ProviderInfo from '@/components/ProviderInfo';
-import { CompareCardSkeleton } from '@/components/Skeleton';
+import { CompareCardSkeleton, PageSkeleton } from '@/components/Skeleton';
 import GuestSelector from '@/components/GuestSelector';
 import ShareBar from '@/components/ShareBar';
 
@@ -419,7 +419,7 @@ function CompareInner() {
 
 export default function ComparePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen p-8 text-center text-zinc-500">Loading...</div>}>
+    <Suspense fallback={<PageSkeleton headerColor="bg-blue-700" />}>
       <CompareInner />
     </Suspense>
   );

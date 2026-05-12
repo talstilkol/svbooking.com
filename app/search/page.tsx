@@ -8,7 +8,7 @@ import MapView from '@/components/MapView';
 import FilterDrawer from '@/components/FilterDrawer';
 import RecentSearches, { addRecentSearch } from '@/components/RecentSearches';
 import SearchSuggestions from '@/components/SearchSuggestions';
-import { CardGridSkeleton } from '@/components/Skeleton';
+import { CardGridSkeleton, PageSkeleton } from '@/components/Skeleton';
 import SearchFilters, { type FilterOptions } from '@/components/SearchFilters';
 import EmptyState from '@/components/EmptyState';
 import { useDebounce } from '@/lib/useDebounce';
@@ -318,7 +318,7 @@ function SearchInner() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen p-8 text-center text-zinc-500">Loading...</div>}>
+    <Suspense fallback={<PageSkeleton headerColor="bg-slate-800" />}>
       <SearchInner />
     </Suspense>
   );

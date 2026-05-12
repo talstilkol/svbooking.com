@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useTrips, SavedTrip } from '@/lib/useLocalStorage';
 import CheaperDates from '@/components/CheaperDates';
+import { PageSkeleton } from '@/components/Skeleton';
 
 interface CatalogHotel {
   hotelKey: string;
@@ -351,7 +352,7 @@ function TripsInner() {
 
 export default function TripsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen p-8 text-center text-zinc-600">Loading...</div>}>
+    <Suspense fallback={<PageSkeleton headerColor="bg-teal-700" />}>
       <TripsInner />
     </Suspense>
   );

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import RatingBadge from '@/components/RatingBadge';
+import { PageSkeleton } from '@/components/Skeleton';
 
 interface Hotel {
   hotelKey: string;
@@ -333,7 +334,7 @@ function CompareHotelsInner() {
 
 export default function CompareHotelsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen p-8 text-center text-slate-500">Loading...</div>}>
+    <Suspense fallback={<PageSkeleton headerColor="bg-teal-700" />}>
       <CompareHotelsInner />
     </Suspense>
   );
