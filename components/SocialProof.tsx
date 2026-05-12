@@ -20,9 +20,13 @@ const ACTIVITY_TEMPLATES = [
 export default function SocialProof({ className = '' }: { className?: string }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [visible, setVisible] = useState(false);
+  const [minutesAgo, setMinutesAgo] = useState(1);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
+    // Set random time only on client (avoids hydration mismatch)
+    setMinutesAgo(Math.floor(Math.random() * 5) + 1);
+
     // Delay first show
     const initial = setTimeout(() => {
       setVisible(true);
@@ -38,6 +42,7 @@ export default function SocialProof({ className = '' }: { className?: string }) 
       setVisible(false);
       setTimeout(() => {
         setCurrentIdx((prev) => (prev + 1) % ACTIVITY_TEMPLATES.length);
+        setMinutesAgo(Math.floor(Math.random() * 5) + 1);
         setVisible(true);
       }, 500);
     }, 4000);
@@ -51,8 +56,8 @@ export default function SocialProof({ className = '' }: { className?: string }) 
 
   return (
     <div
-      className={`fixed bottom-20 md:bottom-4 left-4 z-30 transition-all duration-500 ${
-        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      className={`fixed bottom-24 md:bottom-6 left-4 z-40 transition-all duration-500 pointer-events-auto ${
+        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
       } ${className}`}
     >
       <div className="bg-white rounded-lg shadow-lg border border-slate-200 p-3 pr-10 max-w-xs relative">
@@ -70,7 +75,7 @@ export default function SocialProof({ className = '' }: { className?: string }) 
           Someone in {activity.city} {activity.action}
         </p>
         <p className="text-[10px] text-slate-300 mt-1">
-          {Math.floor(Math.random() * 5) + 1} min ago
+          {minutesAgo} min ago
         </p>
       </div>
     </div>
