@@ -2,11 +2,14 @@
 // Called by Vercel cron (every 6 hours) or manually from the dashboard.
 //
 // Execution order:
-//   1. Health Monitor  (fast, 5-10s)  — check what's working
-//   2. Enrichment      (medium, 30s)  — enrich metadata
-//   3. Discovery       (medium, 30s)  — find new hotels
-//   4. Price Cache     (slow, 2-5m)   — warm price cache
-//   5. Deal Scanner    (slow, 2-5m)   — find best deals
+//   1. Provider Manager  (fast, 5-10s)  — check providers, reset circuit breakers
+//   2. Health Monitor    (fast, 5-10s)  — check data sources
+//   3. Enrichment        (medium, 30s)  — enrich metadata
+//   4. Discovery         (medium, 30s)  — find new hotels (city-by-city)
+//   5. Bulk Discovery    (medium, 60s)  — massive Wikidata catalog expansion
+//   6. OSM Scanner       (medium, 60s)  — find hotels with TA refs from OpenStreetMap
+//   7. Price Cache       (slow, 2-5m)   — warm price cache
+//   8. Deal Scanner      (slow, 2-5m)   — find best deals
 //
 // Each agent runs independently. If one fails, the rest continue.
 
@@ -15,11 +18,15 @@ import { kv } from '@/lib/kv';
 import { addDiscoveredHotel } from '@/lib/hotels-catalog';
 
 const AGENT_URLS = [
-  { name: AGENT_NAMES.HEALTH_MONITOR, path: '/api/agents/auto/health-monitor' },
-  { name: AGENT_NAMES.ENRICHMENT,     path: '/api/agents/auto/enrichment' },
-  { name: AGENT_NAMES.DISCOVERY,      path: '/api/agents/auto/discovery' },
-  { name: AGENT_NAMES.PRICE_CACHE,    path: '/api/agents/auto/price-cache' },
-  { name: AGENT_NAMES.DEAL_SCANNER,   path: '/api/agents/auto/deal-scanner' },
+  { name: AGENT_NAMES.PROVIDER_MANAGER, path: '/api/agents/auto/provider-manager' },
+  { name: AGENT_NAMES.HEALTH_MONITOR,   path: '/api/agents/auto/health-monitor' },
+  { name: AGENT_NAMES.ENRICHMENT,       path: '/api/agents/auto/enrichment' },
+  { name: AGENT_NAMES.DISCOVERY,        path: '/api/agents/auto/discovery' },
+  { name: AGENT_NAMES.BULK_DISCOVERY,   path: '/api/agents/auto/bulk-discovery' },
+  { name: AGENT_NAMES.OSM_SCANNER,      path: '/api/agents/auto/osm-scanner' },
+  { name: AGENT_NAMES.XOTELO_DISCOVERY, path: '/api/agents/auto/xotelo-discovery' },
+  { name: AGENT_NAMES.PRICE_CACHE,      path: '/api/agents/auto/price-cache' },
+  { name: AGENT_NAMES.DEAL_SCANNER,     path: '/api/agents/auto/deal-scanner' },
 ];
 
 async function runOrchestrator(baseUrl, authHeader) {
