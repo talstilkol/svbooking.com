@@ -54,7 +54,7 @@ export default function FeatureHighlight({ className = '' }: { className?: strin
             href={f.href}
             className="group relative overflow-hidden rounded-2xl p-6 text-white hover:shadow-xl transition-shadow"
           >
-            <div className={`absolute inset-0 bg-gradient-to-br ${f.color}`} />
+            <div className={`absolute inset-0 bg-linear-to-br ${f.color}`} />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition" />
             <div className="relative">
               <span className="text-3xl block mb-3">{f.icon}</span>

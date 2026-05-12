@@ -295,9 +295,9 @@ export default function HotelDetailPage() {
             priority
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-blue-600" />
+          <div className="absolute inset-0 bg-linear-to-br from-blue-900 to-blue-600" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
 
         {/* Back button */}
         <button

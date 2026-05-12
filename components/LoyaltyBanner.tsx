@@ -85,7 +85,7 @@ export default function LoyaltyBanner({ className = '' }: LoyaltyBannerProps) {
   return (
     <div className={className}>
       <div
-        className={`relative overflow-hidden rounded-2xl p-5 text-white bg-gradient-to-r ${level.color}`}
+        className={`relative overflow-hidden rounded-2xl p-5 text-white bg-linear-to-r ${level.color}`}
       >
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-6 -translate-x-6" />

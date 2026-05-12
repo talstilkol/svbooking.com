@@ -63,7 +63,7 @@ export default function BookPage() {
             <textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={280} rows={3} className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2 bg-white dark:bg-zinc-800" />
           </div>
           {error && <p className="text-red-600 text-sm">{error}</p>}
-          <button type="submit" disabled={saving} className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-semibold disabled:opacity-50">
+          <button type="submit" disabled={saving} className="w-full py-3 rounded-xl bg-linear-to-r from-indigo-600 to-pink-600 text-white font-semibold disabled:opacity-50">
             {saving ? 'Saving...' : 'Save trip'}
           </button>
         </form>

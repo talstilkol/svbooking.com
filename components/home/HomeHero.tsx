@@ -49,7 +49,7 @@ export default function HomeHero() {
       ))}
       <motion.div
         style={{ opacity }}
-        className="absolute inset-0 bg-gradient-to-b from-blue-900/60 via-blue-800/40 to-sky-50"
+        className="absolute inset-0 bg-linear-to-b from-blue-900/60 via-blue-800/40 to-sky-50"
       />
 
       <div className="relative max-w-7xl mx-auto px-4 py-20 w-full">
@@ -78,7 +78,7 @@ export default function HomeHero() {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -60, opacity: 0 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent inline-block"
+                className="bg-linear-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent inline-block"
               >
                 {ROTATING_CITIES[cityIdx]}
               </motion.span>

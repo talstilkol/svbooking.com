@@ -86,7 +86,7 @@ export default function MapView({
 
       <div
         ref={containerRef}
-        className="relative bg-gradient-to-b from-sky-50 to-blue-50 overflow-hidden"
+        className="relative bg-linear-to-b from-sky-50 to-blue-50 overflow-hidden"
         style={{ aspectRatio: `${MAP_W}/${MAP_H}` }}
       >
         <svg

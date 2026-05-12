@@ -40,7 +40,7 @@ export default function HomeHowItWorks() {
             <Reveal key={s.title} delay={i * 0.12}>
               <div className="group relative p-8 rounded-3xl bg-white border border-slate-200/60 hover:border-slate-300 transition-all hover:-translate-y-1 hover:shadow-xl">
                 <div
-                  className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${s.color} flex items-center justify-center text-white mb-4 group-hover:rotate-6 transition-transform`}
+                  className={`w-14 h-14 rounded-2xl bg-linear-to-br ${s.color} flex items-center justify-center text-white mb-4 group-hover:rotate-6 transition-transform`}
                 >
                   <Icon className="w-7 h-7" />
                 </div>

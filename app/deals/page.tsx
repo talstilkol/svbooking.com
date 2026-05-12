@@ -53,7 +53,7 @@ export default function DealsPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-10 px-4">
+      <div className="bg-linear-to-r from-amber-500 to-orange-500 text-white py-10 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3 mb-3">
             <Link href="/" className="text-white/80 text-sm hover:text-white">&larr; Home</Link>

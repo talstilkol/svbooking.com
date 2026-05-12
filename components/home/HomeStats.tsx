@@ -21,10 +21,10 @@ export default function HomeStats() {
             <Reveal key={s.label} delay={i * 0.08}>
               <div className="relative p-6 rounded-2xl bg-white border border-slate-200/60 overflow-hidden group hover:shadow-lg transition-shadow">
                 <div
-                  className={`absolute -top-12 -right-12 w-32 h-32 rounded-full bg-gradient-to-br ${s.color} opacity-10 group-hover:opacity-20 transition-opacity`}
+                  className={`absolute -top-12 -right-12 w-32 h-32 rounded-full bg-linear-to-br ${s.color} opacity-10 group-hover:opacity-20 transition-opacity`}
                 />
                 <div
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center text-white mb-4`}
+                  className={`w-12 h-12 rounded-xl bg-linear-to-br ${s.color} flex items-center justify-center text-white mb-4`}
                 >
                   <Icon className="w-6 h-6" />
                 </div>

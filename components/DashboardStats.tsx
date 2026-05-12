@@ -63,7 +63,7 @@ export default function DashboardStats({ className = '' }: { className?: string 
             key={card.label}
             className="relative overflow-hidden rounded-xl p-4 text-white"
           >
-            <div className={`absolute inset-0 bg-gradient-to-br ${card.color}`} />
+            <div className={`absolute inset-0 bg-linear-to-br ${card.color}`} />
             <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -translate-y-4 translate-x-4" />
             <div className="relative">
               <span className="text-2xl block mb-1">{card.icon}</span>

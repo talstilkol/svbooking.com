@@ -33,7 +33,7 @@ export default function PriceBreakdown({
     <div className={className}>
       <button
         onClick={() => setShowDetails(!showDetails)}
-        className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-white border border-slate-200 rounded-xl hover:shadow-sm transition"
+        className="w-full flex items-center justify-between p-4 bg-linear-to-r from-slate-50 to-white border border-slate-200 rounded-xl hover:shadow-sm transition"
       >
         <div className="flex items-center gap-2">
           <span className="text-lg">💰</span>

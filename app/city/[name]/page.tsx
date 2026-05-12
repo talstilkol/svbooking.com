@@ -71,7 +71,7 @@ export default async function CityPage({ params }: Props) {
             priority
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
           <div className="max-w-5xl mx-auto">
             <nav className="text-sm text-white/60 mb-2">

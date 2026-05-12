@@ -40,9 +40,9 @@ interface WorldMapProps {
 
 export default function WorldMap({ onCitySelect, selectedCity, className = '' }: WorldMapProps) {
   return (
-    <div className={`relative bg-gradient-to-b from-sky-100 to-blue-100 rounded-2xl overflow-hidden border border-blue-200 ${className}`}>
+    <div className={`relative bg-linear-to-b from-sky-100 to-blue-100 rounded-2xl overflow-hidden border border-blue-200 ${className}`}>
       {/* Ocean background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-200/50 via-blue-100/30 to-sky-200/50" />
+      <div className="absolute inset-0 bg-linear-to-br from-blue-200/50 via-blue-100/30 to-sky-200/50" />
 
       {/* Simple continent shapes using CSS */}
       <svg

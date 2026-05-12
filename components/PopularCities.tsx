@@ -35,7 +35,7 @@ export default function PopularCities() {
                   sizes="(max-width: 768px) 50vw, 25vw"
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                 <h3 className="font-bold text-lg drop-shadow-lg">{city}</h3>
                 <p className="text-sm text-white/80">
