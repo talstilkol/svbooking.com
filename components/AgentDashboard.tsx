@@ -48,6 +48,23 @@ interface AvailabilityCheck {
   bookingLinks: { provider: string; url: string }[];
 }
 
+interface ProviderInfo {
+  id: string;
+  name: string;
+  priority: number;
+  configured: boolean;
+  available: boolean;
+  monthlyLimit: number;
+  dailyLimit: number;
+  callsThisMonth: number;
+  callsToday: number;
+  errors: number;
+  consecutiveErrors: number;
+  quotaUsedPct: number;
+  lastSuccess: string | null;
+  lastError: { message: string; at: string } | null;
+}
+
 function formatTimestamp(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -69,7 +86,8 @@ export default function AgentDashboard() {
   const [availCheckOut, setAvailCheckOut] = useState('');
   const [hotels, setHotels] = useState<{ hotelKey: string; name: string; city: string }[]>([]);
   const [dealsScannedAt, setDealsScannedAt] = useState<string | null>(null);
-  const [loading, setLoading] = useState({ health: false, deals: false, recs: false });
+  const [providers, setProviders] = useState<ProviderInfo[]>([]);
+  const [loading, setLoading] = useState({ health: false, deals: false, recs: false, providers: false });
   const { favorites } = useFavorites();
   const { trips } = useTrips();
 
@@ -109,6 +127,25 @@ export default function AgentDashboard() {
     setLoading((l) => ({ ...l, recs: false }));
   };
 
+  const fetchProviders = async () => {
+    setLoading((l) => ({ ...l, providers: true }));
+    try {
+      const res = await fetch('/api/agents/providers');
+      const data = await res.json();
+      setProviders(data.providers || []);
+    } catch { setProviders([]); }
+    setLoading((l) => ({ ...l, providers: false }));
+  };
+
+  const resetProviderBreaker = async (providerId: string) => {
+    await fetch('/api/agents/providers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reset', providerId }),
+    });
+    fetchProviders();
+  };
+
   const fetchHotels = async () => {
     try {
       const res = await fetch('/api/compare');
@@ -135,6 +172,7 @@ export default function AgentDashboard() {
     fetchHealth();
     fetchDeals();
     fetchHotels();
+    fetchProviders();
   }, []);
 
   useEffect(() => {
@@ -181,6 +219,69 @@ export default function AgentDashboard() {
               </div>
             )}
           </div>
+        )}
+      </div>
+
+      {/* Pricing Providers */}
+      <div className="bg-white border border-zinc-200 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-zinc-900">Pricing Providers</h3>
+          <button
+            onClick={fetchProviders}
+            disabled={loading.providers}
+            className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
+          >
+            {loading.providers ? 'Loading...' : 'Refresh'}
+          </button>
+        </div>
+        {providers.length > 0 ? (
+          <div className="space-y-3">
+            {providers.map((p) => (
+              <div key={p.id} className="flex items-center gap-3 p-3 bg-zinc-50 rounded-lg">
+                <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                  !p.configured ? 'bg-zinc-300' : p.available ? 'bg-emerald-500' : 'bg-red-500'
+                }`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-zinc-900">{p.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-600">
+                      #{p.priority}
+                    </span>
+                    {!p.configured && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-500">Not configured</span>
+                    )}
+                    {p.consecutiveErrors >= 5 && (
+                      <button
+                        onClick={() => resetProviderBreaker(p.id)}
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-600 hover:bg-red-200"
+                      >
+                        Circuit open — Reset
+                      </button>
+                    )}
+                  </div>
+                  {p.configured && (
+                    <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500">
+                      <span>Today: {p.callsToday}{p.dailyLimit > 0 ? `/${p.dailyLimit}` : ''}</span>
+                      <span>Month: {p.callsThisMonth}{p.monthlyLimit > 0 ? `/${p.monthlyLimit}` : ''}</span>
+                      {p.errors > 0 && <span className="text-amber-600">Errors: {p.errors}</span>}
+                    </div>
+                  )}
+                </div>
+                {p.configured && p.monthlyLimit > 0 && (
+                  <div className="w-16 h-1.5 bg-zinc-200 rounded-full overflow-hidden flex-shrink-0">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        p.quotaUsedPct > 80 ? 'bg-red-500' : p.quotaUsedPct > 50 ? 'bg-amber-500' : 'bg-emerald-500'
+                      }`}
+                      style={{ width: `${Math.min(100, p.quotaUsedPct)}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-zinc-500">Loading providers...</p>
         )}
       </div>
 

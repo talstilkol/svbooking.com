@@ -41,6 +41,7 @@ const PUBLIC_PATHS = [
   '/api/agents/availability',
   '/api/catalog/discover',
   '/api/catalog/validate',
+  '/api/agents/providers',
 ];
 
 function isPublicPath(pathname: string): boolean {
