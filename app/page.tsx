@@ -21,7 +21,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Animated hero with rotating cities + parallax */}
-      <Suspense fallback={<div className="min-h-[640px] bg-gradient-to-b from-blue-900 to-sky-50" />}>
+      <Suspense fallback={<div className="min-h-[640px] bg-linear-to-b from-blue-900 to-sky-50" />}>
         <HomeHero />
       </Suspense>
 
