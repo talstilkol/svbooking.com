@@ -51,13 +51,18 @@ const FAQ_ITEMS = [
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Contact Us</h1>
-          <p className="text-slate-600">We&apos;d love to hear from you</p>
+    <div className="min-h-screen">
+      {/* Gradient header */}
+      <div className="bg-linear-to-r from-sky-500 via-blue-500 to-indigo-500 text-white py-10 px-4 mb-8">
+        <div className="max-w-4xl mx-auto">
+          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">&larr; Home</Link>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">Contact Us</h1>
+          <p className="text-white/70">We&apos;d love to hear from you</p>
         </div>
+      </div>
 
+      <div className="px-4 pb-8">
+      <div className="max-w-4xl mx-auto">
         {/* Contact methods */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {CONTACT_METHODS.map((m) => (
@@ -109,6 +114,7 @@ export default function ContactPage() {
             Start Comparing
           </Link>
         </div>
+      </div>
       </div>
     </div>
   );

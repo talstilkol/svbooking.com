@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import DashboardStats from '@/components/DashboardStats';
 import LoyaltyBanner from '@/components/LoyaltyBanner';
 import DataExport from '@/components/DataExport';
@@ -12,16 +13,19 @@ import UpcomingTrips from '@/components/UpcomingTrips';
 
 export default function ProfilePage() {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">My Profile</h1>
-            <p className="text-sm text-slate-500 mt-1">Manage your preferences and data</p>
-          </div>
-          <UserPreferences />
+    <div className="min-h-screen">
+      {/* Gradient header */}
+      <div className="bg-linear-to-r from-violet-600 via-purple-600 to-indigo-600 text-white py-10 px-4 mb-8">
+        <div className="max-w-7xl mx-auto">
+          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">&larr; Home</Link>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">My Profile</h1>
+          <p className="text-white/70">Manage your preferences and data</p>
         </div>
+      </div>
+
+      <div className="px-4 pb-8">
+      <div className="max-w-7xl mx-auto">
+        <UserPreferences />
 
         {/* Onboarding */}
         <OnboardingTour className="mb-6" />
@@ -47,6 +51,7 @@ export default function ProfilePage() {
             <DataExport />
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

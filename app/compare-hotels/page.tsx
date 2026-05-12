@@ -105,19 +105,17 @@ function CompareHotelsInner() {
 
   return (
     <div className="min-h-screen">
-      <div className="bg-gradient-to-r from-blue-700 to-cyan-600 text-white py-10 px-4">
+      {/* Gradient header */}
+      <div className="bg-linear-to-r from-cyan-600 via-teal-600 to-emerald-600 text-white py-10 px-4 mb-8">
         <div className="max-w-7xl mx-auto">
-          <Link href="/compare" className="text-white/80 text-sm hover:text-white mb-3 inline-block">
-            &larr; Standard comparison
-          </Link>
-          <h1 className="text-3xl font-bold mb-1">Compare Hotels Side by Side</h1>
-          <p className="text-lg opacity-90">
-            Select up to 4 hotels and compare prices across all providers
-          </p>
+          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">&larr; Home</Link>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">Compare Hotels Side by Side</h1>
+          <p className="text-white/70">Select up to 4 hotels and compare prices across all providers</p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="px-4 pb-8">
+      <div className="max-w-7xl mx-auto">
         {/* Hotel Selection */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
           <h2 className="font-semibold text-slate-800 mb-4">
@@ -327,6 +325,7 @@ function CompareHotelsInner() {
             <p className="text-lg">Click &quot;Compare&quot; to fetch live prices for all selected hotels</p>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
