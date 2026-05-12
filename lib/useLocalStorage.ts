@@ -57,21 +57,43 @@ export interface SavedTrip {
   createdAt: string;
 }
 
+async function syncToCloud(type: 'favorites' | 'trips', data: unknown) {
+  try {
+    await fetch(`/api/me/${type}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    // cloud sync is best-effort
+  }
+}
+
 export function useFavorites() {
   const [favorites, setFavorites, hydrated] = useLocalStorage<FavoriteHotel[]>('svbooking:favorites', []);
 
   const isFavorite = (hotelKey: string) => favorites.some((f) => f.hotelKey === hotelKey);
 
-  const toggleFavorite = (hotel: Omit<FavoriteHotel, 'addedAt'>) => {
+  const toggleFavorite = async (hotel: Omit<FavoriteHotel, 'addedAt'>) => {
     setFavorites((prev) => {
       const exists = prev.some((f) => f.hotelKey === hotel.hotelKey);
-      if (exists) return prev.filter((f) => f.hotelKey !== hotel.hotelKey);
-      return [...prev, { ...hotel, addedAt: new Date().toISOString() }];
+      if (exists) {
+        const next = prev.filter((f) => f.hotelKey !== hotel.hotelKey);
+        syncToCloud('favorites', next);
+        return next;
+      }
+      const next = [...prev, { ...hotel, addedAt: new Date().toISOString() }];
+      syncToCloud('favorites', next);
+      return next;
     });
   };
 
   const removeFavorite = (hotelKey: string) => {
-    setFavorites((prev) => prev.filter((f) => f.hotelKey !== hotelKey));
+    setFavorites((prev) => {
+      const next = prev.filter((f) => f.hotelKey !== hotelKey);
+      syncToCloud('favorites', next);
+      return next;
+    });
   };
 
   return { favorites, isFavorite, toggleFavorite, removeFavorite, hydrated };

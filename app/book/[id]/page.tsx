@@ -1,211 +1,73 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
-interface Listing {
-  _id: string;
-  title: string;
-  location: string;
-  pricePerNight: number;
-  rating: number;
-  images?: string[];
-  description?: string;
-}
+interface Hotel { hotelKey: string; name: string; city: string; country: string; image: string; }
 
-export default function BookingForm() {
-  const { id } = useParams();
+export default function BookPage() {
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const [listing, setListing] = useState<Listing | null>(null);
-  const [form, setForm] = useState({
-    guestName: '',
-    checkIn: '',
-    checkOut: '',
-    guests: 1,
-  });
+  const [hotel, setHotel] = useState<Hotel | null>(null);
+  const [checkIn, setCheckIn] = useState('');
+  const [checkOut, setCheckOut] = useState('');
+  const [guests, setGuests] = useState(1);
+  const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const controller = new AbortController();
-    const fetchListing = async () => {
-      try {
-        const res = await fetch(`/api/listings/${id}`, { signal: controller.signal });
-        if (!res.ok) throw new Error('Not found');
-        const data = await res.json();
-        setListing(data);
-      } catch (err) {
-        if (err instanceof Error && err.name !== 'AbortError') setError('Hotel not found');
-      }
-    };
-    fetchListing();
-    return () => controller.abort();
+    fetch('/api/compare').then(r => r.json()).then(d => {
+      const h = (d.hotels || []).find((x: Hotel) => x.hotelKey === id);
+      if (h) setHotel(h); else setError('Hotel not found');
+    }).catch(() => setError('Failed to load'));
   }, [id]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const getNights = () => {
-    if (!form.checkIn || !form.checkOut) return 0;
-    const a = new Date(form.checkIn);
-    const b = new Date(form.checkOut);
-    if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime()) || a >= b) return 0;
-    return Math.ceil((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
-  };
-
-  const nights = getNights();
-  const totalPrice = listing ? nights * listing.pricePerNight : 0;
-
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    const cleanName = form.guestName.trim();
-    if (cleanName.length < 2) {
-      setError('Guest name must contain at least 2 characters');
-      setLoading(false);
-      return;
-    }
-    if (!form.checkIn || !form.checkOut) {
-      setError('Please select dates');
-      setLoading(false);
-      return;
-    }
-    const guestsNumber = Number(form.guests);
-    if (!Number.isInteger(guestsNumber) || guestsNumber < 1) {
-      setError('Guests must be a positive integer');
-      setLoading(false);
-      return;
-    }
-    if (new Date(form.checkIn) >= new Date(form.checkOut)) {
-      setError('Check-in must be before check-out');
-      setLoading(false);
-      return;
-    }
-
+    e.preventDefault(); setError(''); setSaving(true);
+    if (!checkIn || !checkOut) { setError('Please select dates'); setSaving(false); return; }
+    if (new Date(checkIn) >= new Date(checkOut)) { setError('Check-in must be before check-out'); setSaving(false); return; }
     try {
-      const res = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId: id, ...form }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Booking failed');
-      }
-
-      router.push('/search');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Booking failed');
-    } finally {
-      setLoading(false);
-    }
+      const res = await fetch('/api/me/trips', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ hotelKey: id, hotelName: hotel?.name, city: hotel?.city, country: hotel?.country, image: hotel?.image, checkIn, checkOut, guests, notes }) });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
+      router.push('/trips');
+    } catch (err: any) { setError(err.message || 'Failed to save trip'); }
+    finally { setSaving(false); }
   };
 
-  if (!listing) return <div className="min-h-screen p-8">Loading...</div>;
+  if (error && !hotel) return <div className="min-h-screen p-8 text-center"><p className="text-red-600 mb-4">{error}</p><Link href="/search" className="text-blue-600 underline">Browse hotels</Link></div>;
+  if (!hotel) return <div className="min-h-screen p-8 text-center">Loading...</div>;
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-2xl mx-auto">
-        <Link href="/search" className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
-          ← Back to search
-        </Link>
-        <h1 className="text-3xl font-bold text-zinc-900 mb-4">Book: {listing.title}</h1>
-        <p className="text-zinc-600 mb-2">{listing.location}</p>
-        <p className="text-2xl font-bold text-blue-600 mb-6">${listing.pricePerNight}/night</p>
-        {listing.description && (
-          <p className="text-zinc-600 mb-6">{listing.description}</p>
-        )}
-
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg p-6 shadow-md border border-zinc-200">
-          <h2 className="text-xl font-semibold text-zinc-900 mb-4">Booking Details</h2>
-          
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="book-name" className="block text-sm font-medium text-zinc-700 mb-1">Your Name</label>
-              <input
-                id="book-name"
-                name="guestName"
-                placeholder="Enter your name"
-                value={form.guestName}
-                onChange={handleChange}
-                required
-                className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white text-zinc-900"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="book-checkin" className="block text-sm font-medium text-zinc-700 mb-1">Check-in Date</label>
-              <input
-                id="book-checkin"
-                type="date"
-                name="checkIn"
-                value={form.checkIn}
-                onChange={handleChange}
-                required
-                className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white text-zinc-900"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="book-checkout" className="block text-sm font-medium text-zinc-700 mb-1">Check-out Date</label>
-              <input
-                id="book-checkout"
-                type="date"
-                name="checkOut"
-                value={form.checkOut}
-                onChange={handleChange}
-                required
-                className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white text-zinc-900"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="book-guests" className="block text-sm font-medium text-zinc-700 mb-1">Number of Guests</label>
-              <input
-                id="book-guests"
-                type="number"
-                name="guests"
-                min="1"
-                value={form.guests}
-                onChange={handleChange}
-                className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white text-zinc-900"
-              />
-            </div>
-
-            {nights > 0 && (
-              <div className="border border-zinc-200 rounded-lg p-4 bg-zinc-50">
-                <div className="flex justify-between text-sm text-zinc-600">
-                  <span>Nights</span>
-                  <span>{nights}</span>
-                </div>
-                <div className="flex justify-between text-sm text-zinc-600">
-                  <span>${listing.pricePerNight} × {nights} nights</span>
-                  <span>${totalPrice}</span>
-                </div>
-                <div className="flex justify-between font-bold text-lg text-zinc-900 mt-2 pt-2 border-t border-zinc-300">
-                  <span>Total</span>
-                  <span>${totalPrice}</span>
-                </div>
-              </div>
-            )}
-
-            {error && <p className="text-red-600">{error}</p>}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
-            >
-              {loading ? 'Processing...' : 'Confirm Booking'}
-            </button>
+    <div className="max-w-2xl mx-auto px-4 py-10">
+      <Link href={`/compare?hotelKey=${id}`} className="text-blue-600 hover:underline text-sm mb-4 inline-block">← Back to compare</Link>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-3xl font-bold mb-2">Book: {hotel.name}</h1>
+        <p className="text-zinc-600 mb-6">{hotel.city}, {hotel.country}</p>
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Check-in</label>
+            <input type="date" value={checkIn} onChange={e => setCheckIn(e.target.value)} required className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2 bg-white dark:bg-zinc-800" />
           </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Check-out</label>
+            <input type="date" value={checkOut} onChange={e => setCheckOut(e.target.value)} required className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2 bg-white dark:bg-zinc-800" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Guests</label>
+            <input type="number" min={1} max={20} value={guests} onChange={e => setGuests(Number(e.target.value))} className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2 bg-white dark:bg-zinc-800" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Notes (optional)</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={280} rows={3} className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2 bg-white dark:bg-zinc-800" />
+          </div>
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+          <button type="submit" disabled={saving} className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-semibold disabled:opacity-50">
+            {saving ? 'Saving...' : 'Save trip'}
+          </button>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }

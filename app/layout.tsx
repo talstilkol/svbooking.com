@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { ToastProvider } from "@/components/Toast";
 import ScrollToTop from "@/components/ScrollToTop";
 import BackToTop from "@/components/BackToTop";
 import CookieConsent from "@/components/CookieConsent";
@@ -11,7 +12,6 @@ import { WebsiteJsonLd } from "@/components/JsonLd";
 import MobileBottomBar from "@/components/MobileBottomBar";
 import SocialProof from "@/components/SocialProof";
 import AccessibilityPanel from "@/components/AccessibilityPanel";
-import { ToastProvider } from "@/components/Toast";
 import { OrganizationJsonLd, SearchActionJsonLd } from "@/components/SchemaOrg";
 import OfflineBanner from "@/components/OfflineBanner";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
@@ -69,7 +69,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
-      <body className="min-h-full flex flex-col bg-gradient-to-b from-sky-50 via-white to-amber-50/30">
+      <body className="min-h-full flex flex-col bg-linear-to-b from-sky-50 via-white to-amber-50/30">
         <ToastProvider>
         {/* Skip to main content — accessibility */}
         <a

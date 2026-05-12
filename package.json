@@ -6,14 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
     "@kinde-oss/kinde-auth-nextjs": "^2.12.1",
+    "@upstash/redis": "^1.38.0",
     "framer-motion": "^12.38.0",
     "lightningcss": "^1.32.0",
     "lucide-react": "^1.14.0",
-    "mongoose": "^9.6.2",
     "next": "^16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"
