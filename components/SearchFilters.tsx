@@ -76,14 +76,14 @@ export default function SearchFilters({
       {/* Toggle Button */}
       <button
         onClick={onToggle}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-zinc-200 hover:border-indigo-300 transition-colors"
       >
         <Filter className="w-4 h-4" />
         <span className="font-medium">Filters</span>
         {hasActiveFilters && (
           <span className="w-2 h-2 rounded-full bg-indigo-500" />
         )}
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">
+        <span className="text-sm text-zinc-500">
           {resultCount} results
         </span>
       </button>
@@ -95,14 +95,14 @@ export default function SearchFilters({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full left-0 right-0 mt-2 p-5 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl z-50"
+            className="absolute top-full left-0 right-0 mt-2 p-5 bg-white rounded-2xl border border-zinc-200 shadow-xl z-50"
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-bold">Filters</h3>
               <button
                 onClick={onClear}
-                className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                className="text-sm text-zinc-500 hover:text-zinc-700"
               >
                 Clear all
               </button>
@@ -119,8 +119,8 @@ export default function SearchFilters({
                       onClick={() => toggleStar(star)}
                       className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-colors ${
                         filters.stars.includes(star)
-                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300'
-                          : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                          : 'border-zinc-200 hover:border-zinc-300'
                       }`}
                     >
                       <Star className={`w-3.5 h-3.5 ${filters.stars.includes(star) ? 'fill-current' : ''}`} />
@@ -135,7 +135,7 @@ export default function SearchFilters({
                 <label className="text-sm font-semibold mb-2 block">Price Range (per night)</label>
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200">
                       <DollarSign className="w-4 h-4 text-zinc-400" />
                       <input
                         type="number"
@@ -148,7 +148,7 @@ export default function SearchFilters({
                   </div>
                   <span className="text-zinc-400">-</span>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200">
                       <DollarSign className="w-4 h-4 text-zinc-400" />
                       <input
                         type="number"
@@ -174,8 +174,8 @@ export default function SearchFilters({
                         onClick={() => toggleAmenity(amenity.id)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors ${
                           filters.amenities.includes(amenity.id)
-                            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300'
-                            : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                            : 'border-zinc-200 hover:border-zinc-300'
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5" />
@@ -192,7 +192,7 @@ export default function SearchFilters({
                 <select
                   value={filters.sort}
                   onChange={(e) => handleSortChange(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
+                  className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white"
                 >
                   <option value="name">Name (A-Z)</option>
                   <option value="name-desc">Name (Z-A)</option>

@@ -23,7 +23,7 @@ export default function DashboardClient({ userName }: { userName: string }) {
             {userName}
           </span>
         </h1>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">Your travel command center.</p>
+        <p className="mt-2 text-zinc-600">Your travel command center.</p>
       </motion.div>
 
       <SuggestionsPanel />
@@ -31,12 +31,12 @@ export default function DashboardClient({ userName }: { userName: string }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         <Reveal delay={0.0}>
           <Link href="/favorites" className="block group">
-            <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 hover:border-pink-400 transition-colors">
+            <div className="p-6 rounded-2xl bg-white border border-zinc-200/60 hover:border-pink-400 transition-colors">
               <Heart className="w-8 h-8 text-pink-500 mb-3" />
               <div className="text-3xl font-bold">
                 <AnimatedCounter value={favorites.length} />
               </div>
-              <div className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">Favorite hotels</div>
+              <div className="text-sm text-zinc-600 mt-1">Favorite hotels</div>
               <div className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-pink-600 group-hover:gap-2 transition-all">
                 Manage <ArrowRight className="w-3 h-3" />
               </div>
@@ -45,12 +45,12 @@ export default function DashboardClient({ userName }: { userName: string }) {
         </Reveal>
         <Reveal delay={0.08}>
           <Link href="/trips" className="block group">
-            <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 hover:border-purple-400 transition-colors">
+            <div className="p-6 rounded-2xl bg-white border border-zinc-200/60 hover:border-purple-400 transition-colors">
               <Calendar className="w-8 h-8 text-purple-500 mb-3" />
               <div className="text-3xl font-bold">
                 <AnimatedCounter value={trips.length} />
               </div>
-              <div className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+              <div className="text-sm text-zinc-600 mt-1">
                 Saved trips ({upcoming} upcoming)
               </div>
               <div className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-purple-600 group-hover:gap-2 transition-all">
@@ -61,10 +61,10 @@ export default function DashboardClient({ userName }: { userName: string }) {
         </Reveal>
         <Reveal delay={0.16}>
           <Link href="/compare" className="block group">
-            <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 hover:border-amber-400 transition-colors">
+            <div className="p-6 rounded-2xl bg-white border border-zinc-200/60 hover:border-amber-400 transition-colors">
               <BarChart3 className="w-8 h-8 text-amber-500 mb-3" />
               <div className="text-3xl font-bold">5+</div>
-              <div className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">Price providers compared</div>
+              <div className="text-sm text-zinc-600 mt-1">Price providers compared</div>
               <div className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-amber-600 group-hover:gap-2 transition-all">
                 Compare now <ArrowRight className="w-3 h-3" />
               </div>

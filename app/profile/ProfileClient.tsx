@@ -95,7 +95,7 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
             <h1 className="text-3xl md:text-4xl font-bold">
               {userName} {userFamilyName}
             </h1>
-            <p className="text-zinc-600 dark:text-zinc-400 flex items-center gap-1 mt-1">
+            <p className="text-zinc-600 flex items-center gap-1 mt-1">
               <Mail className="w-4 h-4" />
               {userEmail}
             </p>
@@ -105,29 +105,29 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
 
       <Reveal delay={0.08}>
         <div className="grid grid-cols-2 gap-3 mb-8">
-          <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 flex items-center gap-3">
+          <div className="p-4 rounded-2xl bg-white border border-zinc-200/60 flex items-center gap-3">
             <Heart className="w-8 h-8 text-pink-500" />
             <div>
               <div className="text-2xl font-bold">{favorites.length}</div>
-              <div className="text-sm text-zinc-600 dark:text-zinc-400">Favorites</div>
+              <div className="text-sm text-zinc-600">Favorites</div>
             </div>
           </div>
-          <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/60 flex items-center gap-3">
+          <div className="p-4 rounded-2xl bg-white border border-zinc-200/60 flex items-center gap-3">
             <Plane className="w-8 h-8 text-purple-500" />
             <div>
               <div className="text-2xl font-bold">{trips.length}</div>
-              <div className="text-sm text-zinc-600 dark:text-zinc-400">Trips planned</div>
+              <div className="text-sm text-zinc-600">Trips planned</div>
             </div>
           </div>
         </div>
       </Reveal>
 
       <Reveal delay={0.16}>
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200/60 dark:border-zinc-800/60">
+        <div className="bg-white rounded-2xl p-6 border border-zinc-200/60">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold">Travel preferences</h2>
             {!cloudEnabled && (
-              <span className="text-xs px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
+              <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">
                 Local only (KV not configured)
               </span>
             )}
@@ -150,7 +150,7 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
           ) : (
             <div className="space-y-5">
               <div>
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2 mb-1.5">
+                <label className="text-sm font-medium text-zinc-700 flex items-center gap-2 mb-1.5">
                   <MapPin className="w-4 h-4" />
                   Home city
                 </label>
@@ -159,13 +159,13 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                   value={prefs.homeCity || ''}
                   onChange={(e) => setPrefs({ ...prefs, homeCity: e.target.value })}
                   placeholder="e.g. Tel Aviv"
-                  className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                  className="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2 mb-1.5">
+                  <label className="text-sm font-medium text-zinc-700 flex items-center gap-2 mb-1.5">
                     <Users className="w-4 h-4" />
                     Default guests
                   </label>
@@ -175,11 +175,11 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                     max={20}
                     value={prefs.defaultGuests || 2}
                     onChange={(e) => setPrefs({ ...prefs, defaultGuests: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                    className="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2 mb-1.5">
+                  <label className="text-sm font-medium text-zinc-700 flex items-center gap-2 mb-1.5">
                     <Calendar className="w-4 h-4" />
                     Default nights
                   </label>
@@ -189,18 +189,18 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                     max={60}
                     value={prefs.defaultTripLength || 3}
                     onChange={(e) => setPrefs({ ...prefs, defaultTripLength: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                    className="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2 mb-1.5">
+                  <label className="text-sm font-medium text-zinc-700 flex items-center gap-2 mb-1.5">
                     <DollarSign className="w-4 h-4" />
                     Currency
                   </label>
                   <select
                     value={prefs.currency || 'USD'}
                     onChange={(e) => setPrefs({ ...prefs, currency: e.target.value as Prefs['currency'] })}
-                    className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                    className="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white"
                   >
                     <option>USD</option>
                     <option>EUR</option>
@@ -211,7 +211,7 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
               </div>
 
               <div>
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5 block">
+                <label className="text-sm font-medium text-zinc-700 mb-1.5 block">
                   Favorite destinations
                 </label>
                 <div className="flex gap-2 mb-2">
@@ -226,12 +226,12 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                       }
                     }}
                     placeholder="Add a city…"
-                    className="flex-1 px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800"
+                    className="flex-1 px-3 py-2 rounded-lg border border-zinc-300 bg-white"
                   />
                   <button
                     type="button"
                     onClick={addDestination}
-                    className="px-4 py-2 rounded-lg bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-sm font-semibold"
+                    className="px-4 py-2 rounded-lg bg-zinc-200 hover:bg-zinc-300 text-sm font-semibold"
                   >
                     Add
                   </button>
@@ -244,7 +244,7 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
-                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-sm"
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm"
                     >
                       {d}
                       <button onClick={() => removeDestination(d)} className="ml-1 hover:text-indigo-900">

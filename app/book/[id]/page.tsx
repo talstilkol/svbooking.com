@@ -45,22 +45,22 @@ export default function BookPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-3xl font-bold mb-2">Book: {hotel.name}</h1>
         <p className="text-zinc-600 mb-6">{hotel.city}, {hotel.country}</p>
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 border border-zinc-200 space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">Check-in</label>
-            <input type="date" value={checkIn} onChange={e => setCheckIn(e.target.value)} required className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2 bg-white dark:bg-zinc-800" />
+            <input type="date" value={checkIn} onChange={e => setCheckIn(e.target.value)} required className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Check-out</label>
-            <input type="date" value={checkOut} onChange={e => setCheckOut(e.target.value)} required className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2 bg-white dark:bg-zinc-800" />
+            <input type="date" value={checkOut} onChange={e => setCheckOut(e.target.value)} required className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Guests</label>
-            <input type="number" min={1} max={20} value={guests} onChange={e => setGuests(Number(e.target.value))} className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2 bg-white dark:bg-zinc-800" />
+            <input type="number" min={1} max={20} value={guests} onChange={e => setGuests(Number(e.target.value))} className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Notes (optional)</label>
-            <textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={280} rows={3} className="w-full border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-2 bg-white dark:bg-zinc-800" />
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={280} rows={3} className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white" />
           </div>
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <button type="submit" disabled={saving} className="w-full py-3 rounded-xl bg-linear-to-r from-indigo-600 to-pink-600 text-white font-semibold disabled:opacity-50">
