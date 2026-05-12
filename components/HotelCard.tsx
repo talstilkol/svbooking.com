@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useFavorites } from '@/lib/useLocalStorage';
+import { useToast } from '@/components/Toast';
 import RatingBadge from '@/components/RatingBadge';
 
 export interface CatalogHotel {
@@ -15,6 +16,7 @@ export interface CatalogHotel {
 
 export default function HotelCard({ hotel }: { hotel: CatalogHotel }) {
   const { isFavorite, toggleFavorite, hydrated } = useFavorites();
+  const { showToast } = useToast();
   const fav = hydrated && isFavorite(hotel.hotelKey);
 
   return (
@@ -22,7 +24,7 @@ export default function HotelCard({ hotel }: { hotel: CatalogHotel }) {
       <Link href={`/hotel/${hotel.hotelKey}`} className="relative block">
         <Image src={hotel.image} alt={hotel.name} width={400} height={192} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
         <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(hotel); }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(hotel); showToast(fav ? `Removed ${hotel.name} from favorites` : `Added ${hotel.name} to favorites`, 'success'); }}
           aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
           className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-md hover:scale-110 transition"
         >

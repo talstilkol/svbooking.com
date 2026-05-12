@@ -7,6 +7,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useFavorites, useRecentlyViewed } from '@/lib/useLocalStorage';
 import { useCurrency } from '@/components/CurrencySelector';
+import { useToast } from '@/components/Toast';
 import RatingBadge from '@/components/RatingBadge';
 import ProviderLogos from '@/components/ProviderLogos';
 import DateSummary from '@/components/DateSummary';
@@ -131,6 +132,7 @@ export default function HotelDetailPage() {
   const { isFavorite, toggleFavorite, hydrated } = useFavorites();
   const { addRecentlyViewed } = useRecentlyViewed();
   const { currency } = useCurrency();
+  const { showToast } = useToast();
 
   // Fetch hotel info from catalog immediately (for hero + recently viewed)
   useEffect(() => {
@@ -194,7 +196,7 @@ export default function HotelDetailPage() {
       } catch { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(url);
-      alert('Link copied to clipboard!');
+      showToast('Link copied to clipboard!', 'success');
     }
   };
 
@@ -330,7 +332,7 @@ export default function HotelDetailPage() {
                 </button>
                 {hydrated && (
                   <button
-                    onClick={() => toggleFavorite(displayHotel)}
+                    onClick={() => { toggleFavorite(displayHotel); showToast(fav ? `Removed ${displayHotel.name} from favorites` : `Added ${displayHotel.name} to favorites`, 'success'); }}
                     aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
                     className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center hover:scale-110 transition"
                   >
