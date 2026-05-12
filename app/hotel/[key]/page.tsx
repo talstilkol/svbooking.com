@@ -48,6 +48,9 @@ const RoomTypeSelector = dynamic(() => import('@/components/RoomTypeSelector'), 
 const HotelPolicies = dynamic(() => import('@/components/HotelPolicies'), { ssr: false });
 const PriceBreakdown = dynamic(() => import('@/components/PriceBreakdown'), { ssr: false });
 const LoyaltyBanner = dynamic(() => import('@/components/LoyaltyBanner'), { ssr: false });
+const HolidayWarning = dynamic(() => import('@/components/HolidayWarning'), { ssr: false });
+const CityDescription = dynamic(() => import('@/components/CityDescription'), { ssr: false });
+const PriceInCurrencies = dynamic(() => import('@/components/PriceInCurrencies'), { ssr: false });
 const UserReviewForm = dynamic(() => import('@/components/UserReviewForm'), { ssr: false });
 const HotelQuickFacts = dynamic(() => import('@/components/HotelQuickFacts'), { ssr: false });
 const ProviderTrustScore = dynamic(() => import('@/components/ProviderTrustScore'), { ssr: false });
@@ -612,6 +615,25 @@ export default function HotelDetailPage() {
               </div>
             )}
 
+            {/* Holiday warning */}
+            {displayHotel && (
+              <HolidayWarning
+                country={displayHotel.country}
+                checkIn={data.checkIn}
+                checkOut={data.checkOut}
+                className="mt-4"
+              />
+            )}
+
+            {/* Price in other currencies */}
+            {data.cheapest && (
+              <PriceInCurrencies
+                amount={data.cheapest.total}
+                baseCurrency={data.currency}
+                className="mt-4"
+              />
+            )}
+
             {/* Cheaper dates */}
             <div className="mt-4">
               <CheaperDates
@@ -678,6 +700,11 @@ export default function HotelDetailPage() {
         <div className="mt-8">
           <PriceTrend hotelKey={hotelKey} nights={nights || 1} currency={currency} />
         </div>
+
+        {/* About the city */}
+        {displayHotel && (
+          <CityDescription city={displayHotel.city} className="mt-8" />
+        )}
 
         {/* Nearby attractions + Weather + Flights */}
         {displayHotel && (

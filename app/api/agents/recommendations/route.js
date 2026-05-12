@@ -1,5 +1,5 @@
-import { getRates } from '@/lib/xotelo';
-import { HOTELS, findHotel } from '@/lib/hotels-catalog';
+import { HOTELS, findHotel, getHotelsByCountry } from '@/lib/hotels-catalog';
+import { getCachedRates } from '@/lib/price-cache';
 
 function addDays(dateStr, days) {
   const d = new Date(dateStr);
@@ -9,7 +9,7 @@ function addDays(dateStr, days) {
 
 async function checkPriceForHotel(hotelKey, checkIn, checkOut) {
   try {
-    const result = await getRates({ hotelKey, checkIn, checkOut });
+    const result = await getCachedRates({ hotelKey, checkIn, checkOut });
     const rates = (result?.rates || [])
       .map((r) => ({ provider: r.name, total: Number(r.rate || 0) + Number(r.tax || 0) }))
       .filter((r) => r.total > 0)
@@ -28,59 +28,102 @@ export async function POST(request) {
     const recommendations = [];
     const today = new Date().toISOString().split('T')[0];
 
-    for (const trip of trips.slice(0, 3)) {
-      if (!trip.hotelKey || !trip.checkIn || !trip.checkOut) continue;
-      if (trip.checkIn < today) continue;
+    // ── Trip-based recommendations (parallel price checks) ──
+    const validTrips = trips
+      .slice(0, 3)
+      .filter((t) => t.hotelKey && t.checkIn && t.checkOut && t.checkIn >= today);
 
+    // Build all price check tasks upfront, then run in parallel
+    const tripPriceTasks = [];
+    for (const trip of validTrips) {
       const hotel = findHotel(trip.hotelKey);
       if (!hotel) continue;
-
-      const currentPrice = await checkPriceForHotel(trip.hotelKey, trip.checkIn, trip.checkOut);
-      if (!currentPrice) continue;
-
       const altCheckIn = addDays(trip.checkIn, -3);
       const altCheckOut = addDays(trip.checkOut, -3);
+
+      tripPriceTasks.push({
+        type: 'current',
+        hotel,
+        trip,
+        promise: checkPriceForHotel(trip.hotelKey, trip.checkIn, trip.checkOut),
+      });
       if (altCheckIn >= today) {
-        const altPrice = await checkPriceForHotel(trip.hotelKey, altCheckIn, altCheckOut);
-        if (altPrice && altPrice.total < currentPrice.total * 0.9) {
-          const savingsPct = Math.round(((currentPrice.total - altPrice.total) / currentPrice.total) * 100);
-          recommendations.push({
-            type: 'timing_suggestion',
-            title: `Save ${savingsPct}% on ${hotel.name}`,
-            description: `Moving your trip 3 days earlier saves $${(currentPrice.total - altPrice.total).toFixed(0)} (${altCheckIn} to ${altCheckOut})`,
-            hotel,
-            action: { label: 'Compare Dates', href: `/compare?hotelKey=${hotel.hotelKey}&checkIn=${altCheckIn}&checkOut=${altCheckOut}` },
-            priority: savingsPct >= 20 ? 'high' : 'medium',
-          });
-        }
-      }
-    }
-
-    for (const fav of favorites.slice(0, 3)) {
-      if (!fav.hotelKey) continue;
-      const hotel = findHotel(fav.hotelKey);
-      if (!hotel) continue;
-
-      const checkIn = addDays(today, 14);
-      const checkOut = addDays(today, 16);
-      const price = await checkPriceForHotel(fav.hotelKey, checkIn, checkOut);
-      if (price) {
-        recommendations.push({
-          type: 'new_deal',
-          title: `${hotel.name} from $${price.total.toFixed(0)}/2 nights`,
-          description: `Your favorited hotel in ${hotel.city} is available via ${price.provider} — check if it fits your schedule`,
+        tripPriceTasks.push({
+          type: 'alt',
           hotel,
-          action: { label: 'View Deal', href: `/compare?hotelKey=${hotel.hotelKey}&checkIn=${checkIn}&checkOut=${checkOut}` },
-          priority: 'medium',
+          trip,
+          altCheckIn,
+          altCheckOut,
+          promise: checkPriceForHotel(trip.hotelKey, altCheckIn, altCheckOut),
         });
       }
     }
 
+    // Run ALL trip price checks in parallel (instead of sequential)
+    const tripResults = await Promise.allSettled(tripPriceTasks.map((t) => t.promise));
+    const priceMap = new Map();
+    tripPriceTasks.forEach((task, i) => {
+      const result = tripResults[i];
+      const price = result.status === 'fulfilled' ? result.value : null;
+      const key = `${task.trip.hotelKey}:${task.type}`;
+      priceMap.set(key, { ...task, price });
+    });
+
+    // Build timing suggestions from parallel results
+    for (const trip of validTrips) {
+      const hotel = findHotel(trip.hotelKey);
+      if (!hotel) continue;
+      const current = priceMap.get(`${trip.hotelKey}:current`);
+      const alt = priceMap.get(`${trip.hotelKey}:alt`);
+
+      if (current?.price && alt?.price && alt.price.total < current.price.total * 0.9) {
+        const savingsPct = Math.round(((current.price.total - alt.price.total) / current.price.total) * 100);
+        recommendations.push({
+          type: 'timing_suggestion',
+          title: `Save ${savingsPct}% on ${hotel.name}`,
+          description: `Moving your trip 3 days earlier saves $${(current.price.total - alt.price.total).toFixed(0)} (${alt.altCheckIn} to ${alt.altCheckOut})`,
+          hotel,
+          action: { label: 'Compare Dates', href: `/compare?hotelKey=${hotel.hotelKey}&checkIn=${alt.altCheckIn}&checkOut=${alt.altCheckOut}` },
+          priority: savingsPct >= 20 ? 'high' : 'medium',
+        });
+      }
+    }
+
+    // ── Favorite-based recommendations (parallel price checks) ──
+    const validFavs = favorites.slice(0, 3).filter((f) => f.hotelKey);
+    const favCheckIn = addDays(today, 14);
+    const favCheckOut = addDays(today, 16);
+
+    const favResults = await Promise.allSettled(
+      validFavs.map((fav) => checkPriceForHotel(fav.hotelKey, favCheckIn, favCheckOut))
+    );
+
+    validFavs.forEach((fav, i) => {
+      const result = favResults[i];
+      const price = result.status === 'fulfilled' ? result.value : null;
+      if (!price) return;
+
+      const hotel = findHotel(fav.hotelKey);
+      if (!hotel) return;
+
+      recommendations.push({
+        type: 'new_deal',
+        title: `${hotel.name} from $${price.total.toFixed(0)}/2 nights`,
+        description: `Your favorited hotel in ${hotel.city} is available via ${price.provider} — check if it fits your schedule`,
+        hotel,
+        action: { label: 'View Deal', href: `/compare?hotelKey=${hotel.hotelKey}&checkIn=${favCheckIn}&checkOut=${favCheckOut}` },
+        priority: 'medium',
+      });
+    });
+
+    // ── Similar hotel suggestions (no API calls needed) ──
     if (favorites.length > 0) {
       const favCountries = [...new Set(favorites.map((f) => f.country).filter(Boolean))];
+      const favKeys = new Set(favorites.map((f) => f.hotelKey));
+
       for (const country of favCountries.slice(0, 1)) {
-        const hotelsInCountry = HOTELS.filter(
-          (h) => h.country === country && !favorites.some((f) => f.hotelKey === h.hotelKey)
+        const hotelsInCountry = getHotelsByCountry(country).filter(
+          (h) => !favKeys.has(h.hotelKey)
         );
         if (hotelsInCountry.length > 0) {
           const suggest = hotelsInCountry[0];
@@ -89,7 +132,7 @@ export async function POST(request) {
             title: `Discover ${suggest.name}`,
             description: `Since you like hotels in ${country}, check out ${suggest.name} in ${suggest.city}`,
             hotel: suggest,
-            action: { label: 'Explore', href: `/compare?hotelKey=${suggest.hotelKey}&checkIn=${addDays(today, 14)}&checkOut=${addDays(today, 16)}` },
+            action: { label: 'Explore', href: `/compare?hotelKey=${suggest.hotelKey}&checkIn=${favCheckIn}&checkOut=${favCheckOut}` },
             priority: 'low',
           });
         }
