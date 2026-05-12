@@ -20,6 +20,9 @@ export default function DestinationExplorer() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(false);
+  const [checkIn, setCheckIn] = useState('');
+  const [checkOut, setCheckOut] = useState('');
+  const [showDates, setShowDates] = useState(false);
 
   useEffect(() => {
     if (!selectedContinent && !selectedCountry) return;
@@ -32,6 +35,8 @@ export default function DestinationExplorer() {
     } else if (selectedContinent) {
       params.set('continent', selectedContinent);
     }
+    if (checkIn) params.set('checkIn', checkIn);
+    if (checkOut) params.set('checkOut', checkOut);
 
     fetch(`/api/deals?${params.toString()}`, { signal: controller.signal })
       .then((res) => res.json())
@@ -42,15 +47,54 @@ export default function DestinationExplorer() {
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-  }, [selectedContinent, selectedCountry]);
+  }, [selectedContinent, selectedCountry, checkIn, checkOut]);
 
   const selectedContinentData = CONTINENTS.find((c) => c.id === selectedContinent);
 
   return (
     <div className="w-full">
-      <h2 className="text-2xl font-bold text-zinc-900 mb-6 text-center">
+      <h2 className="text-2xl font-bold text-zinc-900 mb-4 text-center">
         Explore by Destination
       </h2>
+
+      {/* Optional date picker toggle */}
+      <div className="flex justify-center mb-4">
+        <button
+          onClick={() => setShowDates(!showDates)}
+          className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 transition"
+        >
+          <span>📅</span>
+          {showDates ? 'Hide date filter' : 'Filter by dates'}
+        </button>
+      </div>
+
+      {showDates && (
+        <div className="flex flex-wrap justify-center items-center gap-3 mb-5 bg-blue-50 rounded-lg p-3">
+          <input
+            type="date"
+            aria-label="Check-in date"
+            value={checkIn}
+            onChange={(e) => setCheckIn(e.target.value)}
+            className="px-3 py-1.5 border border-zinc-300 rounded-lg text-sm bg-white text-zinc-900"
+          />
+          <span className="text-zinc-400 text-sm">to</span>
+          <input
+            type="date"
+            aria-label="Check-out date"
+            value={checkOut}
+            onChange={(e) => setCheckOut(e.target.value)}
+            className="px-3 py-1.5 border border-zinc-300 rounded-lg text-sm bg-white text-zinc-900"
+          />
+          {(checkIn || checkOut) && (
+            <button
+              onClick={() => { setCheckIn(''); setCheckOut(''); }}
+              className="text-xs text-red-500 hover:text-red-600"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-wrap justify-center gap-3 mb-6">
         {CONTINENTS.map((continent) => (

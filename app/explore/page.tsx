@@ -16,6 +16,23 @@ interface Deal {
   currency: string;
 }
 
+type SortOption = 'price' | 'name' | 'country';
+
+function sortDeals(deals: Deal[], sortBy: SortOption): Deal[] {
+  return [...deals].sort((a, b) => {
+    switch (sortBy) {
+      case 'price':
+        return a.pricePerNight - b.pricePerNight;
+      case 'name':
+        return a.hotel.name.localeCompare(b.hotel.name);
+      case 'country':
+        return a.hotel.country.localeCompare(b.hotel.country) || a.pricePerNight - b.pricePerNight;
+      default:
+        return 0;
+    }
+  });
+}
+
 export default function ExplorePage() {
   const [selectedContinent, setSelectedContinent] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -24,6 +41,9 @@ export default function ExplorePage() {
   const [checkOut, setCheckOut] = useState('');
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>('price');
+
+  const sortedDeals = sortDeals(deals, sortBy);
 
   useEffect(() => {
     if (!selectedContinent && !selectedCountry && !selectedCity) return;
@@ -164,15 +184,39 @@ export default function ExplorePage() {
           </div>
         )}
 
-        {/* Results */}
+        {/* Sort + Results */}
+        {deals.length > 0 && !loading && (
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-zinc-500">
+              {deals.length} {deals.length === 1 ? 'deal' : 'deals'} found
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-zinc-500">Sort by:</span>
+              {(['price', 'name', 'country'] as SortOption[]).map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => setSortBy(opt)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    sortBy === opt
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-white text-zinc-600 border border-zinc-200 hover:border-indigo-300'
+                  }`}
+                >
+                  {opt === 'price' ? '💰 Price' : opt === 'name' ? '🏨 Name' : '🌍 Country'}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
             <p className="text-zinc-500 mt-3">Finding the best deals...</p>
           </div>
-        ) : deals.length > 0 ? (
+        ) : sortedDeals.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {deals.map((deal) => (
+            {sortedDeals.map((deal) => (
               <DealCard key={deal.hotel.hotelKey} deal={deal} />
             ))}
           </div>
