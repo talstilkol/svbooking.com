@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { CONTINENTS } from '@/lib/destinations';
 import DealCard from '@/components/DealCard';
 import WorldMap from '@/components/WorldMap';
+import DestinationIntel from '@/components/DestinationIntel';
 
 interface Deal {
   hotel: { hotelKey: string; name: string; city: string; country: string; image: string };
@@ -182,6 +183,16 @@ export default function ExplorePage() {
               </button>
             ))}
           </div>
+        )}
+
+        {/* Destination Intelligence */}
+        {selectedCity && (
+          <DestinationIntel
+            city={selectedCity}
+            checkIn={checkIn || undefined}
+            checkOut={checkOut || undefined}
+            className="mb-8"
+          />
         )}
 
         {/* Sort + Results */}

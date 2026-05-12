@@ -8,6 +8,7 @@ import LocalEvents from '@/components/LocalEvents';
 import SafetyInfo from '@/components/SafetyInfo';
 import FlightEstimate from '@/components/FlightEstimate';
 import RatingBadge from '@/components/RatingBadge';
+import DestinationIntel from '@/components/DestinationIntel';
 
 type Props = {
   params: Promise<{ name: string }>;
@@ -119,6 +120,9 @@ export default async function CityPage({ params }: Props) {
             </Link>
           ))}
         </div>
+
+        {/* Destination intelligence */}
+        <DestinationIntel city={city} country={country} className="mt-8" />
 
         {/* City guide + Travel info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
