@@ -11,6 +11,8 @@
 // Each agent runs independently. If one fails, the rest continue.
 
 import { runAgent, verifyCronAuth, AGENT_NAMES } from '@/lib/agent-utils';
+import { kv } from '@/lib/kv';
+import { addDiscoveredHotel } from '@/lib/hotels-catalog';
 
 const AGENT_URLS = [
   { name: AGENT_NAMES.HEALTH_MONITOR, path: '/api/agents/auto/health-monitor' },
@@ -50,6 +52,21 @@ async function runOrchestrator(baseUrl, authHeader) {
     }
   }
 
+  // Auto-merge discovered hotels into runtime catalog
+  let autoMerged = 0;
+  try {
+    const discoveredKeys = await kv.keys('discovered:hotels:*');
+    if (discoveredKeys.length > 0) {
+      const values = await kv.mget(discoveredKeys);
+      for (const hotels of values) {
+        if (!Array.isArray(hotels)) continue;
+        for (const hotel of hotels) {
+          if (addDiscoveredHotel(hotel)) autoMerged++;
+        }
+      }
+    }
+  } catch { /* non-critical */ }
+
   const completed = results.filter((r) => r.status === 'completed').length;
   const failed = results.filter((r) => r.status === 'error').length;
 
@@ -57,6 +74,7 @@ async function runOrchestrator(baseUrl, authHeader) {
     agentsRun: results.length,
     completed,
     failed,
+    autoMergedHotels: autoMerged,
     agents: results,
   };
 }

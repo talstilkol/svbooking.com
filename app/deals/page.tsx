@@ -24,24 +24,36 @@ export default function DealsPage() {
   const [continent, setContinent] = useState<string | null>(null);
   const [sort, setSort] = useState<SortOption>('price-asc');
   const [lastScanned, setLastScanned] = useState('');
+  const [strategy, setStrategy] = useState('');
+  const [error, setError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const fetchDeals = (cont: string | null) => {
+  useEffect(() => {
+    const controller = new AbortController();
     setLoading(true);
+    setError('');
     const params = new URLSearchParams();
-    if (cont) params.set('continent', cont);
-    fetch(`/api/deals?${params.toString()}`)
+    if (continent) params.set('continent', continent);
+    fetch(`/api/deals?${params.toString()}`, { signal: controller.signal })
       .then((r) => r.json())
       .then((d) => {
         setDeals(d.deals || []);
-        setLastScanned(new Date().toLocaleTimeString());
+        setStrategy(d.strategy || '');
+        if (d.scannedAt) {
+          setLastScanned(new Date(d.scannedAt).toLocaleTimeString());
+        } else {
+          setLastScanned(new Date().toLocaleTimeString());
+        }
       })
-      .catch(() => setDeals([]))
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
+        setDeals([]);
+        setError('Failed to load deals. Please try again.');
+      })
       .finally(() => setLoading(false));
-  };
 
-  useEffect(() => {
-    fetchDeals(continent);
-  }, [continent]);
+    return () => controller.abort();
+  }, [continent, refreshKey]);
 
   const sorted = [...deals].sort((a, b) => {
     if (sort === 'price-asc') return a.pricePerNight - b.pricePerNight;
@@ -63,7 +75,10 @@ export default function DealsPage() {
             Live prices scanned by our AI agents across {CONTINENTS.length} regions
           </p>
           {lastScanned && (
-            <p className="text-sm opacity-70 mt-2">Last scanned: {lastScanned}</p>
+            <p className="text-sm opacity-70 mt-2">
+              Last scanned: {lastScanned}
+              {strategy === 'cached-agent' && ' (instant from AI agent cache)'}
+            </p>
           )}
         </div>
       </div>
@@ -110,6 +125,13 @@ export default function DealsPage() {
           </select>
         </div>
 
+        {/* Error */}
+        {error && !loading && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
         {/* Results */}
         {loading ? (
           <div className="text-center py-16">
@@ -134,7 +156,7 @@ export default function DealsPage() {
         {!loading && (
           <div className="text-center mt-10">
             <button
-              onClick={() => fetchDeals(continent)}
+              onClick={() => setRefreshKey((k) => k + 1)}
               className="px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 font-medium transition"
             >
               &#128260; Refresh Deals

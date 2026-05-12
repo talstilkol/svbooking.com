@@ -126,7 +126,7 @@ async function buildPriceTrend(hotelKey, nights) {
     checkIn.setDate(today.getDate() + i);
     const checkInStr = checkIn.toISOString().split('T')[0];
     promises.push(
-      getHeatmap({ hotelKey, checkOut: checkOutStr })
+      getCachedHeatmap({ hotelKey, checkOut: checkOutStr })
         .then((result) => {
           if (!result) return null;
           // The heatmap result contains rates for different check-in dates
@@ -165,6 +165,7 @@ export async function GET(request) {
     const limit = Math.min(Number(searchParams.get('limit') || '10'), 15);
     const hotelKey = searchParams.get('hotelKey');
     const nights = Math.max(1, Number(searchParams.get('nights') || '1'));
+    const hasDates = Boolean(checkIn && checkOut);
 
     // Price trend mode for a single hotel
     if (hotelKey) {
@@ -222,10 +223,9 @@ export async function GET(request) {
       }
     }
 
-    const hasDates = Boolean(checkIn && checkOut);
-
-    // Heatmap for dateless queries (faster, wider coverage), getRates for specific dates
-    const tasks = hotels.slice(0, limit).map((hotel) =>
+    // Scan up to 30 hotels for dateless heatmap (fast), or up to limit for dated queries
+    const scanLimit = hasDates ? limit : Math.min(hotels.length, 30);
+    const tasks = hotels.slice(0, scanLimit).map((hotel) =>
       hasDates
         ? fetchDealForHotel(hotel, checkIn, checkOut)
         : fetchDealViaHeatmap(hotel)
@@ -236,15 +236,20 @@ export async function GET(request) {
     const deals = results
       .filter((r) => r.status === 'fulfilled' && r.value !== null)
       .map((r) => r.value)
-      .sort((a, b) => a.pricePerNight - b.pricePerNight);
+      .sort((a, b) => a.pricePerNight - b.pricePerNight)
+      .slice(0, limit);
 
-    return Response.json({
-      deals,
-      filter: { continent: continent || null, country: country || null, city: city || null },
-      dates: hasDates ? { checkIn, checkOut } : null,
-      strategy: hasDates ? 'rates' : 'heatmap',
-      totalHotelsScanned: hotels.length,
-    });
+    return Response.json(
+      {
+        deals,
+        filter: { continent: continent || null, country: country || null, city: city || null },
+        dates: hasDates ? { checkIn, checkOut } : null,
+        strategy: hasDates ? 'rates' : 'heatmap',
+        totalHotelsScanned: scanLimit,
+        scannedAt: new Date().toISOString(),
+      },
+      { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } }
+    );
   } catch (err) {
     console.error('GET /api/deals error:', err);
     const message = err instanceof Error ? err.message : 'Server error';

@@ -81,15 +81,18 @@ export async function GET(request) {
         kv.setWithTTL(cacheKey, responseData, 1800).catch(() => {});
       }
 
-      return Response.json(responseData);
+      return Response.json(
+        responseData,
+        { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' } }
+      );
     }
 
-    // Mode 2: list hotels in a city
+    // Mode 2: list hotels in a city (static catalog data)
     if (city) {
-      return Response.json({
-        city,
-        hotels: getHotelsByCity(city),
-      });
+      return Response.json(
+        { city, hotels: getHotelsByCity(city) },
+        { headers: { 'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1200' } }
+      );
     }
 
     // Mode 3: catalog (cacheable for 5 minutes)

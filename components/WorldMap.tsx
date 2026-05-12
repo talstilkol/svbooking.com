@@ -10,26 +10,58 @@ const CITY_PINS: {
   y: number; // percent from top
   emoji: string;
 }[] = [
-  { city: 'London',     country: 'UK',          x: 47.5, y: 22,   emoji: '🏰' },
+  // Europe
+  { city: 'London',     country: 'UK',           x: 47.5, y: 22,   emoji: '🏰' },
   { city: 'Paris',      country: 'France',       x: 49,   y: 24,   emoji: '🗼' },
   { city: 'Amsterdam',  country: 'Netherlands',  x: 49.5, y: 21,   emoji: '🌷' },
   { city: 'Rome',       country: 'Italy',        x: 51,   y: 28,   emoji: '🏟' },
+  { city: 'Venice',     country: 'Italy',        x: 51.5, y: 26,   emoji: '🛶' },
   { city: 'Barcelona',  country: 'Spain',        x: 48,   y: 27,   emoji: '⛪' },
+  { city: 'Granada',    country: 'Spain',        x: 47,   y: 29,   emoji: '🏰' },
+  { city: 'Malaga',     country: 'Spain',        x: 46.5, y: 30,   emoji: '🌞' },
   { city: 'Prague',     country: 'Czech Republic', x: 51.5, y: 22.5, emoji: '🏯' },
   { city: 'Vienna',     country: 'Austria',      x: 52,   y: 23,   emoji: '🎼' },
+  { city: 'Berlin',     country: 'Germany',      x: 51,   y: 20.5, emoji: '🐻' },
+  { city: 'Munich',     country: 'Germany',      x: 50.5, y: 23.5, emoji: '🍺' },
+  { city: 'Dresden',    country: 'Germany',      x: 51.5, y: 21,   emoji: '🏛' },
+  { city: 'Lisbon',     country: 'Portugal',     x: 45,   y: 28,   emoji: '🚋' },
+  { city: 'Porto',      country: 'Portugal',     x: 45.5, y: 26.5, emoji: '🍷' },
+  { city: 'Athens',     country: 'Greece',       x: 54,   y: 29,   emoji: '🏛' },
+  { city: 'Budapest',   country: 'Hungary',      x: 53,   y: 23.5, emoji: '♨️' },
+  { city: 'Helsinki',   country: 'Finland',      x: 53,   y: 16,   emoji: '❄️' },
+  { city: 'Zagreb',     country: 'Croatia',      x: 52.5, y: 25.5, emoji: '🏰' },
+  // Middle East
   { city: 'Istanbul',   country: 'Turkey',       x: 56,   y: 27,   emoji: '🕌' },
   { city: 'Dubai',      country: 'UAE',          x: 60,   y: 35,   emoji: '🏙' },
   { city: 'Tel Aviv',   country: 'Israel',       x: 56.5, y: 30,   emoji: '🌊' },
   { city: 'Jerusalem',  country: 'Israel',       x: 57,   y: 31,   emoji: '⛩' },
+  { city: 'Jeddah',     country: 'Saudi Arabia', x: 58,   y: 34,   emoji: '🕋' },
+  { city: 'Riyadh',     country: 'Saudi Arabia', x: 59,   y: 33,   emoji: '🏜' },
+  { city: 'Cairo',      country: 'Egypt',        x: 55,   y: 32,   emoji: '🔺' },
+  // Asia
   { city: 'Bangkok',    country: 'Thailand',     x: 74,   y: 38,   emoji: '🏛' },
   { city: 'Phuket',     country: 'Thailand',     x: 74,   y: 42,   emoji: '🌴' },
   { city: 'Singapore',  country: 'Singapore',    x: 77,   y: 45,   emoji: '🦁' },
   { city: 'Bali',       country: 'Indonesia',    x: 79,   y: 49,   emoji: '🌺' },
   { city: 'Tokyo',      country: 'Japan',        x: 86,   y: 28,   emoji: '🗻' },
-  { city: 'Sydney',     country: 'Australia',    x: 87,   y: 65,   emoji: '🦘' },
+  { city: 'Seoul',      country: 'South Korea',  x: 84,   y: 28,   emoji: '🏯' },
+  { city: 'Kuala Lumpur', country: 'Malaysia',   x: 76,   y: 44,   emoji: '🗼' },
+  { city: 'Jaipur',     country: 'India',        x: 66,   y: 34,   emoji: '🏰' },
+  { city: 'New Delhi',  country: 'India',        x: 66,   y: 32,   emoji: '🕌' },
+  { city: 'Colombo',    country: 'Sri Lanka',    x: 67,   y: 42,   emoji: '🌿' },
+  // Africa
+  { city: 'Nairobi',    country: 'Kenya',        x: 57,   y: 45,   emoji: '🦁' },
+  // Americas
   { city: 'New York',   country: 'USA',          x: 27,   y: 26,   emoji: '🗽' },
   { city: 'Miami',      country: 'USA',          x: 26,   y: 32,   emoji: '🏖' },
   { city: 'Las Vegas',  country: 'USA',          x: 19,   y: 28,   emoji: '🎰' },
+  { city: 'Toronto',    country: 'Canada',       x: 26,   y: 23,   emoji: '🍁' },
+  { city: 'Salvador',   country: 'Brazil',       x: 35,   y: 52,   emoji: '🎭' },
+  // Oceania
+  { city: 'Sydney',     country: 'Australia',    x: 87,   y: 65,   emoji: '🦘' },
+  { city: 'Melbourne',  country: 'Australia',    x: 86,   y: 68,   emoji: '☕' },
+  { city: 'Brisbane',   country: 'Australia',    x: 88,   y: 61,   emoji: '🌞' },
+  { city: 'Perth',      country: 'Australia',    x: 80,   y: 66,   emoji: '🦢' },
 ];
 
 interface WorldMapProps {

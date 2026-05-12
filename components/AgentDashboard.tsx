@@ -104,6 +104,9 @@ export default function AgentDashboard() {
   const [bgAgents, setBgAgents] = useState<BackgroundAgent[]>([]);
   const [bgLoading, setBgLoading] = useState(false);
   const [runningAgent, setRunningAgent] = useState<string | null>(null);
+  const [discoveredHotels, setDiscoveredHotels] = useState<Array<{ hotelKey: string; name: string; city: string; country: string; stars?: number; alreadyInCatalog: boolean; discoveredForCity: string }>>([]);
+  const [discoveredStats, setDiscoveredStats] = useState<{ total: number; newHotels: number; citiesScanned: number } | null>(null);
+  const [addingHotel, setAddingHotel] = useState<string | null>(null);
   const [loading, setLoading] = useState({ health: false, deals: false, recs: false, providers: false });
   const { favorites } = useFavorites();
   const { trips } = useTrips();
@@ -163,6 +166,41 @@ export default function AgentDashboard() {
     fetchProviders();
   };
 
+  const fetchDiscovered = async () => {
+    try {
+      const res = await fetch('/api/agents/discovered?stats=true');
+      const data = await res.json();
+      setDiscoveredHotels(data.hotels || []);
+      setDiscoveredStats({ total: data.total, newHotels: data.newHotels, citiesScanned: data.citiesScanned });
+    } catch { setDiscoveredHotels([]); }
+  };
+
+  const addDiscoveredHotel = async (hotel: { hotelKey: string; name: string; city: string; country: string; stars?: number }) => {
+    setAddingHotel(hotel.hotelKey);
+    try {
+      await fetch('/api/agents/discovered', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(hotel),
+      });
+      await fetchDiscovered();
+    } catch { /* ignore */ }
+    setAddingHotel(null);
+  };
+
+  const addAllDiscovered = async () => {
+    setAddingHotel('all');
+    try {
+      await fetch('/api/agents/discovered', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add-all' }),
+      });
+      await fetchDiscovered();
+    } catch { /* ignore */ }
+    setAddingHotel(null);
+  };
+
   const fetchBgAgents = async () => {
     setBgLoading(true);
     try {
@@ -210,6 +248,7 @@ export default function AgentDashboard() {
     fetchHotels();
     fetchProviders();
     fetchBgAgents();
+    fetchDiscovered();
   }, []);
 
   useEffect(() => {
@@ -391,6 +430,74 @@ export default function AgentDashboard() {
           <p className="text-sm text-zinc-500">Loading agents...</p>
         )}
       </div>
+
+      {/* Discovered Hotels */}
+      {discoveredHotels.length > 0 && (
+        <div className="bg-white border border-zinc-200 rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold text-zinc-900">Discovered Hotels</h3>
+              {discoveredStats && (
+                <p className="text-xs text-zinc-500 mt-0.5">
+                  {discoveredStats.total} found across {discoveredStats.citiesScanned} cities
+                  {discoveredStats.newHotels > 0 && (
+                    <span className="text-emerald-600 font-medium"> ({discoveredStats.newHotels} new)</span>
+                  )}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={fetchDiscovered}
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                Refresh
+              </button>
+              {discoveredStats && discoveredStats.newHotels > 0 && (
+                <button
+                  onClick={addAllDiscovered}
+                  disabled={addingHotel !== null}
+                  className="text-sm px-3 py-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {addingHotel === 'all' ? 'Adding...' : `Add All ${discoveredStats.newHotels} New`}
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {discoveredHotels.slice(0, 20).map((hotel) => (
+              <div key={hotel.hotelKey} className="flex items-center gap-3 p-2 bg-zinc-50 rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-zinc-900 truncate">{hotel.name}</span>
+                    {hotel.stars ? <span className="text-[10px] text-amber-500">{'*'.repeat(hotel.stars)}</span> : null}
+                    {hotel.alreadyInCatalog ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-500">In catalog</span>
+                    ) : (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">New</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-zinc-500">{hotel.city}, {hotel.country}</p>
+                </div>
+                {!hotel.alreadyInCatalog && (
+                  <button
+                    onClick={() => addDiscoveredHotel(hotel)}
+                    disabled={addingHotel !== null}
+                    className="text-xs px-2 py-1 text-emerald-600 hover:bg-emerald-50 rounded disabled:opacity-50"
+                  >
+                    {addingHotel === hotel.hotelKey ? 'Adding...' : 'Add'}
+                  </button>
+                )}
+              </div>
+            ))}
+            {discoveredHotels.length > 20 && (
+              <p className="text-xs text-zinc-400 text-center py-1">
+                + {discoveredHotels.length - 20} more hotels
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Top Deals */}
       <div>
