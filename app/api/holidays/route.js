@@ -1,0 +1,74 @@
+import { getPublicHolidays, getHolidaysInRange, getUpcomingHolidays, countryToCode } from '@/lib/holidays';
+
+/**
+ * GET /api/holidays?country=France
+ * GET /api/holidays?country=France&year=2026
+ * GET /api/holidays?country=France&checkIn=2026-07-10&checkOut=2026-07-17
+ * GET /api/holidays?countryCode=FR&upcoming=true
+ *
+ * Returns public holidays for travel planning.
+ * Helps users avoid expensive holiday weekends.
+ */
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const country = searchParams.get('country');
+    let countryCode = searchParams.get('countryCode');
+    const checkIn = searchParams.get('checkIn');
+    const checkOut = searchParams.get('checkOut');
+    const upcoming = searchParams.get('upcoming') === 'true';
+    const year = searchParams.get('year') ? Number(searchParams.get('year')) : undefined;
+
+    // Resolve country name to code
+    if (!countryCode && country) {
+      countryCode = countryToCode(country);
+    }
+
+    if (!countryCode) {
+      return Response.json(
+        { error: 'Provide country name or countryCode (ISO 3166-1 alpha-2)' },
+        { status: 400 }
+      );
+    }
+
+    // Check if holidays overlap with travel dates
+    if (checkIn && checkOut) {
+      const overlapping = await getHolidaysInRange(countryCode, checkIn, checkOut);
+      return Response.json({
+        countryCode,
+        checkIn,
+        checkOut,
+        holidays: overlapping,
+        hasHoliday: overlapping.length > 0,
+        warning: overlapping.length > 0
+          ? `Your stay overlaps with ${overlapping.length} public holiday(s). Prices may be higher.`
+          : null,
+      }, {
+        headers: { 'Cache-Control': 'public, s-maxage=86400' },
+      });
+    }
+
+    // Upcoming holidays (next 90 days)
+    if (upcoming) {
+      const holidays = await getUpcomingHolidays(countryCode);
+      return Response.json({
+        countryCode,
+        upcoming: holidays,
+      }, {
+        headers: { 'Cache-Control': 'public, s-maxage=86400' },
+      });
+    }
+
+    // Full year holidays
+    const holidays = await getPublicHolidays(countryCode, year);
+    return Response.json({
+      countryCode,
+      year: year || new Date().getFullYear(),
+      holidays,
+    }, {
+      headers: { 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800' },
+    });
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 500 });
+  }
+}

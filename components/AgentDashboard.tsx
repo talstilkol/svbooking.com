@@ -465,6 +465,8 @@ export default function AgentDashboard() {
             { name: 'Wikipedia', desc: 'City descriptions & images', type: 'Content', icon: '📖', endpoint: '/api/city-info' },
             { name: 'Open Exchange Rates', desc: '166 currencies, daily updates', type: 'Currency', icon: '💱', endpoint: '/api/exchange-rates' },
             { name: 'IP-API', desc: 'Visitor geolocation & currency', type: 'Geolocation', icon: '🌐', endpoint: '/api/geo' },
+            { name: 'Nager.Date', desc: 'Public holidays for 100+ countries', type: 'Holidays', icon: '📅', endpoint: '/api/holidays' },
+            { name: 'REST Countries', desc: 'Country metadata, currencies, languages', type: 'Reference', icon: '🏳️', endpoint: '' },
           ].map((source) => (
             <div
               key={source.name}

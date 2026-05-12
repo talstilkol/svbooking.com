@@ -46,6 +46,7 @@ const PUBLIC_PATHS = [
   '/api/geo',
   '/api/weather',
   '/api/city-info',
+  '/api/holidays',
   '/api/agents/providers',
 ];
 

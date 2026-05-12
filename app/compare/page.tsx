@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import CheaperDates from '@/components/CheaperDates';
+import HolidayWarning from '@/components/HolidayWarning';
 import RatingBadge from '@/components/RatingBadge';
 import ComparisonSummary from '@/components/ComparisonSummary';
 import UrgencyBadge from '@/components/UrgencyBadge';
@@ -397,6 +398,7 @@ function CompareInner() {
                           cheapest={result.cheapest}
                           savingsPct={result.savingsPct}
                         />
+                        <HolidayWarning country={hotel.country} checkIn={checkIn} checkOut={checkOut} className="mt-3" />
                         <CheaperDates hotelKey={hotel.hotelKey} checkIn={checkIn} checkOut={checkOut} />
                         <ShareBar
                           url={`${typeof window !== 'undefined' ? window.location.origin : ''}/compare?hotelKey=${hotel.hotelKey}&checkIn=${checkIn}&checkOut=${checkOut}`}
