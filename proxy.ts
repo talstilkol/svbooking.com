@@ -47,6 +47,7 @@ const PUBLIC_PATHS = [
   '/api/weather',
   '/api/city-info',
   '/api/holidays',
+  '/api/destination-intel',
   '/api/agents/providers',
 ];
 
