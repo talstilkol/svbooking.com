@@ -48,6 +48,16 @@ interface AvailabilityCheck {
   bookingLinks: { provider: string; url: string }[];
 }
 
+function formatTimestamp(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 export default function AgentDashboard() {
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [topDeals, setTopDeals] = useState<TopDeal[]>([]);
@@ -58,6 +68,7 @@ export default function AgentDashboard() {
   const [availCheckIn, setAvailCheckIn] = useState('');
   const [availCheckOut, setAvailCheckOut] = useState('');
   const [hotels, setHotels] = useState<{ hotelKey: string; name: string; city: string }[]>([]);
+  const [dealsScannedAt, setDealsScannedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState({ health: false, deals: false, recs: false });
   const { favorites } = useFavorites();
   const { trips } = useTrips();
@@ -78,6 +89,7 @@ export default function AgentDashboard() {
       const res = await fetch('/api/agents/deals?limit=6');
       const data = await res.json();
       setTopDeals(data.topDeals || []);
+      if (data.scannedAt) setDealsScannedAt(data.scannedAt);
     } catch { setTopDeals([]); }
     setLoading((l) => ({ ...l, deals: false }));
   };
@@ -140,13 +152,18 @@ export default function AgentDashboard() {
             <div className={`w-3 h-3 rounded-full ${statusColor} ${!health ? 'animate-pulse' : ''}`} />
             <h3 className="font-semibold text-zinc-900">System Health</h3>
           </div>
-          <button
-            onClick={fetchHealth}
-            disabled={loading.health}
-            className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
-          >
-            {loading.health ? 'Checking...' : 'Refresh'}
-          </button>
+          <div className="flex items-center gap-3">
+            {health?.checkedAt && (
+              <span className="text-xs text-zinc-400">Last checked: {formatTimestamp(health.checkedAt)}</span>
+            )}
+            <button
+              onClick={fetchHealth}
+              disabled={loading.health}
+              className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
+            >
+              {loading.health ? 'Checking...' : 'Refresh'}
+            </button>
+          </div>
         </div>
         {health && (
           <div className="space-y-2">
@@ -171,13 +188,18 @@ export default function AgentDashboard() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-zinc-900">Top Deals Found</h3>
-          <button
-            onClick={fetchDeals}
-            disabled={loading.deals}
-            className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
-          >
-            {loading.deals ? 'Scanning...' : 'Scan Again'}
-          </button>
+          <div className="flex items-center gap-3">
+            {dealsScannedAt && (
+              <span className="text-xs text-zinc-400">Last scanned: {formatTimestamp(dealsScannedAt)}</span>
+            )}
+            <button
+              onClick={fetchDeals}
+              disabled={loading.deals}
+              className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
+            >
+              {loading.deals ? 'Scanning...' : 'Scan Again'}
+            </button>
+          </div>
         </div>
         {loading.deals ? (
           <div className="text-center py-8">

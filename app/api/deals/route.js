@@ -15,6 +15,70 @@ function getDefaultDates() {
   return { checkIn, checkOut };
 }
 
+// Heatmap-based deal finder for dateless queries (faster, covers wide date range)
+async function fetchDealViaHeatmap(hotel, defaultNights = 2) {
+  try {
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Two strategic checkout dates: ~2 weeks and ~1 month out
+    const checkOutDates = [
+      addDays(todayStr, 14 + defaultNights),
+      addDays(todayStr, 30 + defaultNights),
+    ];
+
+    let bestDeal = null;
+    let bestPPN = Infinity;
+
+    for (const checkOutStr of checkOutDates) {
+      try {
+        const result = await getHeatmap({ hotelKey: hotel.hotelKey, checkOut: checkOutStr });
+        if (!result) continue;
+
+        const rates = result.rates || result.data || [];
+        if (!Array.isArray(rates)) continue;
+
+        for (const entry of rates) {
+          const checkIn = entry.chk_in || entry.date;
+          const totalPrice = Number(entry.rate || entry.price || entry.min_rate || 0);
+          if (!checkIn || totalPrice <= 0) continue;
+
+          // Only consider future check-in dates
+          if (checkIn < todayStr) continue;
+
+          const nights = Math.round(
+            (new Date(checkOutStr) - new Date(checkIn)) / (1000 * 60 * 60 * 24)
+          );
+          // Focus on short stays (1-4 nights) for meaningful deal comparison
+          if (nights < 1 || nights > 4) continue;
+
+          const ppn = totalPrice / nights;
+          if (ppn < bestPPN) {
+            bestPPN = ppn;
+            bestDeal = {
+              hotel,
+              bestPrice: totalPrice,
+              pricePerNight: Number(ppn.toFixed(2)),
+              bestProvider: 'Best Available',
+              checkIn,
+              checkOut: checkOutStr,
+              nights,
+              providerCount: 1,
+              currency: 'USD',
+            };
+          }
+        }
+      } catch {
+        // Skip failed heatmap calls
+      }
+    }
+
+    return bestDeal;
+  } catch {
+    return null;
+  }
+}
+
+// Live rate-based deal finder for queries with specific dates
 async function fetchDealForHotel(hotel, checkIn, checkOut) {
   try {
     const result = await getRates({ hotelKey: hotel.hotelKey, checkIn, checkOut });
@@ -125,10 +189,13 @@ export async function GET(request) {
       }
     }
 
-    const dates = checkIn && checkOut ? { checkIn, checkOut } : getDefaultDates();
+    const hasDates = Boolean(checkIn && checkOut);
 
+    // Heatmap for dateless queries (faster, wider coverage), getRates for specific dates
     const tasks = hotels.slice(0, limit).map((hotel) =>
-      fetchDealForHotel(hotel, dates.checkIn, dates.checkOut)
+      hasDates
+        ? fetchDealForHotel(hotel, checkIn, checkOut)
+        : fetchDealViaHeatmap(hotel)
     );
 
     const results = await Promise.allSettled(tasks);
@@ -141,7 +208,8 @@ export async function GET(request) {
     return Response.json({
       deals,
       filter: { continent: continent || null, country: country || null, city: city || null },
-      dates,
+      dates: hasDates ? { checkIn, checkOut } : null,
+      strategy: hasDates ? 'rates' : 'heatmap',
       totalHotelsScanned: hotels.length,
     });
   } catch (err) {

@@ -1,4 +1,4 @@
-import { getRates } from '@/lib/xotelo';
+import { getHeatmap } from '@/lib/xotelo';
 import { HOTELS } from '@/lib/hotels-catalog';
 
 function addDays(dateStr, days) {
@@ -7,45 +7,57 @@ function addDays(dateStr, days) {
   return d.toISOString().split('T')[0];
 }
 
-async function scanHotelDeals(hotel, horizonDays) {
+// Heatmap-based scanning: 2-3 calls per hotel covers entire horizon
+async function scanHotelViaHeatmap(hotel, horizonDays) {
   const today = new Date().toISOString().split('T')[0];
-  const windows = [
-    { checkIn: addDays(today, 7), checkOut: addDays(today, 9), label: 'next-week' },
-    { checkIn: addDays(today, 14), checkOut: addDays(today, 16), label: '2-weeks' },
-    { checkIn: addDays(today, 30), checkOut: addDays(today, 32), label: '1-month' },
-  ];
+  const defaultNights = 2;
 
+  // Strategic checkout dates — each heatmap call returns prices for many check-in dates
+  const checkOuts = [
+    { checkOut: addDays(today, 14 + defaultNights), label: 'next-2-weeks' },
+    { checkOut: addDays(today, 30 + defaultNights), label: '1-month' },
+  ];
   if (horizonDays >= 60) {
-    windows.push({ checkIn: addDays(today, 60), checkOut: addDays(today, 62), label: '2-months' });
+    checkOuts.push({ checkOut: addDays(today, 60 + defaultNights), label: '2-months' });
   }
 
   const results = [];
 
-  for (const window of windows) {
+  for (const { checkOut, label } of checkOuts) {
     try {
-      const result = await getRates({ hotelKey: hotel.hotelKey, checkIn: window.checkIn, checkOut: window.checkOut });
-      const rates = (result?.rates || [])
-        .map((r) => ({
-          provider: r.name,
-          total: Number(r.rate || 0) + Number(r.tax || 0),
-        }))
-        .filter((r) => r.total > 0)
-        .sort((a, b) => a.total - b.total);
+      const result = await getHeatmap({ hotelKey: hotel.hotelKey, checkOut });
+      if (!result) continue;
 
-      if (rates.length > 0) {
+      const rates = result.rates || result.data || [];
+      if (!Array.isArray(rates)) continue;
+
+      for (const entry of rates) {
+        const checkIn = entry.chk_in || entry.date;
+        const totalPrice = Number(entry.rate || entry.price || entry.min_rate || 0);
+        if (!checkIn || totalPrice <= 0) continue;
+
+        // Only future dates
+        if (checkIn < today) continue;
+
+        const nights = Math.round(
+          (new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)
+        );
+        // Focus on 1-4 night stays for comparable deals
+        if (nights < 1 || nights > 4) continue;
+
         results.push({
           hotel,
-          checkIn: window.checkIn,
-          checkOut: window.checkOut,
-          price: rates[0].total,
-          pricePerNight: Number((rates[0].total / 2).toFixed(2)),
-          provider: rates[0].provider,
-          label: window.label,
-          providerCount: rates.length,
+          checkIn,
+          checkOut,
+          price: totalPrice,
+          pricePerNight: Number((totalPrice / nights).toFixed(2)),
+          provider: 'Best Available',
+          label,
+          providerCount: 1,
         });
       }
     } catch {
-      // skip failed windows
+      // skip failed heatmap calls
     }
   }
 
@@ -65,7 +77,7 @@ export async function GET(request) {
     for (let i = 0; i < sampleHotels.length; i += batchSize) {
       const batch = sampleHotels.slice(i, i + batchSize);
       const batchResults = await Promise.allSettled(
-        batch.map((hotel) => scanHotelDeals(hotel, horizon))
+        batch.map((hotel) => scanHotelViaHeatmap(hotel, horizon))
       );
       for (const result of batchResults) {
         if (result.status === 'fulfilled') {
