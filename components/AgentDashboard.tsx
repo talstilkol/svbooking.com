@@ -249,6 +249,13 @@ export default function AgentDashboard() {
     fetchProviders();
     fetchBgAgents();
     fetchDiscovered();
+
+    // Auto-refresh health and agents every 60 seconds
+    const interval = setInterval(() => {
+      fetchHealth();
+      fetchBgAgents();
+    }, 60_000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {

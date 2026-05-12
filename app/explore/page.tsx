@@ -41,11 +41,28 @@ export default function ExplorePage() {
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [deals, setDeals] = useState<Deal[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortOption>('price');
+  const [strategy, setStrategy] = useState('');
 
   const sortedDeals = sortDeals(deals, sortBy);
 
+  // Load featured deals on initial mount (from agent cache if available)
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    fetch('/api/deals?limit=12', { signal: controller.signal })
+      .then((res) => res.json())
+      .then((data) => {
+        setDeals(data.deals || []);
+        setStrategy(data.strategy || '');
+      })
+      .catch((err) => { if (err.name !== 'AbortError') setDeals([]); })
+      .finally(() => setLoading(false));
+    return () => controller.abort();
+  }, []);
+
+  // Fetch filtered deals when user selects a filter
   useEffect(() => {
     if (!selectedContinent && !selectedCountry && !selectedCity) return;
 
@@ -60,7 +77,10 @@ export default function ExplorePage() {
 
     fetch(`/api/deals?${params.toString()}`, { signal: controller.signal })
       .then((res) => res.json())
-      .then((data) => setDeals(data.deals || []))
+      .then((data) => {
+        setDeals(data.deals || []);
+        setStrategy(data.strategy || '');
+      })
       .catch((err) => { if (err.name !== 'AbortError') setDeals([]); })
       .finally(() => setLoading(false));
 
@@ -200,6 +220,9 @@ export default function ExplorePage() {
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-zinc-500">
               {deals.length} {deals.length === 1 ? 'deal' : 'deals'} found
+              {strategy === 'cached-agent' && (
+                <span className="text-emerald-600 ml-1">(instant)</span>
+              )}
             </p>
             <div className="flex items-center gap-2">
               <span className="text-sm text-zinc-500">Sort by:</span>
@@ -231,16 +254,15 @@ export default function ExplorePage() {
               <DealCard key={deal.hotel.hotelKey} deal={deal} />
             ))}
           </div>
-        ) : (selectedContinent || selectedCountry || selectedCity) ? (
+        ) : (
           <div className="text-center py-12 text-zinc-500">
             <div className="text-4xl mb-3">🔍</div>
-            <p className="text-lg">No deals available right now.</p>
-            <p className="text-sm mt-2">Try a different region or clear date filters.</p>
-          </div>
-        ) : (
-          <div className="text-center py-12 text-zinc-400">
-            <div className="text-4xl mb-3">🗺️</div>
-            <p className="text-lg">Click a city on the map or a continent below to explore deals</p>
+            <p className="text-lg">No deals available right now</p>
+            <p className="text-sm mt-2">
+              {selectedContinent || selectedCountry || selectedCity
+                ? 'Try a different region or clear date filters.'
+                : 'Click a city on the map or a continent below to explore.'}
+            </p>
           </div>
         )}
       </div>
