@@ -4,14 +4,14 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'About SV Booking',
   description:
-    'Learn about SV Booking — the free hotel price comparison platform that helps travelers find the best deals across 8+ booking providers in 20+ cities worldwide.',
+    'Learn about SV Booking — the free hotel price comparison platform that helps travelers find the best deals across 8+ booking providers in 45+ cities worldwide.',
 };
 
 const STATS = [
-  { number: '63+', label: 'Hotels' },
-  { number: '20', label: 'Cities' },
+  { number: '130+', label: 'Hotels' },
+  { number: '45+', label: 'Cities' },
   { number: '8+', label: 'Providers' },
-  { number: '15+', label: 'Countries' },
+  { number: '20+', label: 'Countries' },
 ];
 
 const TEAM_VALUES = [
@@ -105,7 +105,7 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold text-slate-900 mb-4">How It Works</h2>
           <div className="space-y-4">
             {[
-              { step: '1', title: 'Search', desc: 'Enter a hotel name, city, or browse our curated catalog of 63+ premium hotels.' },
+              { step: '1', title: 'Search', desc: 'Enter a hotel name, city, or browse our curated catalog of 130+ premium hotels.' },
               { step: '2', title: 'Compare', desc: 'We fetch real-time prices from 8+ major booking providers simultaneously.' },
               { step: '3', title: 'Save', desc: 'Find a cheaper date? Set a price alert? Save to your trip planner — all free.' },
               { step: '4', title: 'Book', desc: 'Click through to the provider with the best price and book directly. No middleman.' },

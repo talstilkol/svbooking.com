@@ -31,7 +31,7 @@ const REASONS = [
   },
   {
     icon: '🌍',
-    title: '20 cities worldwide',
+    title: '45+ cities worldwide',
     desc: 'From Paris to Tokyo, Dubai to New York — find the best hotel deals in the most popular destinations.',
     color: 'bg-sky-50 border-sky-100',
   },

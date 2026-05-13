@@ -7,7 +7,7 @@ const STEPS = [
   {
     icon: Search,
     title: '1. Search',
-    desc: 'Browse curated hotels across 20 cities. Save your favorites.',
+    desc: 'Browse curated hotels across 45+ cities. Save your favorites.',
     color: 'from-blue-500 to-cyan-500',
   },
   {

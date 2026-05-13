@@ -32,7 +32,7 @@ export default function OnboardingTour({ className = '' }: { className?: string 
         {
           icon: '🔍',
           title: 'Search for a hotel',
-          description: 'Browse our catalog of 63 hotels across 20 cities',
+          description: 'Browse our catalog of 130+ hotels across 45+ cities',
           action: 'Search Now',
           href: '/search',
           completed: searches.length > 0,

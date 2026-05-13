@@ -17,7 +17,7 @@ const FAQS = [
   },
   {
     q: 'How many cities and hotels do you cover?',
-    a: 'We currently cover 63 hotels across 20 cities in over 15 countries worldwide, including popular destinations like Paris, London, Tokyo, Dubai, New York, and Bangkok.',
+    a: 'We currently cover 130+ hotels across 45+ cities in over 20 countries worldwide, including popular destinations like Paris, London, Tokyo, Dubai, New York, Bangkok, and many more. Our catalog grows daily through automated discovery.',
   },
   {
     q: 'What are AI Agents?',

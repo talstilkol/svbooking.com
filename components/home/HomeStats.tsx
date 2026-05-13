@@ -5,8 +5,8 @@ import AnimatedCounter from '@/components/ui/AnimatedCounter';
 import Reveal from '@/components/ui/Reveal';
 
 const STATS = [
-  { icon: Building2, value: 63, suffix: '+', label: 'Curated hotels', color: 'from-blue-500 to-cyan-500' },
-  { icon: Globe2, value: 20, suffix: '', label: 'Cities worldwide', color: 'from-purple-500 to-pink-500' },
+  { icon: Building2, value: 130, suffix: '+', label: 'Curated hotels', color: 'from-blue-500 to-cyan-500' },
+  { icon: Globe2, value: 46, suffix: '', label: 'Cities worldwide', color: 'from-purple-500 to-pink-500' },
   { icon: ShieldCheck, value: 8, suffix: '+', label: 'Price providers', color: 'from-emerald-500 to-teal-500' },
   { icon: TrendingUp, value: 35, suffix: '%', label: 'Average savings', color: 'from-amber-500 to-orange-500' },
 ];
