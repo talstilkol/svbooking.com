@@ -1,5 +1,9 @@
 import { kv } from '@/lib/kv';
 import { getAffiliateUrl } from '@/lib/affiliate';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+
+// Rate limiter: 60 clicks per minute per IP (generous but prevents abuse)
+const clickLimiter = rateLimit({ limit: 60, window: 60 });
 
 /**
  * POST /api/click
@@ -11,6 +15,11 @@ import { getAffiliateUrl } from '@/lib/affiliate';
  */
 export async function POST(request) {
   try {
+    // Rate limit
+    const ip = getClientIp(request);
+    const { success, reset } = await clickLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
+
     const body = await request.json();
     const { hotelKey, provider, url, price, currency } = body;
 

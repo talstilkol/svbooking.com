@@ -1,4 +1,8 @@
 import { getRates } from '@/lib/xotelo';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+
+// Rate limiter: 10 validation requests per minute per IP
+const validateLimiter = rateLimit({ limit: 10, window: 60 });
 
 /**
  * POST /api/catalog/validate
@@ -9,6 +13,11 @@ import { getRates } from '@/lib/xotelo';
  */
 export async function POST(request) {
   try {
+    // Rate limit to prevent Xotelo API abuse
+    const ip = getClientIp(request);
+    const { success, reset } = await validateLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
+
     const body = await request.json();
     const hotels = body.hotels || [];
 

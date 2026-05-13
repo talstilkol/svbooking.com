@@ -1,6 +1,10 @@
 import { getHotelRates } from '@/lib/hotel-pricing';
 import { HOTELS, listCities, getHotelsByCity, findHotel, getFullCatalog } from '@/lib/hotels-catalog';
 import { kv } from '@/lib/kv';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+
+// Rate limiter: 30 price comparisons per minute per IP
+const compareLimiter = rateLimit({ limit: 30, window: 60 });
 
 // GET /api/compare
 //   ?city=Paris                                      -> list hotels in city
@@ -35,6 +39,11 @@ export async function GET(request) {
           );
         }
       } catch { /* cache miss */ }
+
+      // Rate limit external API calls (cache hits skip this)
+      const ip = getClientIp(request);
+      const { success, remaining, reset } = await compareLimiter.check(ip);
+      if (!success) return rateLimitResponse(reset);
 
       const hotel = findHotel(hotelKey);
       const result = await getHotelRates({

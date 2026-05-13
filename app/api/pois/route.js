@@ -26,7 +26,10 @@ export async function GET(request) {
     const city = searchParams.get('city');
     let lat = parseFloat(searchParams.get('lat'));
     let lon = parseFloat(searchParams.get('lon'));
-    const radius = parseInt(searchParams.get('radius')) || (type === 'restaurants' ? 2000 : 5000);
+    const radius = Math.min(
+      parseInt(searchParams.get('radius')) || (type === 'restaurants' ? 2000 : 5000),
+      25000 // Cap radius at 25km to prevent abuse
+    );
 
     // Resolve city to coordinates if needed
     if (city && (!lat || !lon || isNaN(lat) || isNaN(lon))) {
