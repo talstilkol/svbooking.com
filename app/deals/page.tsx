@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import DealsClient from '@/components/DealsClient';
+import { BreadcrumbJsonLd } from '@/components/JsonLd';
 
 export const metadata: Metadata = {
   title: "Today's Best Hotel Deals — Compare Prices | SVBooking",
@@ -14,5 +15,15 @@ export const metadata: Metadata = {
 };
 
 export default function DealsPage() {
-  return <DealsClient />;
+  return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: 'https://svbooking.com' },
+          { name: 'Deals', url: 'https://svbooking.com/deals' },
+        ]}
+      />
+      <DealsClient />
+    </>
+  );
 }

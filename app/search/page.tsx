@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { HOTELS, listCities } from '@/lib/hotels-catalog';
 import SearchClient from '@/components/SearchClient';
+import { BreadcrumbJsonLd } from '@/components/JsonLd';
 
 type Props = {
   searchParams: Promise<{ city?: string }>;
@@ -25,5 +26,16 @@ export default async function SearchPage({ searchParams }: Props) {
   const hotels = HOTELS;
   const cities = listCities();
 
-  return <SearchClient hotels={hotels} cities={cities} initialCity={city || ''} />;
+  const breadcrumbs = [
+    { name: 'Home', url: 'https://svbooking.com' },
+    { name: 'Search', url: 'https://svbooking.com/search' },
+    ...(city ? [{ name: city, url: `https://svbooking.com/search?city=${encodeURIComponent(city)}` }] : []),
+  ];
+
+  return (
+    <>
+      <BreadcrumbJsonLd items={breadcrumbs} />
+      <SearchClient hotels={hotels} cities={cities} initialCity={city || ''} />
+    </>
+  );
 }

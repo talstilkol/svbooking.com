@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { findHotel } from '@/lib/hotels-catalog';
-import { LodgingJsonLd } from '@/components/JsonLd';
+import { LodgingJsonLd, BreadcrumbJsonLd } from '@/components/JsonLd';
 
 type Props = {
   params: Promise<{ key: string }>;
@@ -51,12 +51,21 @@ export default async function HotelLayout({ params, children }: Props) {
   return (
     <>
       {hotel && (
-        <LodgingJsonLd
-          name={hotel.name}
-          city={hotel.city}
-          country={hotel.country}
-          image={hotel.image}
-        />
+        <>
+          <BreadcrumbJsonLd
+            items={[
+              { name: 'Home', url: 'https://svbooking.com' },
+              { name: hotel.city, url: `https://svbooking.com/city/${encodeURIComponent(hotel.city)}` },
+              { name: hotel.name, url: `https://svbooking.com/hotel/${key}` },
+            ]}
+          />
+          <LodgingJsonLd
+            name={hotel.name}
+            city={hotel.city}
+            country={hotel.country}
+            image={hotel.image}
+          />
+        </>
       )}
       {children}
     </>

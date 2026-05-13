@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { BreadcrumbJsonLd } from '@/components/JsonLd';
 
 export const metadata: Metadata = {
   title: 'About SV Booking',
@@ -40,6 +41,12 @@ const TEAM_VALUES = [
 export default function AboutPage() {
   return (
     <div className="min-h-screen">
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Home', url: 'https://svbooking.com' },
+          { name: 'About', url: 'https://svbooking.com/about' },
+        ]}
+      />
       {/* Hero */}
       <div className="bg-linear-to-br from-blue-600 to-indigo-700 text-white py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
