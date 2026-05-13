@@ -95,8 +95,7 @@ describe('validation', () => {
     });
 
     it('handles errors with status property', async () => {
-      const err = new Error('Unauthorized');
-      (err as any).status = 401;
+      const err = Object.assign(new Error('Unauthorized'), { status: 401 });
       const res = errorResponse(err);
       expect(res.status).toBe(401);
     });

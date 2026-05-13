@@ -3,12 +3,12 @@ import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 // Mock the KV module to use in-memory storage for tests
 vi.mock('@/lib/kv', () => {
-  const store = new Map<string, any>();
+  const store = new Map<string, unknown>();
   return {
     kv: {
       get: vi.fn(async (key: string) => store.get(key) || null),
-      set: vi.fn(async (key: string, value: any) => store.set(key, value)),
-      setWithTTL: vi.fn(async (key: string, value: any) => store.set(key, value)),
+      set: vi.fn(async (key: string, value: unknown) => store.set(key, value)),
+      setWithTTL: vi.fn(async (key: string, value: unknown) => store.set(key, value)),
     },
     __store: store,
   };
@@ -16,8 +16,8 @@ vi.mock('@/lib/kv', () => {
 
 describe('rate-limit', () => {
   beforeEach(async () => {
-    const { __store } = await import('@/lib/kv') as any;
-    __store.clear();
+    const mod = await import('@/lib/kv') as Record<string, unknown>;
+    (mod.__store as Map<string, unknown>).clear();
   });
 
   describe('rateLimit', () => {
@@ -69,7 +69,7 @@ describe('rate-limit', () => {
         headers: new Headers({
           'x-forwarded-for': '1.2.3.4, 5.6.7.8',
         }),
-      } as any;
+      } as Request;
       expect(getClientIp(req)).toBe('1.2.3.4');
     });
 
@@ -78,14 +78,14 @@ describe('rate-limit', () => {
         headers: new Headers({
           'x-real-ip': '10.0.0.1',
         }),
-      } as any;
+      } as Request;
       expect(getClientIp(req)).toBe('10.0.0.1');
     });
 
     it('falls back to 127.0.0.1', () => {
       const req = {
         headers: new Headers({}),
-      } as any;
+      } as Request;
       expect(getClientIp(req)).toBe('127.0.0.1');
     });
   });
