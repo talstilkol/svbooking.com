@@ -1,6 +1,6 @@
 # SV Booking — Comprehensive System Audit Report
 
-**Date:** 2026-05-12
+**Date:** 2026-05-13
 **Version:** 0.1.0
 **Files scanned:** 282 source files
 **Bugs found:** 20 | **Fixed:** 9 critical/high | **Remaining:** 11 low/medium
@@ -63,11 +63,11 @@ SV Booking is a hotel price comparison platform with 134 hotels across 46 cities
 | Broken Access Control | 2 | Critical (FIXED) |
 | Injection | 1 | High (FIXED) |
 | Security Misconfiguration | 2 | Medium (1 FIXED) |
-| Missing Rate Limiting | 1 | Medium |
+| Missing Rate Limiting | 1 | Medium (FIXED) |
 | Information Disclosure | 1 | Medium (FIXED) |
 | Vulnerable Dependencies | 1 | Low |
 
-### Security Score: 6/10 (post-fixes)
+### Security Score: 8/10 (post-fixes)
 
 **Security improvements applied:**
 1. ~~**Add rate limiting**~~ — DONE: KV-backed sliding-window limiter on `/api/compare`, `/api/click`, `/api/catalog/validate`
@@ -84,16 +84,16 @@ SV Booking is a hotel price comparison platform with 134 hotels across 46 cities
 |----------|-------|---------|
 | **Architecture** | 8/10 | Clean separation (app/components/lib), SSR + client shells, good provider abstraction, 12 background agents. KV-persisted catalog survives cold starts. |
 | **Performance** | 7/10 | SSR eliminates CSR waterfalls. Hero uses `next/image` with blur placeholders. Dynamic imports for below-fold. Debounced search. |
-| **SEO** | 9/10 | Full OpenGraph/Twitter meta, JSON-LD structured data, sitemap, robots.txt. SSR on search/hotel/deals — search engines index real HTML content. `generateMetadata` with dynamic titles. |
-| **Security** | 8/10 | Auth with Kinde, hardened cron auth, input sanitization, rate limiting on key endpoints, CSP header, capped API params, security headers. |
+| **SEO** | 9/10 | Full OpenGraph/Twitter meta, JSON-LD structured data (LodgingBusiness, FAQPage, BreadcrumbList, WebSite, Organization, SearchAction), sitemap, robots.txt. SSR on search/hotel/deals. `generateMetadata` with dynamic titles. Breadcrumbs on hotel, search, deals, about, and city pages. |
+| **Security** | 8/10 | Auth with Kinde, hardened cron auth, input sanitization, rate limiting on key endpoints, CSP header, HSTS, capped API params, security headers. |
 | **Data Sources** | 9/10 | 25+ free integrations (Overpass, OpenTripMap, Wikivoyage, Wikipedia, Wikidata, Open-Meteo, Ticketmaster, Nominatim, DBpedia, exchange rates, holidays). Excellent for zero-cost operation. |
 | **Features** | 8/10 | Price comparison, cheaper dates, deals, city guides, safety, weather, events, POIs, amenities, trip planning, favorites, AI agent dashboard, real price history, affiliate tracking. |
 | **UI/UX** | 7/10 | Clean Tailwind design, responsive, accessibility panel, mobile bottom bar, cookie consent. Weakness: no dark mode, some emoji-only buttons lack aria labels. |
 | **Mobile** | 8/10 | Responsive grid patterns, MobileBottomBar, FilterDrawer. PWA manifest present. No native apps. |
 | **Accessibility** | 7/10 | Skip-to-content, aria-labels on nav, keyboard escape handler, AccessibilityPanel. Weakness: no focus traps in modals, some color contrast issues. |
 | **Error Handling** | 8/10 | Custom error.tsx, not-found.tsx, ErrorBoundary, loading states, AbortController in fetches. Good resilience. |
-| **Caching** | 7/10 | KV with Redis/in-memory fallback, TTL support, HTTP Cache-Control headers. Price cache with 30-min TTL. Weakness: no cache invalidation strategy. |
-| **Testing** | 6/10 | 74 unit tests (Vitest) across 6 core modules + 13 E2E tests (Playwright). Lib modules well covered. Weakness: no component tests, no API route tests. |
+| **Caching** | 8/10 | KV with Redis/in-memory fallback, TTL support, HTTP Cache-Control headers. Price cache with 30-min TTL. Long cache for static assets (1yr, immutable). Service worker with stale-while-revalidate. |
+| **Testing** | 7/10 | 95 tests (Vitest) across 9 modules: 6 unit test suites for lib/ modules + 3 API route test suites. Lib modules well covered. Weakness: no component tests. |
 | **i18n** | 2/10 | Hardcoded English only. No RTL support. Static `lang="en"`. Currency selector exists but no locale routing. |
 | **Code Quality** | 7/10 | TypeScript for components, no TODO/FIXME comments, validation module. Some console.error in production, double-stringify bug was present. |
 | **DevOps** | 7/10 | Vercel deploy, cron-based orchestrator, health monitoring agent. No CI/CD pipeline visible, no staging environment. |
@@ -108,10 +108,10 @@ SV Booking is a hotel price comparison platform with 134 hotels across 46 cities
 | Feature | SV Booking | Booking.com | Trivago | Kayak | Hotels.com | TripAdvisor | Google Hotels |
 |---------|-----------|-------------|---------|-------|------------|-------------|---------------|
 | **Inventory** | 134 hotels | Millions | Millions | Millions | Millions | Millions | Millions |
-| **Price providers** | 7 | Own | 400+ | 200+ | Own | 200+ | 200+ |
+| **Price providers** | 8+ | Own | 400+ | 200+ | Own | 200+ | 200+ |
 | **Real-time pricing** | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
 | **Cheaper dates** | Yes | Yes | No | Yes | No | No | Yes |
-| **Price history** | Simulated | No | No | Yes | No | No | Yes |
+| **Price history** | Real + Estimated | No | No | Yes | No | No | Yes |
 | **User reviews** | Form only | Millions | Links | Links | Millions | Millions | Aggregated |
 | **City guides** | Yes | Basic | No | No | No | Rich | Basic |
 | **Safety info** | Yes | No | No | No | No | Yes | No |
@@ -129,7 +129,7 @@ SV Booking is a hotel price comparison platform with 134 hotels across 46 cities
 
 | Competitor | Inventory | Price Compare | UX/UI | Content | Features | Mobile | Trust | TOTAL |
 |-----------|-----------|--------------|-------|---------|----------|--------|-------|-------|
-| **SV Booking** | 3/10 | 8/10 | 8/10 | 8/10 | 9/10 | 6/10 | 5/10 | **6.7/10** |
+| **SV Booking** | 3/10 | 8/10 | 8/10 | 8/10 | 9/10 | 7/10 | 6/10 | **7.0/10** |
 | **Booking.com** | 10/10 | 5/10 | 9/10 | 6/10 | 9/10 | 10/10 | 10/10 | **8.4/10** |
 | **Trivago** | 9/10 | 9/10 | 7/10 | 3/10 | 6/10 | 8/10 | 8/10 | **7.1/10** |
 | **Kayak** | 9/10 | 9/10 | 8/10 | 4/10 | 8/10 | 9/10 | 8/10 | **7.9/10** |
@@ -147,16 +147,16 @@ SV Booking is a hotel price comparison platform with 134 hotels across 46 cities
 |---|-----|--------|--------|
 | 1 | **Inventory: 134 vs millions** | No user will stay if their hotel isn't listed. This is THE #1 blocker. | High |
 | 2 | **No real reviews** | Reviews are the #1 decision factor for travelers. We have a form but no data. | High |
-| 3 | **All pages are CSR** | Search engines index blank pages. Zero organic traffic potential. | Medium |
-| 4 | **No real price history** | PriceHistory component uses fake hash-generated data. | Low |
-| 5 | **No unit/component tests** | Only 13 E2E tests. No confidence in refactoring. | Medium |
+| 3 | ~~**All pages are CSR**~~ | ~~Search engines index blank pages. Zero organic traffic potential.~~ | ~~Medium~~ FIXED |
+| 4 | ~~**No real price history**~~ | ~~PriceHistory component uses fake hash-generated data.~~ | ~~Low~~ FIXED |
+| 5 | ~~**No unit/component tests**~~ | ~~Only 13 E2E tests. No confidence in refactoring.~~ | ~~Medium~~ FIXED (95 tests) |
 
 ### Tier 2 — Competitive Gaps (Should have)
 
 | # | Gap | Impact | Effort |
 |---|-----|--------|--------|
 | 6 | **No push notifications** for price alerts | Users forget about us between sessions | Medium |
-| 7 | **No affiliate monetization** | Redirect URLs lack tracking params — we make zero revenue | Low |
+| 7 | ~~**No affiliate monetization**~~ | ~~Redirect URLs lack tracking params~~ — FIXED: `/api/click` with per-provider affiliate params | ~~Low~~ FIXED |
 | 8 | **No loyalty/rewards system** | No stickiness mechanism | High |
 | 9 | **No native mobile apps** | PWA exists but stores demand native presence | High |
 | 10 | **No i18n** | Locked out of non-English markets (70%+ of global travelers) | High |
@@ -301,3 +301,44 @@ These are areas where SV Booking **already beats competitors**:
 | `tests/affiliate.test.ts` | NEW — 11 tests for affiliate module |
 | `tests/rate-limit.test.ts` | NEW — 7 tests for rate limiter |
 | `tests/kv.test.ts` | NEW — 10 tests for KV storage |
+| `tests/api-search.test.ts` | NEW — 8 tests for search API route |
+| `tests/api-price-history.test.ts` | NEW — 6 tests for price history API route |
+| `tests/api-click.test.ts` | NEW — 7 tests for click tracking API route |
+
+### PWA & Offline Support
+| File | Change |
+|------|--------|
+| `public/sw.js` | NEW — service worker with offline fallback and stale-while-revalidate |
+| `app/offline/page.tsx` | NEW — offline fallback page |
+| `components/ServiceWorkerRegistration.tsx` | NEW — production-only SW registration |
+
+### SEO Enhancements
+| File | Change |
+|------|--------|
+| `app/hotel/[key]/layout.tsx` | Added BreadcrumbList JSON-LD |
+| `app/search/page.tsx` | Added BreadcrumbList JSON-LD (dynamic with city param) |
+| `app/deals/page.tsx` | Added BreadcrumbList JSON-LD |
+| `app/about/page.tsx` | Added BreadcrumbList JSON-LD |
+| `next.config.ts` | Added HSTS, static asset caching (1yr immutable), SW cache control |
+
+### Stats & Domain Cleanup
+| File | Change |
+|------|--------|
+| `components/home/HomeStats.tsx` | Updated 63→130 hotels, 20→46 cities |
+| `components/OnboardingTour.tsx` | Updated catalog stats |
+| `components/TrustBadges.tsx` | Updated catalog stats |
+| `components/FAQ.tsx` | Updated coverage answer |
+| `components/WhyChooseUs.tsx` | Updated 20→45+ cities |
+| `components/home/HomeHowItWorks.tsx` | Updated 20→45+ cities |
+| `app/about/page.tsx` | Updated stats (63→130+ hotels, 20→45+ cities, 15→20+ countries) |
+| `app/about/layout.tsx` | Updated metadata description |
+| `app/deals/page.tsx` | Updated metadata description |
+| `app/robots.ts` | Fixed stale Vercel domain |
+| `app/city/[name]/page.tsx` | Fixed 2 stale domain references |
+| `app/hotel/[key]/layout.tsx` | Fixed stale domain, updated hotel count |
+| `components/ComparisonSummary.tsx` | Fixed share text domain |
+
+### Affiliate Revenue Fix
+| File | Change |
+|------|--------|
+| `components/HotelDetailClient.tsx` | Changed booking button from `<a>` to `<button>` with async `/api/click` redirect — fixes zero affiliate revenue bug |
