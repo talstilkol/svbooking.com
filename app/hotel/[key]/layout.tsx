@@ -14,11 +14,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!hotel) {
     return {
       title: 'Hotel Not Found | SVBooking',
-      description: 'This hotel could not be found. Browse our catalog of 63+ hotels.',
+      description: 'This hotel could not be found. Browse our catalog of 130+ hotels.',
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking-com.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://my-app-alpha-one-28.vercel.app';
   const title = `${hotel.name} — Compare Prices | SVBooking`;
   const description = `Compare live prices for ${hotel.name} in ${hotel.city}, ${hotel.country} from Booking.com, Expedia, Hotels.com, Agoda & more. Find the cheapest rate.`;
   const ogImage = `${baseUrl}/api/og?hotelKey=${encodeURIComponent(key)}`;

@@ -45,7 +45,7 @@ export default function ComparisonSummary({
     `All prices:`,
     ...rates.map((r, i) => `${i === 0 ? '  * ' : '    '}${r.provider}: ${r.currency} ${r.total.toFixed(2)}`),
     ``,
-    `Found on SV Booking — svbooking-com.vercel.app`,
+    `Found on SV Booking — svbooking.com`,
   ]
     .filter(Boolean)
     .join('\n');

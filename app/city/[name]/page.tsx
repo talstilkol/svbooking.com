@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const city = decodeURIComponent(name);
   const hotels = getHotelsByCity(city);
   const count = hotels.length;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking-com.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://my-app-alpha-one-28.vercel.app';
   const ogImage = `${baseUrl}/api/og?title=${encodeURIComponent(`${count} Best Hotels in ${city}`)}&subtitle=${encodeURIComponent(`Compare prices from Booking.com, Expedia, Hotels.com & more`)}`;
 
   return {
@@ -49,7 +49,7 @@ export default async function CityPage({ params }: Props) {
   const hotels = getHotelsByCity(city);
   const country = hotels[0]?.country || '';
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking-com.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://my-app-alpha-one-28.vercel.app';
 
   return (
     <div className="min-h-screen">
