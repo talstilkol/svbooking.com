@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking-com.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://my-app-alpha-one-28.vercel.app';
 
   return {
     rules: [

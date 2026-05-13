@@ -472,28 +472,34 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
                         {rate.currency} {(rate.total / nights).toFixed(0)}/night &middot; incl. taxes
                       </div>
                     </div>
-                    <a
-                      href={bookingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => {
-                        // Track click (non-blocking — don't delay navigation)
-                        fetch('/api/click', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            hotelKey,
-                            provider: rate.provider,
-                            url: bookingUrl,
-                            price: rate.total,
-                            currency: rate.currency,
-                          }),
-                        }).catch(() => {});
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        // Open tab immediately for responsiveness, then redirect to affiliate URL
+                        const tab = window.open('about:blank', '_blank');
+                        try {
+                          const res = await fetch('/api/click', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              hotelKey,
+                              provider: rate.provider,
+                              url: bookingUrl,
+                              price: rate.total,
+                              currency: rate.currency,
+                            }),
+                          });
+                          const data = await res.json();
+                          if (tab) tab.location.href = data.redirectUrl || bookingUrl;
+                        } catch {
+                          // Fallback: navigate to raw URL on API failure
+                          if (tab) tab.location.href = bookingUrl;
+                        }
                       }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-semibold transition shrink-0"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-semibold transition shrink-0 cursor-pointer"
                     >
                       Book &rarr;
-                    </a>
+                    </button>
                   </div>
                 );
               })}
