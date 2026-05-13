@@ -23,6 +23,7 @@ const PUBLIC_PATHS = [
   '/profile',
   '/about',
   '/contact',
+  '/offline',
   '/privacy',
   '/terms',
   // API routes

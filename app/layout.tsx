@@ -15,6 +15,7 @@ import AccessibilityPanel from "@/components/AccessibilityPanel";
 import { OrganizationJsonLd, SearchActionJsonLd } from "@/components/SchemaOrg";
 import OfflineBanner from "@/components/OfflineBanner";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import CompareWidget from "@/components/CompareWidget";
 import PriceDropAlert from "@/components/PriceDropAlert";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -30,15 +31,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://my-app-alpha-one-28.vercel.app'),
   title: {
     default: "SV Booking - Hotel Price Comparison",
     template: "%s | SV Booking",
   },
-  description: "Compare hotel prices from Booking.com, Expedia, Hotels.com, Agoda & more. Find cheaper dates and get AI-powered recommendations across 20 cities worldwide.",
-  keywords: ["hotel comparison", "cheap hotels", "booking", "expedia", "price comparison", "travel", "hotel deals"],
+  description: "Compare hotel prices from Booking.com, Expedia, Hotels.com, Agoda & more. Find cheaper dates and get AI-powered recommendations across 45+ cities worldwide.",
+  keywords: ["hotel comparison", "cheap hotels", "booking", "expedia", "price comparison", "travel", "hotel deals", "best hotel price", "hotel price comparison"],
   openGraph: {
     title: "SV Booking - Hotel Price Comparison",
-    description: "Compare hotel prices from 8+ providers. Find the best deals across 20 cities worldwide.",
+    description: "Compare hotel prices from 8+ providers. Find the best deals across 45+ cities worldwide.",
     type: "website",
     locale: "en_US",
     siteName: "SV Booking",
@@ -97,6 +99,7 @@ export default function RootLayout({
         <AccessibilityPanel />
         <CookieConsent />
         <PerformanceMonitor />
+        <ServiceWorkerRegistration />
         </ToastProvider>
       </body>
     </html>
