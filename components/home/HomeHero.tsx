@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -89,16 +89,18 @@ export default function HomeHero() {
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05] text-white drop-shadow-lg">
             Find the best hotel deal in{' '}
             <span className="relative inline-block">
-              <motion.span
-                key={ROTATING_CITIES[cityIdx]}
-                initial={{ y: 60, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -60, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                className="bg-linear-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent inline-block"
-              >
-                {ROTATING_CITIES[cityIdx]}
-              </motion.span>
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={ROTATING_CITIES[cityIdx]}
+                  initial={{ y: 60, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -60, opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                  className="bg-linear-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent inline-block"
+                >
+                  {ROTATING_CITIES[cityIdx]}
+                </motion.span>
+              </AnimatePresence>
             </span>
           </h1>
           <p className="mt-6 text-lg md:text-xl text-white/90 max-w-2xl drop-shadow">

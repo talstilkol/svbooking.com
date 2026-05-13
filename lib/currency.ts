@@ -36,27 +36,23 @@ export function detectCurrency(): string {
   if (typeof window === 'undefined') return 'USD';
 
   const locale = navigator.language || 'en-US';
-  const currencyCode = new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: 'USD',
-  }).resolvedOptions().currency || 'USD';
 
-  // Check if detected currency is supported
-  if (CURRENCIES.some((c) => c.code === currencyCode)) {
-    return currencyCode;
+  // Map locale regions to currencies (Intl.NumberFormat with currency:'USD' always returns USD — useless)
+  const LOCALE_CURRENCY: Record<string, string> = {
+    'en-GB': 'GBP', 'en-AU': 'AUD', 'en-CA': 'CAD', 'en-IN': 'INR',
+    'en-SG': 'SGD', 'en-HK': 'HKD', 'en-IL': 'ILS', 'en-AE': 'AED',
+    'ja': 'JPY', 'zh': 'CNY', 'zh-HK': 'HKD', 'zh-TW': 'CNY',
+    'de': 'EUR', 'fr': 'EUR', 'it': 'EUR', 'es': 'EUR', 'nl': 'EUR',
+    'pt': 'EUR', 'fi': 'EUR', 'el': 'EUR', 'de-CH': 'CHF', 'fr-CH': 'CHF',
+    'he': 'ILS', 'ar': 'AED', 'ar-SA': 'AED',
+    'th': 'THB', 'hi': 'INR', 'ko': 'USD',
+  };
+
+  // Try exact match first, then language prefix
+  const detected = LOCALE_CURRENCY[locale] || LOCALE_CURRENCY[locale.split('-')[0]];
+  if (detected && CURRENCIES.some((c) => c.code === detected)) {
+    return detected;
   }
-
-  // Fallback to common currencies based on locale
-  if (locale.startsWith('en-GB') || locale.startsWith('gb')) return 'GBP';
-  if (locale.startsWith('en-AU') || locale.startsWith('au')) return 'AUD';
-  if (locale.startsWith('en-CA') || locale.startsWith('ca')) return 'CAD';
-  if (locale.startsWith('ja')) return 'JPY';
-  if (locale.startsWith('zh')) return 'CNY';
-  if (locale.startsWith('de') || locale.startsWith('fr') || locale.startsWith('it')) return 'EUR';
-  if (locale.startsWith('he')) return 'ILS';
-  if (locale.startsWith('ar')) return 'AED';
-  if (locale.startsWith('th')) return 'THB';
-  if (locale.startsWith('hi') || locale.startsWith('en-IN')) return 'INR';
 
   return 'USD';
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useDebounce } from '@/lib/useDebounce';
@@ -64,10 +64,10 @@ export default function SearchAutocomplete() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const allItems = [
+  const allItems = useMemo(() => [
     ...results.cities.map((c) => ({ type: 'city' as const, value: c })),
     ...results.hotels.map((h) => ({ type: 'hotel' as const, value: h })),
-  ];
+  ], [results.cities, results.hotels]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

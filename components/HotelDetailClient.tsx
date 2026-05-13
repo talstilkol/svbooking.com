@@ -172,8 +172,8 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
   // Use comparison hotel if available (might have extra data), otherwise server-provided hotel
   const displayHotel = data?.hotel || hotel;
   const nights = data
-    ? Math.round((new Date(data.checkOut).getTime() - new Date(data.checkIn).getTime()) / 86400000)
-    : 0;
+    ? Math.max(Math.round((new Date(data.checkOut).getTime() - new Date(data.checkIn).getTime()) / 86400000), 1)
+    : 1;
 
   const fav = hydrated && isFavorite(displayHotel.hotelKey);
 
