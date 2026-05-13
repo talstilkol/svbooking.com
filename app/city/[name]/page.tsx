@@ -25,6 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `Best Hotels in ${city} — Compare Prices | SVBooking`,
     description: `Compare prices for ${count} top hotels in ${city} from Booking.com, Expedia, Hotels.com & more. Find the cheapest rates.`,
+    alternates: { canonical: `/city/${encodeURIComponent(city)}` },
     openGraph: {
       title: `${count} Best Hotels in ${city}`,
       description: `Compare hotel prices in ${city} from 8+ providers`,

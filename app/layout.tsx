@@ -52,6 +52,7 @@ export const metadata: Metadata = {
     description: "Compare hotel prices from Booking.com, Expedia, Hotels.com & more",
     images: ["/api/og"],
   },
+  alternates: { canonical: '/' },
   robots: { index: true, follow: true },
 };
 

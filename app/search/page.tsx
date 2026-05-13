@@ -13,11 +13,13 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     return {
       title: `Hotels in ${city} — Compare Prices | SVBooking`,
       description: `Compare live hotel prices in ${city} from Booking.com, Expedia, Hotels.com, Agoda & more. Find the best deals across multiple providers.`,
+      alternates: { canonical: `/search?city=${encodeURIComponent(city)}` },
     };
   }
   return {
     title: 'Find Hotels — Compare Prices | SVBooking',
     description: 'Search and compare hotel prices from Booking.com, Expedia, Hotels.com, Agoda and more. Find the best deals across multiple providers.',
+    alternates: { canonical: '/search' },
   };
 }
 
