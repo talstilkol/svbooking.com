@@ -1,6 +1,8 @@
 import { ImageResponse } from 'next/og';
 import { findHotel } from '@/lib/hotels-catalog';
 
+export const revalidate = 86400; // OG images are deterministic — cache 24h
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const hotelKey = searchParams.get('hotelKey');
