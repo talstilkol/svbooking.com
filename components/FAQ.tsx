@@ -1,31 +1,33 @@
 'use client';
 
 import { useState } from 'react';
+import { serializeJsonLd } from '@/lib/utils/jsonLd';
+import { CATALOG_STATS } from '@/lib/catalog-stats';
 
 const FAQS = [
   {
     q: 'How does SV Booking compare hotel prices?',
-    a: 'We aggregate prices from 8+ online travel agencies including Booking.com, Expedia, Hotels.com, Agoda, and more. Our system fetches real-time rates so you can see all options side-by-side and pick the cheapest one.',
+    a: 'We aggregate rates returned by configured pricing providers. Cache-backed heatmap observations are labeled as price-source observations, not booking providers. Missing or unverified prices are not displayed as confirmed booking offers.',
   },
   {
     q: 'Is SV Booking free to use?',
-    a: 'Yes, completely free! We compare hotel prices across major providers at no cost. No sign-up required. You book directly with the provider offering the best price.',
+    a: 'SV Booking is free to browse and compare. Providers control final checkout prices, taxes, fees, and terms. No sign-up is required for public search and comparison flows.',
   },
   {
     q: 'What is the "Cheaper Dates" feature?',
-    a: 'Our Cheaper Dates tool analyzes hotel price trends and suggests alternative check-in dates within 3 days, 1 week, or 1 month of your selected dates. Many travelers save 20-40% just by shifting their dates slightly.',
+    a: 'The Cheaper Dates tool checks available provider-returned date options around a selected stay. It reports savings only when provider data is available for both the original and alternative dates.',
   },
   {
     q: 'How many cities and hotels do you cover?',
-    a: 'We currently cover 130+ hotels across 45+ cities in over 20 countries worldwide, including popular destinations like Paris, London, Tokyo, Dubai, New York, Bangkok, and many more. Our catalog grows daily through automated discovery.',
+    a: `The current static catalog contains ${CATALOG_STATS.hotels} hotels across ${CATALOG_STATS.cities} cities and ${CATALOG_STATS.countries} countries. Additional discovered hotels are kept separate until they are validated.`,
   },
   {
     q: 'What are AI Agents?',
-    a: 'Our AI Agents automatically scan for deals, monitor price drops, and provide personalized hotel recommendations based on your browsing history and saved favorites. They work in the background to find you the best deals.',
+    a: 'AI Agents scan configured providers, monitor provider health, and surface available recommendations from catalog, price, and locally saved preference signals. Unverified provider-quality scores are not displayed.',
   },
   {
     q: 'Do I book directly through SV Booking?',
-    a: 'No, we are a price comparison service. Once you find the best price, you book directly with the provider (Booking.com, Expedia, etc.). This ensures you get the provider\'s own customer support and guarantees.',
+    a: 'No, SV Booking is a price comparison service. Once you select an available provider result, checkout happens on that provider\'s site under that provider\'s terms and support policies.',
   },
 ];
 
@@ -77,7 +79,7 @@ export default function FAQ() {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
+            __html: serializeJsonLd({
               '@context': 'https://schema.org',
               '@type': 'FAQPage',
               mainEntity: FAQS.map((faq) => ({

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CATALOG_STATS } from '@/lib/catalog-stats';
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -14,7 +15,6 @@ export default function Footer() {
     Tools: [
       { href: '/trips', label: 'Trip Planner' },
       { href: '/favorites', label: 'Favorites' },
-      { href: '/agents', label: 'AI Agents' },
     ],
     Company: [
       { href: '/about', label: 'About Us' },
@@ -43,7 +43,7 @@ export default function Footer() {
               SV Booking
             </Link>
             <p className="text-sm leading-relaxed">
-              Compare hotel prices from Booking.com, Expedia, Hotels.com, Agoda & more. Find the best deal in seconds.
+              Compare provider-returned hotel prices when configured sources respond. Missing rates stay unavailable.
             </p>
             <div className="flex gap-3 mt-4">
               <span className="text-xs bg-slate-800 px-2 py-1 rounded">&#128274; Secure</span>
@@ -73,10 +73,10 @@ export default function Footer() {
 
         <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs">
-            {`© ${year} SV Booking · Compare prices from 8+ OTA providers · 133 hotels across 40+ cities`}
+            {`© ${year} SV Booking · Provider-returned prices when available · ${CATALOG_STATS.hotels} hotels across ${CATALOG_STATS.cities} cities`}
           </p>
           <p className="text-xs">
-            Prices from{' '}
+            Pricing metadata from configured sources, including{' '}
             <a href="https://xotelo.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
               Xotelo API
             </a>

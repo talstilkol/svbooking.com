@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { findHotel } from '@/lib/hotels-catalog';
 import { LodgingJsonLd, BreadcrumbJsonLd } from '@/components/JsonLd';
+import { CATALOG_STATS } from '@/lib/catalog-stats';
 
 type Props = {
   params: Promise<{ key: string }>;
@@ -14,19 +15,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!hotel) {
     return {
       title: 'Hotel Not Found | SVBooking',
-      description: 'This hotel could not be found. Browse our catalog of 130+ hotels.',
+      description: `This hotel could not be found. Browse our catalog of ${CATALOG_STATS.hotels} hotels.`,
+      robots: { index: false, follow: false },
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://my-app-alpha-one-28.vercel.app';
+  const catalogHotel = hotel as typeof hotel & {
+    discovered?: boolean;
+    provenance?: unknown;
+    sourceUrl?: string | null;
+  };
+  const indexable = !catalogHotel.discovered || Boolean(catalogHotel.provenance || catalogHotel.sourceUrl);
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com';
   const title = `${hotel.name} — Compare Prices | SVBooking`;
-  const description = `Compare live prices for ${hotel.name} in ${hotel.city}, ${hotel.country} from Booking.com, Expedia, Hotels.com, Agoda & more. Find the cheapest rate.`;
+  const description = `Compare provider-returned prices for ${hotel.name} in ${hotel.city}, ${hotel.country} when verified rate data is available.`;
   const ogImage = `${baseUrl}/api/og?hotelKey=${encodeURIComponent(key)}`;
 
   return {
     title,
     description,
     alternates: { canonical: `/hotel/${key}` },
+    robots: { index: indexable, follow: indexable },
     openGraph: {
       title,
       description,
@@ -38,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${hotel.name} — Best Prices`,
+      title: `${hotel.name} — Compare Prices`,
       description: `Compare prices for ${hotel.name} in ${hotel.city}`,
       images: [ogImage],
     },

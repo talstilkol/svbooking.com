@@ -1,8 +1,10 @@
+import { CATALOG_STATS } from '@/lib/catalog-stats';
+
 const BADGES = [
   { icon: '🔒', label: 'Secure & Private', desc: 'No sign-up required' },
-  { icon: '💯', label: '100% Free', desc: 'No hidden fees' },
-  { icon: '⚡', label: 'Real-Time Prices', desc: 'Live from 8+ providers' },
-  { icon: '🌍', label: '45+ Cities', desc: '130+ hotels worldwide' },
+  { icon: '💯', label: 'Free To Browse', desc: 'No SV Booking fee' },
+  { icon: '⚡', label: 'Provider Rates', desc: 'When providers return data' },
+  { icon: '🌍', label: `${CATALOG_STATS.cities} Cities`, desc: `${CATALOG_STATS.hotels} catalog hotels` },
 ];
 
 export default function TrustBadges({ className = '' }: { className?: string }) {

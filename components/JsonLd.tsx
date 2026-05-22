@@ -1,4 +1,6 @@
 // JSON-LD structured data component for SEO
+import { serializeJsonLd } from '@/lib/utils/jsonLd';
+
 interface LodgingJsonLdProps {
   name: string;
   city: string;
@@ -26,8 +28,7 @@ export function LodgingJsonLd({ name, city, country, image, price, currency }: L
   return (
     <script
       type="application/ld+json"
-      // eslint-disable-next-line react/no-danger
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -46,31 +47,9 @@ export function BreadcrumbJsonLd({ items }: { items: { name: string; url: string
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
 
-export function WebsiteJsonLd() {
-  const schema = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'SVBooking — Hotel Price Comparison',
-    url: 'https://svbooking.com',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: 'https://svbooking.com/search?city={search_term_string}',
-      },
-      'query-input': 'required name=search_term_string',
-    },
-  };
-  return (
-    <script
-      type="application/ld+json"
-      // eslint-disable-next-line react/no-danger
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
-  );
-}
+// WebsiteJsonLd removed — replaced by SearchActionJsonLd in SchemaOrg.tsx to avoid duplicate @type:WebSite schemas

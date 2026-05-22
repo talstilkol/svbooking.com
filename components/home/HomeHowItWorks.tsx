@@ -2,24 +2,25 @@
 
 import { Search, BarChart3, Bot } from 'lucide-react';
 import Reveal from '@/components/ui/Reveal';
+import { CATALOG_STATS } from '@/lib/catalog-stats';
 
 const STEPS = [
   {
     icon: Search,
     title: '1. Search',
-    desc: 'Browse curated hotels across 45+ cities. Save your favorites.',
+    desc: `Browse curated hotels across ${CATALOG_STATS.cities} cities. Save your favorites.`,
     color: 'from-blue-500 to-cyan-500',
   },
   {
     icon: BarChart3,
     title: '2. Compare',
-    desc: 'See live rates from Booking, Expedia, Hotels.com, Agoda & more.',
+    desc: 'See provider-returned rates when configured sources respond; missing data stays unavailable.',
     color: 'from-purple-500 to-pink-500',
   },
   {
     icon: Bot,
     title: '3. Let AI decide',
-    desc: 'Our agent weighs price + provider trust to recommend the best deal.',
+    desc: 'Our agent ranks available offers by verified total price and marks missing data as unavailable.',
     color: 'from-emerald-500 to-teal-500',
   },
 ];

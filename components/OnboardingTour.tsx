@@ -2,6 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { CATALOG_STATS } from '@/lib/catalog-stats';
+import {
+  LEGACY_LOCAL_STORAGE_KEYS,
+  LOCAL_STORAGE_KEYS,
+  readLocalStorageJsonWithFallback,
+  readLocalStorageStringWithFallback,
+  writeLocalStorageJson,
+} from '@/lib/local-storage-keys';
 
 interface Step {
   icon: string;
@@ -17,60 +25,71 @@ export default function OnboardingTour({ className = '' }: { className?: string 
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    try {
-      if (localStorage.getItem('sv-onboarding-dismissed') === 'true') {
-        setDismissed(true);
-        return;
-      }
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        if (readLocalStorageStringWithFallback(LOCAL_STORAGE_KEYS.onboardingDismissed, [], null) === 'true') {
+          setDismissed(true);
+          return;
+        }
 
-      const favs = JSON.parse(localStorage.getItem('hotel-favorites') || '[]');
-      const trips = JSON.parse(localStorage.getItem('saved-trips') || '[]');
-      const recent = JSON.parse(localStorage.getItem('recently-viewed') || '[]');
-      const searches = JSON.parse(localStorage.getItem('sv-recent-searches') || '[]');
+        const favs = readLocalStorageJsonWithFallback(LOCAL_STORAGE_KEYS.favorites, [LEGACY_LOCAL_STORAGE_KEYS.favorites], []);
+        const trips = readLocalStorageJsonWithFallback(LOCAL_STORAGE_KEYS.trips, [LEGACY_LOCAL_STORAGE_KEYS.trips], []);
+        const recent = readLocalStorageJsonWithFallback(LOCAL_STORAGE_KEYS.recentlyViewed, [LEGACY_LOCAL_STORAGE_KEYS.recentlyViewed], []);
+        const searches = readLocalStorageJsonWithFallback(
+          LOCAL_STORAGE_KEYS.recentSearches,
+          [LEGACY_LOCAL_STORAGE_KEYS.recentSearches, LEGACY_LOCAL_STORAGE_KEYS.recentSearchesUnprefixed],
+          []
+        );
 
-      setSteps([
-        {
-          icon: '🔍',
-          title: 'Search for a hotel',
-          description: 'Browse our catalog of 130+ hotels across 45+ cities',
-          action: 'Search Now',
-          href: '/search',
-          completed: searches.length > 0,
-        },
-        {
-          icon: '📊',
-          title: 'Compare prices',
-          description: 'See prices from 8+ providers side by side',
-          action: 'Compare',
-          href: '/compare',
-          completed: recent.length > 0,
-        },
-        {
-          icon: '❤️',
-          title: 'Save a favorite',
-          description: 'Heart any hotel to track it in your favorites',
-          action: 'Browse Hotels',
-          href: '/search',
-          completed: favs.length > 0,
-        },
-        {
-          icon: '✈️',
-          title: 'Plan a trip',
-          description: 'Save hotels with dates and let AI find the best price',
-          action: 'Plan Trip',
-          href: '/trips',
-          completed: trips.length > 0,
-        },
-        {
-          icon: '🌍',
-          title: 'Explore destinations',
-          description: 'Browse by continent and discover new places',
-          action: 'Explore',
-          href: '/explore',
-          completed: false, // Can't track explore page visits easily
-        },
-      ]);
-    } catch {}
+        setSteps([
+          {
+            icon: '🔍',
+            title: 'Search for a hotel',
+            description: `Browse our catalog of ${CATALOG_STATS.hotels} hotels across ${CATALOG_STATS.cities} cities`,
+            action: 'Search Now',
+            href: '/search',
+            completed: searches.length > 0,
+          },
+          {
+            icon: '📊',
+            title: 'Compare prices',
+            description: 'See available provider prices side by side',
+            action: 'Compare',
+            href: '/compare',
+            completed: recent.length > 0,
+          },
+          {
+            icon: '❤️',
+            title: 'Save a favorite',
+            description: 'Heart any hotel to track it in your favorites',
+            action: 'Browse Hotels',
+            href: '/search',
+            completed: favs.length > 0,
+          },
+          {
+            icon: '✈️',
+            title: 'Plan a trip',
+            description: 'Save hotels with dates for follow-up',
+            action: 'Plan Trip',
+            href: '/trips',
+            completed: trips.length > 0,
+          },
+          {
+            icon: '🌍',
+            title: 'Explore destinations',
+            description: 'Browse catalog destinations by region',
+            action: 'Explore',
+            href: '/explore',
+            completed: false,
+          },
+        ]);
+      } catch {}
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (dismissed || steps.length === 0) return null;
@@ -91,7 +110,7 @@ export default function OnboardingTour({ className = '' }: { className?: string 
         <button
           onClick={() => {
             setDismissed(true);
-            try { localStorage.setItem('sv-onboarding-dismissed', 'true'); } catch {}
+            writeLocalStorageJson(LOCAL_STORAGE_KEYS.onboardingDismissed, 'true');
           }}
           className="text-xs text-slate-400 hover:text-slate-600 transition"
         >

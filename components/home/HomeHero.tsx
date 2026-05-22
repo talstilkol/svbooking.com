@@ -47,6 +47,7 @@ export default function HomeHero() {
         <motion.div
           key={src}
           className="absolute inset-0"
+          aria-hidden="true"
           style={{ y }}
           animate={{ opacity: i === bgIdx ? 0.35 : 0 }}
           transition={{ duration: 1.6, ease: 'easeInOut' }}
@@ -87,7 +88,7 @@ export default function HomeHero() {
           </motion.div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05] text-white drop-shadow-lg">
-            Find the best hotel deal in{' '}
+            Compare hotel rates in{' '}
             <span className="relative inline-block">
               <AnimatePresence mode="wait">
                 <motion.span
@@ -104,8 +105,7 @@ export default function HomeHero() {
             </span>
           </h1>
           <p className="mt-6 text-lg md:text-xl text-white/90 max-w-2xl drop-shadow">
-            Compare live prices from Booking.com, Expedia, Hotels.com, Agoda &amp; more — let our AI agent pick the
-            winner.
+            Compare provider-returned rates from configured partners when verified data is available.
           </p>
 
           <motion.div

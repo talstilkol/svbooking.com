@@ -1,14 +1,16 @@
+import { CATALOG_STATS } from '@/lib/catalog-stats';
+
 const REASONS = [
   {
     icon: '🔎',
-    title: 'Compare 8+ providers',
-    desc: 'One search shows prices from Booking.com, Expedia, Hotels.com, Agoda, Vio.com, Trip.com, and more — all side by side.',
+    title: 'Compare available providers',
+    desc: 'One search shows provider-returned prices side by side when configured sources respond.',
     color: 'bg-blue-50 border-blue-100',
   },
   {
     icon: '📅',
     title: 'Find cheaper dates',
-    desc: 'Our Cheaper Dates tool analyzes price trends and suggests when to travel for the biggest savings — up to 40% off.',
+    desc: 'The Cheaper Dates tool compares available provider prices across nearby dates and reports savings only when provider data supports it.',
     color: 'bg-emerald-50 border-emerald-100',
   },
   {
@@ -20,19 +22,19 @@ const REASONS = [
   {
     icon: '📊',
     title: 'Price trend charts',
-    desc: 'See 30-day price history to know if today is a good time to book or if you should wait for a better deal.',
+    desc: 'See price-history charts when verified provider observations are available; otherwise the app marks history as unavailable.',
     color: 'bg-amber-50 border-amber-100',
   },
   {
     icon: '🔒',
     title: 'No sign-up required',
-    desc: 'Start comparing prices instantly. Your favorites and trips are saved locally — we never collect personal data.',
+    desc: 'Start comparing prices instantly. Favorites and trips are saved locally in your browser unless account features are enabled.',
     color: 'bg-slate-50 border-slate-100',
   },
   {
     icon: '🌍',
-    title: '45+ cities worldwide',
-    desc: 'From Paris to Tokyo, Dubai to New York — find the best hotel deals in the most popular destinations.',
+    title: `${CATALOG_STATS.cities} cities worldwide`,
+    desc: 'From Paris to Tokyo, Dubai to New York — compare catalog hotels across the supported city list.',
     color: 'bg-sky-50 border-sky-100',
   },
 ];
@@ -45,7 +47,7 @@ export default function WhyChooseUs() {
           Why travelers choose SV Booking
         </h2>
         <p className="text-center text-slate-500 mb-10 max-w-2xl mx-auto">
-          Everything you need to find the perfect hotel at the best price
+          Tools for comparing hotels with available provider data
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {REASONS.map((reason) => (

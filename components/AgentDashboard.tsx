@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useFavorites, useTrips } from '@/lib/useLocalStorage';
 import DealCard from './DealCard';
@@ -18,7 +18,8 @@ interface TopDeal {
   checkOut: string;
   price: number;
   pricePerNight: number;
-  provider: string;
+  provider: string | null;
+  priceSourceLabel?: string;
   urgency: string;
   savingsPct: number;
 }
@@ -34,8 +35,9 @@ interface Recommendation {
 
 interface AvailabilityResult {
   provider: string;
-  url: string;
-  status: number;
+  url?: string;
+  deepLink?: string | null;
+  status: number | string;
   available: boolean;
   note: string;
 }
@@ -45,7 +47,9 @@ interface AvailabilityCheck {
   dates: { checkIn: string; checkOut: string };
   results: AvailabilityResult[];
   summary: string;
-  bookingLinks: { provider: string; url: string }[];
+  bookingLinks?: { provider: string; url: string }[];
+  sourcePolicy?: string;
+  note?: string;
 }
 
 interface ProviderInfo {
@@ -79,6 +83,30 @@ interface BackgroundAgent {
   recentRuns?: Array<{ status: string; startedAt: string; elapsedMs: number }>;
 }
 
+interface CatalogOption {
+  hotelKey: string;
+  name: string;
+  city: string;
+}
+
+interface CatalogCandidate {
+  id: string;
+  hotelKey: string;
+  name: string;
+  city: string;
+  country: string;
+  stars?: number;
+  status: 'pending' | 'approved' | 'rejected' | 'stale';
+  alreadyInCatalog: boolean;
+  duplicate?: boolean;
+  missingProvenance?: boolean;
+  discoveredForCity?: string;
+}
+
+function isAuthRestricted(response: Response): boolean {
+  return response.status === 401 || response.status === 403;
+}
+
 function formatTimestamp(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -104,21 +132,35 @@ export default function AgentDashboard() {
   const [bgAgents, setBgAgents] = useState<BackgroundAgent[]>([]);
   const [bgLoading, setBgLoading] = useState(false);
   const [runningAgent, setRunningAgent] = useState<string | null>(null);
-  const [discoveredHotels, setDiscoveredHotels] = useState<Array<{ hotelKey: string; name: string; city: string; country: string; stars?: number; alreadyInCatalog: boolean; discoveredForCity: string }>>([]);
-  const [discoveredStats, setDiscoveredStats] = useState<{ total: number; newHotels: number; citiesScanned: number } | null>(null);
+  const [discoveredHotels, setDiscoveredHotels] = useState<CatalogCandidate[]>([]);
+  const [discoveredStats, setDiscoveredStats] = useState<{ total: number; newHotels: number; pending?: number; duplicate?: number; missingProvenance?: number } | null>(null);
+  const [candidateStatusFilter, setCandidateStatusFilter] = useState('pending');
+  const [candidateFlagFilter, setCandidateFlagFilter] = useState('all');
   const [addingHotel, setAddingHotel] = useState<string | null>(null);
   const [loading, setLoading] = useState({ health: false, deals: false, recs: false, providers: false });
+  const [restricted, setRestricted] = useState({
+    health: false,
+    providers: false,
+    discovered: false,
+    agents: false,
+  });
   const { favorites } = useFavorites();
   const { trips } = useTrips();
 
   const fetchHealth = async () => {
     setLoading((l) => ({ ...l, health: true }));
     try {
-      const res = await fetch('/api/agents/health-check');
+      const res = await fetch('/api/admin/agents/health-check');
+      if (isAuthRestricted(res)) {
+        setHealth(null);
+        setRestricted((r) => ({ ...r, health: true }));
+        return;
+      }
       const data = await res.json();
       setHealth(data);
-    } catch { setHealth(null); }
-    setLoading((l) => ({ ...l, health: false }));
+      setRestricted((r) => ({ ...r, health: false }));
+    } catch (err) { console.warn('AgentDashboard: health fetch failed', err); setHealth(null); }
+    finally { setLoading((l) => ({ ...l, health: false })); }
   };
 
   const fetchDeals = async () => {
@@ -128,11 +170,11 @@ export default function AgentDashboard() {
       const data = await res.json();
       setTopDeals(data.topDeals || []);
       if (data.scannedAt) setDealsScannedAt(data.scannedAt);
-    } catch { setTopDeals([]); }
+    } catch (err) { console.warn('AgentDashboard: deals fetch failed', err); setTopDeals([]); }
     setLoading((l) => ({ ...l, deals: false }));
   };
 
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = useCallback(async () => {
     if (favorites.length === 0 && trips.length === 0) return;
     setLoading((l) => ({ ...l, recs: true }));
     try {
@@ -143,89 +185,137 @@ export default function AgentDashboard() {
       });
       const data = await res.json();
       setRecommendations(data.recommendations || []);
-    } catch { setRecommendations([]); }
+    } catch (err) { console.warn('AgentDashboard: recommendations fetch failed', err); setRecommendations([]); }
     setLoading((l) => ({ ...l, recs: false }));
-  };
+  }, [favorites, trips]);
 
   const fetchProviders = async () => {
     setLoading((l) => ({ ...l, providers: true }));
     try {
-      const res = await fetch('/api/agents/providers');
+      const res = await fetch('/api/admin/agents/providers');
+      if (isAuthRestricted(res)) {
+        setProviders([]);
+        setRestricted((r) => ({ ...r, providers: true }));
+        return;
+      }
       const data = await res.json();
       setProviders(data.providers || []);
-    } catch { setProviders([]); }
-    setLoading((l) => ({ ...l, providers: false }));
+      setRestricted((r) => ({ ...r, providers: false }));
+    } catch (err) { console.warn('AgentDashboard: providers fetch failed', err); setProviders([]); }
+    finally { setLoading((l) => ({ ...l, providers: false })); }
   };
 
   const resetProviderBreaker = async (providerId: string) => {
-    await fetch('/api/agents/providers', {
+    const res = await fetch('/api/admin/agents/providers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'reset', providerId }),
     });
+    if (isAuthRestricted(res)) {
+      setRestricted((r) => ({ ...r, providers: true }));
+      return;
+    }
     fetchProviders();
   };
 
-  const fetchDiscovered = async () => {
+  const fetchDiscovered = useCallback(async () => {
     try {
-      const res = await fetch('/api/agents/discovered?stats=true');
+      const params = new URLSearchParams({ stats: 'true', limit: '50' });
+      if (candidateStatusFilter !== 'all') params.set('status', candidateStatusFilter);
+      if (candidateFlagFilter === 'duplicate') params.set('duplicate', 'true');
+      if (candidateFlagFilter === 'missing-provenance') params.set('missingProvenance', 'true');
+      const res = await fetch(`/api/admin/catalog/candidates?${params.toString()}`);
+      if (isAuthRestricted(res)) {
+        setDiscoveredHotels([]);
+        setDiscoveredStats(null);
+        setRestricted((r) => ({ ...r, discovered: true }));
+        return;
+      }
       const data = await res.json();
-      setDiscoveredHotels(data.hotels || []);
-      setDiscoveredStats({ total: data.total, newHotels: data.newHotels, citiesScanned: data.citiesScanned });
-    } catch { setDiscoveredHotels([]); }
-  };
+      setDiscoveredHotels(data.candidates || []);
+      setDiscoveredStats({
+        total: data.total,
+        newHotels: data.newHotels,
+        pending: data.pending,
+        duplicate: data.duplicate,
+        missingProvenance: data.missingProvenance,
+      });
+      setRestricted((r) => ({ ...r, discovered: false }));
+    } catch (err) { console.warn('AgentDashboard: discovered hotels fetch failed', err); setDiscoveredHotels([]); }
+  }, [candidateStatusFilter, candidateFlagFilter]);
 
-  const addDiscoveredHotel = async (hotel: { hotelKey: string; name: string; city: string; country: string; stars?: number }) => {
-    setAddingHotel(hotel.hotelKey);
+  const reviewCandidate = async (candidate: CatalogCandidate, action: 'approve' | 'reject' | 'stale') => {
+    setAddingHotel(candidate.id);
     try {
-      await fetch('/api/agents/discovered', {
+      const res = await fetch('/api/admin/catalog/candidates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(hotel),
+        body: JSON.stringify({ action, id: candidate.id }),
       });
+      if (isAuthRestricted(res)) {
+        setRestricted((r) => ({ ...r, discovered: true }));
+        return;
+      }
       await fetchDiscovered();
-    } catch { /* ignore */ }
-    setAddingHotel(null);
+    } catch (err) { console.warn('AgentDashboard: candidate review failed', err); }
+    finally { setAddingHotel(null); }
   };
 
   const addAllDiscovered = async () => {
     setAddingHotel('all');
     try {
-      await fetch('/api/agents/discovered', {
+      const res = await fetch('/api/admin/catalog/candidates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'add-all' }),
+        body: JSON.stringify({ action: 'approve-all' }),
       });
+      if (isAuthRestricted(res)) {
+        setRestricted((r) => ({ ...r, discovered: true }));
+        return;
+      }
       await fetchDiscovered();
-    } catch { /* ignore */ }
-    setAddingHotel(null);
+    } catch (err) { console.warn('AgentDashboard: approve-all failed', err); }
+    finally { setAddingHotel(null); }
   };
 
   const fetchBgAgents = async () => {
     setBgLoading(true);
     try {
-      const res = await fetch('/api/agents/auto/status');
+      const res = await fetch('/api/admin/agents/auto/status');
+      if (isAuthRestricted(res)) {
+        setBgAgents([]);
+        setRestricted((r) => ({ ...r, agents: true }));
+        return;
+      }
       const data = await res.json();
       setBgAgents(data.agents || []);
-    } catch { setBgAgents([]); }
-    setBgLoading(false);
+      setRestricted((r) => ({ ...r, agents: false }));
+    } catch (err) { console.warn('AgentDashboard: bg agents fetch failed', err); setBgAgents([]); }
+    finally { setBgLoading(false); }
   };
 
   const triggerAgent = async (agentName: string) => {
     setRunningAgent(agentName);
+    let shouldRefresh = true;
     try {
-      await fetch(`/api/agents/auto/${agentName}`);
-    } catch { /* ignore */ }
-    setRunningAgent(null);
-    fetchBgAgents();
+      const res = await fetch(`/api/admin/agents/auto/${agentName}`);
+      if (isAuthRestricted(res)) {
+        setRestricted((r) => ({ ...r, agents: true }));
+        shouldRefresh = false;
+      }
+    } catch (err) { console.warn('AgentDashboard: trigger agent failed', err); shouldRefresh = false; }
+    finally {
+      setRunningAgent(null);
+      if (shouldRefresh) fetchBgAgents();
+    }
   };
 
   const fetchHotels = async () => {
     try {
       const res = await fetch('/api/compare');
       const data = await res.json();
-      setHotels((data.hotels || []).map((h: any) => ({ hotelKey: h.hotelKey, name: h.name, city: h.city })));
-    } catch {}
+      setHotels(((data.hotels || []) as CatalogOption[]).map((h) => ({ hotelKey: h.hotelKey, name: h.name, city: h.city })));
+    } catch (err) { console.warn('AgentDashboard: hotel list fetch failed', err); }
   };
 
   const checkAvailability = async () => {
@@ -236,33 +326,35 @@ export default function AgentDashboard() {
       const params = new URLSearchParams({ hotelKey: availHotel, checkIn: availCheckIn, checkOut: availCheckOut });
       const res = await fetch(`/api/agents/availability?${params}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error('Availability unavailable');
       setAvailability(data);
-    } catch {}
+    } catch (err) { console.warn('AgentDashboard: availability check failed', err); }
     setAvailLoading(false);
   };
 
   useEffect(() => {
-    fetchHealth();
-    fetchDeals();
-    fetchHotels();
-    fetchProviders();
-    fetchBgAgents();
-    fetchDiscovered();
-
-    // Auto-refresh health and agents every 60 seconds
-    const interval = setInterval(() => {
+    queueMicrotask(() => {
+      fetchDeals();
+      fetchHotels();
       fetchHealth();
+      fetchProviders();
       fetchBgAgents();
-    }, 60_000);
-    return () => clearInterval(interval);
+    });
   }, []);
 
   useEffect(() => {
-    fetchRecommendations();
-  }, [favorites.length, trips.length]);
+    queueMicrotask(fetchRecommendations);
+  }, [fetchRecommendations]);
 
-  const statusColor = health?.status === 'healthy' ? 'bg-emerald-500' : health?.status === 'degraded' ? 'bg-amber-500' : 'bg-red-500';
+  useEffect(() => {
+    if (!restricted.discovered) {
+      queueMicrotask(fetchDiscovered);
+    }
+  }, [fetchDiscovered, restricted.discovered]);
+
+  const statusColor = restricted.health
+    ? 'bg-zinc-300'
+    : health?.status === 'healthy' ? 'bg-emerald-500' : health?.status === 'degraded' ? 'bg-amber-500' : 'bg-red-500';
 
   return (
     <div className="space-y-8">
@@ -270,14 +362,14 @@ export default function AgentDashboard() {
       <div className="bg-white border border-zinc-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 rounded-full ${statusColor} ${!health ? 'animate-pulse' : ''}`} />
+            <div className={`w-3 h-3 rounded-full ${statusColor} ${!health && !restricted.health ? 'animate-pulse' : ''}`} />
             <h3 className="font-semibold text-zinc-900">System Health</h3>
           </div>
           <div className="flex items-center gap-3">
             {health?.checkedAt && (
               <span className="text-xs text-zinc-400">Last checked: {formatTimestamp(health.checkedAt)}</span>
             )}
-            <button
+              <button
               onClick={fetchHealth}
               disabled={loading.health}
               className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
@@ -286,7 +378,9 @@ export default function AgentDashboard() {
             </button>
           </div>
         </div>
-        {health && (
+        {restricted.health ? (
+          <p className="text-sm text-zinc-500">Operational health checks require an authorized admin session.</p>
+        ) : health && (
           <div className="space-y-2">
             {Object.entries(health.checks).map(([key, check]) => (
               <div key={key} className="flex items-center justify-between text-sm">
@@ -309,15 +403,17 @@ export default function AgentDashboard() {
       <div className="bg-white border border-zinc-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-zinc-900">Pricing Providers</h3>
-          <button
-            onClick={fetchProviders}
-            disabled={loading.providers}
-            className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
-          >
+            <button
+              onClick={fetchProviders}
+              disabled={loading.providers}
+              className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
+            >
             {loading.providers ? 'Loading...' : 'Refresh'}
           </button>
         </div>
-        {providers.length > 0 ? (
+        {restricted.providers ? (
+          <p className="text-sm text-zinc-500">Provider operations require an authorized admin session.</p>
+        ) : providers.length > 0 ? (
           <div className="space-y-3">
             {providers.map((p) => (
               <div key={p.id} className="flex items-center gap-3 p-3 bg-zinc-50 rounded-lg">
@@ -364,7 +460,7 @@ export default function AgentDashboard() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-zinc-500">Loading providers...</p>
+          <p className="text-sm text-zinc-500">{loading.providers ? 'Loading providers...' : 'Provider status unavailable.'}</p>
         )}
       </div>
 
@@ -382,14 +478,16 @@ export default function AgentDashboard() {
             </button>
             <button
               onClick={() => triggerAgent('orchestrate')}
-              disabled={runningAgent !== null}
+              disabled={runningAgent !== null || restricted.agents}
               className="text-sm px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
               {runningAgent === 'orchestrate' ? 'Running...' : 'Run All'}
             </button>
           </div>
         </div>
-        {bgAgents.length > 0 ? (
+        {restricted.agents ? (
+          <p className="text-sm text-zinc-500">Background agent operations require an authorized admin session.</p>
+        ) : bgAgents.length > 0 ? (
           <div className="space-y-3">
             {bgAgents.map((agent) => (
               <div key={agent.name} className="flex items-center gap-3 p-3 bg-zinc-50 rounded-lg">
@@ -434,26 +532,52 @@ export default function AgentDashboard() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-zinc-500">Loading agents...</p>
+          <p className="text-sm text-zinc-500">{bgLoading ? 'Loading agents...' : 'Agent status unavailable.'}</p>
         )}
       </div>
 
       {/* Discovered Hotels */}
-      {discoveredHotels.length > 0 && (
+      {(restricted.discovered || discoveredHotels.length > 0) && (
         <div className="bg-white border border-zinc-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="font-semibold text-zinc-900">Discovered Hotels</h3>
-              {discoveredStats && (
+              <h3 className="font-semibold text-zinc-900">Catalog Candidate Queue</h3>
+              {restricted.discovered ? (
+                <p className="text-xs text-zinc-500 mt-0.5">Admin access required</p>
+              ) : discoveredStats && (
                 <p className="text-xs text-zinc-500 mt-0.5">
-                  {discoveredStats.total} found across {discoveredStats.citiesScanned} cities
+                  {discoveredStats.total} candidates
+                  {typeof discoveredStats.pending === 'number' && `, ${discoveredStats.pending} pending`}
                   {discoveredStats.newHotels > 0 && (
                     <span className="text-emerald-600 font-medium"> ({discoveredStats.newHotels} new)</span>
                   )}
                 </p>
               )}
             </div>
+            {!restricted.discovered && (
             <div className="flex items-center gap-2">
+              <select
+                value={candidateStatusFilter}
+                onChange={(event) => setCandidateStatusFilter(event.target.value)}
+                className="text-xs border border-zinc-200 rounded-lg px-2 py-1 bg-white text-zinc-700"
+                aria-label="Candidate status filter"
+              >
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="stale">Stale</option>
+                <option value="all">All</option>
+              </select>
+              <select
+                value={candidateFlagFilter}
+                onChange={(event) => setCandidateFlagFilter(event.target.value)}
+                className="text-xs border border-zinc-200 rounded-lg px-2 py-1 bg-white text-zinc-700"
+                aria-label="Candidate issue filter"
+              >
+                <option value="all">All flags</option>
+                <option value="duplicate">Duplicate</option>
+                <option value="missing-provenance">Missing provenance</option>
+              </select>
               <button
                 onClick={fetchDiscovered}
                 className="text-sm text-blue-600 hover:text-blue-700"
@@ -466,11 +590,15 @@ export default function AgentDashboard() {
                   disabled={addingHotel !== null}
                   className="text-sm px-3 py-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
                 >
-                  {addingHotel === 'all' ? 'Adding...' : `Add All ${discoveredStats.newHotels} New`}
+                  {addingHotel === 'all' ? 'Approving...' : `Approve ${discoveredStats.newHotels} New`}
                 </button>
               )}
             </div>
+            )}
           </div>
+          {restricted.discovered ? (
+            <p className="text-sm text-zinc-500">Discovered catalog operations require an authorized admin session.</p>
+          ) : (
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {discoveredHotels.slice(0, 20).map((hotel) => (
               <div key={hotel.hotelKey} className="flex items-center gap-3 p-2 bg-zinc-50 rounded-lg">
@@ -478,22 +606,44 @@ export default function AgentDashboard() {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-zinc-900 truncate">{hotel.name}</span>
                     {hotel.stars ? <span className="text-[10px] text-amber-500">{'*'.repeat(hotel.stars)}</span> : null}
+                    {hotel.status !== 'pending' && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{hotel.status}</span>
+                    )}
                     {hotel.alreadyInCatalog ? (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-500">In catalog</span>
                     ) : (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">New</span>
                     )}
+                    {hotel.missingProvenance && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Missing source</span>
+                    )}
                   </div>
                   <p className="text-xs text-zinc-500">{hotel.city}, {hotel.country}</p>
                 </div>
-                {!hotel.alreadyInCatalog && (
-                  <button
-                    onClick={() => addDiscoveredHotel(hotel)}
-                    disabled={addingHotel !== null}
-                    className="text-xs px-2 py-1 text-emerald-600 hover:bg-emerald-50 rounded disabled:opacity-50"
-                  >
-                    {addingHotel === hotel.hotelKey ? 'Adding...' : 'Add'}
-                  </button>
+                {hotel.status === 'pending' && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => reviewCandidate(hotel, 'approve')}
+                      disabled={addingHotel !== null || hotel.missingProvenance}
+                      className="text-xs px-2 py-1 text-emerald-600 hover:bg-emerald-50 rounded disabled:opacity-50"
+                    >
+                      {addingHotel === hotel.id ? 'Working...' : 'Approve'}
+                    </button>
+                    <button
+                      onClick={() => reviewCandidate(hotel, 'reject')}
+                      disabled={addingHotel !== null}
+                      className="text-xs px-2 py-1 text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                    >
+                      Reject
+                    </button>
+                    <button
+                      onClick={() => reviewCandidate(hotel, 'stale')}
+                      disabled={addingHotel !== null}
+                      className="text-xs px-2 py-1 text-zinc-500 hover:bg-zinc-100 rounded disabled:opacity-50"
+                    >
+                      Stale
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
@@ -503,6 +653,7 @@ export default function AgentDashboard() {
               </p>
             )}
           </div>
+          )}
         </div>
       )}
 
@@ -538,6 +689,7 @@ export default function AgentDashboard() {
                   bestPrice: deal.price,
                   pricePerNight: deal.pricePerNight,
                   bestProvider: deal.provider,
+                  priceSourceLabel: deal.priceSourceLabel,
                   checkIn: deal.checkIn,
                   checkOut: deal.checkOut,
                   nights: 2,
@@ -651,20 +803,29 @@ export default function AgentDashboard() {
               ))}
             </div>
             <div className="mt-3 pt-3 border-t border-zinc-200">
-              <p className="text-xs text-zinc-500 mb-2">Direct booking links:</p>
-              <div className="flex flex-wrap gap-2">
-                {availability.bookingLinks.map((link, i) => (
-                  <a
-                    key={i}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded-lg hover:bg-blue-100"
-                  >
-                    {link.provider} ↗
-                  </a>
-                ))}
-              </div>
+              <p className="text-xs text-zinc-500 mb-2">Provider-returned booking links:</p>
+              {availability.bookingLinks?.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {availability.bookingLinks.map((link, i) => (
+                    <a
+                      key={i}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded-lg hover:bg-blue-100"
+                    >
+                      {link.provider} ↗
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-500">
+                  Provider-returned booking links are unavailable until a configured pricing source returns a verified link.
+                </p>
+              )}
+              {availability.note && (
+                <p className="mt-2 text-xs text-zinc-400">{availability.note}</p>
+              )}
             </div>
           </div>
         )}
@@ -672,21 +833,21 @@ export default function AgentDashboard() {
 
       {/* Data Sources Overview */}
       <div className="bg-white border border-zinc-200 rounded-lg p-6">
-        <h3 className="font-semibold text-zinc-900 mb-4">Free Data Sources (No Auth Required)</h3>
+        <h3 className="font-semibold text-zinc-900 mb-4">Data Sources Overview</h3>
         <p className="text-sm text-zinc-500 mb-4">
-          All external data sources used by SVBooking. Every source is free and requires no API key.
+          External data sources used by SVBooking. Availability depends on configured credentials and source uptime.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
-            { name: 'Xotelo', desc: 'Hotel pricing from 8+ providers', type: 'Pricing', icon: '💰', endpoint: '/api/compare' },
+            { name: 'Xotelo', desc: 'Hotel pricing from available providers', type: 'Pricing', icon: '💰', endpoint: '/api/compare' },
             { name: 'Open-Meteo', desc: '7-day weather forecast', type: 'Weather', icon: '🌤️', endpoint: '/api/weather' },
-            { name: 'OpenStreetMap Overpass', desc: 'Hotel discovery (1,100+ in Paris alone)', type: 'Discovery', icon: '🗺️', endpoint: '/api/catalog/discover-osm' },
+            { name: 'OpenStreetMap Overpass', desc: 'Hotel discovery from public map data', type: 'Discovery', icon: '🗺️', endpoint: '/api/catalog/discover-osm' },
             { name: 'Nominatim', desc: 'Hotel geocoding & address lookup', type: 'Geocoding', icon: '📍', endpoint: '/api/catalog/discover-osm?source=nominatim' },
             { name: 'Wikidata SPARQL', desc: 'TripAdvisor/Booking IDs crossref', type: 'Enrichment', icon: '🔗', endpoint: '/api/catalog/discover' },
             { name: 'Wikipedia', desc: 'City descriptions & images', type: 'Content', icon: '📖', endpoint: '/api/city-info' },
-            { name: 'Open Exchange Rates', desc: '166 currencies, daily updates', type: 'Currency', icon: '💱', endpoint: '/api/exchange-rates' },
+            { name: 'Open Exchange Rates', desc: 'Currency rates when the provider is configured', type: 'Currency', icon: '💱', endpoint: '/api/exchange-rates' },
             { name: 'IP-API', desc: 'Visitor geolocation & currency', type: 'Geolocation', icon: '🌐', endpoint: '/api/geo' },
-            { name: 'Nager.Date', desc: 'Public holidays for 100+ countries', type: 'Holidays', icon: '📅', endpoint: '/api/holidays' },
+            { name: 'Nager.Date', desc: 'Public holiday reference data', type: 'Holidays', icon: '📅', endpoint: '/api/holidays' },
             { name: 'REST Countries', desc: 'Country metadata, currencies, languages', type: 'Reference', icon: '🏳️', endpoint: '' },
           ].map((source) => (
             <div

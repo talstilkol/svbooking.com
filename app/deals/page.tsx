@@ -3,13 +3,14 @@ import DealsClient from '@/components/DealsClient';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
 
 export const metadata: Metadata = {
-  title: "Today's Best Hotel Deals — Compare Prices | SVBooking",
+  title: 'Hotel Deals — Compare Provider Prices | SVBooking',
   description:
-    'Live hotel deals scanned by our AI agents. Find the cheapest rates from Booking.com, Expedia, Hotels.com, Agoda & more across 45+ cities worldwide.',
+    'Compare provider-returned hotel rates from configured sources when verified deal data is available.',
+  alternates: { canonical: '/deals' },
   openGraph: {
-    title: "Today's Best Hotel Deals | SVBooking",
+    title: 'Hotel Deals | SVBooking',
     description:
-      'AI-powered deal scanner finds the cheapest hotel rates across 8+ providers.',
+      'AI-powered deal scanner reports provider-returned hotel rates with source metadata when available.',
     type: 'website',
   },
 };

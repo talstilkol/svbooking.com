@@ -1,39 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { CITY_COORDINATES, type CityCoordinate } from '@/lib/city-coordinates';
-
-interface Hotel {
-  hotelKey: string;
-  name: string;
-  city: string;
-  country: string;
-}
+import { buildMapMarkers, type MapHotel, type MapMarker } from '@/lib/map-markers';
 
 interface MapViewProps {
-  hotels: Hotel[];
+  hotels: MapHotel[];
   className?: string;
   selectedCity?: string;
   onCitySelect?: (city: string) => void;
-}
-
-// Group hotels by city for marker clustering
-function groupByCity(hotels: Hotel[]) {
-  const map = new Map<string, { coord: CityCoordinate; hotels: Hotel[] }>();
-  for (const h of hotels) {
-    const coord = CITY_COORDINATES.find(
-      (c) => c.city.toLowerCase() === h.city.toLowerCase()
-    );
-    if (!coord) continue;
-    const existing = map.get(h.city);
-    if (existing) {
-      existing.hotels.push(h);
-    } else {
-      map.set(h.city, { coord, hotels: [h] });
-    }
-  }
-  return Array.from(map.values());
 }
 
 // Pure CSS/SVG map — no external library needed
@@ -47,7 +22,7 @@ export default function MapView({
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const groups = groupByCity(hotels);
+  const markers = buildMapMarkers(hotels);
 
   // Map projection (Mercator-like, simplified for our lat/lng range)
   const MAP_W = 900;
@@ -66,21 +41,26 @@ export default function MapView({
   const handleMouseMove = (e: React.MouseEvent, city: string) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
+    const rawX = e.clientX - rect.left;
+    const clampedX = Math.min(Math.max(rawX, 100), Math.max(100, rect.width - 100));
     setTooltipPos({
-      x: e.clientX - rect.left,
+      x: clampedX,
       y: e.clientY - rect.top - 10,
     });
     setHoveredCity(city);
   };
 
-  const hoveredGroup = groups.find((g) => g.coord.city === hoveredCity);
+  const hoveredMarker = markers.find((marker) => marker.id === hoveredCity);
+  const selectMarker = (marker: MapMarker) => {
+    onCitySelect?.(marker.coord.city);
+  };
 
   return (
     <div className={`bg-white rounded-xl border border-slate-200 overflow-hidden ${className}`}>
       <div className="p-4 border-b border-slate-100">
         <h3 className="text-sm font-semibold text-slate-700">Hotel Map</h3>
         <p className="text-xs text-slate-400">
-          {groups.length} cities · {hotels.length} hotels · Click a city to explore
+          {markers.length} markers · {hotels.length} hotels · Exact pins appear when verified coordinates exist
         </p>
       </div>
 
@@ -119,15 +99,16 @@ export default function MapView({
           ))}
 
           {/* City markers */}
-          {groups.map(({ coord, hotels: cityHotels }) => {
+          {markers.map((marker) => {
+            const { coord, hotels: markerHotels } = marker;
             const x = projectLng(coord.lng);
             const y = projectLat(coord.lat);
-            const isSelected = selectedCity === coord.city;
-            const isHovered = hoveredCity === coord.city;
-            const r = Math.max(6, Math.min(12, 4 + cityHotels.length * 2));
+            const isSelected = marker.kind === 'city' && selectedCity === coord.city;
+            const isHovered = hoveredCity === marker.id;
+            const r = marker.kind === 'hotel' ? 7 : Math.max(6, Math.min(12, 4 + markerHotels.length * 2));
 
             return (
-              <g key={coord.city}>
+              <g key={marker.id}>
                 {/* Pulse ring for selected */}
                 {isSelected && (
                   <circle
@@ -155,19 +136,38 @@ export default function MapView({
                     />
                   </circle>
                 )}
-                {/* Marker */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={isHovered ? r + 2 : r}
-                  fill={isSelected ? '#2563eb' : isHovered ? '#3b82f6' : '#60a5fa'}
-                  stroke="white"
-                  strokeWidth={2}
-                  className="cursor-pointer transition-all"
-                  onMouseMove={(e) => handleMouseMove(e as unknown as React.MouseEvent, coord.city)}
+                <g
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${marker.kind === 'hotel' ? 'Exact property pin' : 'City cluster'}: ${marker.label}`}
+                  className="cursor-pointer"
+                  onMouseMove={(e) => handleMouseMove(e as unknown as React.MouseEvent, marker.id)}
                   onMouseLeave={() => setHoveredCity(null)}
-                  onClick={() => onCitySelect?.(coord.city)}
-                />
+                  onFocus={() => setHoveredCity(marker.id)}
+                  onBlur={() => setHoveredCity(null)}
+                  onClick={() => selectMarker(marker)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      selectMarker(marker);
+                    }
+                  }}
+                >
+                  <title>
+                    {marker.kind === 'hotel'
+                      ? `${marker.label}, exact property coordinates`
+                      : `${marker.label}, city cluster fallback`}
+                  </title>
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={isHovered ? r + 2 : r}
+                    fill={isSelected ? '#2563eb' : isHovered ? '#3b82f6' : '#60a5fa'}
+                    stroke="white"
+                    strokeWidth={2}
+                    className="transition-all"
+                  />
+                </g>
                 {/* Count */}
                 <text
                   x={x}
@@ -176,7 +176,7 @@ export default function MapView({
                   dominantBaseline="middle"
                   className="fill-white text-[9px] font-bold pointer-events-none select-none"
                 >
-                  {cityHotels.length}
+                  {marker.kind === 'hotel' ? '1' : markerHotels.length}
                 </text>
                 {/* City label */}
                 <text
@@ -185,7 +185,7 @@ export default function MapView({
                   textAnchor="middle"
                   className="fill-slate-600 text-[10px] font-medium pointer-events-none select-none"
                 >
-                  {coord.city}
+                  {marker.label}
                 </text>
               </g>
             );
@@ -193,30 +193,35 @@ export default function MapView({
         </svg>
 
         {/* Tooltip */}
-        {hoveredCity && hoveredGroup && (
+        {hoveredCity && hoveredMarker && (
           <div
             className="absolute z-20 bg-white rounded-lg shadow-lg border border-slate-200 p-3 pointer-events-none"
             style={{
-              left: Math.min(tooltipPos.x, (containerRef.current?.offsetWidth || 300) - 200),
+              left: tooltipPos.x,
               top: tooltipPos.y - 80,
               minWidth: 180,
+              transform: 'translateX(-50%)',
             }}
           >
             <p className="text-sm font-semibold text-slate-800">
-              {hoveredGroup.coord.city}, {hoveredGroup.coord.country}
+              {hoveredMarker.kind === 'hotel'
+                ? hoveredMarker.hotels[0]?.name
+                : `${hoveredMarker.coord.city}, ${hoveredMarker.coord.country}`}
             </p>
             <p className="text-xs text-slate-500 mt-0.5">
-              {hoveredGroup.hotels.length} hotel{hoveredGroup.hotels.length !== 1 ? 's' : ''}
+              {hoveredMarker.kind === 'hotel'
+                ? `${hoveredMarker.hotels[0]?.city}, ${hoveredMarker.hotels[0]?.country}`
+                : `${hoveredMarker.hotels.length} hotel${hoveredMarker.hotels.length !== 1 ? 's' : ''}`}
             </p>
             <div className="mt-1.5 space-y-0.5">
-              {hoveredGroup.hotels.slice(0, 3).map((h) => (
+              {hoveredMarker.hotels.slice(0, 3).map((h) => (
                 <p key={h.hotelKey} className="text-xs text-slate-600 truncate">
                   • {h.name}
                 </p>
               ))}
-              {hoveredGroup.hotels.length > 3 && (
+              {hoveredMarker.hotels.length > 3 && (
                 <p className="text-xs text-blue-500">
-                  +{hoveredGroup.hotels.length - 3} more
+                  +{hoveredMarker.hotels.length - 3} more
                 </p>
               )}
             </div>
@@ -224,9 +229,45 @@ export default function MapView({
         )}
       </div>
 
-      {/* City list below map */}
+      <div className="border-t border-slate-100 bg-slate-50/50">
+        <div className="px-4 pt-4">
+          <h4 className="text-sm font-semibold text-slate-700">Map locations</h4>
+          <p className="text-xs text-slate-500">
+            Exact property pins are used only when verified coordinates exist; otherwise hotels stay grouped by city.
+          </p>
+        </div>
+        <div className="p-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {markers.map((marker) => {
+            const sourceLabel = marker.coordinateSource === 'property'
+              ? 'Exact property coordinates'
+              : 'City cluster fallback';
+            const countLabel = marker.kind === 'hotel'
+              ? `${marker.hotels[0]?.city}, ${marker.hotels[0]?.country}`
+              : `${marker.hotels.length} hotel${marker.hotels.length !== 1 ? 's' : ''}`;
+            const href = marker.kind === 'hotel'
+              ? `/hotel/${marker.hotels[0]?.hotelKey}`
+              : `/search?city=${encodeURIComponent(marker.coord.city)}`;
+
+            return (
+              <Link
+                key={marker.id}
+                href={href}
+                className="block rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition hover:border-blue-300 hover:text-blue-700"
+              >
+                <span className="block font-medium text-slate-800">{marker.label}</span>
+                <span className="mt-0.5 block text-xs text-slate-500">{countLabel}</span>
+                <span className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                  {sourceLabel}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="p-3 flex flex-wrap gap-1.5 border-t border-slate-100 bg-slate-50/50">
-        {groups
+        {markers
+          .filter((marker) => marker.kind === 'city')
           .sort((a, b) => b.hotels.length - a.hotels.length)
           .map(({ coord, hotels: cityHotels }) => (
             <Link

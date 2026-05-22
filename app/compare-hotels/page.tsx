@@ -17,8 +17,15 @@ interface Hotel {
 
 interface Rate {
   provider: string;
+  code?: string;
   total: number;
   currency: string;
+  source?: string | null;
+  freshness?: string;
+  partial?: boolean;
+  deepLink?: string | null;
+  taxesIncluded?: boolean | null;
+  priceAccuracyState?: string;
 }
 
 interface ComparisonResult {
@@ -34,9 +41,31 @@ function localDate(offsetDays: number) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+function rateSourceLabel(rate: Rate) {
+  return `Source: ${rate.source || 'unavailable'}`;
+}
+
+function rateFreshnessLabel(rate: Rate) {
+  return `Freshness: ${rate.freshness || 'unknown'}`;
+}
+
+function rateCompletenessLabel(rate: Rate) {
+  return rate.partial ? 'Partial provider response' : 'Complete provider response';
+}
+
+function rateTaxLabel(rate: Rate) {
+  if (rate.taxesIncluded === true) return 'Taxes included';
+  if (rate.taxesIncluded === false) return 'Taxes may be excluded';
+  return 'Tax status unavailable';
+}
+
+function rateAccuracyLabel(rate: Rate) {
+  return `Accuracy: ${rate.priceAccuracyState || 'unobserved'}`;
+}
+
 function CompareHotelsInner() {
   const searchParams = useSearchParams();
-  const initialKeys = searchParams.get('hotels')?.split(',').filter(Boolean) || [];
+  const initialKeys = (searchParams.get('hotels') || searchParams.get('keys'))?.split(',').filter(Boolean) || [];
 
   const [allHotels, setAllHotels] = useState<Hotel[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>(initialKeys);
@@ -83,7 +112,7 @@ function CompareHotelsInner() {
           if (res.ok && data.hotel) {
             newResults[key] = data;
           }
-        } catch { /* skip */ }
+        } catch (err) { console.warn(`compare-hotels: fetch failed for ${key}`, err); }
       })
     );
 
@@ -111,7 +140,7 @@ function CompareHotelsInner() {
         <div className="max-w-7xl mx-auto">
           <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">&larr; Home</Link>
           <h1 className="text-3xl md:text-4xl font-bold mb-2">Compare Hotels Side by Side</h1>
-          <p className="text-white/70">Select up to 4 hotels and compare prices across all providers</p>
+          <p className="text-white/70">Select up to 4 hotels and compare provider-returned prices when available</p>
         </div>
       </div>
 
@@ -128,7 +157,7 @@ function CompareHotelsInner() {
                 key={hotel.hotelKey}
                 className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2"
               >
-                <Image src={hotel.image} alt="" width={32} height={32} className="w-8 h-8 rounded object-cover" />
+                <Image src={hotel.image} alt={hotel.name} width={32} height={32} className="w-8 h-8 rounded object-cover" />
                 <span className="text-sm font-medium text-slate-800">{hotel.name}</span>
                 <button
                   onClick={() => removeHotel(hotel.hotelKey)}
@@ -195,7 +224,7 @@ function CompareHotelsInner() {
         {loading && (
           <div className="text-center py-16">
             <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-slate-500 mt-3">Fetching prices from all providers...</p>
+            <p className="text-slate-500 mt-3">Fetching provider-returned prices when available...</p>
           </div>
         )}
 
@@ -223,7 +252,7 @@ function CompareHotelsInner() {
                           />
                           <div className="font-semibold text-slate-900 text-sm">{r.hotel.name}</div>
                           <div className="text-xs text-slate-500">{r.hotel.city}</div>
-                          <RatingBadge hotelKey={key} size="sm" className="mt-1 justify-center" />
+                          <RatingBadge size="sm" className="mt-1 justify-center" />
                         </th>
                       );
                     })}
@@ -233,7 +262,7 @@ function CompareHotelsInner() {
                   {/* Cheapest row */}
                   <tr className="bg-green-50 border-b border-green-100">
                     <td className="p-4 font-semibold text-green-800 text-sm">
-                      &#11088; Best Price
+                      &#11088; Lowest returned price
                     </td>
                     {selectedKeys.map((key) => {
                       const r = results[key];
@@ -249,6 +278,13 @@ function CompareHotelsInner() {
                           <div className="text-xs text-green-600 font-medium mt-0.5">
                             on {r.cheapest.provider}
                           </div>
+                          <div className="mt-2 flex flex-wrap justify-center gap-1">
+                            {[rateSourceLabel(r.cheapest), rateFreshnessLabel(r.cheapest)].map((label) => (
+                              <span key={label} className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
+                                {label}
+                              </span>
+                            ))}
+                          </div>
                         </td>
                       );
                     })}
@@ -262,7 +298,13 @@ function CompareHotelsInner() {
                         const r = results[key];
                         const rate = r?.rates.find((rt) => rt.provider === provider);
                         const isCheapest = rate && r?.cheapest && rate.provider === r.cheapest.provider && rate.total === r.cheapest.total;
-                        if (!rate) return <td key={key} className="p-4 text-center text-slate-300 text-sm">—</td>;
+                        if (!rate) {
+                          return (
+                            <td key={key} className="p-4 text-center text-slate-400 text-sm">
+                              No provider-returned rate
+                            </td>
+                          );
+                        }
                         return (
                           <td key={key} className={`p-4 text-center ${isCheapest ? 'bg-green-50' : ''}`}>
                             <div className={`font-semibold ${isCheapest ? 'text-green-700' : 'text-slate-900'}`}>
@@ -270,6 +312,26 @@ function CompareHotelsInner() {
                             </div>
                             <div className="text-xs text-slate-500">
                               {rate.currency} {(rate.total / nights).toFixed(0)}/night
+                            </div>
+                            <div
+                              className="mt-2 flex flex-wrap justify-center gap-1"
+                              aria-label={`Rate metadata for ${provider} at ${r?.hotel.name || key}`}
+                            >
+                              {[
+                                rateSourceLabel(rate),
+                                rateFreshnessLabel(rate),
+                                rateCompletenessLabel(rate),
+                                rateTaxLabel(rate),
+                                rateAccuracyLabel(rate),
+                                rate.deepLink ? 'Provider link returned' : 'Provider search unavailable',
+                              ].map((label) => (
+                                <span
+                                  key={label}
+                                  className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600"
+                                >
+                                  {label}
+                                </span>
+                              ))}
                             </div>
                           </td>
                         );
@@ -323,7 +385,7 @@ function CompareHotelsInner() {
         {!loading && selectedKeys.length >= 2 && Object.keys(results).length === 0 && (
           <div className="text-center py-16 text-slate-400">
             <div className="text-5xl mb-4">&#128200;</div>
-            <p className="text-lg">Click &quot;Compare&quot; to fetch live prices for all selected hotels</p>
+            <p className="text-lg">Click &quot;Compare&quot; to fetch provider-returned prices for all selected hotels</p>
           </div>
         )}
       </div>

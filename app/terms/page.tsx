@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Terms of Service',
   description: 'SV Booking terms of service — usage terms, disclaimers, and conditions for using our hotel price comparison service.',
+  alternates: { canonical: '/terms' },
 };
 
 export default function TermsPage() {
@@ -34,7 +35,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold text-slate-800">3. Price Accuracy</h2>
             <p className="text-slate-600 leading-relaxed">
-              While we strive to show accurate, real-time prices, we cannot guarantee that
+              While we strive to show current provider-returned prices, we cannot guarantee that
               displayed prices are always current. Prices may change between the time we
               fetch them and when you visit the provider&apos;s site. Always verify the final
               price on the booking provider&apos;s website before completing your reservation.

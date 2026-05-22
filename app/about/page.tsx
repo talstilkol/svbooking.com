@@ -1,40 +1,42 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BreadcrumbJsonLd } from '@/components/JsonLd';
+import { CATALOG_STATS } from '@/lib/catalog-stats';
 
 export const metadata: Metadata = {
   title: 'About SV Booking',
   description:
-    'Learn about SV Booking — the free hotel price comparison platform that helps travelers find the best deals across 8+ booking providers in 45+ cities worldwide.',
+    'Learn about SV Booking — the free hotel price comparison platform that helps travelers compare verified prices across a curated global catalog.',
+  alternates: { canonical: '/about' },
 };
 
 const STATS = [
-  { number: '130+', label: 'Hotels' },
-  { number: '45+', label: 'Cities' },
+  { number: String(CATALOG_STATS.hotels), label: 'Hotels' },
+  { number: String(CATALOG_STATS.cities), label: 'Cities' },
   { number: '8+', label: 'Providers' },
-  { number: '20+', label: 'Countries' },
+  { number: String(CATALOG_STATS.countries), label: 'Countries' },
 ];
 
 const TEAM_VALUES = [
   {
     icon: '🎯',
     title: 'Transparency',
-    desc: 'We show real prices from real providers. No hidden fees, no affiliate tricks.',
+    desc: 'We show provider-returned prices and label unavailable data instead of filling gaps.',
   },
   {
     icon: '⚡',
     title: 'Speed',
-    desc: 'Real-time price comparisons in seconds, not minutes. Your time matters.',
+    desc: 'Provider-returned price comparisons in seconds when configured providers respond.',
   },
   {
     icon: '🔒',
     title: 'Privacy',
-    desc: 'No account required. No tracking. Your favorites stay on your device.',
+    desc: 'Public search works without an account; local favorites stay on your device.',
   },
   {
     icon: '💡',
     title: 'Innovation',
-    desc: 'AI-powered recommendations, cheaper date discovery, and trend analysis.',
+    desc: 'Agent-assisted recommendations, cheaper date discovery, and verified trend states.',
   },
 ];
 
@@ -52,7 +54,7 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">About SV Booking</h1>
           <p className="text-lg md:text-xl opacity-90 max-w-2xl mx-auto">
-            We believe finding the best hotel price should be free, fast, and transparent.
+            We believe comparing available hotel prices should be free, fast, and transparent.
           </p>
         </div>
       </div>
@@ -79,13 +81,13 @@ export default function AboutPage() {
           <div className="prose prose-slate max-w-none">
             <p className="text-slate-600 leading-relaxed">
               SV Booking was built with a simple goal: help travelers compare hotel prices
-              across all major booking platforms in one place. Instead of opening 8 different
-              tabs and manually checking prices, we do it for you in real-time.
+              across configured booking providers in one place. Instead of opening multiple
+              tabs and manually checking prices, we compare available provider data in one place.
             </p>
             <p className="text-slate-600 leading-relaxed mt-4">
-              We aggregate live pricing data from Booking.com, Expedia, Hotels.com, Agoda,
-              Trip.com, Vio.com, and more. When you find the best price, you book directly
-              with the provider — we never charge a middleman fee.
+              We request pricing data from configured providers and display only offers returned
+              by those sources. When you find an available provider price, checkout happens
+              directly with the provider — SV Booking does not add a booking fee.
             </p>
           </div>
         </section>
@@ -112,10 +114,10 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold text-slate-900 mb-4">How It Works</h2>
           <div className="space-y-4">
             {[
-              { step: '1', title: 'Search', desc: 'Enter a hotel name, city, or browse our curated catalog of 130+ premium hotels.' },
-              { step: '2', title: 'Compare', desc: 'We fetch real-time prices from 8+ major booking providers simultaneously.' },
+              { step: '1', title: 'Search', desc: `Enter a hotel name, city, or browse the curated catalog of ${CATALOG_STATS.hotels} hotels.` },
+              { step: '2', title: 'Compare', desc: 'We fetch provider-returned prices from available booking providers simultaneously.' },
               { step: '3', title: 'Save', desc: 'Find a cheaper date? Set a price alert? Save to your trip planner — all free.' },
-              { step: '4', title: 'Book', desc: 'Click through to the provider with the best price and book directly. No middleman.' },
+              { step: '4', title: 'Book', desc: 'Click through to the selected provider and book directly. No SV Booking fee.' },
             ].map((s) => (
               <div key={s.step} className="flex gap-4 items-start">
                 <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
@@ -132,7 +134,7 @@ export default function AboutPage() {
 
         {/* CTA */}
         <div className="bg-blue-50 border border-blue-200 rounded-2xl p-8 text-center">
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Ready to find the best deal?</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Ready to compare available rates?</h2>
           <p className="text-slate-600 mb-4">Start comparing hotel prices — completely free.</p>
           <div className="flex justify-center gap-3">
             <Link
