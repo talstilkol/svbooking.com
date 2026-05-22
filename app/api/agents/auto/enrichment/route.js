@@ -2,7 +2,7 @@
 // Wikidata cross-references (Booking.com slugs), and city metadata.
 // All data sources are free and require no authentication.
 
-import { runAgent, verifyCronAuth, withConcurrency, sleep, AGENT_NAMES } from '@/lib/agent-utils';
+import { runAgent, verifyCronAuth, sleep, AGENT_NAMES } from '@/lib/agent-utils';
 import { getSummary } from '@/lib/wikipedia';
 import { enrichFromWikidata } from '@/lib/wikidata-enrich';
 import { discoverHotelsDBpedia } from '@/lib/dbpedia';
@@ -77,12 +77,13 @@ async function runEnrichment() {
     }
   }
 
-  // 3. Try DBpedia for a sample city (additional hotel descriptions)
+  // 3. Try DBpedia for one deterministic city each day (additional hotel descriptions)
   try {
-    const sampleCity = cities[Math.floor(Math.random() * cities.length)];
-    const dbpediaResults = await discoverHotelsDBpedia({ city: sampleCity, limit: 20 });
+    const dayNumber = Math.floor(Date.now() / 86400000);
+    const selectedCity = cities[dayNumber % cities.length];
+    const dbpediaResults = await discoverHotelsDBpedia({ city: selectedCity, limit: 20 });
     if (dbpediaResults && dbpediaResults.length > 0) {
-      await kv.setWithTTL(`enrichment:dbpedia:${sampleCity.toLowerCase()}`, dbpediaResults, CITY_ENRICHMENT_TTL);
+      await kv.setWithTTL(`enrichment:dbpedia:${selectedCity.toLowerCase()}`, dbpediaResults, CITY_ENRICHMENT_TTL);
       dbpediaHotels = dbpediaResults.length;
     }
   } catch {
@@ -105,11 +106,12 @@ export async function GET(request) {
 
   try {
     const status = await runAgent(AGENT_NAMES.ENRICHMENT, runEnrichment);
-    return Response.json(status);
+    return Response.json(status, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
+    console.error('GET /api/agents/auto/enrichment error:', err);
     return Response.json(
-      { status: 'error', error: err.message },
-      { status: 500 }
+      { status: 'error', error: 'Enrichment unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 }

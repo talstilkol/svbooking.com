@@ -12,8 +12,10 @@
 import { kv } from '@/lib/kv';
 import { isConfigured, getEvents } from '@/lib/ticketmaster';
 import { getCityCoordinate } from '@/lib/city-coordinates';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 const CACHE_TTL = 21600; // 6 hours
+const eventsLimiter = rateLimit({ namespace: 'events', limit: 20, window: 60, failOpen: false });
 
 export async function GET(request) {
   try {
@@ -31,22 +33,28 @@ export async function GET(request) {
     if (city && (isNaN(lat) || isNaN(lon))) {
       const coord = getCityCoordinate(city);
       if (!coord) {
-        return Response.json({ events: [], error: 'Unknown city' }, { status: 404 });
+        return Response.json(
+          { events: [], error: 'Unknown city' },
+          { status: 404, headers: { 'Cache-Control': 'no-store' } }
+        );
       }
       resolvedLat = coord.lat;
       resolvedLon = coord.lng;
     }
 
     if (isNaN(resolvedLat) || isNaN(resolvedLon)) {
-      return Response.json({ error: 'city or lat/lon required' }, { status: 400 });
+      return Response.json(
+        { error: 'city or lat/lon required' },
+        { status: 400, headers: { 'Cache-Control': 'no-store' } }
+      );
     }
 
     if (!isConfigured()) {
       return Response.json({
         events: [],
         source: 'not-configured',
-        message: 'TICKETMASTER_API_KEY not set',
-      });
+        message: 'Events provider unavailable',
+      }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
     const lat2d = resolvedLat.toFixed(1);
@@ -64,6 +72,10 @@ export async function GET(request) {
         headers: { 'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600' },
       });
     }
+
+    const ip = getClientIp(request);
+    const { success, reset } = await eventsLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
 
     const events = await getEvents({
       lat: resolvedLat,
@@ -85,9 +97,10 @@ export async function GET(request) {
       headers: { 'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600' },
     });
   } catch (err) {
+    console.error('GET /api/events error:', err);
     return Response.json(
-      { events: [], error: err.message },
-      { status: 500 }
+      { events: [], error: 'Events unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 }

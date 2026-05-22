@@ -3,6 +3,14 @@
     {
       "path": "/api/agents/auto/orchestrate",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/price-alerts/evaluate",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/ops/alerts/evaluate",
+      "schedule": "15 */6 * * *"
     }
   ]
 }

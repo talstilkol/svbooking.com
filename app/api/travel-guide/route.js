@@ -12,8 +12,10 @@
 
 import { kv } from '@/lib/kv';
 import { getTravelGuide, getSafetyInfo, getEventInfo, getDiningInfo } from '@/lib/wikivoyage';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 const CACHE_TTL = 604800; // 7 days
+const travelGuideLimiter = rateLimit({ namespace: 'travel-guide', limit: 20, window: 60, failOpen: false });
 
 export async function GET(request) {
   try {
@@ -22,7 +24,10 @@ export async function GET(request) {
     const section = searchParams.get('section') || 'overview';
 
     if (!city) {
-      return Response.json({ error: 'city parameter required' }, { status: 400 });
+      return Response.json(
+        { error: 'city parameter required' },
+        { status: 400, headers: { 'Cache-Control': 'no-store' } }
+      );
     }
 
     const cacheKey = `wikivoyage:${section}:${city.toLowerCase()}`;
@@ -39,6 +44,10 @@ export async function GET(request) {
         headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' },
       });
     }
+
+    const ip = getClientIp(request);
+    const { success, reset } = await travelGuideLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
 
     let data = null;
 
@@ -70,9 +79,10 @@ export async function GET(request) {
       headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400' },
     });
   } catch (err) {
+    console.error('GET /api/travel-guide error:', err);
     return Response.json(
-      { error: err.message, data: null },
-      { status: 500 }
+      { error: 'Travel guide unavailable', data: null },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 }

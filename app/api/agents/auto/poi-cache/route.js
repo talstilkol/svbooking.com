@@ -87,15 +87,18 @@ async function runPOICache() {
       );
       if (!coord) continue;
 
-      const amenities = await getHotelAmenities({
+      const amenityResult = await getHotelAmenities({
         lat: coord.lat,
         lon: coord.lng,
         hotelName: hotel.name,
       });
 
       // Cache even null to avoid repeated failed lookups
-      await kv.setWithTTL(amenityKey, amenities, AMENITY_CACHE_TTL);
-      if (amenities && amenities.length > 0) amenitiesCached++;
+      const cacheValue = amenityResult
+        ? { ...amenityResult, amenities: amenityResult.amenities || null, source: 'osm' }
+        : { amenities: null, source: 'not-in-osm' };
+      await kv.setWithTTL(amenityKey, cacheValue, AMENITY_CACHE_TTL);
+      if (amenityResult?.amenities?.length > 0) amenitiesCached++;
 
       await sleep(3000);
     } catch {
@@ -133,11 +136,12 @@ export async function GET(request) {
 
   try {
     const status = await runAgent(AGENT_NAMES.POI_CACHE, runPOICache);
-    return Response.json(status);
+    return Response.json(status, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
+    console.error('GET /api/agents/auto/poi-cache error:', err);
     return Response.json(
-      { status: 'error', error: err.message },
-      { status: 500 }
+      { status: 'error', error: 'POI cache unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 }

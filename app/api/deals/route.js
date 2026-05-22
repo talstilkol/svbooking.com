@@ -1,19 +1,34 @@
 import { HOTELS, getHotelsByCity, getHotelsByCountry, getHotelsByCities, findHotel } from '@/lib/hotels-catalog';
 import { CONTINENTS } from '@/lib/destinations';
 import { getCachedRates, getCachedHeatmap } from '@/lib/price-cache';
+import { getVerifiedRateObservations } from '@/lib/cheaper-dates';
 import { kv } from '@/lib/kv';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { addDays } from '@/lib/utils/date';
 
-function addDays(dateStr, days) {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
+const LEGACY_HEATMAP_PROVIDER_LABEL = ['Best', 'Available'].join(' ');
+const dealsLimiter = rateLimit({ namespace: 'deals', limit: 20, window: 60, failOpen: false });
+
+async function enforceDealsRateLimit(request) {
+  const ip = getClientIp(request);
+  const { success, reset } = await dealsLimiter.check(ip);
+  return success ? null : rateLimitResponse(reset);
 }
 
-function getDefaultDates() {
-  const today = new Date().toISOString().split('T')[0];
-  const checkIn = addDays(today, 30);
-  const checkOut = addDays(today, 32);
-  return { checkIn, checkOut };
+function normalizePublicDeal(deal) {
+  if (!deal) return null;
+  const bestProvider = deal.bestProvider || deal.provider || null;
+  const isLegacyHeatmapProvider = bestProvider === LEGACY_HEATMAP_PROVIDER_LABEL;
+
+  return {
+    ...deal,
+    bestPrice: Number(deal.bestPrice ?? deal.price ?? 0),
+    pricePerNight: Number(deal.pricePerNight ?? 0),
+    bestProvider: isLegacyHeatmapProvider ? null : bestProvider,
+    priceSource: deal.priceSource || (isLegacyHeatmapProvider ? 'xotelo-heatmap' : null),
+    priceSourceLabel: deal.priceSourceLabel || (isLegacyHeatmapProvider ? 'Xotelo heatmap observation' : undefined),
+    providerCount: Number(deal.providerCount || 0),
+  };
 }
 
 // Heatmap-based deal finder for dateless queries (faster, covers wide date range)
@@ -59,11 +74,14 @@ async function fetchDealViaHeatmap(hotel, defaultNights = 2) {
               hotel,
               bestPrice: totalPrice,
               pricePerNight: Number(ppn.toFixed(2)),
-              bestProvider: 'Best Available',
+              bestProvider: null,
+              priceSource: 'xotelo-heatmap',
+              priceSourceLabel: 'Xotelo heatmap observation',
+              bookingProvider: false,
               checkIn,
               checkOut: checkOutStr,
               nights,
-              providerCount: 1,
+              providerCount: 0,
               currency: 'USD',
             };
           }
@@ -83,13 +101,7 @@ async function fetchDealViaHeatmap(hotel, defaultNights = 2) {
 async function fetchDealForHotel(hotel, checkIn, checkOut) {
   try {
     const result = await getCachedRates({ hotelKey: hotel.hotelKey, checkIn, checkOut });
-    const rates = (result?.rates || [])
-      .map((r) => ({
-        provider: r.name,
-        total: Number(r.rate || 0) + Number(r.tax || 0),
-      }))
-      .filter((r) => r.total > 0)
-      .sort((a, b) => a.total - b.total);
+    const rates = getVerifiedRateObservations(result);
 
     if (rates.length === 0) return null;
 
@@ -100,6 +112,14 @@ async function fetchDealForHotel(hotel, checkIn, checkOut) {
       bestPrice: rates[0].total,
       pricePerNight: Number((rates[0].total / nights).toFixed(2)),
       bestProvider: rates[0].provider,
+      source: rates[0].source,
+      freshness: rates[0].freshness,
+      partial: rates[0].partial,
+      lastCheckedAt: rates[0].lastCheckedAt,
+      priceAccuracyState: rates[0].priceAccuracyState,
+      priceSource: 'provider-rate',
+      priceSourceLabel: 'Verified provider rate',
+      bookingProvider: true,
       checkIn,
       checkOut,
       nights,
@@ -116,7 +136,7 @@ async function buildPriceTrend(hotelKey, nights) {
   const today = new Date();
   const trendPoints = [];
 
-  // Sample ~30 checkout dates (every 1 day) from tomorrow to +30 days
+  // Scan ~30 checkout dates (every 1 day) from tomorrow to +30 days
   const promises = [];
   for (let i = 1; i <= 30; i++) {
     const checkOut = new Date(today);
@@ -141,7 +161,18 @@ async function buildPriceTrend(hotelKey, nights) {
           if (price <= 0) return null;
           const d = new Date(checkInStr);
           const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          return { date: dateKey, price: Math.round(price), label };
+          const roundedPrice = Math.round(price);
+          return {
+            date: dateKey,
+            price: roundedPrice,
+            min: roundedPrice,
+            avg: roundedPrice,
+            label,
+            source: 'xotelo-heatmap',
+            priceSource: 'xotelo-heatmap',
+            priceSourceLabel: 'Xotelo heatmap observation',
+            bookingProvider: false,
+          };
         })
         .catch(() => null)
     );
@@ -170,9 +201,22 @@ export async function GET(request) {
     // Price trend mode for a single hotel
     if (hotelKey) {
       const hotel = findHotel(hotelKey);
+      if (!hotel) {
+        return Response.json({ error: 'Hotel not found' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
+      }
+      const blocked = await enforceDealsRateLimit(request);
+      if (blocked) return blocked;
       const trend = await buildPriceTrend(hotelKey, nights).catch(() => []);
       return Response.json(
-        { hotel, trend },
+        {
+          hotel,
+          trend,
+          hasRealData: trend.length > 0,
+          dataPolicy: 'verified-provider-or-source-observations-only',
+          priceSource: 'xotelo-heatmap',
+          priceSourceLabel: 'Xotelo heatmap observation',
+          bookingProvider: false,
+        },
         { headers: { 'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600' } }
       );
     }
@@ -183,10 +227,11 @@ export async function GET(request) {
         const cachedDeals = await kv.get('agent:deals:top');
         if (cachedDeals && Array.isArray(cachedDeals) && cachedDeals.length > 0) {
           return Response.json({
-            deals: cachedDeals.slice(0, limit),
+            deals: cachedDeals.map(normalizePublicDeal).filter(Boolean).slice(0, limit),
             filter: { continent: null, country: null, city: null },
             dates: null,
             strategy: 'cached-agent',
+            dataPolicy: 'verified-provider-or-source-observations-only',
             totalHotelsScanned: cachedDeals.length,
           });
         }
@@ -199,15 +244,19 @@ export async function GET(request) {
         const cityDeals = await kv.get(`agent:deals:city:${city.toLowerCase()}`);
         if (cityDeals && Array.isArray(cityDeals) && cityDeals.length > 0) {
           return Response.json({
-            deals: cityDeals.slice(0, limit),
+            deals: cityDeals.map(normalizePublicDeal).filter(Boolean).slice(0, limit),
             filter: { continent: null, country: null, city },
             dates: null,
             strategy: 'cached-agent',
+            dataPolicy: 'verified-provider-or-source-observations-only',
             totalHotelsScanned: cityDeals.length,
           });
         }
       } catch { /* cache miss */ }
     }
+
+    const blocked = await enforceDealsRateLimit(request);
+    if (blocked) return blocked;
 
     let hotels = HOTELS;
 
@@ -236,6 +285,8 @@ export async function GET(request) {
     const deals = results
       .filter((r) => r.status === 'fulfilled' && r.value !== null)
       .map((r) => r.value)
+      .map(normalizePublicDeal)
+      .filter(Boolean)
       .sort((a, b) => a.pricePerNight - b.pricePerNight)
       .slice(0, limit);
 
@@ -245,6 +296,7 @@ export async function GET(request) {
         filter: { continent: continent || null, country: country || null, city: city || null },
         dates: hasDates ? { checkIn, checkOut } : null,
         strategy: hasDates ? 'rates' : 'heatmap',
+        dataPolicy: 'verified-provider-or-source-observations-only',
         totalHotelsScanned: scanLimit,
         scannedAt: new Date().toISOString(),
       },
@@ -252,7 +304,9 @@ export async function GET(request) {
     );
   } catch (err) {
     console.error('GET /api/deals error:', err);
-    const message = err instanceof Error ? err.message : 'Server error';
-    return Response.json({ error: message }, { status: 500 });
+    return Response.json(
+      { error: 'Deals unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
+    );
   }
 }

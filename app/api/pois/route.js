@@ -16,8 +16,10 @@ import { kv } from '@/lib/kv';
 import { discoverAttractions, discoverRestaurants } from '@/lib/overpass-pois';
 import { getAttractions as getOTMAttractions } from '@/lib/opentripmap';
 import { getCityCoordinate } from '@/lib/city-coordinates';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 const CACHE_TTL = 604800; // 7 days
+const poisLimiter = rateLimit({ namespace: 'pois', limit: 20, window: 60, failOpen: false });
 
 export async function GET(request) {
   try {
@@ -43,7 +45,7 @@ export async function GET(request) {
     if (!lat || !lon || isNaN(lat) || isNaN(lon)) {
       return Response.json(
         { error: 'Provide city name or lat/lon coordinates' },
-        { status: 400 }
+        { status: 400, headers: { 'Cache-Control': 'no-store' } }
       );
     }
 
@@ -64,6 +66,10 @@ export async function GET(request) {
         headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' },
       });
     }
+
+    const ip = getClientIp(request);
+    const { success, reset } = await poisLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
 
     let pois;
 
@@ -98,9 +104,10 @@ export async function GET(request) {
       headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' },
     });
   } catch (err) {
+    console.error('GET /api/pois error:', err);
     return Response.json(
-      { error: err.message, pois: [], count: 0 },
-      { status: 500 }
+      { error: 'POI data unavailable', pois: [], count: 0 },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 }

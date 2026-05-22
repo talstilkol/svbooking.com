@@ -14,19 +14,16 @@
 import { runAgent, verifyCronAuth } from '@/lib/agent-utils';
 import { registry } from '@/lib/providers/registry';
 import { kv } from '@/lib/kv';
+import { addDays } from '@/lib/utils/date';
+import { RETENTION_SECONDS } from '@/lib/data-retention';
 
 const XOTELO_BASE = 'https://data.xotelo.com/api';
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 
 // Reference hotel key for probes (well-known, always has data)
 const PROBE_HOTEL_KEY = 'g187147-d188728'; // Hotel in Paris
 const PROBE_CHECK_IN = addDays(new Date().toISOString().split('T')[0], 14);
 const PROBE_CHECK_OUT = addDays(PROBE_CHECK_IN, 2);
-
-function addDays(dateStr, days) {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-}
 
 /**
  * Probe Xotelo directly (lightweight heatmap check)
@@ -47,7 +44,8 @@ async function probeXotelo() {
     return { ok: rates.length > 0, latency, ratesFound: rates.length };
   } catch (err) {
     clearTimeout(timer);
-    return { ok: false, latency: 0, error: err.message };
+    console.error('Xotelo provider probe error:', err);
+    return { ok: false, latency: 0, error: 'Provider probe unavailable' };
   }
 }
 
@@ -78,7 +76,8 @@ async function probeRapidAPI(host, path, apiKey) {
     return { ok: res.ok, latency, status: res.status, configured: true };
   } catch (err) {
     clearTimeout(timer);
-    return { ok: false, error: err.message, configured: true };
+    console.error('RapidAPI provider probe error:', err);
+    return { ok: false, error: 'Provider probe unavailable', configured: true };
   }
 }
 
@@ -152,7 +151,8 @@ async function runProviderManager() {
         probeResults.serpapi = { ok: false, error: `HTTP ${res.status}`, configured: true };
       }
     } catch (err) {
-      probeResults.serpapi = { ok: false, error: err.message, configured: true };
+      console.error('SerpApi provider probe error:', err);
+      probeResults.serpapi = { ok: false, error: 'Provider probe unavailable', configured: true };
     }
   }
 
@@ -189,7 +189,7 @@ async function runProviderManager() {
     actions,
   };
 
-  await kv.setWithTTL('agent:provider-manager:latest', snapshot, 3600);
+  await kv.setWithTTL('agent:provider-manager:latest', snapshot, RETENTION_SECONDS.providerManagerLatest);
 
   // Track daily trends
   const today = new Date().toISOString().split('T')[0];
@@ -203,7 +203,7 @@ async function runProviderManager() {
       errors: p.errors,
     })),
   });
-  await kv.setWithTTL(trendKey, existingTrend, 172800); // 2 days
+  await kv.setWithTTL(trendKey, existingTrend, RETENTION_SECONDS.providerTrends);
 
   return {
     providersChecked: Object.keys(probeResults).length,
@@ -222,9 +222,9 @@ export async function GET(request) {
 
   try {
     const result = await runAgent('provider-manager', runProviderManager);
-    return Response.json(result);
+    return Response.json(result, { headers: NO_STORE_HEADERS });
   } catch (err) {
     console.error('Provider manager error:', err);
-    return Response.json({ error: err.message }, { status: 500 });
+    return Response.json({ error: 'Provider manager unavailable' }, { status: 500, headers: NO_STORE_HEADERS });
   }
 }

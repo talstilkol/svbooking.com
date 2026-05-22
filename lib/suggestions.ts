@@ -31,7 +31,7 @@ export function buildSuggestions({
         id: `recheck-${t.id}`,
         kind: 'check_prices',
         title: `Your ${t.hotelName} trip starts in ${days} day${days !== 1 ? 's' : ''}`,
-        description: `Re-run the AI agent to confirm you still have the best price.`,
+        description: `Re-run the AI agent to refresh available provider prices.`,
         action: { label: 'Check now', href: `/trips#${t.id}` },
         priority: 10 - days,
       });
@@ -83,7 +83,7 @@ export function buildSuggestions({
       id: `compare-home`,
       kind: 'compare',
       title: `Looking to travel from ${prefsHomeCity}?`,
-      description: `Compare live prices across providers for your favorite destinations.`,
+      description: `Compare provider-returned prices for your favorite destinations when verified rates are available.`,
       action: { label: 'Compare hotels', href: '/compare' },
       priority: 2,
     });

@@ -1,3 +1,10 @@
+import {
+  LEGACY_LOCAL_STORAGE_KEYS,
+  LOCAL_STORAGE_KEYS,
+  readLocalStorageStringWithFallback,
+  writeLocalStorageJson,
+} from '@/lib/local-storage-keys';
+
 export const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
   { code: 'EUR', symbol: '€', name: 'Euro' },
@@ -60,13 +67,17 @@ export function detectCurrency(): string {
 export function getCurrencyCode(): string {
   if (typeof window === 'undefined') return 'USD';
   
-  const stored = localStorage.getItem('svbooking-currency');
+  const stored = readLocalStorageStringWithFallback(
+    LOCAL_STORAGE_KEYS.currency,
+    [LEGACY_LOCAL_STORAGE_KEYS.currency],
+    null
+  );
   if (stored && CURRENCIES.some(c => c.code === stored)) {
     return stored;
   }
   
   const detected = detectCurrency();
-  localStorage.setItem('svbooking-currency', detected);
+  writeLocalStorageJson(LOCAL_STORAGE_KEYS.currency, detected);
   return detected;
 }
 
@@ -74,7 +85,7 @@ export function setCurrencyCode(code: string): void {
   if (typeof window === 'undefined') return;
   
   if (CURRENCIES.some(c => c.code === code)) {
-    localStorage.setItem('svbooking-currency', code);
+    writeLocalStorageJson(LOCAL_STORAGE_KEYS.currency, code);
   }
 }
 

@@ -1,9 +1,28 @@
 import { kv } from '@/lib/kv';
-import { listCities, findHotel, addDiscoveredHotel, getCatalogStats } from '@/lib/hotels-catalog';
+import { findHotel, getCatalogStats } from '@/lib/hotels-catalog';
+import { verifyAdminAuth } from '@/lib/admin-auth';
+import { recordAdminAuditEvent } from '@/lib/admin-audit';
+import {
+  approveCandidate,
+  getCandidate,
+  listCandidates,
+  markCandidateStale,
+  rejectCandidate,
+  upsertCandidate,
+} from '@/lib/catalog-candidates';
+import { assertSameOrigin } from '@/lib/request-origin';
+import { errorResponse } from '@/lib/validation';
+
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
+
+function booleanParam(value) {
+  if (value === null || value === undefined || value === '') return undefined;
+  return value === 'true' || value === '1';
+}
 
 /**
  * GET /api/agents/discovered
- * Returns all hotels discovered by the discovery agent across all cities.
+ * Returns hotel candidates discovered by the discovery agents.
  *
  * Optional query params:
  *   ?city=Paris  — filter by city
@@ -11,14 +30,27 @@ import { listCities, findHotel, addDiscoveredHotel, getCatalogStats } from '@/li
  */
 export async function GET(request) {
   try {
+    const auth = verifyAdminAuth(request);
+    if (!auth.authorized) return auth.response;
+
     const { searchParams } = new URL(request.url);
     const cityFilter = searchParams.get('city');
     const includeStats = searchParams.get('stats') === 'true';
 
-    // Get all discovered:hotels:* keys from KV
-    const discoveredKeys = await kv.keys('discovered:hotels:*');
+    const statusFilter = searchParams.get('status');
+    const candidates = await listCandidates({
+      city: cityFilter || undefined,
+      status: statusFilter || undefined,
+      source: searchParams.get('source') || undefined,
+      duplicate: booleanParam(searchParams.get('duplicate')),
+      missingProvenance: booleanParam(searchParams.get('missingProvenance')),
+      limit: searchParams.get('limit') || undefined,
+    });
 
-    const allDiscovered = [];
+    // Backward-compatible read-only view of legacy discovered:hotels:* keys.
+    // Agents now write candidates, but old queues may still exist in local KV.
+    const discoveredKeys = await kv.keys('discovered:hotels:*');
+    const legacyDiscovered = [];
     if (discoveredKeys.length > 0) {
       const values = await kv.mget(discoveredKeys);
       for (let i = 0; i < discoveredKeys.length; i++) {
@@ -27,108 +59,274 @@ export async function GET(request) {
         if (!Array.isArray(hotels)) continue;
         for (const hotel of hotels) {
           const alreadyInCatalog = Boolean(findHotel(hotel.hotelKey));
-          allDiscovered.push({
+          legacyDiscovered.push({
             ...hotel,
+            id: hotel.id || hotel.hotelKey,
+            status: alreadyInCatalog ? 'approved' : 'pending',
             discoveredForCity: cityName,
             alreadyInCatalog,
+            legacy: true,
           });
         }
       }
     }
 
-    // Apply city filter
-    const filtered = cityFilter
-      ? allDiscovered.filter(
+    const filteredLegacy = cityFilter
+      ? legacyDiscovered.filter(
           (h) => h.discoveredForCity.toLowerCase() === cityFilter.toLowerCase() ||
                  h.city?.toLowerCase() === cityFilter.toLowerCase()
         )
-      : allDiscovered;
+      : legacyDiscovered;
 
-    // Sort: new (not in catalog) first, then by city
-    filtered.sort((a, b) => {
+    const hotels = [...candidates, ...filteredLegacy];
+    hotels.sort((a, b) => {
       if (a.alreadyInCatalog !== b.alreadyInCatalog) return a.alreadyInCatalog ? 1 : -1;
       return (a.city || '').localeCompare(b.city || '');
     });
 
     const response = {
-      total: filtered.length,
-      newHotels: filtered.filter((h) => !h.alreadyInCatalog).length,
-      existingHotels: filtered.filter((h) => h.alreadyInCatalog).length,
+      total: hotels.length,
+      pending: hotels.filter((h) => h.status === 'pending').length,
+      approved: hotels.filter((h) => h.status === 'approved').length,
+      rejected: hotels.filter((h) => h.status === 'rejected').length,
+      stale: hotels.filter((h) => h.status === 'stale').length,
+      duplicate: hotels.filter((h) => h.duplicate).length,
+      missingProvenance: hotels.filter((h) => h.missingProvenance).length,
+      missingLocation: hotels.filter((h) => h.missingLocation).length,
+      newHotels: hotels.filter((h) => !h.alreadyInCatalog).length,
+      existingHotels: hotels.filter((h) => h.alreadyInCatalog).length,
       citiesScanned: discoveredKeys.length,
-      hotels: filtered,
+      hotels,
+      candidates: hotels,
     };
 
     if (includeStats) {
       response.catalogStats = getCatalogStats();
     }
 
-    return Response.json(response, {
-      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
-    });
+    return Response.json(response, { headers: NO_STORE_HEADERS });
   } catch (err) {
     console.error('GET /api/agents/discovered error:', err);
-    return Response.json({ error: err.message || 'Server error' }, { status: 500 });
+    return Response.json({ error: 'Internal server error' }, { status: 500, headers: NO_STORE_HEADERS });
   }
 }
 
 /**
  * POST /api/agents/discovered
- * Add a discovered hotel to the runtime catalog.
- * Body: { hotelKey, name, city, country, stars? }
- * Or: { action: 'add-all' } to add all undiscovered hotels
+ * Candidate review actions:
+ *   { action: 'ingest', hotelKey, name, city, country, source? }
+ *   { action: 'approve', id }
+ *   { action: 'reject', id, reason? }
+ *   { action: 'stale', id, reason? }
+ *   { action: 'approve-all' } / { action: 'add-all' } approve all promotable pending candidates
  */
 export async function POST(request) {
   try {
+    assertSameOrigin(request);
+
+    const auth = verifyAdminAuth(request);
+    if (!auth.authorized) return auth.response;
+
     const body = await request.json();
 
-    // Bulk add all discovered hotels
-    if (body.action === 'add-all') {
-      const discoveredKeys = await kv.keys('discovered:hotels:*');
-      if (discoveredKeys.length === 0) {
-        return Response.json({ added: 0, skipped: 0, message: 'No discovered hotels found' });
-      }
+    const action = body.action || 'ingest';
 
-      const values = await kv.mget(discoveredKeys);
+    if (action === 'approve-all' || action === 'add-all') {
+      const pending = await listCandidates({ status: 'pending' });
+      let approved = 0;
       let added = 0;
       let skipped = 0;
+      const failures = [];
 
-      for (const hotels of values) {
-        if (!Array.isArray(hotels)) continue;
-        for (const hotel of hotels) {
-          if (addDiscoveredHotel(hotel)) {
-            added++;
-          } else {
-            skipped++;
-          }
+      for (const candidate of pending) {
+        const result = await approveCandidate(candidate.id, { actor: auth.subject });
+        if (result.approved) {
+          approved++;
+          if (result.added) added++;
+          else skipped++;
+        } else {
+          skipped++;
+          failures.push({ id: candidate.id, error: result.error });
         }
       }
 
-      return Response.json({
-        added,
-        skipped,
-        message: `Added ${added} hotels to runtime catalog (${skipped} already existed)`,
-        catalogStats: getCatalogStats(),
+      await recordAdminAuditEvent({
+        request,
+        actor: auth.subject,
+        action: 'catalog.candidates.approve-all',
+        resource: 'catalog',
+        details: { approved, added, skipped, failures: failures.slice(0, 20) },
       });
-    }
 
-    // Single hotel add
-    const { hotelKey, name, city, country, stars } = body;
-    if (!hotelKey || !name || !city || !country) {
       return Response.json(
-        { error: 'Missing required fields: hotelKey, name, city, country' },
-        { status: 400 }
+        {
+          approved,
+          added,
+          skipped,
+          failures,
+          message: `Approved ${approved} candidates (${added} new catalog entries, ${skipped} skipped)`,
+          catalogStats: getCatalogStats(),
+        },
+        { headers: NO_STORE_HEADERS }
       );
     }
 
-    const wasAdded = addDiscoveredHotel({ hotelKey, name, city, country, stars });
+    if (action === 'approve') {
+      const id = body.id || body.candidateId;
+      if (!id) {
+        return Response.json(
+          { error: 'Missing required field: id' },
+          { status: 400, headers: NO_STORE_HEADERS }
+        );
+      }
 
-    return Response.json({
-      added: wasAdded,
-      message: wasAdded ? `${name} added to catalog` : `${name} already exists in catalog`,
-      catalogStats: getCatalogStats(),
+      const result = await approveCandidate(id, { actor: auth.subject });
+      await recordAdminAuditEvent({
+        request,
+        actor: auth.subject,
+        action: 'catalog.candidates.approve',
+        resource: id,
+        status: result.approved ? 'success' : 'failure',
+        details: { id, added: result.added, error: result.error },
+      });
+
+      return Response.json(
+        {
+          approved: result.approved,
+          added: result.added || false,
+          error: result.error,
+          candidate: result.candidate,
+          catalogStats: getCatalogStats(),
+        },
+        { status: result.approved ? 200 : 400, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    if (action === 'reject') {
+      const id = body.id || body.candidateId;
+      if (!id) {
+        return Response.json(
+          { error: 'Missing required field: id' },
+          { status: 400, headers: NO_STORE_HEADERS }
+        );
+      }
+
+      const result = await rejectCandidate(id, { actor: auth.subject, reason: body.reason });
+      await recordAdminAuditEvent({
+        request,
+        actor: auth.subject,
+        action: 'catalog.candidates.reject',
+        resource: id,
+        status: result.rejected ? 'success' : 'failure',
+        details: { id, reason: body.reason, error: result.error },
+      });
+
+      return Response.json(
+        {
+          rejected: result.rejected,
+          error: result.error,
+          candidate: result.candidate,
+        },
+        { status: result.rejected ? 200 : 404, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    if (action === 'stale') {
+      const id = body.id || body.candidateId;
+      if (!id) {
+        return Response.json(
+          { error: 'Missing required field: id' },
+          { status: 400, headers: NO_STORE_HEADERS }
+        );
+      }
+
+      const result = await markCandidateStale(id, { actor: auth.subject, reason: body.reason });
+      await recordAdminAuditEvent({
+        request,
+        actor: auth.subject,
+        action: 'catalog.candidates.stale',
+        resource: id,
+        status: result.stale ? 'success' : 'failure',
+        details: { id, reason: body.reason, error: result.error },
+      });
+
+      return Response.json(
+        {
+          stale: result.stale,
+          error: result.error,
+          candidate: result.candidate,
+        },
+        { status: result.stale ? 200 : 404, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    if (action === 'get') {
+      const candidate = await getCandidate(body.id || body.candidateId);
+      return Response.json({ candidate }, { status: candidate ? 200 : 404, headers: NO_STORE_HEADERS });
+    }
+
+    const {
+      hotelKey,
+      name,
+      city,
+      country,
+      stars,
+      source,
+      sourceUrl,
+      lat,
+      lon,
+      externalIds,
+      provenance,
+      wikidataId,
+      osmId,
+      providerHotelId,
+    } = body;
+    if (!name || !city) {
+      return Response.json(
+        { error: 'Missing required fields: name, city' },
+        { status: 400, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    const result = await upsertCandidate(
+      {
+        hotelKey,
+        name,
+        city,
+        country,
+        stars,
+        source: source || 'manual-admin',
+        sourceUrl,
+        lat,
+        lon,
+        externalIds,
+        provenance,
+        wikidataId,
+        osmId,
+        providerHotelId,
+      },
+      { source: source || 'manual-admin' }
+    );
+
+    await recordAdminAuditEvent({
+      request,
+      actor: auth.subject,
+      action: 'catalog.candidates.ingest',
+      resource: result.candidate.id,
+      status: result.saved ? 'success' : 'failure',
+      details: { candidateId: result.candidate.id, hotelKey, city, country, saved: result.saved, reason: result.reason },
     });
+
+    return Response.json(
+      {
+        queued: result.saved,
+        candidate: result.candidate,
+        message: result.saved ? `${name} queued for review` : result.reason,
+        catalogStats: getCatalogStats(),
+      },
+      { status: result.saved ? 200 : 400, headers: NO_STORE_HEADERS }
+    );
   } catch (err) {
-    console.error('POST /api/agents/discovered error:', err);
-    return Response.json({ error: err.message || 'Server error' }, { status: 500 });
+    return errorResponse(err);
   }
 }

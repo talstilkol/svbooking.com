@@ -1,7 +1,10 @@
 // Agent Status API — Returns status of all background agents.
 // Used by the AgentDashboard to display agent health and run history.
 
-import { getAllAgentStatuses, getAgentHistory, AGENT_NAMES } from '@/lib/agent-utils';
+import { getAllAgentReadiness, getAllAgentStatuses, getAgentHistory, AGENT_NAMES } from '@/lib/agent-utils';
+import { verifyAdminAuth } from '@/lib/admin-auth';
+
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 
 const AGENT_DESCRIPTIONS = {
   [AGENT_NAMES.PROVIDER_MANAGER]: { label: 'Provider Manager',    icon: '🔧', desc: 'Monitors pricing providers, resets circuit breakers, rotates quotas' },
@@ -12,16 +15,20 @@ const AGENT_DESCRIPTIONS = {
   [AGENT_NAMES.OSM_SCANNER]:      { label: 'OSM Scanner',         icon: '🗺️', desc: 'Finds hotels with TripAdvisor refs from OpenStreetMap' },
   [AGENT_NAMES.XOTELO_DISCOVERY]: { label: 'Xotelo Discovery',    icon: '🔎', desc: 'Discovers hotels from Xotelo search (requires RAPIDAPI_KEY)' },
   [AGENT_NAMES.PRICE_CACHE]:      { label: 'Price Cache',         icon: '💰', desc: 'Pre-warms price cache for instant searches' },
-  [AGENT_NAMES.DEAL_SCANNER]:     { label: 'Deal Scanner',        icon: '🏷️', desc: 'Scans all hotels for best deals' },
+  [AGENT_NAMES.DEAL_SCANNER]:     { label: 'Deal Scanner',        icon: '🏷️', desc: 'Scans all hotels for deal candidates' },
   [AGENT_NAMES.POI_CACHE]:        { label: 'POI Cache',           icon: '📍', desc: 'Pre-warms attractions & restaurants from Overpass + OpenTripMap' },
   [AGENT_NAMES.TRAVEL_GUIDE]:     { label: 'Travel Guide Cache',  icon: '📚', desc: 'Pre-warms safety, events & dining from Wikivoyage for all cities' },
   [AGENT_NAMES.EVENTS_CACHE]:     { label: 'Events Cache',        icon: '🎫', desc: 'Pre-warms live events from Ticketmaster (requires API key)' },
   [AGENT_NAMES.ORCHESTRATOR]:     { label: 'Orchestrator',        icon: '🎯', desc: 'Runs all 12 agents in sequence (every 6h via cron)' },
 };
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const auth = verifyAdminAuth(request);
+    if (!auth.authorized) return auth.response;
+
     const statuses = await getAllAgentStatuses();
+    const readiness = await getAllAgentReadiness();
 
     const agents = await Promise.all(
       Object.entries(statuses).map(async ([name, status]) => {
@@ -35,6 +42,7 @@ export async function GET() {
           name,
           ...meta,
           ...status,
+          readiness: readiness[name] || { status: 'ready', ready: true },
           recentRuns: history.slice(0, 5),
         };
       })
@@ -44,12 +52,13 @@ export async function GET() {
       agents,
       generatedAt: new Date().toISOString(),
     }, {
-      headers: { 'Cache-Control': 'no-cache' },
+      headers: NO_STORE_HEADERS,
     });
   } catch (err) {
+    console.error('GET /api/agents/auto/status error:', err);
     return Response.json(
-      { error: err.message, agents: [] },
-      { status: 500 }
+      { error: 'Agent status unavailable', agents: [] },
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }

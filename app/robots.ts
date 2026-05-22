@@ -1,14 +1,14 @@
 import type { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://my-app-alpha-one-28.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com';
 
   return {
     rules: [
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/'],
+        disallow: ['/api/', '/agents', '/dashboard', '/profile'],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

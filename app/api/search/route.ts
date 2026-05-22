@@ -1,5 +1,13 @@
 import { searchHotels, listCities, listCountries } from '@/lib/hotels-catalog';
 
+interface SearchHotel {
+  hotelKey: string;
+  name: string;
+  city: string;
+  country: string;
+  image: string;
+}
+
 // GET /api/search?q=par
 // Returns matching cities, countries, + hotels for autocomplete
 // Uses fuzzy search with field-weighted ranking
@@ -38,7 +46,7 @@ export async function GET(request: Request) {
     .slice(0, 3);
 
   // Hotels: uses fuzzy search with field-weighted ranking
-  const matchingHotels = searchHotels(q).map((h: any) => ({
+  const matchingHotels = (searchHotels(q) as SearchHotel[]).map((h) => ({
     hotelKey: h.hotelKey,
     name: h.name,
     city: h.city,

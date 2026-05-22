@@ -1,6 +1,14 @@
 // SV Booking Service Worker — offline fallback + cache strategy
 const CACHE_NAME = 'svbooking-v1';
 const OFFLINE_URL = '/offline';
+const PRIVATE_NAVIGATION_PREFIXES = [
+  '/api',
+  '/agents',
+  '/dashboard',
+  '/profile',
+  '/favorites',
+  '/trips',
+];
 
 // Assets to pre-cache on install
 const PRE_CACHE = [
@@ -9,6 +17,26 @@ const PRE_CACHE = [
   '/icon-192.png',
   '/icon-512.png',
 ];
+
+function toSameOriginUrl(value) {
+  try {
+    const url = new URL(value || '/', self.location.origin);
+    if (url.origin !== self.location.origin) return '/';
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return '/';
+  }
+}
+
+function pathMatchesPrefix(pathname, prefix) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+function shouldBypassServiceWorker(request, url) {
+  if (request.method !== 'GET') return true;
+  if (url.origin !== self.location.origin) return true;
+  return PRIVATE_NAVIGATION_PREFIXES.some((prefix) => pathMatchesPrefix(url.pathname, prefix));
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -30,11 +58,8 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Only handle same-origin requests
-  if (url.origin !== self.location.origin) return;
-
-  // Skip API routes — always go to network
-  if (url.pathname.startsWith('/api/')) return;
+  // Let the browser handle cross-origin, non-GET, API, auth, and private routes.
+  if (shouldBypassServiceWorker(request, url)) return;
 
   // Navigation requests (pages) — network first, fallback to offline page
   if (request.mode === 'navigate') {
@@ -63,4 +88,46 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
+});
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  let payload = {};
+  try {
+    payload = event.data.json();
+  } catch {
+    payload = { title: 'SV Booking notification', body: event.data.text() };
+  }
+
+  const title = payload.title || 'SV Booking notification';
+  const options = {
+    body: payload.body || '',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    data: {
+      url: toSameOriginUrl(payload.url),
+      source: payload.source || 'push',
+    },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = toSameOriginUrl(event.notification.data?.url);
+  const absoluteTargetUrl = new URL(targetUrl, self.location.origin).toString();
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ('focus' in client && client.url === absoluteTargetUrl) {
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+      return undefined;
+    })
+  );
 });

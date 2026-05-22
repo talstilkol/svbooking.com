@@ -1,21 +1,31 @@
 import { kv } from '@/lib/kv';
 import { requireUser } from '@/lib/auth';
 import { errorResponse, ValidationError } from '@/lib/validation';
+import { userDataKey } from '@/lib/user-data';
+import { assertSameOrigin } from '@/lib/request-origin';
+import { getClientIp, rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
-function key(uid) {
-  return `user:${uid}:prefs`;
-}
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
+const userDataMutationLimiter = rateLimit({ namespace: 'user-data-mutations', limit: 30, window: 60, failOpen: false });
 
 const VALID_CURRENCIES = new Set([
   'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY',
   'HKD', 'SGD', 'ILS', 'AED', 'THB', 'INR',
 ]);
 
+async function enforceUserDataMutationRateLimit(request) {
+  const { success, reset } = await userDataMutationLimiter.check(getClientIp(request));
+  return success ? null : rateLimitResponse(reset);
+}
+
 export async function GET() {
   try {
     const user = await requireUser();
-    const data = (await kv.get(key(user.id))) || {};
-    return Response.json({ prefs: data, cloudEnabled: kv.isConfigured() });
+    const data = (await kv.get(userDataKey(user.id, 'preferences'))) || {};
+    return Response.json(
+      { prefs: data, cloudEnabled: await kv.isConfigured() },
+      { headers: NO_STORE_HEADERS }
+    );
   } catch (err) {
     return errorResponse(err);
   }
@@ -23,6 +33,10 @@ export async function GET() {
 
 export async function PUT(request) {
   try {
+    assertSameOrigin(request);
+    const limited = await enforceUserDataMutationRateLimit(request);
+    if (limited) return limited;
+
     const user = await requireUser();
     const body = await request.json();
     const { homeCity, defaultGuests, defaultTripLength, currency, favoriteDestinations } = body || {};
@@ -52,10 +66,10 @@ export async function PUT(request) {
     }
     clean.updatedAt = new Date().toISOString();
 
-    const existing = (await kv.get(key(user.id))) || {};
+    const existing = (await kv.get(userDataKey(user.id, 'preferences'))) || {};
     const merged = { ...existing, ...clean };
-    await kv.set(key(user.id), merged);
-    return Response.json({ prefs: merged });
+    await kv.set(userDataKey(user.id, 'preferences'), merged);
+    return Response.json({ prefs: merged }, { headers: NO_STORE_HEADERS });
   } catch (err) {
     return errorResponse(err);
   }

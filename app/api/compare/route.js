@@ -1,10 +1,45 @@
-import { getHotelRates } from '@/lib/hotel-pricing';
-import { HOTELS, listCities, getHotelsByCity, findHotel, getFullCatalog } from '@/lib/hotels-catalog';
+import { getCachedRates } from '@/lib/price-cache';
+import { listCities, getHotelsByCity, findHotel, getFullCatalog } from '@/lib/hotels-catalog';
 import { kv } from '@/lib/kv';
 import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 // Rate limiter: 30 price comparisons per minute per IP
-const compareLimiter = rateLimit({ limit: 30, window: 60 });
+const compareLimiter = rateLimit({ namespace: 'compare', limit: 30, window: 60, failOpen: false });
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
+
+function toNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function fallbackCode(provider, index) {
+  return String(provider || `provider-${index + 1}`).toLowerCase().replace(/[^a-z0-9]+/g, '-') || `provider-${index + 1}`;
+}
+
+function normalizePublicRate(rate, result, index) {
+  const provider = rate?.provider || rate?.name || result?.provider || result?.source || 'Unknown provider';
+  const baseRate = toNumber(rate?.rate);
+  const tax = toNumber(rate?.tax);
+  const total = toNumber(rate?.total) || baseRate + tax;
+
+  return {
+    provider,
+    code: rate?.code || fallbackCode(provider, index),
+    rate: baseRate,
+    tax,
+    total,
+    currency: rate?.currency || result?.currency || 'USD',
+    source: rate?.source || result?.source || null,
+    freshness: rate?.freshness || result?.freshness || 'unknown',
+    partial: Boolean(rate?.partial ?? result?.partial),
+    deepLink: rate?.deepLink || null,
+    taxesIncluded: rate?.taxesIncluded ?? result?.taxesIncluded ?? null,
+    cancellationPolicy: rate?.cancellationPolicy || null,
+    roomName: rate?.roomName || null,
+    lastCheckedAt: rate?.lastCheckedAt || result?.lastCheckedAt || null,
+    priceAccuracyState: rate?.priceAccuracyState || 'unobserved',
+  };
+}
 
 // GET /api/compare
 //   ?city=Paris                                      -> list hotels in city
@@ -24,45 +59,28 @@ export async function GET(request) {
       // If no dates, return just hotel catalog info (for detail page header)
       if (!checkIn || !checkOut) {
         const hotel = findHotel(hotelKey);
-        if (!hotel) return Response.json({ error: 'Hotel not found' }, { status: 404 });
+        if (!hotel) return Response.json({ error: 'Hotel not found' }, { status: 404, headers: NO_STORE_HEADERS });
         return Response.json({ hotel }, { headers: { 'Cache-Control': 'public, s-maxage=300' } });
       }
 
-      // Check price cache first (30-minute TTL)
-      const cacheKey = `compare:${hotelKey}:${checkIn}:${checkOut}:${currency}`;
-      try {
-        const cached = await kv.get(cacheKey);
-        if (cached) {
-          return Response.json(
-            { ...cached, fromCache: true },
-            { headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300' } }
-          );
-        }
-      } catch { /* cache miss */ }
-
-      // Rate limit external API calls (cache hits skip this)
+      // Rate limit dated comparison requests before they can reach external providers.
       const ip = getClientIp(request);
-      const { success, remaining, reset } = await compareLimiter.check(ip);
+      const { success, reset } = await compareLimiter.check(ip);
       if (!success) return rateLimitResponse(reset);
 
       const hotel = findHotel(hotelKey);
-      const result = await getHotelRates({
+      if (!hotel) return Response.json({ error: 'Hotel not found' }, { status: 404, headers: NO_STORE_HEADERS });
+      const result = await getCachedRates({
         hotelKey,
-        hotelName: hotel?.name,
-        city: hotel?.city,
+        hotelName: hotel.name,
+        city: hotel.city,
         checkIn,
         checkOut,
         currency,
       });
       const rates = (result?.rates || [])
-        .map((r) => ({
-          provider: r.name,
-          code: r.code,
-          rate: Number(r.rate || 0),
-          tax: Number(r.tax || 0),
-          total: Number(r.rate || 0) + Number(r.tax || 0),
-          currency: result.currency || currency,
-        }))
+        .map((r, index) => normalizePublicRate(r, result, index))
+        .filter((r) => r.total > 0)
         .sort((a, b) => a.total - b.total);
 
       const cheapest = rates[0] || null;
@@ -73,7 +91,7 @@ export async function GET(request) {
           : 0;
 
       const responseData = {
-        hotel: hotel || { hotelKey, name: 'Hotel', city: '', country: '' },
+        hotel,
         checkIn: result?.chk_in || checkIn,
         checkOut: result?.chk_out || checkOut,
         currency: result?.currency || currency,
@@ -83,32 +101,35 @@ export async function GET(request) {
         savingsPct,
         savingsAmount: cheapest && mostExpensive ? Number((mostExpensive.total - cheapest.total).toFixed(2)) : 0,
         providerCount: rates.length,
+        fromCache: Boolean(result?.fromCache),
+        freshness: result?.freshness || 'unknown',
+        partial: Boolean(result?.partial),
+        source: result?.source || null,
+        providerSource: result?.provider || null,
+        lastCheckedAt: result?.lastCheckedAt || null,
       };
 
-      // Cache the result (fire-and-forget, 30 min TTL)
-      if (rates.length > 0) {
-        kv.setWithTTL(cacheKey, responseData, 1800).catch(() => {});
-
-        // Store price snapshot for history (fire-and-forget)
-        if (cheapest) {
-          (async () => {
-            try {
-              const snapshot = {
-                date: new Date().toISOString().split('T')[0],
-                price: cheapest.total,
-                provider: cheapest.provider,
-              };
-              const historyKey = `price-history:${hotelKey}`;
-              const history = (await kv.get(historyKey)) || [];
-              // Dedup: only one entry per day
-              if (!history.length || history[history.length - 1].date !== snapshot.date) {
-                history.push(snapshot);
-                const trimmed = history.slice(-90); // keep last 90 days
-                await kv.setWithTTL(historyKey, trimmed, 90 * 86400);
-              }
-            } catch { /* non-critical */ }
-          })();
-        }
+      // Store price history only for fresh live observations, never for stale cache replays.
+      if (cheapest && result?.freshness === 'live' && !result?.fromCache) {
+        (async () => {
+          try {
+            const snapshot = {
+              date: new Date().toISOString().split('T')[0],
+              price: cheapest.total,
+              provider: cheapest.provider,
+              source: cheapest.source,
+              lastCheckedAt: cheapest.lastCheckedAt,
+            };
+            const historyKey = `price-history:${hotelKey}`;
+            const history = (await kv.get(historyKey)) || [];
+            // Dedup: only one entry per day
+            if (!history.length || history[history.length - 1].date !== snapshot.date) {
+              history.push(snapshot);
+              const trimmed = history.slice(-90); // keep last 90 days
+              await kv.setWithTTL(historyKey, trimmed, 90 * 86400);
+            }
+          } catch { /* non-critical */ }
+        })();
       }
 
       return Response.json(
@@ -133,7 +154,6 @@ export async function GET(request) {
     );
   } catch (err) {
     console.error('GET /api/compare error:', err);
-    const message = err instanceof Error ? err.message : 'Server error';
-    return Response.json({ error: message }, { status: 500 });
+    return Response.json({ error: 'Internal server error' }, { status: 500, headers: NO_STORE_HEADERS });
   }
 }

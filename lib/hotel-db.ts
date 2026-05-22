@@ -34,9 +34,6 @@ export class HotelDatabase {
   private constructor() {
     this.hotels = HOTELS.map((h) => ({
       ...h,
-      rating: 4.5,
-      stars: 4,
-      amenities: ['WiFi', 'Pool', 'Restaurant'],
       coordinates: this.getCoordinates(h.city),
     }));
   }

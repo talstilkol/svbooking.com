@@ -15,15 +15,16 @@
 interface AffiliateConfig {
   envVar: string;
   paramName: string;
+  domains: string[];
 }
 
 const PROVIDER_CONFIGS: Record<string, AffiliateConfig> = {
-  'Booking.com': { envVar: 'BOOKING_AFFILIATE_ID', paramName: 'aid' },
-  'Expedia': { envVar: 'EXPEDIA_AFFILIATE_ID', paramName: 'affcid' },
-  'Hotels.com': { envVar: 'HOTELS_AFFILIATE_TAG', paramName: 'tag' },
-  'Agoda.com': { envVar: 'AGODA_AFFILIATE_ID', paramName: 'cid' },
-  'Trip.com': { envVar: 'TRIP_AFFILIATE_ID', paramName: 'Allianceid' },
-  'Vio.com': { envVar: 'VIO_AFFILIATE_ID', paramName: 'affid' },
+  'Booking.com': { envVar: 'BOOKING_AFFILIATE_ID', paramName: 'aid', domains: ['booking.com'] },
+  'Expedia': { envVar: 'EXPEDIA_AFFILIATE_ID', paramName: 'affcid', domains: ['expedia.com'] },
+  'Hotels.com': { envVar: 'HOTELS_AFFILIATE_TAG', paramName: 'tag', domains: ['hotels.com'] },
+  'Agoda.com': { envVar: 'AGODA_AFFILIATE_ID', paramName: 'cid', domains: ['agoda.com'] },
+  'Trip.com': { envVar: 'TRIP_AFFILIATE_ID', paramName: 'Allianceid', domains: ['trip.com'] },
+  'Vio.com': { envVar: 'VIO_AFFILIATE_ID', paramName: 'affid', domains: ['vio.com'] },
 };
 
 /**
@@ -39,15 +40,32 @@ export function getAffiliateUrl(provider: string, baseUrl: string): string {
 
   try {
     const url = new URL(baseUrl);
+    if (url.protocol !== 'https:') return baseUrl;
     url.searchParams.set(config.paramName, affiliateId);
     // Add a consistent sub-tracking parameter
     url.searchParams.set('utm_source', 'svbooking');
     url.searchParams.set('utm_medium', 'referral');
     return url.toString();
   } catch {
-    // If URL parsing fails, append params manually
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}${config.paramName}=${encodeURIComponent(affiliateId)}&utm_source=svbooking&utm_medium=referral`;
+    return baseUrl;
+  }
+}
+
+export function isKnownProvider(provider: string): boolean {
+  return Boolean(PROVIDER_CONFIGS[provider]);
+}
+
+export function isAllowedProviderUrl(provider: string, baseUrl: string): boolean {
+  const config = PROVIDER_CONFIGS[provider];
+  if (!config) return false;
+
+  try {
+    const url = new URL(baseUrl);
+    if (url.protocol !== 'https:') return false;
+    const hostname = url.hostname.toLowerCase();
+    return config.domains.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
+  } catch {
+    return false;
   }
 }
 

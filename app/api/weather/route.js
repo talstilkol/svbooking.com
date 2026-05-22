@@ -1,5 +1,8 @@
 import { getForecast, getMonthlyAverages } from '@/lib/weather';
 import { CITY_COORDINATES } from '@/lib/city-coordinates';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+
+const weatherLimiter = rateLimit({ namespace: 'weather', limit: 30, window: 60, failOpen: false });
 
 /**
  * GET /api/weather?city=Paris
@@ -31,9 +34,13 @@ export async function GET(request) {
     if (!lat || !lon) {
       return Response.json(
         { error: 'Provide city name or lat/lon coordinates' },
-        { status: 400 }
+        { status: 400, headers: { 'Cache-Control': 'no-store' } }
       );
     }
+
+    const ip = getClientIp(request);
+    const { success, reset } = await weatherLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
 
     if (mode === 'monthly') {
       const month = Number(searchParams.get('month') || new Date().getMonth() + 1);
@@ -49,6 +56,10 @@ export async function GET(request) {
       headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' },
     });
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    console.error('GET /api/weather error:', err);
+    return Response.json(
+      { error: 'Weather unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
+    );
   }
 }

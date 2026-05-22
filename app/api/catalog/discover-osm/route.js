@@ -1,6 +1,11 @@
 import { discoverHotels, countHotels } from '@/lib/overpass';
 import { searchHotels } from '@/lib/nominatim';
 import { HOTELS } from '@/lib/hotels-catalog';
+import { verifyAdminAuth } from '@/lib/admin-auth';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+
+const osmDiscoveryLimiter = rateLimit({ namespace: 'catalog-discover-osm', limit: 10, window: 60, failOpen: false });
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 
 /**
  * GET /api/catalog/discover-osm?city=Paris&source=overpass&limit=30
@@ -15,6 +20,13 @@ import { HOTELS } from '@/lib/hotels-catalog';
  */
 export async function GET(request) {
   try {
+    const auth = verifyAdminAuth(request);
+    if (!auth.authorized) return auth.response;
+
+    const ip = getClientIp(request);
+    const { success, reset } = await osmDiscoveryLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
+
     const { searchParams } = new URL(request.url);
     const city = searchParams.get('city');
     const source = searchParams.get('source') || 'overpass';
@@ -22,7 +34,7 @@ export async function GET(request) {
     const wikidataOnly = searchParams.get('wikidataOnly') === 'true';
 
     if (!city) {
-      return Response.json({ error: 'city parameter is required' }, { status: 400 });
+      return Response.json({ error: 'city parameter is required' }, { status: 400, headers: NO_STORE_HEADERS });
     }
 
     // Count-only mode (fast)
@@ -32,7 +44,7 @@ export async function GET(request) {
         city,
         totalHotels: total,
         source: 'overpass-count',
-      });
+      }, { headers: NO_STORE_HEADERS });
     }
 
     let hotels;
@@ -56,14 +68,12 @@ export async function GET(request) {
       withBrand: withBrand.length,
       currentCatalogSize: HOTELS.length,
       hotels,
-    }, {
-      headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' },
-    });
+    }, { headers: NO_STORE_HEADERS });
   } catch (err) {
     console.error('GET /api/catalog/discover-osm error:', err);
     return Response.json(
-      { error: err.message || 'Discovery failed' },
-      { status: 500 }
+      { error: 'Discovery unavailable' },
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }

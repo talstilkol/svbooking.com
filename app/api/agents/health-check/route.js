@@ -1,32 +1,69 @@
 import { getRates, getHeatmap } from '@/lib/xotelo';
 import { HOTELS } from '@/lib/hotels-catalog';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { verifyAdminAuth } from '@/lib/admin-auth';
+import { addDays } from '@/lib/utils/date';
+import { recordProviderUptimeEvent } from '@/lib/provider-observability';
 
-function addDays(dateStr, days) {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-}
+const healthCheckLimiter = rateLimit({ namespace: 'agents-health-check', limit: 10, window: 60, failOpen: false });
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 
-async function timedCall(fn) {
+async function timedCall({ providerId, providerName, operation, fn }) {
   const start = Date.now();
   try {
     await fn();
-    return { ok: true, latencyMs: Date.now() - start };
+    const latencyMs = Date.now() - start;
+    await recordProviderUptimeEvent({
+      providerId,
+      providerName,
+      operation,
+      ok: true,
+      latencyMs,
+      source: 'agents-health-check',
+    });
+    return { ok: true, latencyMs };
   } catch (err) {
-    return { ok: false, latencyMs: Date.now() - start, error: err.message };
+    console.error('Health check probe error:', err);
+    const latencyMs = Date.now() - start;
+    await recordProviderUptimeEvent({
+      providerId,
+      providerName,
+      operation,
+      ok: false,
+      latencyMs,
+      source: 'agents-health-check',
+    });
+    return { ok: false, latencyMs, error: 'Probe unavailable' };
   }
 }
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const auth = verifyAdminAuth(request);
+    if (!auth.authorized) return auth.response;
+
+    const ip = getClientIp(request);
+    const { success, reset } = await healthCheckLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
+
     const testHotel = HOTELS[0];
     const today = new Date().toISOString().split('T')[0];
     const checkIn = addDays(today, 14);
     const checkOut = addDays(today, 16);
 
     const [ratesCheck, heatmapCheck] = await Promise.all([
-      timedCall(() => getRates({ hotelKey: testHotel.hotelKey, checkIn, checkOut })),
-      timedCall(() => getHeatmap({ hotelKey: testHotel.hotelKey, checkOut })),
+      timedCall({
+        providerId: 'xotelo',
+        providerName: 'Xotelo',
+        operation: 'rates-health-probe',
+        fn: () => getRates({ hotelKey: testHotel.hotelKey, checkIn, checkOut }),
+      }),
+      timedCall({
+        providerId: 'xotelo',
+        providerName: 'Xotelo',
+        operation: 'heatmap-health-probe',
+        fn: () => getHeatmap({ hotelKey: testHotel.hotelKey, checkOut }),
+      }),
     ]);
 
     const catalogIssues = [];
@@ -75,13 +112,14 @@ export async function GET() {
         catalogIntegrity: catalogCheck,
       },
       suggestions,
-    });
+    }, { headers: NO_STORE_HEADERS });
   } catch (err) {
+    console.error('GET /api/agents/health-check error:', err);
     return Response.json({
       status: 'error',
       checkedAt: new Date().toISOString(),
       checks: {},
-      suggestions: [`Health check failed: ${err.message}`],
-    }, { status: 500 });
+      suggestions: ['Health check unavailable'],
+    }, { status: 500, headers: NO_STORE_HEADERS });
   }
 }

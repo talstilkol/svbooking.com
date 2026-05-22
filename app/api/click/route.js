@@ -1,9 +1,14 @@
 import { kv } from '@/lib/kv';
-import { getAffiliateUrl } from '@/lib/affiliate';
+import { getAffiliateUrl, isAllowedProviderUrl, isKnownProvider } from '@/lib/affiliate';
 import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { verifyAdminAuth } from '@/lib/admin-auth';
+import { recordPriceObservation } from '@/lib/price-accuracy';
+import { assertSameOrigin } from '@/lib/request-origin';
+import { errorResponse } from '@/lib/validation';
 
 // Rate limiter: 60 clicks per minute per IP (generous but prevents abuse)
-const clickLimiter = rateLimit({ limit: 60, window: 60 });
+const clickLimiter = rateLimit({ namespace: 'click', limit: 60, window: 60, failOpen: false });
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 
 /**
  * POST /api/click
@@ -15,16 +20,24 @@ const clickLimiter = rateLimit({ limit: 60, window: 60 });
  */
 export async function POST(request) {
   try {
+    assertSameOrigin(request);
+
     // Rate limit
     const ip = getClientIp(request);
     const { success, reset } = await clickLimiter.check(ip);
     if (!success) return rateLimitResponse(reset);
 
     const body = await request.json();
-    const { hotelKey, provider, url, price, currency } = body;
+    const { hotelKey, provider, url, price, currency, taxesIncluded } = body;
 
     if (!url || !provider) {
-      return Response.json({ error: 'url and provider are required' }, { status: 400 });
+      return Response.json({ error: 'url and provider are required' }, { status: 400, headers: NO_STORE_HEADERS });
+    }
+    if (!isKnownProvider(provider)) {
+      return Response.json({ error: 'Unknown booking provider' }, { status: 400, headers: NO_STORE_HEADERS });
+    }
+    if (!isAllowedProviderUrl(provider, url)) {
+      return Response.json({ error: 'Provider URL is not allowed' }, { status: 400, headers: NO_STORE_HEADERS });
     }
 
     // Build affiliate URL
@@ -41,20 +54,28 @@ export async function POST(request) {
           provider,
           price: price || null,
           currency: currency || 'USD',
+          taxesIncluded: taxesIncluded ?? null,
           ts: Date.now(),
         });
         // 30-day TTL on click data
         await kv.setWithTTL(clickKey, clicks, 30 * 86400);
+        await recordPriceObservation({
+          hotelKey,
+          provider,
+          quotedTotal: price,
+          currency: currency || 'USD',
+          taxesIncluded: taxesIncluded ?? null,
+          source: 'outbound-click',
+        });
       } catch { /* non-critical */ }
     })();
 
     return Response.json(
       { redirectUrl },
-      { headers: { 'Cache-Control': 'no-store' } }
+      { headers: NO_STORE_HEADERS }
     );
   } catch (err) {
-    console.error('POST /api/click error:', err);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse(err);
   }
 }
 
@@ -66,6 +87,9 @@ export async function POST(request) {
  */
 export async function GET(request) {
   try {
+    const auth = verifyAdminAuth(request);
+    if (!auth.authorized) return auth.response;
+
     const { searchParams } = new URL(request.url);
     const daysParam = parseInt(searchParams.get('days') || '7', 10);
     const days = Math.min(daysParam, 30);
@@ -90,10 +114,10 @@ export async function GET(request) {
     }
 
     return Response.json(stats, {
-      headers: { 'Cache-Control': 'public, s-maxage=60' },
+      headers: NO_STORE_HEADERS,
     });
   } catch (err) {
     console.error('GET /api/click error:', err);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: 'Internal server error' }, { status: 500, headers: NO_STORE_HEADERS });
   }
 }

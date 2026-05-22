@@ -74,11 +74,12 @@ export async function GET(request) {
 
   try {
     const status = await runAgent(AGENT_NAMES.TRAVEL_GUIDE, runTravelGuideCache);
-    return Response.json(status);
+    return Response.json(status, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
+    console.error('GET /api/agents/auto/travel-guide-cache error:', err);
     return Response.json(
-      { status: 'error', error: err.message },
-      { status: 500 }
+      { status: 'error', error: 'Travel guide cache unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 }

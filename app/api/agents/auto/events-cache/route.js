@@ -76,11 +76,12 @@ export async function GET(request) {
 
   try {
     const status = await runAgent(AGENT_NAMES.EVENTS_CACHE, runEventsCache);
-    return Response.json(status);
+    return Response.json(status, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
+    console.error('GET /api/agents/auto/events-cache error:', err);
     return Response.json(
-      { status: 'error', error: err.message },
-      { status: 500 }
+      { status: 'error', error: 'Events cache unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 }

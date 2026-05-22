@@ -1,4 +1,7 @@
 import { getSummary } from '@/lib/wikipedia';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+
+const cityInfoLimiter = rateLimit({ namespace: 'city-info', limit: 30, window: 60, failOpen: false });
 
 /**
  * GET /api/city-info?city=Paris
@@ -12,18 +15,32 @@ export async function GET(request) {
     const city = searchParams.get('city');
 
     if (!city) {
-      return Response.json({ error: 'city parameter is required' }, { status: 400 });
+      return Response.json(
+        { error: 'city parameter is required' },
+        { status: 400, headers: { 'Cache-Control': 'no-store' } }
+      );
     }
+
+    const ip = getClientIp(request);
+    const { success, reset } = await cityInfoLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
 
     const summary = await getSummary(city);
     if (!summary) {
-      return Response.json({ error: `No Wikipedia article found for "${city}"` }, { status: 404 });
+      return Response.json(
+        { error: 'City information unavailable' },
+        { status: 404, headers: { 'Cache-Control': 'no-store' } }
+      );
     }
 
     return Response.json(summary, {
       headers: { 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800' },
     });
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    console.error('GET /api/city-info error:', err);
+    return Response.json(
+      { error: 'City information unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
+    );
   }
 }

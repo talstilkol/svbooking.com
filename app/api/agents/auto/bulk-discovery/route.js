@@ -10,16 +10,19 @@
  *
  * Pipeline:
  *   1. Query Wikidata for hotels with TripAdvisor IDs, grouped by continent/region
- *   2. Validate a sample with Xotelo (quick heatmap check)
- *   3. Store validated hotels in KV for auto-merge by orchestrator
+ *   2. Validate a bounded subset with Xotelo (quick heatmap check)
+ *   3. Store validated hotels in the admin review queue
  *   4. Track discovery stats
  */
 
 import { runAgent, verifyCronAuth, withConcurrency } from '@/lib/agent-utils';
 import { kv } from '@/lib/kv';
 import { findHotel } from '@/lib/hotels-catalog';
+import { upsertCandidates } from '@/lib/catalog-candidates';
+import { addDays } from '@/lib/utils/date';
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 const USER_AGENT = 'SVBooking-BulkDiscovery/1.0 (hotel catalog expansion)';
 const XOTELO_BASE = 'https://data.xotelo.com/api';
 
@@ -114,7 +117,7 @@ async function discoverGlobalHotels(regionFilter = null) {
       // Be polite to Wikidata: 3s delay between region queries
       await new Promise((r) => setTimeout(r, 3000));
     } catch (err) {
-      console.error(`Bulk discovery error for ${region.name}:`, err.message);
+      console.error(`Bulk discovery error for ${region.name}:`, err);
     }
   }
 
@@ -149,12 +152,6 @@ async function validateWithXotelo(hotelKey) {
   }
 }
 
-function addDays(dateStr, days) {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-}
-
 function cleanCityName(raw) {
   const arrMatch = raw.match(/\d+(?:st|nd|rd|th) arrondissement of (.+)/i);
   if (arrMatch) return arrMatch[1];
@@ -174,11 +171,11 @@ async function runBulkDiscovery() {
   // 2. Filter out hotels already in catalog
   const newHotels = discovered.filter((h) => !findHotel(h.hotelKey));
 
-  // 3. Validate a sample with Xotelo (max 200 for faster catalog growth)
-  const samplesToValidate = newHotels.slice(0, 200);
+  // 3. Validate a bounded subset with Xotelo (max 200 for faster catalog growth)
+  const subsetToValidate = newHotels.slice(0, 200);
   const validated = [];
 
-  await withConcurrency(samplesToValidate, 3, async (hotel) => {
+  await withConcurrency(subsetToValidate, 3, async (hotel) => {
     const isValid = await validateWithXotelo(hotel.hotelKey);
     if (isValid) {
       validated.push(hotel);
@@ -186,23 +183,8 @@ async function runBulkDiscovery() {
     return isValid;
   }, 1000); // 1s delay between batches
 
-  // 4. Store validated hotels in KV, grouped by city
-  const byCity = new Map();
-  for (const hotel of validated) {
-    const cityKey = hotel.city.toLowerCase();
-    if (!byCity.has(cityKey)) byCity.set(cityKey, []);
-    byCity.get(cityKey).push(hotel);
-  }
-
-  for (const [cityKey, hotels] of byCity) {
-    const existingKey = `discovered:hotels:${cityKey}`;
-    const existing = await kv.get(existingKey) || [];
-    const existingKeys = new Set(existing.map((h) => h.hotelKey));
-    const newForCity = hotels.filter((h) => !existingKeys.has(h.hotelKey));
-    if (newForCity.length > 0) {
-      await kv.setWithTTL(existingKey, [...existing, ...newForCity], 2592000); // 30 days
-    }
-  }
+  // 4. Store validated hotels in the review queue
+  const queued = await upsertCandidates(validated, { source: 'bulk-discovery-agent' });
 
   // 5. Also store ALL discovered (unvalidated) for catalog browsing
   await kv.setWithTTL('bulk-discovery:all', discovered, 604800); // 7 days
@@ -212,9 +194,11 @@ async function runBulkDiscovery() {
     totalDiscovered: discovered.length,
     alreadyInCatalog: discovered.length - newHotels.length,
     newCandidates: newHotels.length,
-    samplesValidated: samplesToValidate.length,
+    subsetValidated: subsetToValidate.length,
     validatedCount: validated.length,
-    citiesWithNewHotels: byCity.size,
+    queuedCandidates: queued.saved,
+    skippedCandidates: queued.skipped,
+    citiesWithNewHotels: new Set(validated.map((hotel) => hotel.city)).size,
     regionBreakdown: Object.fromEntries(
       [...new Set(discovered.map((h) => h.region))].map((r) => [
         r,
@@ -231,9 +215,9 @@ export async function GET(request) {
 
   try {
     const result = await runAgent('bulk-discovery', runBulkDiscovery);
-    return Response.json(result);
+    return Response.json(result, { headers: NO_STORE_HEADERS });
   } catch (err) {
     console.error('Bulk discovery error:', err);
-    return Response.json({ error: err.message }, { status: 500 });
+    return Response.json({ error: 'Bulk discovery unavailable' }, { status: 500, headers: NO_STORE_HEADERS });
   }
 }

@@ -1,18 +1,68 @@
 // Discovery Agent — Automatically discovers new hotels via OSM Overpass + Wikidata.
 // Pipeline: Overpass (find hotels) → Wikidata (get TripAdvisor IDs) → Xotelo (validate pricing)
-// Stores discovered hotels in KV for later catalog integration.
+// Stores validated candidates in the admin review queue for later catalog integration.
 
-import { runAgent, verifyCronAuth, withConcurrency, sleep, AGENT_NAMES } from '@/lib/agent-utils';
+import { runAgent, verifyCronAuth, withConcurrency, AGENT_NAMES } from '@/lib/agent-utils';
 import { discoverHotels } from '@/lib/overpass';
 import { resolveWikidataToTripAdvisor } from '@/lib/wikidata-enrich';
 import { getRates } from '@/lib/xotelo';
 import { HOTELS, listCities, findHotel } from '@/lib/hotels-catalog';
 import { kv } from '@/lib/kv';
+import { upsertCandidates } from '@/lib/catalog-candidates';
+import { addDays } from '@/lib/utils/date';
 
-function addDays(dateStr, days) {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
+function wikidataUrl(id) {
+  return id ? `https://www.wikidata.org/wiki/${encodeURIComponent(id)}` : null;
+}
+
+function osmUrl(type, id) {
+  return type && id ? `https://www.openstreetmap.org/${type}/${encodeURIComponent(id)}` : null;
+}
+
+function countryForCity(city) {
+  return HOTELS.find((hotel) => hotel.city.toLowerCase() === city.toLowerCase())?.country || '';
+}
+
+function getResolvedTripAdvisor(mapping, wikidataId) {
+  if (!mapping || !wikidataId) return null;
+  if (typeof mapping.get === 'function') return mapping.get(wikidataId) || null;
+  return mapping[wikidataId] || null;
+}
+
+export function buildDiscoveryCandidate({ osmHotel, resolved, fallbackCity }) {
+  const tripAdvisorId = resolved?.tripAdvisorId;
+  const cityTripAdvisorId = resolved?.cityTripAdvisorId;
+  if (!osmHotel?.name || !tripAdvisorId || !cityTripAdvisorId) return null;
+
+  const city = resolved?.cityName || fallbackCity;
+  return {
+    name: osmHotel.name,
+    hotelKey: `g${cityTripAdvisorId}-d${tripAdvisorId}`,
+    city,
+    country: countryForCity(city),
+    lat: osmHotel.lat,
+    lon: osmHotel.lon,
+    wikidataId: osmHotel.wikidataId,
+    osmId: osmHotel.osmId,
+    stars: osmHotel.stars || null,
+    brand: osmHotel.brand || null,
+    source: 'osm-wikidata-xotelo-validated',
+    sourceUrl: wikidataUrl(osmHotel.wikidataId) || osmUrl(osmHotel.osmType, osmHotel.osmId),
+    externalIds: {
+      wikidataId: osmHotel.wikidataId,
+      osmId: osmHotel.osmId ? `${osmHotel.osmType || 'osm'}:${osmHotel.osmId}` : null,
+      providerHotelId: tripAdvisorId,
+    },
+    provenance: {
+      source: 'osm-wikidata-xotelo-validated',
+      sourceUrl: wikidataUrl(osmHotel.wikidataId) || osmUrl(osmHotel.osmType, osmHotel.osmId),
+      wikidataId: osmHotel.wikidataId || null,
+      osmId: osmHotel.osmId ? `${osmHotel.osmType || 'osm'}:${osmHotel.osmId}` : null,
+      providerHotelId: tripAdvisorId,
+      validation: 'xotelo-rates',
+      brand: osmHotel.brand || null,
+    },
+  };
 }
 
 /**
@@ -36,7 +86,8 @@ async function runDiscovery() {
   try {
     osmHotels = await discoverHotels({ city, wikidataOnly: true, limit: 50 });
   } catch (err) {
-    return { city, error: `Overpass failed: ${err.message}`, hotelsFound: 0, newHotels: 0 };
+    console.error('Discovery Overpass error:', err);
+    return { city, error: 'Overpass unavailable', hotelsFound: 0, newHotels: 0 };
   }
 
   if (!osmHotels || osmHotels.length === 0) {
@@ -61,23 +112,14 @@ async function runDiscovery() {
   const candidates = [];
   for (const osmHotel of osmHotels) {
     if (!osmHotel.wikidataId) continue;
-    const taId = taMapping[osmHotel.wikidataId];
-    if (!taId) continue;
+    const resolved = getResolvedTripAdvisor(taMapping, osmHotel.wikidataId);
+    const candidate = buildDiscoveryCandidate({ osmHotel, resolved, fallbackCity: city });
+    if (!candidate) continue;
 
     // Check if already in catalog
-    if (findHotel(taId)) continue;
+    if (findHotel(candidate.hotelKey)) continue;
 
-    candidates.push({
-      name: osmHotel.name,
-      hotelKey: taId,
-      city,
-      lat: osmHotel.lat,
-      lon: osmHotel.lon,
-      wikidataId: osmHotel.wikidataId,
-      stars: osmHotel.stars || null,
-      brand: osmHotel.brand || null,
-      source: 'osm-discovery-agent',
-    });
+    candidates.push(candidate);
   }
 
   // 4. Validate candidates with Xotelo (check if hotel key returns rates)
@@ -109,17 +151,13 @@ async function runDiscovery() {
     }
   }
 
-  // 5. Store discovered hotels in KV
+  // 5. Store validated hotels in the review queue
+  let queued = 0;
+  let skipped = 0;
   if (validated.length > 0) {
-    const existingKey = `discovered:hotels:${city.toLowerCase()}`;
-    const existing = (await kv.get(existingKey)) || [];
-    const existingKeys = new Set(existing.map((h) => h.hotelKey));
-    const newHotels = validated.filter((h) => !existingKeys.has(h.hotelKey));
-
-    if (newHotels.length > 0) {
-      const merged = [...existing, ...newHotels];
-      await kv.setWithTTL(existingKey, merged, 2592000); // 30 days
-    }
+    const result = await upsertCandidates(validated, { source: 'discovery-agent' });
+    queued = result.saved;
+    skipped = result.skipped;
   }
 
   return {
@@ -128,7 +166,9 @@ async function runDiscovery() {
     withWikidata: wikidataIds.length,
     withTripAdvisor: candidates.length,
     validated: validated.length,
-    newHotels: validated.length,
+    newHotels: queued,
+    queuedCandidates: queued,
+    skippedCandidates: skipped,
     existingInCatalog: HOTELS.length,
   };
 }
@@ -139,11 +179,12 @@ export async function GET(request) {
 
   try {
     const status = await runAgent(AGENT_NAMES.DISCOVERY, runDiscovery);
-    return Response.json(status);
+    return Response.json(status, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
+    console.error('GET /api/agents/auto/discovery error:', err);
     return Response.json(
-      { status: 'error', error: err.message },
-      { status: 500 }
+      { status: 'error', error: 'Discovery unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 }

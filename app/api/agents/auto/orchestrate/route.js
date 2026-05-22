@@ -9,13 +9,12 @@
 //   5. Bulk Discovery    (medium, 60s)  — massive Wikidata catalog expansion
 //   6. OSM Scanner       (medium, 60s)  — find hotels with TA refs from OpenStreetMap
 //   7. Price Cache       (slow, 2-5m)   — warm price cache
-//   8. Deal Scanner      (slow, 2-5m)   — find best deals
+//   8. Deal Scanner      (slow, 2-5m)   — find deal candidates
 //
 // Each agent runs independently. If one fails, the rest continue.
+// Discovery agents write to the candidate review queue; catalog promotion remains admin-approved.
 
 import { runAgent, verifyCronAuth, AGENT_NAMES } from '@/lib/agent-utils';
-import { kv } from '@/lib/kv';
-import { addAndPersistHotel } from '@/lib/hotels-catalog';
 
 const AGENT_URLS = [
   { name: AGENT_NAMES.PROVIDER_MANAGER, path: '/api/agents/auto/provider-manager' },
@@ -53,29 +52,15 @@ async function runOrchestrator(baseUrl, authHeader) {
         result: data?.result || data?.error || null,
       });
     } catch (err) {
+      console.error(`Agent ${agent.name} orchestration error:`, err);
       results.push({
         agent: agent.name,
         status: 'error',
         elapsedMs: Date.now() - startedAt,
-        error: err.message,
+        error: 'Agent unavailable',
       });
     }
   }
-
-  // Auto-merge discovered hotels into runtime catalog
-  let autoMerged = 0;
-  try {
-    const discoveredKeys = await kv.keys('discovered:hotels:*');
-    if (discoveredKeys.length > 0) {
-      const values = await kv.mget(discoveredKeys);
-      for (const hotels of values) {
-        if (!Array.isArray(hotels)) continue;
-        for (const hotel of hotels) {
-          if (await addAndPersistHotel(hotel)) autoMerged++;
-        }
-      }
-    }
-  } catch { /* non-critical */ }
 
   const completed = results.filter((r) => r.status === 'completed').length;
   const failed = results.filter((r) => r.status === 'error').length;
@@ -84,7 +69,7 @@ async function runOrchestrator(baseUrl, authHeader) {
     agentsRun: results.length,
     completed,
     failed,
-    autoMergedHotels: autoMerged,
+    catalogPromotion: 'admin-review-required',
     agents: results,
   };
 }
@@ -100,11 +85,12 @@ export async function GET(request) {
     const status = await runAgent(AGENT_NAMES.ORCHESTRATOR, () =>
       runOrchestrator(baseUrl, authHeader)
     );
-    return Response.json(status);
+    return Response.json(status, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
+    console.error('GET /api/agents/auto/orchestrate error:', err);
     return Response.json(
-      { status: 'error', error: err.message },
-      { status: 500 }
+      { status: 'error', error: 'Agent orchestration unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 }

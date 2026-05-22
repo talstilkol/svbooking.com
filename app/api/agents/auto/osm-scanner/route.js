@@ -10,13 +10,15 @@
  * Scans top tourist cities systematically. Free, no auth.
  */
 
-import { runAgent, verifyCronAuth, withConcurrency } from '@/lib/agent-utils';
+import { runAgent, verifyCronAuth } from '@/lib/agent-utils';
 import { kv } from '@/lib/kv';
-import { findHotel, listCities } from '@/lib/hotels-catalog';
+import { HOTELS, findHotel, listCities } from '@/lib/hotels-catalog';
 import { resolveWikidataToTripAdvisor } from '@/lib/wikidata-enrich';
 import { getCityGeoIds } from '@/lib/wikidata';
+import { upsertCandidates } from '@/lib/catalog-candidates';
 
 const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 const USER_AGENT = 'SVBooking-OSMScanner/1.0';
 
 // Top tourist cities to scan (beyond what's already in catalog)
@@ -37,6 +39,117 @@ const EXPANSION_CITIES = [
   // Oceania
   'Auckland', 'Queenstown', 'Fiji',
 ];
+
+const EXPANSION_CITY_COUNTRIES = {
+  Madrid: 'Spain',
+  Milan: 'Italy',
+  Florence: 'Italy',
+  Dublin: 'Ireland',
+  Edinburgh: 'UK',
+  Copenhagen: 'Denmark',
+  Stockholm: 'Sweden',
+  Oslo: 'Norway',
+  Warsaw: 'Poland',
+  Bruges: 'Belgium',
+  Salzburg: 'Austria',
+  Nice: 'France',
+  Marseille: 'France',
+  Lyon: 'France',
+  Seville: 'Spain',
+  Valencia: 'Spain',
+  Zurich: 'Switzerland',
+  Geneva: 'Switzerland',
+  Dubrovnik: 'Croatia',
+  Krakow: 'Poland',
+  Santorini: 'Greece',
+  Mykonos: 'Greece',
+  Reykjavik: 'Iceland',
+  'Hong Kong': 'Hong Kong',
+  Taipei: 'Taiwan',
+  Osaka: 'Japan',
+  Kyoto: 'Japan',
+  Mumbai: 'India',
+  Goa: 'India',
+  Hanoi: 'Vietnam',
+  'Ho Chi Minh City': 'Vietnam',
+  'Phnom Penh': 'Cambodia',
+  'Siem Reap': 'Cambodia',
+  Kathmandu: 'Nepal',
+  'San Francisco': 'USA',
+  'Los Angeles': 'USA',
+  Chicago: 'USA',
+  Cancun: 'Mexico',
+  'Mexico City': 'Mexico',
+  'Buenos Aires': 'Argentina',
+  Lima: 'Peru',
+  Bogota: 'Colombia',
+  'Rio de Janeiro': 'Brazil',
+  Havana: 'Cuba',
+  Marrakech: 'Morocco',
+  'Cape Town': 'South Africa',
+  Zanzibar: 'Tanzania',
+  Doha: 'Qatar',
+  Muscat: 'Oman',
+  Amman: 'Jordan',
+  Auckland: 'New Zealand',
+  Queenstown: 'New Zealand',
+  Fiji: 'Fiji',
+};
+
+function osmUrl(type, id) {
+  return type && id ? `https://www.openstreetmap.org/${type}/${encodeURIComponent(id)}` : null;
+}
+
+function wikidataUrl(id) {
+  return id ? `https://www.wikidata.org/wiki/${encodeURIComponent(id)}` : null;
+}
+
+function countryForCity(city) {
+  return HOTELS.find((hotel) => hotel.city.toLowerCase() === city.toLowerCase())?.country ||
+    EXPANSION_CITY_COUNTRIES[city] ||
+    '';
+}
+
+function tripAdvisorIdFromRef(value) {
+  const match = String(value || '').match(/\d+/);
+  return match ? match[0] : null;
+}
+
+export function buildOsmCandidate({ hotel, city, cityGeoId, resolved }) {
+  const tripAdvisorId = resolved?.tripAdvisorId || tripAdvisorIdFromRef(hotel?.tripadvisorRef);
+  const geoId = resolved?.cityTripAdvisorId || cityGeoId;
+  const candidateCity = resolved?.cityName || city;
+  if (!hotel?.name || !tripAdvisorId || !geoId) return null;
+
+  const source = resolved ? 'osm-wikidata-resolved' : 'osm-tripadvisor-ref';
+  const sourceUrl = wikidataUrl(hotel.wikidataId) || osmUrl(hotel.osmType, hotel.osmId);
+
+  return {
+    hotelKey: `g${geoId}-d${tripAdvisorId}`,
+    name: hotel.name,
+    city: candidateCity,
+    country: countryForCity(candidateCity),
+    stars: hotel.stars,
+    lat: hotel.lat,
+    lon: hotel.lon,
+    source,
+    sourceUrl,
+    wikidataId: hotel.wikidataId || null,
+    osmId: hotel.osmId || null,
+    externalIds: {
+      wikidataId: hotel.wikidataId || null,
+      osmId: hotel.osmId ? `${hotel.osmType || 'osm'}:${hotel.osmId}` : null,
+      providerHotelId: tripAdvisorId,
+    },
+    provenance: {
+      source,
+      sourceUrl,
+      wikidataId: hotel.wikidataId || null,
+      osmId: hotel.osmId ? `${hotel.osmType || 'osm'}:${hotel.osmId}` : null,
+      providerHotelId: tripAdvisorId,
+    },
+  };
+}
 
 /**
  * Query Overpass for hotels with TripAdvisor refs in a city.
@@ -78,6 +191,8 @@ out body 100;`;
           stars: tags.stars ? Number(tags.stars) : null,
           lat: el.lat || el.center?.lat,
           lon: el.lon || el.center?.lon,
+          osmId: el.id,
+          osmType: el.type,
         };
       })
       .filter(Boolean);
@@ -123,17 +238,8 @@ async function runOSMScanner() {
       // Hotels with direct TripAdvisor refs
       const directTA = hotels.filter((h) => h.tripadvisorRef && cityGeoId);
       for (const h of directTA) {
-        const hotelKey = `g${cityGeoId}-d${h.tripadvisorRef}`;
-        if (!findHotel(hotelKey)) {
-          allDiscovered.push({
-            hotelKey,
-            name: h.name,
-            city,
-            country: '', // Will be enriched later
-            stars: h.stars,
-            source: 'osm-tripadvisor-ref',
-          });
-        }
+        const candidate = buildOsmCandidate({ hotel: h, city, cityGeoId });
+        if (candidate && !findHotel(candidate.hotelKey)) allDiscovered.push(candidate);
       }
 
       // Hotels with Wikidata IDs — resolve to TripAdvisor IDs
@@ -147,20 +253,8 @@ async function runOSMScanner() {
           for (const h of wikidataHotels) {
             const info = resolved.get(h.wikidataId);
             if (!info?.tripAdvisorId) continue;
-            const geoId = info.cityTripAdvisorId || cityGeoId;
-            if (!geoId) continue;
-
-            const hotelKey = `g${geoId}-d${info.tripAdvisorId}`;
-            if (!findHotel(hotelKey)) {
-              allDiscovered.push({
-                hotelKey,
-                name: h.name,
-                city: info.cityName || city,
-                country: '',
-                stars: h.stars,
-                source: 'osm-wikidata-resolved',
-              });
-            }
+            const candidate = buildOsmCandidate({ hotel: h, city, cityGeoId, resolved: info });
+            if (candidate && !findHotel(candidate.hotelKey)) allDiscovered.push(candidate);
           }
         } catch { /* wikidata resolution failed */ }
       }
@@ -172,29 +266,14 @@ async function runOSMScanner() {
     }
   }
 
-  // Store discovered hotels
+  // Store discovered hotels in the review queue
   results.newHotels = allDiscovered.length;
-
-  // Group by city and merge into KV
-  const byCity = new Map();
-  for (const h of allDiscovered) {
-    const key = h.city.toLowerCase();
-    if (!byCity.has(key)) byCity.set(key, []);
-    byCity.get(key).push(h);
-  }
-
-  for (const [cityKey, hotels] of byCity) {
-    const existingKey = `discovered:hotels:${cityKey}`;
-    const existing = (await kv.get(existingKey)) || [];
-    const existingKeys = new Set(existing.map((h) => h.hotelKey));
-    const newForCity = hotels.filter((h) => !existingKeys.has(h.hotelKey));
-    if (newForCity.length > 0) {
-      await kv.setWithTTL(existingKey, [...existing, ...newForCity], 2592000);
-    }
-  }
+  const queued = await upsertCandidates(allDiscovered, { source: 'osm-scanner-agent' });
 
   return {
     ...results,
+    queuedCandidates: queued.saved,
+    skippedCandidates: queued.skipped,
     citiesBatch: citiesToScan,
     elapsedMs: Date.now() - startedAt,
   };
@@ -206,9 +285,9 @@ export async function GET(request) {
 
   try {
     const result = await runAgent('osm-scanner', runOSMScanner);
-    return Response.json(result);
+    return Response.json(result, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
     console.error('OSM Scanner error:', err);
-    return Response.json({ error: err.message }, { status: 500 });
+    return Response.json({ error: 'OSM scanner unavailable' }, { status: 500, headers: NO_STORE_HEADERS });
   }
 }

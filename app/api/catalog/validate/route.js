@@ -1,8 +1,13 @@
 import { getRates } from '@/lib/xotelo';
 import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { verifyAdminAuth } from '@/lib/admin-auth';
+import { recordAdminAuditEvent } from '@/lib/admin-audit';
+import { assertSameOrigin } from '@/lib/request-origin';
+import { errorResponse } from '@/lib/validation';
 
 // Rate limiter: 10 validation requests per minute per IP
-const validateLimiter = rateLimit({ limit: 10, window: 60 });
+const validateLimiter = rateLimit({ namespace: 'catalog-validate', limit: 10, window: 60, failOpen: false });
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 
 /**
  * POST /api/catalog/validate
@@ -13,6 +18,11 @@ const validateLimiter = rateLimit({ limit: 10, window: 60 });
  */
 export async function POST(request) {
   try {
+    assertSameOrigin(request);
+
+    const auth = verifyAdminAuth(request);
+    if (!auth.authorized) return auth.response;
+
     // Rate limit to prevent Xotelo API abuse
     const ip = getClientIp(request);
     const { success, reset } = await validateLimiter.check(ip);
@@ -22,7 +32,7 @@ export async function POST(request) {
     const hotels = body.hotels || [];
 
     if (hotels.length === 0) {
-      return Response.json({ error: 'No hotels provided' }, { status: 400 });
+      return Response.json({ error: 'No hotels provided' }, { status: 400, headers: NO_STORE_HEADERS });
     }
 
     // Limit batch size to prevent timeout
@@ -54,16 +64,16 @@ export async function POST(request) {
             ...hotel,
             valid: rates.length > 0,
             providerCount: rates.length,
-            samplePrice: rates.length > 0
+            observedPrice: rates.length > 0
               ? Number((Number(rates[0].rate || 0) + Number(rates[0].tax || 0)).toFixed(2))
               : null,
             latencyMs: Date.now() - start,
           };
-        } catch (err) {
+        } catch {
           return {
             ...hotel,
             valid: false,
-            error: err.message,
+            error: 'Validation unavailable',
             latencyMs: Date.now() - start,
           };
         }
@@ -76,6 +86,19 @@ export async function POST(request) {
 
     const validCount = validated.filter((h) => h.valid).length;
 
+    await recordAdminAuditEvent({
+      request,
+      actor: auth.subject,
+      action: 'catalog.validate',
+      resource: 'catalog',
+      details: {
+        requested: hotels.length,
+        tested: validated.length,
+        valid: validCount,
+        invalid: validated.length - validCount,
+      },
+    });
+
     return Response.json({
       tested: validated.length,
       valid: validCount,
@@ -85,10 +108,6 @@ export async function POST(request) {
       remaining: hotels.length - batch.length,
     });
   } catch (err) {
-    console.error('POST /api/catalog/validate error:', err);
-    return Response.json(
-      { error: err.message || 'Validation failed' },
-      { status: 500 }
-    );
+    return errorResponse(err);
   }
 }

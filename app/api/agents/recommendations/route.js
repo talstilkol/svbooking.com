@@ -1,11 +1,17 @@
-import { HOTELS, findHotel, getHotelsByCountry } from '@/lib/hotels-catalog';
+import { findHotel, getHotelsByCountry } from '@/lib/hotels-catalog';
 import { getCachedRates } from '@/lib/price-cache';
+import { getClientIp, rateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { addDays } from '@/lib/utils/date';
+import { assertSameOrigin } from '@/lib/request-origin';
+import { errorResponse } from '@/lib/validation';
 
-function addDays(dateStr, days) {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-}
+const recommendationsLimiter = rateLimit({
+  namespace: 'agents-recommendations',
+  limit: 20,
+  window: 60,
+  failOpen: false,
+});
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 
 async function checkPriceForHotel(hotelKey, checkIn, checkOut) {
   try {
@@ -22,6 +28,12 @@ async function checkPriceForHotel(hotelKey, checkIn, checkOut) {
 
 export async function POST(request) {
   try {
+    assertSameOrigin(request);
+
+    const ip = getClientIp(request);
+    const { success, reset } = await recommendationsLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
+
     const body = await request.json();
     const { favorites = [], trips = [] } = body;
 
@@ -144,12 +156,14 @@ export async function POST(request) {
       return (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2);
     });
 
-    return Response.json({
-      recommendations: recommendations.slice(0, 8),
-      generatedAt: new Date().toISOString(),
-    });
+    return Response.json(
+      {
+        recommendations: recommendations.slice(0, 8),
+        generatedAt: new Date().toISOString(),
+      },
+      { headers: NO_STORE_HEADERS }
+    );
   } catch (err) {
-    console.error('POST /api/agents/recommendations error:', err);
-    return Response.json({ error: err.message || 'Server error' }, { status: 500 });
+    return errorResponse(err);
   }
 }

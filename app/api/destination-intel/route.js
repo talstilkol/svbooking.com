@@ -4,6 +4,26 @@ import { getHolidaysInRange, getUpcomingHolidays, countryToCode } from '@/lib/ho
 import { getExchangeRates, getCurrencySymbol } from '@/lib/exchange-rates';
 import { CITY_COORDINATES } from '@/lib/city-coordinates';
 import { getHotelsByCity } from '@/lib/hotels-catalog';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { fetchJsonWithTimeout } from '@/lib/utils/fetch-with-timeout';
+
+const destinationIntelLimiter = rateLimit({ namespace: 'destination-intel', limit: 20, window: 60, failOpen: false });
+const SUNRISE_SUNSET_TIMEOUT_MS = 5000;
+
+async function getSunriseSunset({ lat, lon }) {
+  const url = new URL('https://api.sunrise-sunset.org/json');
+  url.searchParams.set('lat', String(lat));
+  url.searchParams.set('lng', String(lon));
+  url.searchParams.set('formatted', '0');
+
+  const data = await fetchJsonWithTimeout(url.toString(), {
+    timeoutMs: SUNRISE_SUNSET_TIMEOUT_MS,
+    cache: 'no-store',
+  });
+
+  if (data?.status && data.status !== 'OK') return null;
+  return data?.results || null;
+}
 
 /**
  * GET /api/destination-intel?city=Paris&country=France&checkIn=2026-07-10&checkOut=2026-07-17
@@ -16,7 +36,7 @@ import { getHotelsByCity } from '@/lib/hotels-catalog';
  *   5. Sunrise-Sunset — daylight hours
  *   6. Hotel catalog — available hotels in city
  *
- * All sources are free, no auth required.
+ * Returns sourced destination context when upstream data is available.
  */
 export async function GET(request) {
   try {
@@ -28,8 +48,15 @@ export async function GET(request) {
     const baseCurrency = searchParams.get('currency') || 'USD';
 
     if (!city) {
-      return Response.json({ error: 'city parameter is required' }, { status: 400 });
+      return Response.json(
+        { error: 'city parameter is required' },
+        { status: 400, headers: { 'Cache-Control': 'no-store' } }
+      );
     }
+
+    const ip = getClientIp(request);
+    const { success, reset } = await destinationIntelLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
 
     // Resolve coordinates
     const coords = CITY_COORDINATES.find(
@@ -66,10 +93,7 @@ export async function GET(request) {
 
       // 5. Sunrise/sunset
       lat && lon
-        ? fetch(`https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&formatted=0`)
-            .then((r) => r.json())
-            .then((d) => d.results)
-            .catch(() => null)
+        ? getSunriseSunset({ lat, lon }).catch(() => null)
         : Promise.resolve(null),
     ]);
 
@@ -148,6 +172,10 @@ export async function GET(request) {
       headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' },
     });
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    console.error('GET /api/destination-intel error:', err);
+    return Response.json(
+      { error: 'Destination intelligence unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
+    );
   }
 }

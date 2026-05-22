@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'SV Booking - Hotel Price Comparison',
     short_name: 'SV Booking',
-    description: 'Compare hotel prices from Booking.com, Expedia, Hotels.com, Agoda & more',
+    description: 'Compare provider-returned hotel prices when rates are available',
     start_url: '/',
     display: 'standalone',
     background_color: '#f0f9ff',

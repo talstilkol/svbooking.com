@@ -7,14 +7,11 @@ import { getRates, getHeatmap } from '@/lib/xotelo';
 import { HOTELS } from '@/lib/hotels-catalog';
 import { registry } from '@/lib/providers/registry';
 import { kv } from '@/lib/kv';
+import { addDays } from '@/lib/utils/date';
+import { fetchWithTimeout } from '@/lib/utils/fetch-with-timeout';
 
 const HEALTH_TTL = 3600; // 1 hour
-
-function addDays(dateStr, days) {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-}
+const PROBE_TIMEOUT_MS = 8000;
 
 async function timedProbe(name, fn) {
   const start = Date.now();
@@ -22,8 +19,17 @@ async function timedProbe(name, fn) {
     await fn();
     return { name, ok: true, latencyMs: Date.now() - start };
   } catch (err) {
-    return { name, ok: false, latencyMs: Date.now() - start, error: err.message };
+    console.error('Health monitor probe error:', err);
+    return { name, ok: false, latencyMs: Date.now() - start, error: 'Probe unavailable' };
   }
+}
+
+async function probeHttpStatus(url) {
+  const response = await fetchWithTimeout(url, {
+    timeoutMs: PROBE_TIMEOUT_MS,
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
 }
 
 async function runHealthMonitor() {
@@ -41,24 +47,16 @@ async function runHealthMonitor() {
       getHeatmap({ hotelKey: testHotel.hotelKey, checkOut, timeoutMs: 10000 })
     ),
     timedProbe('overpass', () =>
-      fetch('https://overpass-api.de/api/status').then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      })
+      probeHttpStatus('https://overpass-api.de/api/status')
     ),
     timedProbe('wikipedia', () =>
-      fetch('https://en.wikipedia.org/api/rest_v1/page/summary/Paris').then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      })
+      probeHttpStatus('https://en.wikipedia.org/api/rest_v1/page/summary/Paris')
     ),
     timedProbe('open-meteo', () =>
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=48.85&longitude=2.35&current_weather=true').then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      })
+      probeHttpStatus('https://api.open-meteo.com/v1/forecast?latitude=48.85&longitude=2.35&current_weather=true')
     ),
     timedProbe('exchange-rates', () =>
-      fetch('https://open.er-api.com/v6/latest/USD').then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      })
+      probeHttpStatus('https://open.er-api.com/v6/latest/USD')
     ),
   ]);
 
@@ -85,7 +83,6 @@ async function runHealthMonitor() {
   }
 
   // 3. Build health snapshot
-  const allOk = results.every((r) => r.ok);
   const failedSources = results.filter((r) => !r.ok).map((r) => r.name);
   const slowSources = results.filter((r) => r.ok && r.latencyMs > 3000).map((r) => `${r.name} (${r.latencyMs}ms)`);
 
@@ -131,11 +128,12 @@ export async function GET(request) {
 
   try {
     const status = await runAgent(AGENT_NAMES.HEALTH_MONITOR, runHealthMonitor);
-    return Response.json(status);
+    return Response.json(status, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
+    console.error('GET /api/agents/auto/health-monitor error:', err);
     return Response.json(
-      { status: 'error', error: err.message },
-      { status: 500 }
+      { status: 'error', error: 'Health monitor unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 }

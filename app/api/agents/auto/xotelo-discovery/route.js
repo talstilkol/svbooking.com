@@ -2,11 +2,11 @@
  * Xotelo Discovery Agent — Discovers hotels directly from Xotelo's search API.
  *
  * This is the most reliable discovery method because:
- * 1. Hotels found here are GUARANTEED to have valid Xotelo hotel keys
+ * 1. Hotels found here are expected to use Xotelo-native hotel keys
  * 2. No need for cross-referencing between Wikidata/OSM/TripAdvisor IDs
  * 3. Hotels are immediately usable for pricing
  *
- * Scans top tourist cities systematically, adds to the discovered:hotels KV store.
+ * Scans top tourist cities systematically, adds candidates to the review queue.
  * Requires RAPIDAPI_KEY env var — Xotelo's search/list endpoints use RapidAPI auth.
  * Without the key, this agent returns a skipped status gracefully.
  */
@@ -15,6 +15,9 @@ import { runAgent, verifyCronAuth } from '@/lib/agent-utils';
 import { kv } from '@/lib/kv';
 import { findHotel, listCities } from '@/lib/hotels-catalog';
 import { searchXoteloHotels, isXoteloDiscoveryConfigured } from '@/lib/xotelo-discovery';
+import { upsertCandidates } from '@/lib/catalog-candidates';
+
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 
 // Cities to scan (catalog cities + expansion targets)
 const EXPANSION_CITIES = [
@@ -65,16 +68,8 @@ async function runXoteloDiscovery() {
       const newForCity = hotels.filter((h) => !findHotel(h.hotelKey));
       if (newForCity.length === 0) continue;
 
-      // Merge into KV
-      const kvKey = `discovered:hotels:${city.toLowerCase()}`;
-      const existing = (await kv.get(kvKey)) || [];
-      const existingKeys = new Set(existing.map((h) => h.hotelKey));
-
-      const toAdd = newForCity.filter((h) => !existingKeys.has(h.hotelKey));
-      if (toAdd.length > 0) {
-        await kv.setWithTTL(kvKey, [...existing, ...toAdd], 2592000); // 30 days
-        newHotels += toAdd.length;
-      }
+      const queued = await upsertCandidates(newForCity, { source: 'xotelo-discovery-agent' });
+      newHotels += queued.saved;
 
       // Polite delay: 3s between cities
       await new Promise((r) => setTimeout(r, 3000));
@@ -99,9 +94,9 @@ export async function GET(request) {
 
   try {
     const result = await runAgent('xotelo-discovery', runXoteloDiscovery);
-    return Response.json(result);
+    return Response.json(result, { headers: NO_STORE_HEADERS });
   } catch (err) {
     console.error('Xotelo discovery error:', err);
-    return Response.json({ error: err.message }, { status: 500 });
+    return Response.json({ error: 'Xotelo discovery unavailable' }, { status: 500, headers: NO_STORE_HEADERS });
   }
 }

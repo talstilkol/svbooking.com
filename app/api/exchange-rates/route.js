@@ -1,4 +1,7 @@
 import { getExchangeRates, convertCurrency } from '@/lib/exchange-rates';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+
+const exchangeRatesLimiter = rateLimit({ namespace: 'exchange-rates', limit: 30, window: 60, failOpen: false });
 
 /**
  * GET /api/exchange-rates?base=USD
@@ -13,6 +16,10 @@ export async function GET(request) {
     const from = searchParams.get('from');
     const to = searchParams.get('to');
     const amount = Number(searchParams.get('amount'));
+
+    const ip = getClientIp(request);
+    const { success, reset } = await exchangeRatesLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
 
     // Conversion mode
     if (from && to && amount) {
@@ -29,6 +36,10 @@ export async function GET(request) {
       headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' },
     });
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    console.error('GET /api/exchange-rates error:', err);
+    return Response.json(
+      { error: 'Exchange rates unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
+    );
   }
 }

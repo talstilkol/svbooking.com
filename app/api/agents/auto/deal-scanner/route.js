@@ -1,22 +1,17 @@
-// Deal Scanner Agent — Scans ALL catalog hotels via heatmap to find best deals.
+// Deal Scanner Agent — Scans ALL catalog hotels via heatmap to find deal candidates.
 // Caches top deals globally and per-city for instant /deals page loading.
 // Much broader coverage than the manual /api/agents/deals (which only scans 8 hotels).
 
 import { runAgent, verifyCronAuth, withConcurrency, AGENT_NAMES } from '@/lib/agent-utils';
 import { getCachedHeatmap } from '@/lib/price-cache';
-import { HOTELS, listCities } from '@/lib/hotels-catalog';
+import { HOTELS } from '@/lib/hotels-catalog';
 import { kv } from '@/lib/kv';
+import { addDays } from '@/lib/utils/date';
 
 const DEALS_TTL = 14400; // 4 hours
 
-function addDays(dateStr, days) {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-}
-
 /**
- * Scan a single hotel via heatmap and extract best deals.
+ * Scan a single hotel via heatmap and extract deal candidates.
  */
 async function scanHotel(hotel) {
   const today = new Date().toISOString().split('T')[0];
@@ -60,7 +55,9 @@ async function scanHotel(hotel) {
           price: totalPrice,
           pricePerNight: Number((totalPrice / nights).toFixed(2)),
           nights,
-          provider: 'Best Available',
+          provider: null,
+          priceSource: 'xotelo-heatmap',
+          priceSourceLabel: 'Xotelo heatmap observation',
           currency: 'USD',
         });
       }
@@ -109,7 +106,7 @@ async function runDealScanner() {
     };
   });
 
-  // Sort by savings percentage (best deals first)
+  // Sort by savings percentage (largest observed spread first)
   enrichedDeals.sort((a, b) => b.savingsPct - a.savingsPct);
 
   // Cache top 20 deals globally
@@ -150,11 +147,12 @@ export async function GET(request) {
 
   try {
     const status = await runAgent(AGENT_NAMES.DEAL_SCANNER, runDealScanner);
-    return Response.json(status);
+    return Response.json(status, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
+    console.error('GET /api/agents/auto/deal-scanner error:', err);
     return Response.json(
-      { status: 'error', error: err.message },
-      { status: 500 }
+      { status: 'error', error: 'Deal scanner unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
 }

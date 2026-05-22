@@ -1,13 +1,11 @@
 import { ImageResponse } from 'next/og';
 import { findHotel } from '@/lib/hotels-catalog';
 
-export const runtime = 'edge';
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const hotelKey = searchParams.get('hotelKey');
   const title = searchParams.get('title') || 'SV Booking';
-  const subtitle = searchParams.get('subtitle') || 'Compare hotel prices from 8+ providers';
+  const subtitle = searchParams.get('subtitle') || 'Compare hotel prices from available providers';
 
   const hotel = hotelKey ? findHotel(hotelKey) : null;
 
@@ -67,7 +65,7 @@ export async function GET(request: Request) {
               maxWidth: '800px',
             }}
           >
-            {hotel ? `${hotel.city}, ${hotel.country} — Compare prices from 8+ providers` : subtitle}
+            {hotel ? `${hotel.city}, ${hotel.country} — Compare prices from available providers` : subtitle}
           </div>
         </div>
 
@@ -82,7 +80,7 @@ export async function GET(request: Request) {
           }}
         >
           <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '20px' }}>
-            Booking.com · Expedia · Hotels.com · Agoda · Vio · Trip.com
+            Provider-returned rates when available
           </div>
           <div
             style={{
@@ -94,7 +92,7 @@ export async function GET(request: Request) {
               borderRadius: '12px',
             }}
           >
-            100% Free
+            Free To Browse
           </div>
         </div>
       </div>

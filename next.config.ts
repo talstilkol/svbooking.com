@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 import path from 'path';
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 const nextConfig: NextConfig = {
   headers: async () => [
     {
@@ -16,11 +18,14 @@ const nextConfig: NextConfig = {
           key: 'Content-Security-Policy',
           value: [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
+            `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://va.vercel-scripts.com`,
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https://images.unsplash.com https://cf.bstatic.com https://photos.hotelbeds.com",
             "font-src 'self'",
             "connect-src 'self' https://*.vercel-insights.com https://*.upstash.io",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
             "frame-ancestors 'none'",
           ].join('; '),
         },

@@ -1,4 +1,13 @@
-import { getPublicHolidays, getHolidaysInRange, getUpcomingHolidays, countryToCode } from '@/lib/holidays';
+import {
+  HolidayProviderUnavailableError,
+  getPublicHolidays,
+  getHolidaysInRange,
+  getUpcomingHolidays,
+  countryToCode,
+} from '@/lib/holidays';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+
+const holidaysLimiter = rateLimit({ namespace: 'holidays', limit: 30, window: 60, failOpen: false });
 
 /**
  * GET /api/holidays?country=France
@@ -27,9 +36,13 @@ export async function GET(request) {
     if (!countryCode) {
       return Response.json(
         { error: 'Provide country name or countryCode (ISO 3166-1 alpha-2)' },
-        { status: 400 }
+        { status: 400, headers: { 'Cache-Control': 'no-store' } }
       );
     }
+
+    const ip = getClientIp(request);
+    const { success, reset } = await holidaysLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
 
     // Check if holidays overlap with travel dates
     if (checkIn && checkOut) {
@@ -69,6 +82,25 @@ export async function GET(request) {
       headers: { 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800' },
     });
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    if (err instanceof HolidayProviderUnavailableError) {
+      return Response.json(
+        {
+          error: 'Holiday data unavailable',
+          holidays: [],
+          upcoming: [],
+          hasHoliday: null,
+          warning: null,
+          source: 'Nager.Date',
+          sourceStatus: 'unavailable',
+        },
+        { status: 200, headers: { 'Cache-Control': 'no-store' } }
+      );
+    }
+
+    console.error('GET /api/holidays error:', err);
+    return Response.json(
+      { error: 'Holiday data unavailable' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
+    );
   }
 }
