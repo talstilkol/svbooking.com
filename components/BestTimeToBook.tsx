@@ -42,28 +42,6 @@ export default function BestTimeToBook({ hotelKey, hotelName }: BestTimeToBookPr
     };
   }, [hotelKey, expanded]);
 
-  if (!expanded) {
-    return (
-      <button
-        onClick={() => setExpanded(true)}
-        className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium mt-4 transition"
-      >
-        When is the best time to book {hotelName}?
-      </button>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
-        <div className="flex items-center gap-2 text-sm text-indigo-600">
-          <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          Analyzing 30-day price observations...
-        </div>
-      </div>
-    );
-  }
-
   const analysis = useMemo(() => {
     if (trend.length === 0) return null;
 
@@ -103,6 +81,28 @@ export default function BestTimeToBook({ hotelKey, hotelName }: BestTimeToBookPr
     return { prices, cheapest, mostExpensive, avgPrice, savingVsCheapest, dayOfWeek, formattedDate, dayAvgs, cheapestDayName, sourceLabel };
   }, [trend]);
 
+  if (!expanded) {
+    return (
+      <button
+        onClick={() => setExpanded(true)}
+        className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium mt-4 transition"
+      >
+        When is the best time to book {hotelName}?
+      </button>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
+        <div className="flex items-center gap-2 text-sm text-indigo-600">
+          <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          Analyzing 30-day price observations...
+        </div>
+      </div>
+    );
+  }
+
   if (!analysis) {
     return trend.length === 0 ? (
       <div className="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-500">
@@ -115,7 +115,7 @@ export default function BestTimeToBook({ hotelKey, hotelName }: BestTimeToBookPr
     );
   }
 
-  const { cheapest, mostExpensive, avgPrice, savingVsCheapest, dayOfWeek, formattedDate, dayAvgs, cheapestDayName, sourceLabel } = analysis;
+  const { cheapest, mostExpensive, savingVsCheapest, dayOfWeek, formattedDate, dayAvgs, cheapestDayName, sourceLabel } = analysis;
 
   return (
     <div className="mt-4 p-5 bg-indigo-50 border border-indigo-100 rounded-xl">
