@@ -1,9 +1,15 @@
 import { ImageResponse } from 'next/og';
 import { findHotel } from '@/lib/hotels-catalog';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+
+const ogLimiter = rateLimit({ namespace: 'og-image', limit: 15, window: 60, failOpen: true });
 
 export const revalidate = 86400; // OG images are deterministic — cache 24h
 
 export async function GET(request: Request) {
+  const ip = getClientIp(request);
+  const { success, reset } = await ogLimiter.check(ip);
+  if (!success) return rateLimitResponse(reset);
   const { searchParams } = new URL(request.url);
   const hotelKey = searchParams.get('hotelKey');
   const title = searchParams.get('title') || 'SV Booking';

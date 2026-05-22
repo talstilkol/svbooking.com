@@ -1,4 +1,7 @@
 import { searchHotels, listCities, listCountries } from '@/lib/hotels-catalog';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+
+const searchLimiter = rateLimit({ namespace: 'search', limit: 60, window: 60, failOpen: true });
 
 interface SearchHotel {
   hotelKey: string;
@@ -12,6 +15,10 @@ interface SearchHotel {
 // Returns matching cities, countries, + hotels for autocomplete
 // Uses fuzzy search with field-weighted ranking
 export async function GET(request: Request) {
+  const ip = getClientIp(request);
+  const { success, reset } = await searchLimiter.check(ip);
+  if (!success) return rateLimitResponse(reset);
+
   const { searchParams } = new URL(request.url);
   const q = (searchParams.get('q') || '').trim().toLowerCase();
 

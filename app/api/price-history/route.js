@@ -1,5 +1,7 @@
 import { kv } from '@/lib/kv';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
+const priceHistoryLimiter = rateLimit({ namespace: 'price-history', limit: 30, window: 60, failOpen: true });
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const BLOCKED_PROVIDER_VALUES = new Set([
@@ -64,6 +66,10 @@ function sanitizePoint(point) {
  * If no real data exists, returns hasRealData: false.
  */
 export async function GET(request) {
+  const ip = getClientIp(request);
+  const { success, reset } = await priceHistoryLimiter.check(ip);
+  if (!success) return rateLimitResponse(reset);
+
   try {
     const { searchParams } = new URL(request.url);
     const hotelKey = searchParams.get('hotelKey');

@@ -79,7 +79,7 @@ function CompareHotelsInner() {
     fetch('/api/compare')
       .then((r) => r.json())
       .then((d) => setAllHotels(d.hotels || []))
-      .catch(() => {})
+      .catch((err) => { console.warn('compare-hotels: catalog fetch failed', err); })
       .finally(() => setCatalogLoading(false));
   }, []);
 

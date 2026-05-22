@@ -1,8 +1,13 @@
 import { getPropertyContent } from '@/lib/property-content';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
+const contentLimiter = rateLimit({ namespace: 'property-content', limit: 40, window: 60, failOpen: true });
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 
-export async function GET(_request, { params }) {
+export async function GET(request, { params }) {
+  const ip = getClientIp(request);
+  const { success, reset } = await contentLimiter.check(ip);
+  if (!success) return rateLimitResponse(reset);
   try {
     const { hotelKey } = await params;
     const content = getPropertyContent(hotelKey);
