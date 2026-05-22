@@ -2,14 +2,34 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import {
+  LEGACY_LOCAL_STORAGE_KEYS,
+  LOCAL_STORAGE_KEYS,
+  readLocalStorageJsonWithFallback,
+} from '@/lib/local-storage-keys';
 
 interface Activity {
   id: string;
-  type: 'view' | 'favorite' | 'trip' | 'search' | 'review' | 'alert';
+  type: 'view' | 'favorite' | 'trip' | 'search' | 'alert';
   title: string;
   detail: string;
   href?: string;
   timestamp: number;
+}
+
+interface RecentHotelRecord {
+  hotelKey: string;
+  name: string;
+  city: string;
+  timestamp?: number;
+  viewedAt?: string;
+}
+
+interface RecentSearchRecord {
+  query: string;
+  resultCount?: number;
+  count?: number;
+  timestamp?: number;
 }
 
 function timeAgo(ts: number): string {
@@ -29,7 +49,6 @@ const ICONS: Record<string, string> = {
   favorite: '❤️',
   trip: '✈️',
   search: '🔍',
-  review: '✍️',
   alert: '🔔',
 };
 
@@ -37,78 +56,91 @@ export default function ActivityFeed({ className = '' }: { className?: string })
   const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
-    const feed: Activity[] = [];
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      const feed: Activity[] = [];
 
-    try {
-      // Recently viewed
-      const recent = JSON.parse(localStorage.getItem('recently-viewed') || '[]');
-      recent.slice(0, 5).forEach((h: { hotelKey: string; name: string; city: string }, i: number) => {
-        feed.push({
-          id: `view-${h.hotelKey}`,
-          type: 'view',
-          title: `Viewed ${h.name}`,
-          detail: h.city,
-          href: `/hotel/${h.hotelKey}`,
-          timestamp: Date.now() - (i + 1) * 3600000,
+      try {
+        const recent = readLocalStorageJsonWithFallback<RecentHotelRecord[]>(
+          LOCAL_STORAGE_KEYS.recentlyViewed,
+          [LEGACY_LOCAL_STORAGE_KEYS.recentlyViewed],
+          []
+        );
+        recent.slice(0, 5).forEach((h) => {
+          const timestamp = h.timestamp || (typeof h.viewedAt === 'string' ? Date.parse(h.viewedAt) : 0);
+          if (!timestamp) return;
+          feed.push({
+            id: `view-${h.hotelKey}`,
+            type: 'view',
+            title: `Viewed ${h.name}`,
+            detail: h.city,
+            href: `/hotel/${h.hotelKey}`,
+            timestamp,
+          });
         });
-      });
 
-      // Favorites
-      const favs = JSON.parse(localStorage.getItem('hotel-favorites') || '[]');
-      favs.slice(0, 3).forEach((h: { hotelKey: string; name: string; city: string }, i: number) => {
-        feed.push({
-          id: `fav-${h.hotelKey}`,
-          type: 'favorite',
-          title: `Favorited ${h.name}`,
-          detail: h.city,
-          href: `/hotel/${h.hotelKey}`,
-          timestamp: Date.now() - (i + 2) * 7200000,
+        const favs = readLocalStorageJsonWithFallback<{ hotelKey: string; name: string; city: string; addedAt?: string }[]>(
+          LOCAL_STORAGE_KEYS.favorites,
+          [LEGACY_LOCAL_STORAGE_KEYS.favorites],
+          []
+        );
+        favs.slice(0, 3).forEach((h: { hotelKey: string; name: string; city: string; addedAt?: string }) => {
+          const timestamp = h.addedAt ? Date.parse(h.addedAt) : 0;
+          if (!Number.isFinite(timestamp) || timestamp <= 0) return;
+          feed.push({
+            id: `fav-${h.hotelKey}`,
+            type: 'favorite',
+            title: `Favorited ${h.name}`,
+            detail: h.city,
+            href: `/hotel/${h.hotelKey}`,
+            timestamp,
+          });
         });
-      });
 
-      // Trips
-      const trips = JSON.parse(localStorage.getItem('saved-trips') || '[]');
-      trips.slice(0, 3).forEach((t: { id: string; hotelName: string; city: string; checkIn: string }, i: number) => {
-        feed.push({
-          id: `trip-${t.id}`,
-          type: 'trip',
-          title: `Planned trip to ${t.hotelName}`,
-          detail: `${t.city} · ${t.checkIn}`,
-          href: '/trips',
-          timestamp: Date.now() - (i + 1) * 14400000,
+        const trips = readLocalStorageJsonWithFallback<{ id: string; hotelName: string; city: string; checkIn: string; createdAt?: string }[]>(
+          LOCAL_STORAGE_KEYS.trips,
+          [LEGACY_LOCAL_STORAGE_KEYS.trips],
+          []
+        );
+        trips.slice(0, 3).forEach((t: { id: string; hotelName: string; city: string; checkIn: string; createdAt?: string }) => {
+          const timestamp = t.createdAt ? Date.parse(t.createdAt) : 0;
+          if (!Number.isFinite(timestamp) || timestamp <= 0) return;
+          feed.push({
+            id: `trip-${t.id}`,
+            type: 'trip',
+            title: `Planned trip to ${t.hotelName}`,
+            detail: `${t.city} · ${t.checkIn}`,
+            href: '/trips',
+            timestamp,
+          });
         });
-      });
 
-      // Searches
-      const searches = JSON.parse(localStorage.getItem('sv-recent-searches') || '[]');
-      searches.slice(0, 3).forEach((s: { query: string; count: number; timestamp?: number }, i: number) => {
-        feed.push({
-          id: `search-${s.query}-${i}`,
-          type: 'search',
-          title: `Searched "${s.query}"`,
-          detail: `${s.count} results`,
-          href: `/search?city=${encodeURIComponent(s.query)}`,
-          timestamp: s.timestamp || Date.now() - (i + 1) * 10800000,
+        const searches = readLocalStorageJsonWithFallback<RecentSearchRecord[]>(
+          LOCAL_STORAGE_KEYS.recentSearches,
+          [LEGACY_LOCAL_STORAGE_KEYS.recentSearches, LEGACY_LOCAL_STORAGE_KEYS.recentSearchesUnprefixed],
+          []
+        );
+        searches.slice(0, 3).forEach((s, i) => {
+          if (!s.timestamp) return;
+          feed.push({
+            id: `search-${s.query}-${i}`,
+            type: 'search',
+            title: `Searched "${s.query}"`,
+            detail: `${s.count ?? s.resultCount ?? 0} results`,
+            href: `/search?city=${encodeURIComponent(s.query)}`,
+            timestamp: s.timestamp,
+          });
         });
-      });
 
-      // Reviews
-      const reviews = JSON.parse(localStorage.getItem('sv-user-reviews') || '[]');
-      reviews.slice(0, 2).forEach((r: { hotelKey: string; title: string; timestamp: number }) => {
-        feed.push({
-          id: `review-${r.hotelKey}`,
-          type: 'review',
-          title: `Wrote review: "${r.title}"`,
-          detail: 'Hotel review',
-          href: `/hotel/${r.hotelKey}`,
-          timestamp: r.timestamp,
-        });
-      });
-    } catch {}
+      } catch {}
 
-    // Sort by timestamp desc
-    feed.sort((a, b) => b.timestamp - a.timestamp);
-    setActivities(feed.slice(0, 10));
+      feed.sort((a, b) => b.timestamp - a.timestamp);
+      setActivities(feed.slice(0, 10));
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (activities.length === 0) {

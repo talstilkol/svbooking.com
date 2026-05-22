@@ -33,7 +33,7 @@ const CONTACT_METHODS = [
 const FAQ_ITEMS = [
   {
     q: 'Is SV Booking really free?',
-    a: 'Yes, completely free. No hidden charges, no premium tier. We compare prices from 8+ booking providers at no cost to you.',
+    a: 'Yes, completely free. No hidden charges, no premium tier. We compare available booking provider prices at no cost to you.',
   },
   {
     q: 'Do I need to create an account?',
@@ -41,11 +41,11 @@ const FAQ_ITEMS = [
   },
   {
     q: 'How accurate are the prices?',
-    a: 'We fetch real-time prices from booking providers. Prices may change between our fetch and your booking, so always verify on the provider\'s site.',
+    a: 'We fetch provider-returned prices from booking providers. Prices may change between our fetch and your booking, so always verify on the provider\'s site.',
   },
   {
     q: 'Can I book directly through SV Booking?',
-    a: 'We redirect you to the booking provider with the best price. Your booking is made directly with them — we\'re just the comparison tool.',
+    a: 'We redirect you to the selected booking provider. Your booking is made directly with them — we\'re the comparison tool.',
   },
 ];
 
@@ -102,10 +102,10 @@ export default function ContactPage() {
         {/* CTA */}
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 text-center">
           <h2 className="text-xl font-bold text-slate-900 mb-2">
-            Ready to find your perfect hotel?
+            Ready to compare available hotel rates?
           </h2>
           <p className="text-slate-500 mb-4">
-            Compare prices from 8+ providers in seconds.
+            Compare available provider prices in seconds.
           </p>
           <Link
             href="/search"

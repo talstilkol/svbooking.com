@@ -1,49 +1,60 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
+import {
+  getHotelViewsStorageKey,
+  getLegacyHotelViewsStorageKey,
+  readLocalStorageJsonWithFallback,
+  writeLocalStorageJson,
+} from '@/lib/local-storage-keys';
 
 interface ViewTrackerProps {
   hotelKey: string;
   className?: string;
 }
 
-function hashKey(key: string): number {
-  let h = 0;
-  for (let i = 0; i < key.length; i++) {
-    h = ((h << 5) - h + key.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h);
+interface HotelViewRecord {
+  count: number;
+  timestamps: number[];
 }
 
 export default function ViewTracker({ hotelKey, className = '' }: ViewTrackerProps) {
   const [viewCount, setViewCount] = useState(0);
   const [recentViews, setRecentViews] = useState(0);
 
-  const baseViews = useMemo(() => {
-    const h = hashKey(hotelKey);
-    return 200 + (h % 800);
-  }, [hotelKey]);
-
   useEffect(() => {
-    try {
-      // Track this view
-      const key = `sv-views-${hotelKey}`;
-      const stored = JSON.parse(localStorage.getItem(key) || '{"count":0,"timestamps":[]}');
-      stored.count += 1;
-      const now = Date.now();
-      stored.timestamps.push(now);
-      // Keep only last 24h of timestamps
-      const cutoff = now - 86400000;
-      stored.timestamps = (stored.timestamps as number[]).filter((t: number) => t > cutoff);
-      localStorage.setItem(key, JSON.stringify(stored));
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        const key = getHotelViewsStorageKey(hotelKey);
+        const legacyKey = getLegacyHotelViewsStorageKey(hotelKey);
+        const stored = readLocalStorageJsonWithFallback<HotelViewRecord>(
+          key,
+          [legacyKey],
+          { count: 0, timestamps: [] }
+        );
+        const count = Number.isFinite(stored.count) ? stored.count + 1 : 1;
+        const now = Date.now();
+        const cutoff = now - 86400000;
+        const timestamps = [
+          ...(Array.isArray(stored.timestamps) ? stored.timestamps : []),
+          now,
+        ].filter((t: number) => t > cutoff);
+        const updated = { count, timestamps };
+        writeLocalStorageJson(key, updated);
 
-      setViewCount(baseViews + stored.count);
-      setRecentViews(stored.timestamps.length);
-    } catch {
-      setViewCount(baseViews);
-      setRecentViews(1);
-    }
-  }, [hotelKey, baseViews]);
+        setViewCount(updated.count);
+        setRecentViews(updated.timestamps.length);
+      } catch {
+        setViewCount(0);
+        setRecentViews(0);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [hotelKey]);
 
   if (viewCount === 0) return null;
 
@@ -51,12 +62,12 @@ export default function ViewTracker({ hotelKey, className = '' }: ViewTrackerPro
     <div className={`flex items-center gap-3 text-xs ${className}`}>
       <div className="flex items-center gap-1 text-slate-500">
         <span>👁️</span>
-        <span>{viewCount.toLocaleString()} views</span>
+        <span>{viewCount.toLocaleString()} local view{viewCount !== 1 ? 's' : ''}</span>
       </div>
       {recentViews > 1 && (
         <div className="flex items-center gap-1 text-amber-600">
-          <span>🔥</span>
-          <span>{recentViews} people viewing today</span>
+          <span>⏱️</span>
+          <span>{recentViews} local views today</span>
         </div>
       )}
     </div>

@@ -2,31 +2,37 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-interface Alert {
-  hotelKey: string;
-  hotelName: string;
-  city: string;
-  targetPrice: number;
-  currency: string;
-  createdAt: string;
-}
+import { LOCAL_STORAGE_KEYS, readLocalStorageJsonWithFallback, writeLocalStorageJson } from '@/lib/local-storage-keys';
+import {
+  type NormalizedPriceAlert,
+  type StoredPriceAlert,
+  normalizeStoredPriceAlerts,
+  priceAlertStorageLabel,
+} from '@/lib/price-alert-local';
 
 export default function SavedAlertsList({ className = '' }: { className?: string }) {
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [alerts, setAlerts] = useState<NormalizedPriceAlert[]>([]);
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem('price-alerts') || '[]');
-      setAlerts(stored);
-    } catch {}
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        setAlerts(normalizeStoredPriceAlerts(
+          readLocalStorageJsonWithFallback<StoredPriceAlert[]>(LOCAL_STORAGE_KEYS.priceAlerts, [], [])
+        ));
+      } catch {}
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const removeAlert = (hotelKey: string) => {
     const updated = alerts.filter((a) => a.hotelKey !== hotelKey);
     setAlerts(updated);
     try {
-      localStorage.setItem('price-alerts', JSON.stringify(updated));
+      writeLocalStorageJson(LOCAL_STORAGE_KEYS.priceAlerts, updated);
     } catch {}
   };
 
@@ -50,6 +56,9 @@ export default function SavedAlertsList({ className = '' }: { className?: string
               </Link>
               <p className="text-[10px] text-slate-400">
                 {alert.city} · Target: {alert.currency} {alert.targetPrice}/night
+              </p>
+              <p className="text-[10px] text-slate-500">
+                {priceAlertStorageLabel(alert)}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">

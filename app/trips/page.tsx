@@ -21,8 +21,8 @@ interface Rate {
   code: string;
   total: number;
   currency: string;
-  trust?: number;
   score?: number;
+  scoreBasis?: string;
 }
 
 interface AgentResponse {
@@ -43,10 +43,6 @@ function todayPlus(days: number) {
   const d = new Date();
   d.setDate(d.getDate() + days);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function todayStr() {
-  return todayPlus(0);
 }
 
 function TripsInner() {
@@ -106,12 +102,12 @@ function TripsInner() {
         checkIn: trip.checkIn,
         checkOut: trip.checkOut,
       });
-      const res = await fetch(`/api/agent?${params}`);
+      const res = await fetch(`/api/agents/price-recommendation?${params}`);
       const data: AgentResponse = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Agent failed');
+      if (!res.ok) throw new Error('Agent recommendation unavailable');
       setAgentResults((prev) => ({ ...prev, [trip.id]: data }));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Agent failed');
+    } catch {
+      setError('Agent recommendation is unavailable right now.');
     } finally {
       setAgentLoading(null);
     }
@@ -129,7 +125,7 @@ function TripsInner() {
           <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">← Home</Link>
           <h1 className="text-3xl md:text-4xl font-bold mb-2">My Trips</h1>
           <p className="text-white/80">
-            Plan future vacations and let our AI agent find the best price across providers.
+            Plan future vacations and let our AI agent compare available provider prices.
           </p>
         </div>
       </div>
@@ -293,7 +289,10 @@ function TripsInner() {
                                 {result.recommended.currency} {result.recommended.total.toFixed(2)}
                               </div>
                               <div className="text-xs text-zinc-500 mt-1">
-                                Trust: {((result.recommended.trust || 0) * 100).toFixed(0)}% · Score: {((result.recommended.score || 0) * 100).toFixed(0)}%
+                                Score: {((result.recommended.score || 0) * 100).toFixed(0)}% · Basis: {result.recommended.scoreBasis || 'verified-price'}
+                              </div>
+                              <div className="text-xs text-zinc-500 mt-1">
+                                Provider-quality data unavailable
                               </div>
                             </div>
                             <div className="flex-1">
@@ -301,7 +300,7 @@ function TripsInner() {
                                 <strong>Why?</strong> {result.reasoning}
                               </p>
                               <div className="text-xs text-zinc-500 mb-2">
-                                All offers ({result.providerCount}, sorted by agent score):
+                                All offers ({result.providerCount}, sorted by verified price score):
                               </div>
                               <div className="space-y-1">
                                 {result.ranked.map((r, i) => (
@@ -317,7 +316,7 @@ function TripsInner() {
                                       {i === 0 && '🏆 '}
                                       {r.provider}
                                       <span className="text-xs text-zinc-500 ml-2">
-                                        (trust {((r.trust || 0) * 100).toFixed(0)}%)
+                                        (score {((r.score || 0) * 100).toFixed(0)}%, provider quality unavailable)
                                       </span>
                                     </span>
                                     <span className="font-mono">
@@ -328,7 +327,7 @@ function TripsInner() {
                               </div>
                               {result.savingsPct > 0 && (
                                 <p className="mt-3 text-xs text-green-700">
-                                  💰 Spread: ${result.savingsVsExpensive.toFixed(2)} ({result.savingsPct}%) between cheapest and most expensive provider
+                                  💰 Spread: ${result.savingsVsExpensive.toFixed(2)} ({result.savingsPct}%) between lowest and highest returned provider
                                 </p>
                               )}
                             </div>

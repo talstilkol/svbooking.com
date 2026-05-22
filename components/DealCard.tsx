@@ -14,7 +14,8 @@ interface Deal {
   };
   bestPrice: number;
   pricePerNight: number;
-  bestProvider: string;
+  bestProvider: string | null;
+  priceSourceLabel?: string;
   checkIn: string;
   checkOut: string;
   nights: number;
@@ -23,6 +24,7 @@ interface Deal {
 
 export default function DealCard({ deal }: { deal: Deal }) {
   const currency = deal.currency || 'USD';
+  const sourceLabel = deal.bestProvider ? `via ${deal.bestProvider}` : deal.priceSourceLabel || 'Provider unavailable';
   return (
     <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-blue-200 transition-all group">
       <Link href={`/hotel/${deal.hotel.hotelKey}`} className="block relative">
@@ -44,14 +46,14 @@ export default function DealCard({ deal }: { deal: Deal }) {
         <p className="text-xs text-zinc-500 mt-0.5 mb-2">
           📍 {deal.hotel.city}, {deal.hotel.country}
         </p>
-        <RatingBadge hotelKey={deal.hotel.hotelKey} size="sm" className="mb-3" />
+        <RatingBadge size="sm" className="mb-3" />
         <div className="flex items-center justify-between">
           <div>
             <p className="text-lg font-bold text-zinc-900">
               {currency} {deal.bestPrice.toFixed(0)}
             </p>
             <p className="text-xs text-zinc-500">
-              {deal.nights} night{deal.nights !== 1 ? 's' : ''} · via {deal.bestProvider}
+              {deal.nights} night{deal.nights !== 1 ? 's' : ''} · {sourceLabel}
             </p>
           </div>
           <Link

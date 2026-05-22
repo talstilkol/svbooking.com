@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 
 interface PriceHistoryProps {
   hotelKey: string;
@@ -13,30 +13,6 @@ interface PricePoint {
   provider?: string;
 }
 
-function hashKey(key: string, seed: number): number {
-  let h = seed;
-  for (let i = 0; i < key.length; i++) {
-    h = ((h << 5) - h + key.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h);
-}
-
-function generateEstimatedData(hotelKey: string, days: number): PricePoint[] {
-  const points: PricePoint[] = [];
-  const basePrice = 80 + (hashKey(hotelKey, 42) % 200);
-
-  for (let i = days; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    const noise = Math.sin(hashKey(hotelKey, i) * 0.01) * 30;
-    const trend = Math.sin(i * 0.05) * 15;
-    const price = Math.max(40, Math.round(basePrice + noise + trend));
-    points.push({ date: dateStr, price });
-  }
-  return points;
-}
-
 export default function PriceHistory({ hotelKey, className = '' }: PriceHistoryProps) {
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
   const [realData, setRealData] = useState<PricePoint[] | null>(null);
@@ -45,10 +21,11 @@ export default function PriceHistory({ hotelKey, className = '' }: PriceHistoryP
 
   const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
 
-  // Fetch real price history
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    queueMicrotask(() => {
+      if (!cancelled) setLoading(true);
+    });
 
     fetch(`/api/price-history?hotelKey=${encodeURIComponent(hotelKey)}&period=${days}`)
       .then((r) => r.json())
@@ -75,9 +52,35 @@ export default function PriceHistory({ hotelKey, className = '' }: PriceHistoryP
     return () => { cancelled = true; };
   }, [hotelKey, days]);
 
-  // Use real data if available, otherwise estimated
-  const estimatedData = useMemo(() => generateEstimatedData(hotelKey, days), [hotelKey, days]);
-  const data = hasRealData && realData ? realData : estimatedData;
+  const data = hasRealData && realData ? realData : [];
+  const hasChartData = data.length > 0;
+
+  if (loading) {
+    return (
+      <div className={`bg-white border border-slate-200 rounded-2xl p-5 ${className}`}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-bold text-slate-900">&#128200; Price History</h3>
+        </div>
+        <div className="w-full h-24 bg-slate-100 rounded-lg animate-pulse" />
+      </div>
+    );
+  }
+
+  if (!hasChartData) {
+    return (
+      <div className={`bg-white border border-slate-200 rounded-2xl p-5 ${className}`}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-bold text-slate-900">&#128200; Price History</h3>
+          <span className="text-[9px] font-medium bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
+            Unavailable
+          </span>
+        </div>
+        <p className="text-sm text-slate-600">
+          Real price history is unavailable for this hotel until live comparison snapshots are collected.
+        </p>
+      </div>
+    );
+  }
 
   const minPrice = Math.min(...data.map((d) => d.price));
   const maxPrice = Math.max(...data.map((d) => d.price));
@@ -106,11 +109,6 @@ export default function PriceHistory({ hotelKey, className = '' }: PriceHistoryP
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-bold text-slate-900">&#128200; Price History</h3>
-          {!loading && !hasRealData && (
-            <span className="text-[9px] font-medium bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
-              Estimated
-            </span>
-          )}
           {!loading && hasRealData && (
             <span className="text-[9px] font-medium bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
               Real data

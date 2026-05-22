@@ -30,9 +30,9 @@ export default function BookPage() {
     if (new Date(checkIn) >= new Date(checkOut)) { setError('Check-in must be before check-out'); setSaving(false); return; }
     try {
       const res = await fetch('/api/me/trips', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ hotelKey: id, hotelName: hotel?.name, city: hotel?.city, country: hotel?.country, image: hotel?.image, checkIn, checkOut, guests, notes }) });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
+      if (!res.ok) throw new Error('Trip save failed');
       router.push('/trips');
-    } catch (err: any) { setError(err.message || 'Failed to save trip'); }
+    } catch { setError('Trip could not be saved right now.'); }
     finally { setSaving(false); }
   };
 
@@ -43,7 +43,7 @@ export default function BookPage() {
     <div className="max-w-2xl mx-auto px-4 py-10">
       <Link href={`/compare?hotelKey=${id}`} className="text-blue-600 hover:underline text-sm mb-4 inline-block">← Back to compare</Link>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-3xl font-bold mb-2">Book: {hotel.name}</h1>
+        <h1 className="text-3xl font-bold mb-2">Plan trip: {hotel.name}</h1>
         <p className="text-zinc-600 mb-6">{hotel.city}, {hotel.country}</p>
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 border border-zinc-200 space-y-4">
           <div>

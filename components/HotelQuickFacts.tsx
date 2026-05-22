@@ -1,20 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
-
 interface HotelQuickFactsProps {
   hotelKey: string;
   hotelName: string;
   city: string;
   className?: string;
-}
-
-function hashKey(key: string): number {
-  let h = 0;
-  for (let i = 0; i < key.length; i++) {
-    h = ((h << 5) - h + key.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h);
 }
 
 export default function HotelQuickFacts({
@@ -23,31 +13,18 @@ export default function HotelQuickFacts({
   city,
   className = '',
 }: HotelQuickFactsProps) {
-  const facts = useMemo(() => {
-    const h = hashKey(hotelKey);
-    const stars = 3 + (h % 3); // 3-5 stars
-    const rooms = 50 + (h % 250);
-    const yearBuilt = 1960 + (h % 60);
-    const yearRenovated = Math.max(yearBuilt + 10, 2015 + (h % 10));
-    const floors = 3 + (h % 25);
-    const distCenter = (0.5 + (h % 50) / 10).toFixed(1);
-    const distAirport = (5 + (h % 40)).toFixed(0);
-    const checkIn = `${14 + (h % 3)}:00`;
-    const checkOut = `${10 + (h % 3)}:00`;
-
-    return [
-      { icon: '⭐', label: 'Category', value: `${stars}-Star Hotel` },
-      { icon: '🏨', label: 'Rooms', value: `${rooms} rooms` },
-      { icon: '🏗️', label: 'Built', value: `${yearBuilt}` },
-      { icon: '🔧', label: 'Renovated', value: `${yearRenovated}` },
-      { icon: '🏢', label: 'Floors', value: `${floors}` },
-      { icon: '📍', label: 'City center', value: `${distCenter} km` },
-      { icon: '✈️', label: 'Airport', value: `${distAirport} km` },
-      { icon: '🕐', label: 'Check-in', value: `From ${checkIn}` },
-      { icon: '🕐', label: 'Check-out', value: `Until ${checkOut}` },
-      { icon: '🌐', label: 'Languages', value: 'EN, Local' },
-    ];
-  }, [hotelKey]);
+  void hotelName; // accepted for future use (e.g., title heading)
+  const facts = [
+    { icon: '📍', label: 'City', value: city || 'Unavailable' },
+    { icon: '🔑', label: 'Catalog key', value: hotelKey },
+    { icon: '⭐', label: 'Category', value: 'Unavailable' },
+    { icon: '🏨', label: 'Rooms', value: 'Unavailable' },
+    { icon: '🏗️', label: 'Built', value: 'Unavailable' },
+    { icon: '🔧', label: 'Renovated', value: 'Unavailable' },
+    { icon: '📌', label: 'Distance data', value: 'Unavailable' },
+    { icon: '🕐', label: 'Check-in/out', value: 'Provider site' },
+    { icon: '🌐', label: 'Languages', value: 'Unavailable' },
+  ];
 
   return (
     <div className={`bg-white border border-slate-200 rounded-2xl p-5 ${className}`}>

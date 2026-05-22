@@ -14,7 +14,7 @@ export default function OfflineBanner() {
     };
 
     // Check initial state
-    if (!navigator.onLine) setOffline(true);
+    if (!navigator.onLine) queueMicrotask(() => setOffline(true));
 
     window.addEventListener('offline', goOffline);
     window.addEventListener('online', goOnline);

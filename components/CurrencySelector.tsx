@@ -1,6 +1,7 @@
 'use client';
 
 import { useLocalStorage } from '@/lib/useLocalStorage';
+import { LEGACY_LOCAL_STORAGE_KEYS, LOCAL_STORAGE_KEYS } from '@/lib/local-storage-keys';
 
 export const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -14,7 +15,11 @@ export const CURRENCIES = [
 ];
 
 export function useCurrency() {
-  const [currency, setCurrency] = useLocalStorage<string>('svbooking:currency', 'USD');
+  const [currency, setCurrency] = useLocalStorage<string>(
+    LOCAL_STORAGE_KEYS.currency,
+    'USD',
+    [LEGACY_LOCAL_STORAGE_KEYS.currency]
+  );
   return { currency, setCurrency };
 }
 

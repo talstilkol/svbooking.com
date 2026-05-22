@@ -140,7 +140,7 @@ export default function FavoritesPage() {
                       &#128205; {fav.city}, {fav.country}
                     </p>
                     <div className="flex items-center gap-2 mt-2">
-                      <RatingBadge hotelKey={fav.hotelKey} size="sm" />
+                      <RatingBadge size="sm" />
                       <span className="text-xs text-slate-400">
                         Added {new Date(fav.addedAt).toLocaleDateString()}
                       </span>

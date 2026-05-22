@@ -14,13 +14,6 @@ function getDaysUntil(dateStr: string): number {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
-function getHoursUntilMidnight(): number {
-  const now = new Date();
-  const midnight = new Date(now);
-  midnight.setHours(24, 0, 0, 0);
-  return Math.ceil((midnight.getTime() - now.getTime()) / (1000 * 60 * 60));
-}
-
 export default function CountdownDeal({ checkIn, className = '' }: CountdownDealProps) {
   const [timeLeft, setTimeLeft] = useState<{
     days: number;
@@ -69,7 +62,7 @@ export default function CountdownDeal({ checkIn, className = '' }: CountdownDeal
       } ${className}`}
     >
       <span className="text-xl" aria-hidden="true">
-        {isUrgent ? '🔥' : isNearby ? '⏰' : '📅'}
+        {isNearby ? '⏰' : '📅'}
       </span>
       <div className="flex-1 min-w-0">
         <p
@@ -78,7 +71,7 @@ export default function CountdownDeal({ checkIn, className = '' }: CountdownDeal
           }`}
         >
           {isUrgent
-            ? 'Book now — prices may increase!'
+            ? 'Check-in is very close'
             : isNearby
             ? 'Your dates are coming up'
             : 'Check-in approaching'}
@@ -119,8 +112,8 @@ export default function CountdownDeal({ checkIn, className = '' }: CountdownDeal
         </div>
       </div>
       {isUrgent && (
-        <span className="px-2 py-1 bg-red-600 text-white text-[10px] font-bold rounded-full animate-pulse">
-          LAST CHANCE
+        <span className="px-2 py-1 bg-red-600 text-white text-[10px] font-bold rounded-full">
+          DATE SOON
         </span>
       )}
     </div>

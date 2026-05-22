@@ -13,9 +13,7 @@ import ProviderLogos from '@/components/ProviderLogos';
 import DateSummary from '@/components/DateSummary';
 import ProviderInfo from '@/components/ProviderInfo';
 import Breadcrumb from '@/components/Breadcrumb';
-import StarRating from '@/components/StarRating';
 import CountdownDeal from '@/components/CountdownDeal';
-import LastUpdated from '@/components/LastUpdated';
 import ComparisonMeta from '@/components/ComparisonMeta';
 import LoadingOverlay from '@/components/LoadingOverlay';
 import ViewTracker from '@/components/ViewTracker';
@@ -31,7 +29,7 @@ const SimilarHotels = dynamic(() => import('@/components/SimilarHotels'), { ssr:
 const BestTimeToBook = dynamic(() => import('@/components/BestTimeToBook'), { ssr: false });
 const PhotoGallery = dynamic(() => import('@/components/PhotoGallery'), { ssr: false });
 const HotelAmenities = dynamic(() => import('@/components/HotelAmenities'), { ssr: false });
-const PriceGuarantee = dynamic(() => import('@/components/PriceGuarantee'), { ssr: false });
+const PriceComparisonNotice = dynamic(() => import('@/components/PriceComparisonNotice'), { ssr: false });
 const StickyCompareBar = dynamic(() => import('@/components/StickyCompareBar'), { ssr: false });
 const FloatingCTA = dynamic(() => import('@/components/FloatingCTA'), { ssr: false });
 const ReviewHighlights = dynamic(() => import('@/components/ReviewHighlights'), { ssr: false });
@@ -51,10 +49,9 @@ const LoyaltyBanner = dynamic(() => import('@/components/LoyaltyBanner'), { ssr:
 const HolidayWarning = dynamic(() => import('@/components/HolidayWarning'), { ssr: false });
 const CityDescription = dynamic(() => import('@/components/CityDescription'), { ssr: false });
 const PriceInCurrencies = dynamic(() => import('@/components/PriceInCurrencies'), { ssr: false });
-const UserReviewForm = dynamic(() => import('@/components/UserReviewForm'), { ssr: false });
 const HotelQuickFacts = dynamic(() => import('@/components/HotelQuickFacts'), { ssr: false });
-const ProviderTrustScore = dynamic(() => import('@/components/ProviderTrustScore'), { ssr: false });
-const FlightEstimate = dynamic(() => import('@/components/FlightEstimate'), { ssr: false });
+const ProviderDataNotice = dynamic(() => import('@/components/ProviderDataNotice'), { ssr: false });
+const FlightDataNotice = dynamic(() => import('@/components/FlightDataNotice'), { ssr: false });
 const PriceHistory = dynamic(() => import('@/components/PriceHistory'), { ssr: false });
 
 interface Hotel {
@@ -72,6 +69,12 @@ interface Rate {
   tax: number;
   total: number;
   currency: string;
+  source?: string | null;
+  freshness?: string;
+  partial?: boolean;
+  deepLink?: string | null;
+  taxesIncluded?: boolean | null;
+  priceAccuracyState?: string;
 }
 
 interface Comparison {
@@ -94,19 +97,6 @@ const PROVIDER_COLORS: Record<string, string> = {
   'Vio.com': 'bg-green-100 text-green-800',
   'Trip.com': 'bg-sky-100 text-sky-800',
 };
-
-function getBookingUrl(provider: string, hotelName: string, city: string, checkIn: string, checkOut: string) {
-  const query = encodeURIComponent(`${hotelName} ${city}`);
-  const urls: Record<string, string> = {
-    'Booking.com': `https://www.booking.com/searchresults.html?ss=${query}&checkin=${checkIn}&checkout=${checkOut}`,
-    'Expedia': `https://www.expedia.com/Hotel-Search?destination=${query}&startDate=${checkIn}&endDate=${checkOut}`,
-    'Hotels.com': `https://www.hotels.com/search.do?q-destination=${query}&q-check-in=${checkIn}&q-check-out=${checkOut}`,
-    'Agoda.com': `https://www.agoda.com/search?city=${encodeURIComponent(city)}&checkIn=${checkIn}&checkOut=${checkOut}`,
-    'Vio.com': `https://www.vio.com/hotels?q=${query}&checkIn=${checkIn}&checkOut=${checkOut}`,
-    'Trip.com': `https://www.trip.com/hotels/?city=${encodeURIComponent(city)}&checkin=${checkIn}&checkout=${checkOut}`,
-  };
-  return urls[provider] || `https://www.google.com/travel/hotels?q=${query}`;
-}
 
 function today() {
   return new Date().toISOString().split('T')[0];
@@ -160,10 +150,10 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
         `/api/compare?hotelKey=${hotelKey}&checkIn=${checkIn}&checkOut=${checkOut}&currency=${currency}`
       );
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to load prices');
+      if (!res.ok) throw new Error('Price comparison unavailable');
       setData(json);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } catch {
+      setError('Price comparison is unavailable right now.');
     } finally {
       setLoading(false);
     }
@@ -179,7 +169,7 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
 
   const handleShare = async () => {
     const url = `${window.location.origin}/hotel/${hotelKey}`;
-    const text = `Check out ${displayHotel.name} in ${displayHotel.city} — compare prices from 8+ providers`;
+    const text = `Check out ${displayHotel.name} in ${displayHotel.city} — compare prices from available providers`;
     if (navigator.share) {
       try {
         await navigator.share({ title: displayHotel.name, text, url });
@@ -193,7 +183,7 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Structured data for SEO */}
-      {data?.cheapest && (
+      {data?.cheapest?.deepLink && (
         <HotelOfferJsonLd
           hotelName={displayHotel.name}
           city={displayHotel.city}
@@ -202,10 +192,7 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
           pricePerNight={Math.round(data.cheapest.total / nights)}
           currency={data.currency}
           provider={data.cheapest.provider}
-          checkIn={data.checkIn}
-          checkOut={data.checkOut}
-          ratingValue={7 + ((displayHotel.hotelKey.charCodeAt(5) || 0) % 25) / 10}
-          ratingCount={50 + ((displayHotel.hotelKey.charCodeAt(3) || 0) * 7) % 450}
+          url={data.cheapest.deepLink}
         />
       )}
 
@@ -259,8 +246,7 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
                 &#128205; {displayHotel.city}, {displayHotel.country}
               </p>
               <div className="flex items-center gap-2 mt-2">
-                <RatingBadge hotelKey={displayHotel.hotelKey} size="sm" className="[&>span:first-child]:!bg-white/20 [&>span:last-child]:!text-white/70" />
-                <StarRating rating={4 + ((displayHotel.hotelKey.charCodeAt(5) % 10) / 10)} size="sm" />
+                <RatingBadge size="sm" className="[&>span:first-child]:!bg-white/20 [&>span:first-child]:!text-white [&>span:last-child]:!text-white/70" />
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -306,7 +292,7 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
         />
 
         {/* Hotel badges */}
-        <HotelBadges hotelKey={hotelKey} className="mb-3" />
+        <HotelBadges className="mb-3" />
 
         {/* View tracker */}
         <ViewTracker hotelKey={hotelKey} className="mb-4" />
@@ -378,8 +364,8 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
         {/* Loyalty banner */}
         <LoyaltyBanner className="mb-6" />
 
-        {/* Price Guarantee */}
-        <PriceGuarantee className="mb-6" />
+        {/* Price comparison notice */}
+        <PriceComparisonNotice className="mb-6" />
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
@@ -407,7 +393,6 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
               checkOut={data.checkOut}
               currency={data.currency}
             />
-            <LastUpdated />
           </div>
         )}
 
@@ -436,18 +421,22 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
             <div className="space-y-3">
               {data.rates.map((rate, idx) => {
                 const isCheapest = rate.provider === data.cheapest?.provider;
-                const bookingUrl = getBookingUrl(rate.provider, data.hotel.name, data.hotel.city, data.checkIn, data.checkOut);
                 const colorClass = PROVIDER_COLORS[rate.provider] || 'bg-slate-100 text-slate-700';
+                const taxLabel = rate.taxesIncluded === true
+                  ? 'taxes included'
+                  : rate.taxesIncluded === false
+                    ? 'taxes may be excluded'
+                    : 'tax status unavailable';
                 return (
                   <div
-                    key={rate.provider}
+                    key={`${rate.provider}-${rate.code || idx}`}
                     className={`bg-white rounded-xl border p-5 flex items-center gap-4 transition ${
                       isCheapest ? 'border-green-300 shadow-md' : 'border-slate-200'
                     }`}
                   >
                     {isCheapest && (
                       <span className="absolute -mt-10 text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full border border-green-300">
-                        Best price
+                        Lowest returned price
                       </span>
                     )}
                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -460,7 +449,7 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
                       </span>
                       {isCheapest && (
                         <span className="hidden sm:inline text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-                          Best price
+                          Lowest returned price
                         </span>
                       )}
                     </div>
@@ -469,14 +458,16 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
                         {rate.currency} {rate.total.toFixed(0)}
                       </div>
                       <div className="text-xs text-slate-500">
-                        {rate.currency} {(rate.total / nights).toFixed(0)}/night &middot; incl. taxes
+                        {rate.currency} {(rate.total / nights).toFixed(0)}/night &middot; {taxLabel}
                       </div>
                     </div>
                     <button
                       onClick={async (e) => {
                         e.preventDefault();
+                        if (!rate.deepLink) return;
                         // Open tab immediately for responsiveness, then redirect to affiliate URL
                         const tab = window.open('about:blank', '_blank');
+                        if (tab) tab.opener = null;
                         try {
                           const res = await fetch('/api/click', {
                             method: 'POST',
@@ -484,21 +475,24 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
                             body: JSON.stringify({
                               hotelKey,
                               provider: rate.provider,
-                              url: bookingUrl,
+                              url: rate.deepLink,
                               price: rate.total,
                               currency: rate.currency,
+                              taxesIncluded: rate.taxesIncluded,
                             }),
                           });
-                          const data = await res.json();
-                          if (tab) tab.location.href = data.redirectUrl || bookingUrl;
+                          const clickData = await res.json();
+                          if (tab && clickData.redirectUrl) tab.location.href = clickData.redirectUrl;
+                          else if (tab) tab.close();
                         } catch {
-                          // Fallback: navigate to raw URL on API failure
-                          if (tab) tab.location.href = bookingUrl;
+                          if (tab) tab.close();
                         }
                       }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-semibold transition shrink-0 cursor-pointer"
+                      disabled={!rate.deepLink}
+                      title={rate.deepLink ? 'Open provider-returned link' : 'Provider search unavailable'}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-semibold transition shrink-0 cursor-pointer disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
                     >
-                      Book &rarr;
+                      {rate.deepLink ? 'Open provider' : 'Unavailable'}
                     </button>
                   </div>
                 );
@@ -522,7 +516,7 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
               <ShareModal
                 url={typeof window !== 'undefined' ? `${window.location.origin}/hotel/${hotelKey}` : ''}
                 title={data.hotel.name}
-                description={`Compare prices for ${data.hotel.name} in ${data.hotel.city} from 8+ providers`}
+                description={`Compare prices for ${data.hotel.name} in ${data.hotel.city} from available providers`}
               />
               <PrintButton />
               <DeepLink
@@ -547,8 +541,6 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
             {/* Room type selector */}
             {data.cheapest && (
               <RoomTypeSelector
-                basePrice={Math.round(data.cheapest.total / nights)}
-                currency={data.currency === 'USD' ? '$' : data.currency + ' '}
                 className="mt-6"
               />
             )}
@@ -560,6 +552,8 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
                   hotelKey={hotelKey}
                   hotelName={data.hotel.name}
                   city={data.hotel.city}
+                  checkIn={data.checkIn}
+                  checkOut={data.checkOut}
                   currentPrice={data.cheapest.total / nights}
                   currency={data.currency}
                 />
@@ -625,16 +619,16 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
         {!loading && !searched && (
           <div className="text-center py-12 text-slate-400">
             <div className="text-5xl mb-4">&#128197;</div>
-            <p className="text-lg">Select dates above to compare live prices from 8+ providers</p>
+            <p className="text-lg">Select dates above to compare provider-returned prices when available</p>
           </div>
         )}
 
         {/* Price history chart */}
         <PriceHistory hotelKey={hotelKey} className="mt-8" />
 
-        {/* Provider trust score for cheapest */}
+        {/* Provider data availability notice */}
         {data?.cheapest && (
-          <ProviderTrustScore provider={data.cheapest.provider} className="mt-6" />
+          <ProviderDataNotice provider={data.cheapest.provider} className="mt-6" />
         )}
 
         {/* Price calendar heatmap */}
@@ -658,7 +652,7 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
             city={displayHotel.city}
             checkIn={data?.checkIn}
           />
-          <FlightEstimate city={displayHotel.city} />
+          <FlightDataNotice city={displayHotel.city} />
         </div>
 
         {/* Guest reviews */}
@@ -668,15 +662,8 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
           className="mt-8"
         />
 
-        {/* Write a review */}
-        <UserReviewForm
-          hotelKey={hotelKey}
-          hotelName={displayHotel.name}
-          className="mt-8"
-        />
-
         {/* Hotel policies */}
-        <HotelPolicies hotelKey={hotelKey} className="mt-8" />
+        <HotelPolicies className="mt-8" />
 
         {/* Travel checklist */}
         <TravelChecklist hotelKey={hotelKey} className="mt-8" />

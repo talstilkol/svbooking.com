@@ -1,12 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import {
+  LOCAL_STORAGE_KEYS,
+  readLocalStorageStringWithFallback,
+  writeLocalStorageJson,
+} from '@/lib/local-storage-keys';
 
 export default function CookieConsent() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const accepted = localStorage.getItem('svbooking:cookies-accepted');
+    const accepted = readLocalStorageStringWithFallback(LOCAL_STORAGE_KEYS.cookiesAccepted, [], null);
     if (!accepted) {
       const timer = setTimeout(() => setShow(true), 1500);
       return () => clearTimeout(timer);
@@ -14,12 +19,12 @@ export default function CookieConsent() {
   }, []);
 
   const accept = () => {
-    localStorage.setItem('svbooking:cookies-accepted', 'true');
+    writeLocalStorageJson(LOCAL_STORAGE_KEYS.cookiesAccepted, 'true');
     setShow(false);
   };
 
   const decline = () => {
-    localStorage.setItem('svbooking:cookies-accepted', 'minimal');
+    writeLocalStorageJson(LOCAL_STORAGE_KEYS.cookiesAccepted, 'minimal');
     setShow(false);
   };
 

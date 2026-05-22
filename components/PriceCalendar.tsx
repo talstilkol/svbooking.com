@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from 'react';
 interface HeatmapDay {
   date: string;
   price: number;
+  priceSourceLabel?: string;
 }
 
 interface PriceCalendarProps {
@@ -40,6 +41,8 @@ function priceColor(price: number, min: number, max: number): string {
 export default function PriceCalendar({ hotelKey, className = '' }: PriceCalendarProps) {
   const [loading, setLoading] = useState(false);
   const [heatmap, setHeatmap] = useState<HeatmapDay[]>([]);
+  const [hasRealData, setHasRealData] = useState(false);
+  const [sourceLabel, setSourceLabel] = useState<string | null>(null);
   const [monthOffset, setMonthOffset] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
@@ -50,7 +53,9 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
   useEffect(() => {
     if (!expanded || !hotelKey) return;
     const controller = new AbortController();
-    setLoading(true);
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) setLoading(true);
+    });
 
     const checkOut = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-28`;
     fetch(
@@ -61,10 +66,20 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
       .then((data) => {
         if (data.heatmap && Array.isArray(data.heatmap)) {
           setHeatmap(data.heatmap);
+          setHasRealData(Boolean(data.hasRealData && data.heatmap.length > 0));
+          setSourceLabel(data.priceSourceLabel || data.heatmap[0]?.priceSourceLabel || null);
+        } else {
+          setHeatmap([]);
+          setHasRealData(false);
+          setSourceLabel(null);
         }
       })
       .catch((e) => {
-        if (e.name !== 'AbortError') setHeatmap([]);
+        if (e.name !== 'AbortError') {
+          setHeatmap([]);
+          setHasRealData(false);
+          setSourceLabel(null);
+        }
       })
       .finally(() => setLoading(false));
 
@@ -94,9 +109,9 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
       >
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-slate-700">📅 Price Calendar</h3>
+            <h3 className="text-sm font-semibold text-slate-700">Price Calendar</h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              See daily prices for this hotel — find the cheapest dates
+              See observed source prices for this hotel
             </p>
           </div>
           <span className="text-blue-600 text-sm font-medium">View →</span>
@@ -110,7 +125,7 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
       {/* Header */}
       <div className="p-4 border-b border-slate-100">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-slate-700">📅 Price Calendar</h3>
+          <h3 className="text-sm font-semibold text-slate-700">Price Calendar</h3>
           <button
             onClick={() => setExpanded(false)}
             className="text-xs text-slate-400 hover:text-slate-600"
@@ -146,6 +161,13 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
         {loading ? (
           <div className="h-48 flex items-center justify-center">
             <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : !hasRealData ? (
+          <div className="h-48 flex items-center justify-center text-center">
+            <div>
+              <p className="text-sm font-medium text-slate-600">Price calendar unavailable</p>
+              <p className="text-xs text-slate-400 mt-1">No verified source observations for this month.</p>
+            </div>
           </div>
         ) : (
           <>
@@ -216,6 +238,7 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
                 <span>
                   ${minPrice}–${maxPrice}/night
                 </span>
+                {sourceLabel && <span>{sourceLabel}</span>}
               </div>
             )}
           </>

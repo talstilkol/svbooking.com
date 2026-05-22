@@ -10,10 +10,10 @@ export default function PopularCities() {
   return (
     <section className="max-w-7xl mx-auto px-4 py-12">
       <h2 className="text-2xl font-bold text-slate-800 text-center mb-2">
-        Popular destinations
+        Featured catalog destinations
       </h2>
       <p className="text-center text-slate-500 mb-8">
-        Browse hotels in the world&apos;s most visited cities
+        Browse cities that currently have verified catalog hotel entries.
       </p>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {cities.map((city) => {

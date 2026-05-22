@@ -17,8 +17,11 @@ export default function RouteProgress() {
       setProgress(20);
 
       let current = 20;
+      let step = 0;
+      const increments = [13, 9, 11, 7, 10, 8];
       timerRef.current = setInterval(() => {
-        current += Math.random() * 15;
+        current += increments[step % increments.length];
+        step += 1;
         if (current >= 90) {
           current = 90;
           if (timerRef.current) clearInterval(timerRef.current);

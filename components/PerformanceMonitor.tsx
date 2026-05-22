@@ -71,7 +71,7 @@ export default function PerformanceMonitor({ className = '' }: { className?: str
     try {
       const navEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
       if (navEntries[0]) {
-        setMetrics((m) => ({ ...m, ttfb: navEntries[0].responseStart }));
+        queueMicrotask(() => setMetrics((m) => ({ ...m, ttfb: navEntries[0].responseStart })));
       }
     } catch {}
   }, []);

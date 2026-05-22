@@ -1,6 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import {
+  getLegacyTravelChecklistStorageKey,
+  getTravelChecklistStorageKey,
+  readLocalStorageJsonWithFallback,
+  writeLocalStorageJson,
+} from '@/lib/local-storage-keys';
 
 interface ChecklistItem {
   id: string;
@@ -25,31 +31,34 @@ interface TravelChecklistProps {
 }
 
 export default function TravelChecklist({ hotelKey, className = '' }: TravelChecklistProps) {
-  const storageKey = `travel-checklist-${hotelKey || 'default'}`;
+  const storageKey = getTravelChecklistStorageKey(hotelKey);
+  const legacyStorageKey = getLegacyTravelChecklistStorageKey(hotelKey);
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) {
-        setItems(JSON.parse(raw));
-      } else {
-        setItems(DEFAULT_ITEMS.map((i) => ({ ...i, checked: false })));
-      }
-    } catch {
-      setItems(DEFAULT_ITEMS.map((i) => ({ ...i, checked: false })));
-    }
-  }, [storageKey]);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      const defaults = DEFAULT_ITEMS.map((i) => ({ ...i, checked: false }));
+      const stored = readLocalStorageJsonWithFallback<ChecklistItem[]>(
+        storageKey,
+        [legacyStorageKey],
+        defaults
+      );
+      setItems(Array.isArray(stored) ? stored : defaults);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [legacyStorageKey, storageKey]);
 
   const toggle = (id: string) => {
     const updated = items.map((i) =>
       i.id === id ? { ...i, checked: !i.checked } : i
     );
     setItems(updated);
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(updated));
-    } catch {}
+    writeLocalStorageJson(storageKey, updated);
   };
 
   const checkedCount = items.filter((i) => i.checked).length;
@@ -139,8 +148,7 @@ export default function TravelChecklist({ hotelKey, className = '' }: TravelChec
 
       {progress === 100 && (
         <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center">
-          <span className="text-lg">🎉</span>
-          <p className="text-sm font-medium text-green-700">All done! Ready to travel!</p>
+          <p className="text-sm font-medium text-green-700">Checklist completed on this device.</p>
         </div>
       )}
     </div>

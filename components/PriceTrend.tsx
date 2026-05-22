@@ -6,6 +6,7 @@ interface PricePoint {
   date: string; // YYYY-MM-DD
   price: number;
   label: string; // e.g. "Mon", "Jan 5"
+  priceSourceLabel?: string;
 }
 
 interface PriceTrendProps {
@@ -23,8 +24,11 @@ export default function PriceTrend({ hotelKey, nights = 1, currency = 'USD' }: P
   useEffect(() => {
     if (!hotelKey) return;
     const controller = new AbortController();
-    setLoading(true);
-    setError('');
+    queueMicrotask(() => {
+      if (controller.signal.aborted) return;
+      setLoading(true);
+      setError('');
+    });
 
     fetch(`/api/deals?hotelKey=${hotelKey}&nights=${nights}&currency=${currency}`, {
       signal: controller.signal,
@@ -60,6 +64,7 @@ export default function PriceTrend({ hotelKey, nights = 1, currency = 'USD' }: P
   const max = Math.max(...prices);
   const range = max - min || 1;
   const cheapestIdx = prices.indexOf(min);
+  const sourceLabel = points.find((p) => p.priceSourceLabel)?.priceSourceLabel;
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4">
@@ -116,7 +121,7 @@ export default function PriceTrend({ hotelKey, nights = 1, currency = 'USD' }: P
       </div>
 
       <p className="text-xs text-slate-400 mt-2 text-center">
-        🟢 Cheapest date · Hover bars for exact price
+        Cheapest observed date · Hover bars for exact price{sourceLabel ? ` · ${sourceLabel}` : ''}
       </p>
     </div>
   );

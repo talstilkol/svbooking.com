@@ -10,7 +10,8 @@ interface Deal {
   hotel: { hotelKey: string; name: string; city: string; country: string; image: string };
   bestPrice: number;
   pricePerNight: number;
-  bestProvider: string;
+  bestProvider: string | null;
+  priceSourceLabel?: string;
   checkIn: string;
   checkOut: string;
   nights: number;
@@ -50,7 +51,9 @@ export default function ExplorePage() {
   // Load featured deals on initial mount (from agent cache if available)
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) setLoading(true);
+    });
     fetch('/api/deals?limit=12', { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
@@ -67,7 +70,9 @@ export default function ExplorePage() {
     if (!selectedContinent && !selectedCountry && !selectedCity) return;
 
     const controller = new AbortController();
-    setLoading(true);
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) setLoading(true);
+    });
     const params = new URLSearchParams();
     if (selectedCity) params.set('city', selectedCity);
     else if (selectedCountry) params.set('country', selectedCountry);
@@ -100,7 +105,7 @@ export default function ExplorePage() {
       <div className="bg-linear-to-r from-indigo-600 to-purple-600 text-white py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-4xl font-bold mb-2">Explore Destinations</h1>
-          <p className="text-lg opacity-90">Find the best hotel deals by region, country, or city</p>
+          <p className="text-lg opacity-90">Explore catalog hotels by region, country, or city</p>
         </div>
       </div>
 
@@ -246,7 +251,7 @@ export default function ExplorePage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-zinc-500 mt-3">Finding the best deals...</p>
+            <p className="text-zinc-500 mt-3">Finding available rate observations...</p>
           </div>
         ) : sortedDeals.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

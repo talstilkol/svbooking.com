@@ -20,12 +20,8 @@ export default function PriceBreakdown({
   const [showDetails, setShowDetails] = useState(false);
 
   const subtotal = pricePerNight * nights;
-  const taxRate = 0.12;
-  const taxes = Math.round(subtotal * taxRate);
-  const serviceFee = Math.round(subtotal * 0.04);
-  const cleaningFee = nights > 3 ? 0 : 15;
-  const total = subtotal + taxes + serviceFee + cleaningFee;
-  const perNightTotal = nights > 0 ? Math.round(total / nights) : 0;
+  const total = Math.round(subtotal);
+  const perNightTotal = nights > 0 ? Math.round(subtotal / nights) : 0;
 
   if (nights <= 0 || pricePerNight <= 0) return null;
 
@@ -57,34 +53,20 @@ export default function PriceBreakdown({
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-slate-600">
-                {currency}{pricePerNight} × {nights} night{nights !== 1 ? 's' : ''}
+              {currency}{Math.round(pricePerNight)} × {nights} night{nights !== 1 ? 's' : ''}
               </span>
-              <span className="text-slate-900 font-medium">{currency}{subtotal}</span>
+              <span className="text-slate-900 font-medium">{currency}{total}</span>
             </div>
 
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Taxes &amp; fees (12%)</span>
-              <span className="text-slate-900 font-medium">{currency}{taxes}</span>
+              <span className="text-slate-600">Taxes and provider fees</span>
+              <span className="text-slate-500 font-medium">Provider total only</span>
             </div>
 
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Service fee (4%)</span>
-              <span className="text-slate-900 font-medium">{currency}{serviceFee}</span>
+              <span className="text-slate-600">Room-level fees</span>
+              <span className="text-slate-500 font-medium">Unavailable</span>
             </div>
-
-            {cleaningFee > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Cleaning fee</span>
-                <span className="text-slate-900 font-medium">{currency}{cleaningFee}</span>
-              </div>
-            )}
-
-            {cleaningFee === 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Cleaning fee</span>
-                <span className="text-green-600 font-medium">Free (4+ nights)</span>
-              </div>
-            )}
           </div>
 
           <div className="border-t border-slate-200 pt-3">
@@ -93,7 +75,8 @@ export default function PriceBreakdown({
               <span className="font-bold text-slate-900 text-lg">{currency}{total}</span>
             </div>
             <p className="text-[10px] text-slate-400 mt-1">
-              Prices shown in USD. Actual charges may vary by provider and payment method.
+              This is the provider-reported total returned for the selected dates. A line-item
+              tax and fee breakdown is unavailable in SV Booking.
             </p>
           </div>
 

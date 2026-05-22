@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react';
+import { hashId } from '@/lib/utils/hashId';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -38,9 +39,11 @@ const COLORS: Record<ToastType, string> = {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const counterRef = useRef(0);
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
-    const id = `${Date.now()}-${Math.random()}`;
+    counterRef.current += 1;
+    const id = hashId('toast', type, message, counterRef.current);
     setToasts((prev) => [...prev, { id, message, type }]);
 
     setTimeout(() => {

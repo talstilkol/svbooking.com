@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, Star, DollarSign, Wifi, Car, Utensils, Dumbbell, Coffee } from 'lucide-react';
 
@@ -29,6 +28,7 @@ const AMENITIES = [
 ];
 
 const STAR_OPTIONS = [5, 4, 3, 2, 1];
+const DATA_FILTER_NOTICE = 'Unavailable until verified property data is connected.';
 
 export default function SearchFilters({
   filters,
@@ -38,7 +38,7 @@ export default function SearchFilters({
   onToggle,
   resultCount,
 }: SearchFiltersProps) {
-  const [priceRange, setPriceRange] = useState(filters.priceRange);
+  const priceRange = filters.priceRange;
 
   const toggleStar = (star: number) => {
     const newStars = filters.stars.includes(star)
@@ -57,7 +57,6 @@ export default function SearchFilters({
   const handlePriceChange = (index: 0 | 1, value: number) => {
     const newRange: [number, number] = [...priceRange];
     newRange[index] = value;
-    setPriceRange(newRange);
     onFiltersChange({ ...filters, priceRange: newRange });
   };
 
@@ -66,10 +65,7 @@ export default function SearchFilters({
   };
 
   const hasActiveFilters =
-    filters.stars.length > 0 ||
-    filters.amenities.length > 0 ||
-    filters.priceRange[0] > 0 ||
-    filters.priceRange[1] < 1000;
+    filters.sort !== 'name-asc';
 
   return (
     <div className="relative">
@@ -109,6 +105,10 @@ export default function SearchFilters({
             </div>
 
             <div className="space-y-5">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                Star, amenity, and price filters stay disabled until verified property data is connected.
+              </div>
+
               {/* Star Rating */}
               <div>
                 <label className="text-sm font-semibold mb-2 block">Star Rating</label>
@@ -116,8 +116,11 @@ export default function SearchFilters({
                   {STAR_OPTIONS.map((star) => (
                     <button
                       key={star}
+                      type="button"
+                      disabled
+                      title={DATA_FILTER_NOTICE}
                       onClick={() => toggleStar(star)}
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-colors ${
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                         filters.stars.includes(star)
                           ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
                           : 'border-zinc-200 hover:border-zinc-300'
@@ -135,26 +138,30 @@ export default function SearchFilters({
                 <label className="text-sm font-semibold mb-2 block">Price Range (per night)</label>
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200 bg-zinc-50">
                       <DollarSign className="w-4 h-4 text-zinc-400" />
                       <input
                         type="number"
                         value={priceRange[0]}
+                        disabled
+                        title={DATA_FILTER_NOTICE}
                         onChange={(e) => handlePriceChange(0, parseInt(e.target.value) || 0)}
-                        className="w-full bg-transparent outline-none"
+                        className="w-full bg-transparent outline-none disabled:cursor-not-allowed"
                         placeholder="Min"
                       />
                     </div>
                   </div>
                   <span className="text-zinc-400">-</span>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200 bg-zinc-50">
                       <DollarSign className="w-4 h-4 text-zinc-400" />
                       <input
                         type="number"
                         value={priceRange[1]}
+                        disabled
+                        title={DATA_FILTER_NOTICE}
                         onChange={(e) => handlePriceChange(1, parseInt(e.target.value) || 0)}
-                        className="w-full bg-transparent outline-none"
+                        className="w-full bg-transparent outline-none disabled:cursor-not-allowed"
                         placeholder="Max"
                       />
                     </div>
@@ -171,8 +178,11 @@ export default function SearchFilters({
                     return (
                       <button
                         key={amenity.id}
+                        type="button"
+                        disabled
+                        title={DATA_FILTER_NOTICE}
                         onClick={() => toggleAmenity(amenity.id)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors ${
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                           filters.amenities.includes(amenity.id)
                             ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
                             : 'border-zinc-200 hover:border-zinc-300'
@@ -194,10 +204,9 @@ export default function SearchFilters({
                   onChange={(e) => handleSortChange(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white"
                 >
-                  <option value="name">Name (A-Z)</option>
+                  <option value="name-asc">Name (A-Z)</option>
                   <option value="name-desc">Name (Z-A)</option>
-                  <option value="city">City (A-Z)</option>
-                  <option value="city-desc">City (Z-A)</option>
+                  <option value="city-asc">City (A-Z)</option>
                 </select>
               </div>
             </div>

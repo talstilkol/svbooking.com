@@ -1,30 +1,38 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { hashId } from '@/lib/utils/hashId';
+import {
+  LEGACY_LOCAL_STORAGE_KEYS,
+  LOCAL_STORAGE_KEYS,
+  readLocalStorageJsonWithFallback,
+  writeLocalStorageJson,
+} from '@/lib/local-storage-keys';
 
-export function useLocalStorage<T>(key: string, initial: T) {
+export function useLocalStorage<T>(key: string, initial: T, fallbackKeys: readonly string[] = []) {
+  const initialRef = useRef(initial);
+  const fallbackKeySignature = fallbackKeys.join('\u0000');
   const [value, setValue] = useState<T>(initial);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(key);
-      if (raw !== null) setValue(JSON.parse(raw));
-    } catch {
-      // ignore parse errors
-    }
-    setHydrated(true);
-  }, [key]);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      const fallbackKeyList = fallbackKeySignature ? fallbackKeySignature.split('\u0000') : [];
+      setValue(readLocalStorageJsonWithFallback(key, fallbackKeyList, initialRef.current));
+      setHydrated(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [key, fallbackKeySignature]);
 
   const update = useCallback(
     (next: T | ((prev: T) => T)) => {
       setValue((prev) => {
         const v = typeof next === 'function' ? (next as (p: T) => T)(prev) : next;
-        try {
-          localStorage.setItem(key, JSON.stringify(v));
-        } catch {
-          // ignore quota errors
-        }
+        writeLocalStorageJson(key, v);
         return v;
       });
     },
@@ -57,20 +65,54 @@ export interface SavedTrip {
   createdAt: string;
 }
 
-async function syncToCloud(type: 'favorites' | 'trips', data: unknown) {
+async function createFavoriteInCloud(favorite: FavoriteHotel) {
   try {
-    await fetch(`/api/me/${type}`, {
+    await fetch('/api/me/favorites', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify(favorite),
     });
   } catch {
     // cloud sync is best-effort
   }
 }
 
+async function deleteFavoriteFromCloud(hotelKey: string) {
+  try {
+    const params = new URLSearchParams({ hotelKey });
+    await fetch(`/api/me/favorites?${params}`, { method: 'DELETE' });
+  } catch {
+    // cloud sync is best-effort
+  }
+}
+
+async function createTripInCloud(trip: SavedTrip) {
+  try {
+    await fetch('/api/me/trips', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(trip),
+    });
+  } catch {
+    // cloud sync is best-effort
+  }
+}
+
+async function deleteTripFromCloud(id: string) {
+  try {
+    const params = new URLSearchParams({ id });
+    await fetch(`/api/me/trips?${params}`, { method: 'DELETE' });
+  } catch {
+    // cloud sync is best-effort
+  }
+}
+
 export function useFavorites() {
-  const [favorites, setFavorites, hydrated] = useLocalStorage<FavoriteHotel[]>('svbooking:favorites', []);
+  const [favorites, setFavorites, hydrated] = useLocalStorage<FavoriteHotel[]>(
+    LOCAL_STORAGE_KEYS.favorites,
+    [],
+    [LEGACY_LOCAL_STORAGE_KEYS.favorites]
+  );
 
   const isFavorite = (hotelKey: string) => favorites.some((f) => f.hotelKey === hotelKey);
 
@@ -79,11 +121,12 @@ export function useFavorites() {
       const exists = prev.some((f) => f.hotelKey === hotel.hotelKey);
       if (exists) {
         const next = prev.filter((f) => f.hotelKey !== hotel.hotelKey);
-        syncToCloud('favorites', next);
+        void deleteFavoriteFromCloud(hotel.hotelKey);
         return next;
       }
-      const next = [...prev, { ...hotel, addedAt: new Date().toISOString() }];
-      syncToCloud('favorites', next);
+      const favorite = { ...hotel, addedAt: new Date().toISOString() };
+      const next = [...prev, favorite];
+      void createFavoriteInCloud(favorite);
       return next;
     });
   };
@@ -91,7 +134,7 @@ export function useFavorites() {
   const removeFavorite = (hotelKey: string) => {
     setFavorites((prev) => {
       const next = prev.filter((f) => f.hotelKey !== hotelKey);
-      syncToCloud('favorites', next);
+      void deleteFavoriteFromCloud(hotelKey);
       return next;
     });
   };
@@ -100,20 +143,27 @@ export function useFavorites() {
 }
 
 export function useTrips() {
-  const [trips, setTrips, hydrated] = useLocalStorage<SavedTrip[]>('svbooking:trips', []);
+  const [trips, setTrips, hydrated] = useLocalStorage<SavedTrip[]>(
+    LOCAL_STORAGE_KEYS.trips,
+    [],
+    [LEGACY_LOCAL_STORAGE_KEYS.trips]
+  );
 
   const addTrip = (trip: Omit<SavedTrip, 'id' | 'createdAt'>) => {
+    const createdAt = new Date().toISOString();
     const newTrip: SavedTrip = {
       ...trip,
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      createdAt: new Date().toISOString(),
+      id: hashId('trip', trip.hotelKey, trip.checkIn, trip.checkOut, trip.guests, trip.notes ?? ''),
+      createdAt,
     };
     setTrips((prev) => [newTrip, ...prev]);
+    void createTripInCloud(newTrip);
     return newTrip;
   };
 
   const removeTrip = (id: string) => {
     setTrips((prev) => prev.filter((t) => t.id !== id));
+    void deleteTripFromCloud(id);
   };
 
   return { trips, addTrip, removeTrip, hydrated };
@@ -129,7 +179,11 @@ export interface RecentlyViewedHotel {
 }
 
 export function useRecentlyViewed() {
-  const [items, setItems, hydrated] = useLocalStorage<RecentlyViewedHotel[]>('svbooking:recent', []);
+  const [items, setItems, hydrated] = useLocalStorage<RecentlyViewedHotel[]>(
+    LOCAL_STORAGE_KEYS.recentlyViewed,
+    [],
+    [LEGACY_LOCAL_STORAGE_KEYS.recentlyViewed]
+  );
 
   const addRecentlyViewed = useCallback(
     (hotel: Omit<RecentlyViewedHotel, 'viewedAt'>) => {

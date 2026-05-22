@@ -1,4 +1,4 @@
-import { HOTELS, listCities, getHotelsByCity } from '@/lib/hotels-catalog';
+import { listCities, getHotelsByCity } from '@/lib/hotels-catalog';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -6,7 +6,7 @@ import { BreadcrumbJsonLd } from '@/components/JsonLd';
 import CityGuide from '@/components/CityGuide';
 import LocalEvents from '@/components/LocalEvents';
 import SafetyInfo from '@/components/SafetyInfo';
-import FlightEstimate from '@/components/FlightEstimate';
+import FlightDataNotice from '@/components/FlightDataNotice';
 import RatingBadge from '@/components/RatingBadge';
 import DestinationIntel from '@/components/DestinationIntel';
 
@@ -19,21 +19,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const city = decodeURIComponent(name);
   const hotels = getHotelsByCity(city);
   const count = hotels.length;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://my-app-alpha-one-28.vercel.app';
-  const ogImage = `${baseUrl}/api/og?title=${encodeURIComponent(`${count} Best Hotels in ${city}`)}&subtitle=${encodeURIComponent(`Compare prices from Booking.com, Expedia, Hotels.com & more`)}`;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com';
+  const ogImage = `${baseUrl}/api/og?title=${encodeURIComponent(`Hotels in ${city}`)}&subtitle=${encodeURIComponent(`Compare provider-returned prices when available`)}`;
 
   return {
-    title: `Best Hotels in ${city} — Compare Prices | SVBooking`,
-    description: `Compare prices for ${count} top hotels in ${city} from Booking.com, Expedia, Hotels.com & more. Find the cheapest rates.`,
+    title: `Hotels in ${city} — Compare Provider Prices | SVBooking`,
+    description: `Compare available provider-returned prices for ${count} catalog hotels in ${city}. Rates and availability are shown only when verified data exists.`,
     alternates: { canonical: `/city/${encodeURIComponent(city)}` },
+    robots: { index: count > 0, follow: count > 0 },
     openGraph: {
-      title: `${count} Best Hotels in ${city}`,
-      description: `Compare hotel prices in ${city} from 8+ providers`,
+      title: `${count} Hotels in ${city}`,
+      description: `Compare hotel prices in ${city} from available providers`,
       images: [{ url: ogImage, width: 1200, height: 630, alt: `Hotels in ${city}` }],
     },
     twitter: {
       card: 'summary_large_image',
-      title: `Best Hotels in ${city}`,
+      title: `Hotels in ${city}`,
       description: `Compare ${count} hotel prices in ${city}`,
       images: [ogImage],
     },
@@ -50,7 +51,7 @@ export default async function CityPage({ params }: Props) {
   const hotels = getHotelsByCity(city);
   const country = hotels[0]?.country || '';
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://my-app-alpha-one-28.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com';
 
   return (
     <div className="min-h-screen">
@@ -87,7 +88,7 @@ export default async function CityPage({ params }: Props) {
               Hotels in {city}
             </h1>
             <p className="text-white/80 mt-1">
-              {hotels.length} hotel{hotels.length !== 1 ? 's' : ''} · {country} · Compare prices from 8+ providers
+              {hotels.length} hotel{hotels.length !== 1 ? 's' : ''} · {country} · Compare prices from available providers
             </p>
           </div>
         </div>
@@ -113,7 +114,7 @@ export default async function CityPage({ params }: Props) {
               <div className="p-4 flex-1 min-w-0">
                 <h2 className="font-bold text-slate-900 truncate">{hotel.name}</h2>
                 <p className="text-sm text-slate-500 mt-0.5">📍 {hotel.city}, {hotel.country}</p>
-                <RatingBadge hotelKey={hotel.hotelKey} size="sm" className="mt-1.5" />
+                <RatingBadge size="sm" className="mt-1.5" />
                 <p className="text-xs text-blue-600 font-medium mt-2">
                   Compare prices →
                 </p>
@@ -130,7 +131,7 @@ export default async function CityPage({ params }: Props) {
           <CityGuide city={city} />
           <SafetyInfo city={city} />
           <LocalEvents city={city} />
-          <FlightEstimate city={city} />
+          <FlightDataNotice city={city} />
         </div>
 
         {/* Cross-links to other cities in same country */}

@@ -35,7 +35,7 @@ const SHARE_PLATFORMS = [
     name: 'LinkedIn',
     icon: '💼',
     color: 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700',
-    getUrl: (url: string, text: string) =>
+    getUrl: (url: string) =>
       `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
   },
   {

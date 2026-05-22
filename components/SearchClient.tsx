@@ -16,7 +16,8 @@ import { useDebounce } from '@/lib/useDebounce';
 type SortOption = 'name-asc' | 'name-desc' | 'city-asc';
 type ViewMode = 'grid' | 'map';
 
-const DEFAULT_FILTERS: FilterOptions = { stars: [], priceRange: [0, 1000], amenities: [], sort: '' };
+const DEFAULT_SORT: SortOption = 'name-asc';
+const DEFAULT_FILTERS: FilterOptions = { stars: [], priceRange: [0, 1000], amenities: [], sort: DEFAULT_SORT };
 
 interface SearchClientProps {
   hotels: CatalogHotel[];
@@ -30,7 +31,6 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
   const cityParam = searchParams.get('city') || initialCity;
 
   const [query, setQuery] = useState(cityParam);
-  const [sort, setSort] = useState<SortOption>('name-asc');
   const [activeCountry, setActiveCountry] = useState('');
   const [page, setPage] = useState(1);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -39,6 +39,7 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
   const PAGE_SIZE = 18;
 
   const debouncedQuery = useDebounce(query, 200);
+  const activeSort = (filters.sort || DEFAULT_SORT) as SortOption;
 
   // Derived countries from hotels
   const countries = useMemo(
@@ -61,17 +62,17 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
       list = list.filter((h) => h.country === activeCountry);
     }
     return [...list].sort((a, b) => {
-      if (sort === 'name-asc') return a.name.localeCompare(b.name);
-      if (sort === 'name-desc') return b.name.localeCompare(a.name);
-      if (sort === 'city-asc') return a.city.localeCompare(b.city);
+      if (activeSort === 'name-asc') return a.name.localeCompare(b.name);
+      if (activeSort === 'name-desc') return b.name.localeCompare(a.name);
+      if (activeSort === 'city-asc') return a.city.localeCompare(b.city);
       return 0;
     });
-  }, [hotels, debouncedQuery, activeCountry, sort]);
+  }, [hotels, debouncedQuery, activeCountry, activeSort]);
 
   // Reset page when filters change
   useEffect(() => {
-    setPage(1);
-  }, [debouncedQuery, activeCountry, sort]);
+    queueMicrotask(() => setPage(1));
+  }, [debouncedQuery, activeCountry, activeSort]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -93,7 +94,7 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl md:text-4xl font-bold mb-1">Find a Hotel</h1>
           <p className="text-white/70">
-            {hotels.length} hotels across {cities.length} cities — compare live prices from 8+ providers
+            {hotels.length} hotels across {cities.length} cities — compare provider-returned prices when available
           </p>
         </div>
       </div>
@@ -121,8 +122,8 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
           </div>
 
           <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortOption)}
+            value={activeSort}
+            onChange={(e) => setFilters((current) => ({ ...current, sort: e.target.value as SortOption }))}
             aria-label="Sort hotels"
             className="px-3 py-2 border border-zinc-300 rounded-lg bg-white text-zinc-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
           >
@@ -194,8 +195,8 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
             { label: 'Z → A', value: 'name-desc' },
             { label: 'By City', value: 'city-asc' },
           ]}
-          activeSort={sort}
-          onSortChange={(s) => setSort(s as SortOption)}
+          activeSort={activeSort}
+          onSortChange={(s) => setFilters((current) => ({ ...current, sort: s as SortOption }))}
           resultCount={filtered.length}
           className="mb-4"
         />

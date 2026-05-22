@@ -37,8 +37,11 @@ export default function DestinationIntel({
   useEffect(() => {
     if (!city) return;
     let cancelled = false;
-    setLoading(true);
-    setData(null);
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setData(null);
+    });
 
     const params = new URLSearchParams({ city });
     if (country) params.set('country', country);

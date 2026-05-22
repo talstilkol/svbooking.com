@@ -23,7 +23,7 @@ export default function StickyCompareBar({
 
   useEffect(() => {
     if (!visible || !cheapestPrice) {
-      setShow(false);
+      queueMicrotask(() => setShow(false));
       return;
     }
     const handleScroll = () => {
@@ -45,7 +45,7 @@ export default function StickyCompareBar({
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-slate-800 truncate">{hotelName}</h2>
           <p className="text-xs text-slate-500">
-            Best price from {cheapestProvider}
+            Lowest returned price from {cheapestProvider}
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0">

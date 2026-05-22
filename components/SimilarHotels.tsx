@@ -67,7 +67,7 @@ export default function SimilarHotels({ currentHotelKey, city, country }: Simila
               <p className="text-xs text-slate-500 mt-0.5 mb-1">
                 📍 {h.city}, {h.country}
               </p>
-              <RatingBadge hotelKey={h.hotelKey} size="sm" />
+              <RatingBadge size="sm" />
             </div>
           </Link>
         ))}

@@ -1,23 +1,22 @@
-// Trust-building row: shows OTA logos/names that we compare
 export default function ProviderLogos({ className = '' }: { className?: string }) {
-  const providers = [
-    { name: 'Booking.com', color: 'text-blue-700', bg: 'bg-blue-50' },
-    { name: 'Expedia', color: 'text-yellow-700', bg: 'bg-yellow-50' },
-    { name: 'Hotels.com', color: 'text-red-700', bg: 'bg-red-50' },
-    { name: 'Agoda', color: 'text-purple-700', bg: 'bg-purple-50' },
-    { name: 'Vio.com', color: 'text-green-700', bg: 'bg-green-50' },
-    { name: 'Trip.com', color: 'text-sky-700', bg: 'bg-sky-50' },
+  const coverageStates = [
+    'Configured sources only',
+    'Links only when returned',
+    'Missing rates stay unavailable',
   ];
 
   return (
-    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
-      <span className="text-xs text-slate-400 font-medium mr-1">Compare on:</span>
-      {providers.map((p) => (
+    <div
+      className={`flex flex-wrap items-center gap-2 ${className}`}
+      aria-label="Pricing source coverage policy"
+    >
+      <span className="text-xs text-slate-500 font-medium mr-1">Rate sources:</span>
+      {coverageStates.map((label) => (
         <span
-          key={p.name}
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${p.bg} ${p.color} border border-current/10`}
+          key={label}
+          className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200"
         >
-          {p.name}
+          {label}
         </span>
       ))}
     </div>

@@ -1,7 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-
 // Approximate x/y % positions on a rectangular world map (Mercator-ish)
 const CITY_PINS: {
   city: string;

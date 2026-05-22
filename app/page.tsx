@@ -70,7 +70,7 @@ export default function Home() {
             Explore by destination
           </h2>
           <p className="text-center text-slate-500 mb-8">
-            Select a region to see the best deals
+            Select a region to see available rate observations
           </p>
           <DestinationExplorer />
         </div>
@@ -118,9 +118,6 @@ export default function Home() {
           </Link>
           <Link href="/explore" className="px-6 py-3 bg-white text-slate-700 rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all font-medium">
             Explore Destinations
-          </Link>
-          <Link href="/agents" className="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors font-medium shadow-sm">
-            AI Agents
           </Link>
         </div>
       </div>

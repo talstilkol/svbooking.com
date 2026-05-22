@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -31,6 +31,12 @@ interface Rate {
   tax: number;
   total: number;
   currency: string;
+  source?: string | null;
+  freshness?: string;
+  partial?: boolean;
+  deepLink?: string | null;
+  taxesIncluded?: boolean | null;
+  priceAccuracyState?: string;
 }
 
 interface Comparison {
@@ -56,19 +62,6 @@ const PROVIDER_COLORS: Record<string, string> = {
   'Fairfield Inn': 'bg-orange-100 text-orange-800',
 };
 
-function getBookingUrl(provider: string, hotelName: string, city: string, checkIn: string, checkOut: string) {
-  const query = encodeURIComponent(`${hotelName} ${city}`);
-  const urls: Record<string, string> = {
-    'Booking.com': `https://www.booking.com/searchresults.html?ss=${query}&checkin=${checkIn}&checkout=${checkOut}`,
-    'Expedia': `https://www.expedia.com/Hotel-Search?destination=${query}&startDate=${checkIn}&endDate=${checkOut}`,
-    'Hotels.com': `https://www.hotels.com/search.do?q-destination=${query}&q-check-in=${checkIn}&q-check-out=${checkOut}`,
-    'Agoda.com': `https://www.agoda.com/search?city=${encodeURIComponent(city)}&checkIn=${checkIn}&checkOut=${checkOut}`,
-    'Vio.com': `https://www.vio.com/hotels?q=${query}&checkIn=${checkIn}&checkOut=${checkOut}`,
-    'Trip.com': `https://www.trip.com/hotels/?city=${encodeURIComponent(city)}&checkin=${checkIn}&checkout=${checkOut}`,
-  };
-  return urls[provider] || `https://www.google.com/travel/hotels?q=${query}`;
-}
-
 function localDate(offsetDays: number) {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
@@ -77,6 +70,28 @@ function localDate(offsetDays: number) {
 
 function todayStr() {
   return localDate(0);
+}
+
+function rateSourceLabel(rate: Rate) {
+  return `Source: ${rate.source || 'unavailable'}`;
+}
+
+function rateFreshnessLabel(rate: Rate) {
+  return `Freshness: ${rate.freshness || 'unknown'}`;
+}
+
+function rateCompletenessLabel(rate: Rate) {
+  return rate.partial ? 'Partial provider response' : 'Complete provider response';
+}
+
+function rateTaxLabel(rate: Rate) {
+  if (rate.taxesIncluded === true) return 'Taxes included';
+  if (rate.taxesIncluded === false) return 'Taxes may be excluded';
+  return 'Tax status unavailable';
+}
+
+function rateAccuracyLabel(rate: Rate) {
+  return `Accuracy: ${rate.priceAccuracyState || 'unobserved'}`;
 }
 
 function CompareInner() {
@@ -97,6 +112,31 @@ function CompareInner() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
+  const compareHotelWithDates = useCallback(async (hotel: Hotel, ci: string, co: string) => {
+    setComparing(hotel.hotelKey);
+    setComparison(null);
+    setError('');
+    try {
+      const params = new URLSearchParams({ hotelKey: hotel.hotelKey, checkIn: ci, checkOut: co });
+      const res = await fetch(`/api/compare?${params}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error('Price comparison unavailable');
+      setComparison(data);
+      if (data.cheapest) {
+        addToRecentlyCompared({
+          hotelKey: hotel.hotelKey,
+          name: hotel.name,
+          city: hotel.city,
+          cheapest: { provider: data.cheapest.provider, total: data.cheapest.total, currency: data.cheapest.currency },
+        });
+      }
+    } catch {
+      setError('Price comparison is unavailable right now.');
+    } finally {
+      setComparing(null);
+    }
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
@@ -113,7 +153,7 @@ function CompareInner() {
             const co = urlCheckOut || localDate(7);
             setCheckIn(ci);
             setCheckOut(co);
-            setTimeout(() => compareHotelDirect(hotel, ci, co), 100);
+            void compareHotelWithDates(hotel, ci, co);
           }
         }
       } catch (err) {
@@ -123,67 +163,13 @@ function CompareInner() {
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [urlHotelKey, urlCheckIn, urlCheckOut, compareHotelWithDates]);
 
   const filteredHotels = selectedCity
     ? hotels.filter((h) => h.city === selectedCity)
     : hotels;
 
-  async function compareHotelDirect(hotel: Hotel, ci: string, co: string) {
-    setComparing(hotel.hotelKey);
-    setComparison(null);
-    setError('');
-    try {
-      const params = new URLSearchParams({ hotelKey: hotel.hotelKey, checkIn: ci, checkOut: co });
-      const res = await fetch(`/api/compare?${params}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to fetch');
-      setComparison(data);
-      // Track recently compared
-      if (data.cheapest) {
-        addToRecentlyCompared({
-          hotelKey: hotel.hotelKey,
-          name: hotel.name,
-          city: hotel.city,
-          cheapest: { provider: data.cheapest.provider, total: data.cheapest.total, currency: data.cheapest.currency },
-        });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to compare');
-    } finally {
-      setComparing(null);
-    }
-  }
-
-  const compareHotel = async (hotel: Hotel) => {
-    setComparing(hotel.hotelKey);
-    setComparison(null);
-    setError('');
-    try {
-      const params = new URLSearchParams({
-        hotelKey: hotel.hotelKey,
-        checkIn,
-        checkOut,
-      });
-      const res = await fetch(`/api/compare?${params}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to fetch');
-      setComparison(data);
-      // Track recently compared
-      if (data.cheapest) {
-        addToRecentlyCompared({
-          hotelKey: hotel.hotelKey,
-          name: hotel.name,
-          city: hotel.city,
-          cheapest: { provider: data.cheapest.provider, total: data.cheapest.total, currency: data.cheapest.currency },
-        });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to compare');
-    } finally {
-      setComparing(null);
-    }
-  };
+  const compareHotel = (hotel: Hotel) => compareHotelWithDates(hotel, checkIn, checkOut);
 
   return (
     <div className="min-h-screen">
@@ -196,7 +182,7 @@ function CompareInner() {
           </h1>
           <div className="flex flex-wrap items-center gap-4">
             <p className="text-white/80 flex-1">
-              Real-time prices from Booking.com, Expedia, Hotels.com, Agoda, Vio & more
+              Provider-returned prices when configured sources return rates
             </p>
             <Link
               href="/compare-hotels"
@@ -288,7 +274,7 @@ function CompareInner() {
                   key={hotel.hotelKey}
                   className="bg-white rounded-lg shadow-md border border-zinc-200 overflow-hidden"
                 >
-                  <Link href={`/hotel/${hotel.hotelKey}`}>
+                  <Link href={`/hotel/${hotel.hotelKey}`} aria-label={`Open ${hotel.name} details`}>
                     <Image src={hotel.image} alt={hotel.name} width={600} height={192} className="w-full h-48 object-cover hover:opacity-90 transition-opacity" />
                   </Link>
                   <div className="p-5">
@@ -298,11 +284,11 @@ function CompareInner() {
                     <p className="text-sm text-zinc-500 mt-0.5 mb-1">
                       📍 {hotel.city}, {hotel.country}
                     </p>
-                    <RatingBadge hotelKey={hotel.hotelKey} size="sm" className="mb-3" />
+                    <RatingBadge size="sm" className="mb-3" />
 
                     {result && result.rates.length > 0 && (
                       <div className="mb-3">
-                        <UrgencyBadge hotelKey={hotel.hotelKey} providerCount={result.providerCount} />
+                        <UrgencyBadge providerCount={result.providerCount} />
                       </div>
                     )}
 
@@ -336,36 +322,95 @@ function CompareInner() {
 
                     {result && result.rates.length > 0 && (
                       <div className="space-y-2 mb-3">
-                        {result.rates.map((rate, idx) => (
-                          <a
-                            key={rate.code}
-                            href={getBookingUrl(rate.provider, hotel.name, hotel.city, checkIn, checkOut)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex justify-between items-center p-2 rounded border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-colors cursor-pointer group"
-                          >
-                            <span className="flex items-center gap-1">
-                              <span
-                                className={`px-2 py-1 rounded text-xs font-medium ${
-                                  PROVIDER_COLORS[rate.provider] ||
-                                  'bg-slate-100 text-slate-800'
-                                }`}
-                              >
-                                {rate.provider}
-                                {idx === 0 && ' ⭐'}
+                        {result.rates.map((rate, idx) => {
+                          const rowClass = 'w-full flex justify-between items-start gap-3 p-3 rounded border border-slate-200 transition-colors group text-left';
+                          const content = (
+                            <>
+                            <span className="min-w-0 flex-1">
+                              <span className="flex flex-wrap items-center gap-1">
+                                <span
+                                  className={`px-2 py-1 rounded text-xs font-medium ${
+                                    PROVIDER_COLORS[rate.provider] ||
+                                    'bg-slate-100 text-slate-800'
+                                  }`}
+                                >
+                                  {rate.provider}
+                                  {idx === 0 && ' ⭐'}
+                                </span>
+                                <ProviderInfo provider={rate.provider} />
                               </span>
-                              <ProviderInfo provider={rate.provider} />
+                              <span
+                                className="mt-2 flex flex-wrap gap-1.5"
+                                aria-label={`Rate metadata for ${rate.provider}`}
+                              >
+                                {[
+                                  rateSourceLabel(rate),
+                                  rateFreshnessLabel(rate),
+                                  rateCompletenessLabel(rate),
+                                  rateTaxLabel(rate),
+                                  rateAccuracyLabel(rate),
+                                ].map((label) => (
+                                  <span
+                                    key={label}
+                                    className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600"
+                                  >
+                                    {label}
+                                  </span>
+                                ))}
+                              </span>
                             </span>
-                            <span className="flex items-center gap-2">
-                              <span className="font-semibold text-slate-900">
+                            <span className="flex shrink-0 flex-col items-end gap-1 text-right">
+                              <span className="font-semibold text-slate-900 whitespace-nowrap">
                                 {rate.currency} {rate.total.toFixed(2)}
                               </span>
-                              <span className="text-blue-500 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                                Book ↗
+                              <span className="text-xs text-slate-500">
+                                {rate.deepLink ? 'Open provider ↗' : 'Provider search unavailable'}
                               </span>
                             </span>
-                          </a>
-                        ))}
+                            </>
+                          );
+
+                          return rate.deepLink ? (
+                            <button
+                              key={`${rate.code}-${idx}`}
+                              type="button"
+                              onClick={async () => {
+                                if (!rate.deepLink) return;
+                                const tab = window.open('about:blank', '_blank');
+                                if (tab) tab.opener = null;
+                                try {
+                                  const res = await fetch('/api/click', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      hotelKey: hotel.hotelKey,
+                                      provider: rate.provider,
+                                      url: rate.deepLink,
+                                      price: rate.total,
+                                      currency: rate.currency,
+                                      taxesIncluded: rate.taxesIncluded,
+                                    }),
+                                  });
+                                  const clickData = await res.json();
+                                  if (tab && clickData.redirectUrl) tab.location.href = clickData.redirectUrl;
+                                  else if (tab) tab.close();
+                                } catch {
+                                  if (tab) tab.close();
+                                }
+                              }}
+                              className={`${rowClass} hover:border-blue-300 hover:bg-blue-50/50 cursor-pointer`}
+                            >
+                              {content}
+                            </button>
+                          ) : (
+                            <div
+                              key={`${rate.code}-${idx}`}
+                              className={`${rowClass} bg-slate-50`}
+                            >
+                              {content}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
 
@@ -373,8 +418,7 @@ function CompareInner() {
                       <div className="mb-3 p-3 bg-amber-50 rounded border border-amber-200 text-sm">
                         <p className="text-amber-800 font-medium">No rates available</p>
                         <p className="text-amber-700 mt-1">
-                          This hotel has no live pricing data for the selected dates. Try adjusting dates or check directly on{' '}
-                          <a href={`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(hotel.name + ' ' + hotel.city)}`} target="_blank" rel="noopener noreferrer" className="underline">Booking.com</a>
+                          This hotel has no provider-returned pricing data for the selected dates. Try adjusting dates or another catalog hotel.
                         </p>
                       </div>
                     )}

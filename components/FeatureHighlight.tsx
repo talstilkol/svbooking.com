@@ -12,28 +12,28 @@ const FEATURES: Feature[] = [
   {
     icon: '📊',
     title: 'Side-by-Side Compare',
-    description: 'Compare up to 4 hotels with detailed pricing from every provider',
+    description: 'Compare up to 4 hotels with provider-returned pricing when available',
     href: '/compare-hotels',
     color: 'from-blue-500 to-blue-600',
   },
   {
     icon: '📅',
     title: 'Cheaper Dates Finder',
-    description: 'AI discovers when prices drop — save up to 40% by shifting dates',
+    description: 'Compare nearby dates when verified provider prices are available',
     href: '/compare',
     color: 'from-green-500 to-emerald-600',
   },
   {
     icon: '🤖',
-    title: 'AI Deal Scanner',
-    description: 'Autonomous agents scan prices 24/7 and alert you on drops',
-    href: '/agents',
+    title: 'Verified Deals Feed',
+    description: 'Agents scan available providers and surface verified results',
+    href: '/deals',
     color: 'from-purple-500 to-indigo-600',
   },
   {
     icon: '🗺️',
     title: 'Destination Explorer',
-    description: 'Browse by continent, country, or city — with live pricing',
+    description: 'Browse by continent, country, or city with explicit availability states',
     href: '/explore',
     color: 'from-amber-500 to-orange-600',
   },
@@ -44,7 +44,7 @@ export default function FeatureHighlight({ className = '' }: { className?: strin
     <div className={className}>
       <h2 className="text-2xl font-bold text-slate-900 mb-1">✨ Power Features</h2>
       <p className="text-sm text-slate-500 mb-5">
-        Tools that make us different from every other booking site
+        Tools focused on verified catalog and provider data
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

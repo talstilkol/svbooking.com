@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 
 interface LocalEventsProps {
   city: string;
@@ -9,134 +9,67 @@ interface LocalEventsProps {
 
 interface LocalEvent {
   name: string;
-  month: string;
-  icon: string;
-  description: string;
-}
-
-interface LiveEvent extends LocalEvent {
+  month?: string;
+  icon?: string;
+  description?: string;
   date?: string;
   priceRange?: string;
   ticketUrl?: string;
   venue?: string;
 }
 
-const EVENTS: Record<string, LocalEvent[]> = {
-  'Tel Aviv': [
-    { name: 'White Night', month: 'Jun', icon: '🌙', description: 'All-night cultural festival with music, art, and performances' },
-    { name: 'Pride Parade', month: 'Jun', icon: '🏳️‍🌈', description: 'One of the largest pride events in the Middle East' },
-    { name: 'DLD Tel Aviv', month: 'Sep', icon: '💻', description: 'Innovation conference showcasing Israeli tech scene' },
-  ],
-  'Paris': [
-    { name: 'Paris Fashion Week', month: 'Feb/Sep', icon: '👗', description: 'World-renowned haute couture runway shows' },
-    { name: 'Bastille Day', month: 'Jul', icon: '🎆', description: 'National holiday with fireworks at the Eiffel Tower' },
-    { name: 'Nuit Blanche', month: 'Oct', icon: '🎨', description: 'All-night contemporary art installations citywide' },
-  ],
-  'London': [
-    { name: 'Wimbledon', month: 'Jul', icon: '🎾', description: 'Legendary Grand Slam tennis tournament' },
-    { name: 'Notting Hill Carnival', month: 'Aug', icon: '🎭', description: 'Colorful Caribbean carnival with music and dancing' },
-    { name: 'New Year Fireworks', month: 'Dec', icon: '🎆', description: 'Spectacular display over the Thames and London Eye' },
-  ],
-  'Tokyo': [
-    { name: 'Cherry Blossom Season', month: 'Mar–Apr', icon: '🌸', description: 'Hanami festivals under beautiful sakura trees' },
-    { name: 'Sumida Fireworks', month: 'Jul', icon: '🎆', description: 'Massive fireworks display over the Sumida River' },
-    { name: 'Comiket', month: 'Aug/Dec', icon: '📚', description: 'World\'s largest comic market and cosplay convention' },
-  ],
-  'Dubai': [
-    { name: 'Dubai Shopping Festival', month: 'Jan', icon: '🛍️', description: 'Month-long mega sales, entertainment and prizes' },
-    { name: 'Dubai World Cup', month: 'Mar', icon: '🏇', description: 'World\'s richest horse race at Meydan Racecourse' },
-    { name: 'Global Village', month: 'Oct–Apr', icon: '🌍', description: 'Cultural festival with pavilions from 70+ countries' },
-  ],
-  'Bangkok': [
-    { name: 'Songkran', month: 'Apr', icon: '💦', description: 'Thai New Year water festival — the world\'s biggest water fight' },
-    { name: 'Loy Krathong', month: 'Nov', icon: '🏮', description: 'Festival of lights with floating lanterns and candles' },
-    { name: 'Chatuchak Weekend Market', month: 'Year-round', icon: '🛒', description: '15,000 stalls in one of the world\'s largest markets' },
-  ],
-  'Bali': [
-    { name: 'Nyepi (Day of Silence)', month: 'Mar', icon: '🤫', description: 'Unique Balinese Hindu day of silence and reflection' },
-    { name: 'Galungan', month: 'Varies', icon: '🎋', description: 'Victory of good over evil celebrated with temple ceremonies' },
-    { name: 'Bali Spirit Festival', month: 'May', icon: '🧘', description: 'International yoga, dance, and music festival' },
-  ],
-  'Barcelona': [
-    { name: 'La Mercè', month: 'Sep', icon: '🎭', description: 'Barcelona\'s biggest street festival with music and fireworks' },
-    { name: 'Mobile World Congress', month: 'Feb', icon: '📱', description: 'World\'s largest mobile technology conference' },
-    { name: 'Sant Jordi Day', month: 'Apr', icon: '📖', description: 'Catalan Valentine\'s Day with roses and books' },
-  ],
-  'Rome': [
-    { name: 'Easter Week', month: 'Apr', icon: '⛪', description: 'Papal ceremonies and events at the Vatican' },
-    { name: 'Estate Romana', month: 'Jun–Sep', icon: '🎬', description: 'Summer-long festival of outdoor cinema, concerts, and shows' },
-    { name: 'Roma Europa Festival', month: 'Sep–Nov', icon: '🎭', description: 'International performing arts festival' },
-  ],
-  'New York': [
-    { name: 'NYC Marathon', month: 'Nov', icon: '🏃', description: 'World\'s largest marathon through all 5 boroughs' },
-    { name: 'Thanksgiving Parade', month: 'Nov', icon: '🎈', description: 'Macy\'s iconic parade with giant balloons and floats' },
-    { name: 'Times Square NYE', month: 'Dec', icon: '🎆', description: 'Legendary ball drop and celebrations' },
-  ],
-};
+function hasEvents(value: unknown): value is LocalEvent[] {
+  return Array.isArray(value) && value.length > 0;
+}
 
 export default function LocalEvents({ city, className = '' }: LocalEventsProps) {
-  const staticEvents = useMemo(() => EVENTS[city] || [], [city]);
-  const [liveEvents, setLiveEvents] = useState<LocalEvent[] | null>(null);
-  const [isLive, setIsLive] = useState(false);
-  const [upcomingEvents, setUpcomingEvents] = useState<LiveEvent[]>([]);
+  const [annualEvents, setAnnualEvents] = useState<LocalEvent[] | null>(null);
+  const [upcomingEvents, setUpcomingEvents] = useState<LocalEvent[] | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
-  // Fetch annual events from Wikivoyage
   useEffect(() => {
     let cancelled = false;
 
-    fetch(`/api/travel-guide?city=${encodeURIComponent(city)}&section=events`)
-      .then((res) => res.json())
-      .then((result) => {
+    Promise.allSettled([
+      fetch(`/api/travel-guide?city=${encodeURIComponent(city)}&section=events`).then((res) => res.json()),
+      fetch(`/api/events?city=${encodeURIComponent(city)}`).then((res) => res.json()),
+    ])
+      .then(([guideResult, eventsResult]) => {
         if (cancelled) return;
-        if (result.data && Array.isArray(result.data) && result.data.length > 0) {
-          setLiveEvents(result.data);
-          setIsLive(true);
+
+        if (guideResult.status === 'fulfilled' && hasEvents(guideResult.value?.data)) {
+          setAnnualEvents(guideResult.value.data);
+        }
+
+        if (eventsResult.status === 'fulfilled' && hasEvents(eventsResult.value?.events)) {
+          setUpcomingEvents(eventsResult.value.events.slice(0, 5));
         }
       })
-      .catch(() => { /* use static fallback */ });
+      .finally(() => {
+        if (!cancelled) setLoaded(true);
+      });
 
     return () => { cancelled = true; };
   }, [city]);
 
-  // Fetch upcoming live events from Ticketmaster
-  useEffect(() => {
-    let cancelled = false;
-
-    fetch(`/api/events?city=${encodeURIComponent(city)}`)
-      .then((res) => res.json())
-      .then((result) => {
-        if (cancelled) return;
-        if (result.events && result.events.length > 0) {
-          setUpcomingEvents(result.events.slice(0, 5));
-        }
-      })
-      .catch(() => { /* no live events */ });
-
-    return () => { cancelled = true; };
-  }, [city]);
-
-  const events = liveEvents || staticEvents;
-
-  if (events.length === 0 && upcomingEvents.length === 0) return null;
+  const hasAnnual = Boolean(annualEvents && annualEvents.length > 0);
+  const hasUpcoming = Boolean(upcomingEvents && upcomingEvents.length > 0);
 
   return (
     <div className={`bg-white border border-slate-200 rounded-2xl p-5 ${className}`}>
-      {/* Annual / Notable Events */}
-      {events.length > 0 && (
+      {hasAnnual && annualEvents && (
         <>
           <div className="flex items-center gap-2 mb-3">
             <h3 className="text-sm font-bold text-slate-900">Events in {city}</h3>
-            {isLive && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
-                Wikivoyage
-              </span>
-            )}
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
+              Wikivoyage
+            </span>
           </div>
 
           <div className="space-y-3">
-            {events.map((event) => (
+            {annualEvents.map((event) => (
               <div key={event.name} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
-                <span className="text-xl shrink-0">{event.icon}</span>
+                <span className="text-xl shrink-0">{event.icon || '*'}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <h4 className="text-xs font-semibold text-slate-800">{event.name}</h4>
@@ -146,7 +79,9 @@ export default function LocalEvents({ city, className = '' }: LocalEventsProps) 
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{event.description}</p>
+                  {event.description && (
+                    <p className="text-[10px] text-slate-500 mt-0.5">{event.description}</p>
+                  )}
                 </div>
               </div>
             ))}
@@ -154,9 +89,8 @@ export default function LocalEvents({ city, className = '' }: LocalEventsProps) 
         </>
       )}
 
-      {/* Upcoming Live Events (Ticketmaster) */}
-      {upcomingEvents.length > 0 && (
-        <div className={events.length > 0 ? 'mt-4 pt-4 border-t border-slate-100' : ''}>
+      {hasUpcoming && upcomingEvents && (
+        <div className={hasAnnual ? 'mt-4 pt-4 border-t border-slate-100' : ''}>
           <div className="flex items-center gap-2 mb-3">
             <h3 className="text-sm font-bold text-slate-900">Upcoming Events</h3>
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">
@@ -166,23 +100,44 @@ export default function LocalEvents({ city, className = '' }: LocalEventsProps) 
 
           <div className="space-y-3">
             {upcomingEvents.map((event) => (
-              <div key={`${event.name}-${event.date}`} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
-                <span className="text-xl shrink-0">{event.icon}</span>
+              <div key={`${event.name}-${event.date || event.venue || ''}`} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
+                <span className="text-xl shrink-0">{event.icon || '*'}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <h4 className="text-xs font-semibold text-slate-800 truncate">{event.name}</h4>
-                    {event.month && (
+                    {(event.month || event.date) && (
                       <span className="text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full font-medium shrink-0">
-                        {event.month}
+                        {event.month || event.date}
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{event.description}</p>
+                  {event.venue && (
+                    <p className="text-[10px] text-slate-500 mt-0.5">{event.venue}</p>
+                  )}
+                  {event.description && (
+                    <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2">{event.description}</p>
+                  )}
+                  {event.ticketUrl && (
+                    <a
+                      href={event.ticketUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-blue-600 hover:underline mt-1 inline-block"
+                    >
+                      Event details
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         </div>
+      )}
+
+      {!hasAnnual && !hasUpcoming && (
+        <p className="text-sm text-slate-500">
+          {loaded ? `Verified event data is unavailable for ${city}.` : 'Checking verified event data...'}
+        </p>
       )}
     </div>
   );

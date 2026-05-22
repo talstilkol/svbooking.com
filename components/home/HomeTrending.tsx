@@ -32,8 +32,8 @@ export default function HomeTrending() {
       <Reveal>
         <div className="flex justify-between items-end mb-8">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Trending destinations</h2>
-            <p className="mt-2 text-slate-600">Real hotels with live prices</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Catalog destinations</h2>
+            <p className="mt-2 text-slate-600">Catalog hotels with provider data when available</p>
           </div>
           <Link
             href="/search"

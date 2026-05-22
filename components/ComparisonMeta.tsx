@@ -21,7 +21,7 @@ export default function ComparisonMeta({
     <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 ${className}`}>
       <span className="flex items-center gap-1">
         <span className="w-1.5 h-1.5 rounded-full bg-green-400" aria-hidden="true" />
-        {providerCount} providers checked
+        {providerCount} provider-returned rate{providerCount !== 1 ? 's' : ''}
       </span>
       <span>
         {nights} night{nights !== 1 ? 's' : ''}

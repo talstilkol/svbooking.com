@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { LOCAL_STORAGE_KEYS, readLocalStorageJsonWithFallback, writeLocalStorageJson } from '@/lib/local-storage-keys';
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
@@ -11,8 +12,12 @@ export default function Newsletter() {
     if (!email.trim()) return;
     // Store signup locally (no backend)
     try {
-      const existing = JSON.parse(localStorage.getItem('svbooking:newsletter') || '[]');
-      localStorage.setItem('svbooking:newsletter', JSON.stringify([...existing, { email, date: new Date().toISOString() }]));
+      const existing = readLocalStorageJsonWithFallback<{ email: string; date: string }[]>(
+        LOCAL_STORAGE_KEYS.newsletter,
+        [],
+        []
+      );
+      writeLocalStorageJson(LOCAL_STORAGE_KEYS.newsletter, [...existing, { email, date: new Date().toISOString() }]);
     } catch { /* ignore */ }
     setSubmitted(true);
   };
@@ -24,7 +29,7 @@ export default function Newsletter() {
           <div className="text-3xl mb-3">✅</div>
           <h3 className="text-lg font-semibold text-blue-800 mb-1">You&apos;re subscribed!</h3>
           <p className="text-sm text-blue-600">
-            We&apos;ll notify you about the best hotel deals and price drops.
+            Your alert signup is saved locally. Email delivery remains unavailable until a production notification provider is configured.
           </p>
         </div>
       </section>
@@ -35,10 +40,10 @@ export default function Newsletter() {
     <section className="bg-blue-50 border-y border-blue-100 py-12">
       <div className="max-w-md mx-auto px-4 text-center">
         <h3 className="text-lg font-semibold text-slate-800 mb-1">
-          Get deal alerts in your inbox
+          Save local deal-alert preferences
         </h3>
         <p className="text-sm text-slate-500 mb-4">
-          Join 10,000+ travelers. We&apos;ll send you the best hotel deals weekly.
+          Store alert preferences locally until production email delivery is configured.
         </p>
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input

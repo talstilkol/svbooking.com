@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import {
+  LOCAL_STORAGE_KEYS,
+  readLocalStorageJson,
+  writeLocalStorageJson,
+} from '@/lib/local-storage-keys';
 
 interface ComparedHotel {
   hotelKey: string;
@@ -11,30 +16,28 @@ interface ComparedHotel {
   timestamp: string;
 }
 
-const STORAGE_KEY = 'svbooking:recently-compared';
 const MAX_ITEMS = 6;
 
 export function addToRecentlyCompared(hotel: Omit<ComparedHotel, 'timestamp'>) {
-  try {
-    const existing: ComparedHotel[] = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    const filtered = existing.filter((h) => h.hotelKey !== hotel.hotelKey);
-    const updated = [{ ...hotel, timestamp: new Date().toISOString() }, ...filtered].slice(0, MAX_ITEMS);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  } catch {
-    // ignore
-  }
+  const existing = readLocalStorageJson<ComparedHotel[]>(LOCAL_STORAGE_KEYS.recentlyCompared, []);
+  const filtered = existing.filter((h) => h.hotelKey !== hotel.hotelKey);
+  const updated = [{ ...hotel, timestamp: new Date().toISOString() }, ...filtered].slice(0, MAX_ITEMS);
+  writeLocalStorageJson(LOCAL_STORAGE_KEYS.recentlyCompared, updated);
 }
 
 export default function RecentlyCompared() {
   const [hotels, setHotels] = useState<ComparedHotel[]>([]);
 
   useEffect(() => {
-    try {
-      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      setHotels(data);
-    } catch {
-      setHotels([]);
-    }
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      const data = readLocalStorageJson<ComparedHotel[]>(LOCAL_STORAGE_KEYS.recentlyCompared, []);
+      setHotels(Array.isArray(data) ? data : []);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (hotels.length === 0) return null;

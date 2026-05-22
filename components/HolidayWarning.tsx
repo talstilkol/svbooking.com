@@ -33,7 +33,9 @@ export default function HolidayWarning({
     if (!country || !checkIn || !checkOut) return;
 
     let cancelled = false;
-    setLoading(true);
+    queueMicrotask(() => {
+      if (!cancelled) setLoading(true);
+    });
 
     fetch(`/api/holidays?country=${encodeURIComponent(country)}&checkIn=${checkIn}&checkOut=${checkOut}`)
       .then((r) => (r.ok ? r.json() : null))

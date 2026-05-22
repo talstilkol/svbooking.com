@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ArrowRight, X } from 'lucide-react';
 import Link from 'next/link';
@@ -12,7 +12,6 @@ export default function SuggestionsPanel() {
   const { trips, hydrated: tripHy } = useTrips();
   const [homeCity, setHomeCity] = useState<string | undefined>();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
   useEffect(() => {
     fetch('/api/me/prefs')
@@ -21,9 +20,9 @@ export default function SuggestionsPanel() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (!favHy || !tripHy) return;
-    setSuggestions(buildSuggestions({ favorites, trips, prefsHomeCity: homeCity }));
+  const suggestions = useMemo<Suggestion[]>(() => {
+    if (!favHy || !tripHy) return [];
+    return buildSuggestions({ favorites, trips, prefsHomeCity: homeCity });
   }, [favorites, trips, homeCity, favHy, tripHy]);
 
   const visible = suggestions.filter((s) => !dismissed.has(s.id));

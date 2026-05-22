@@ -57,11 +57,10 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(prefs),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Save failed');
+      if (!res.ok) throw new Error('Preferences save failed');
       toast.showToast('Preferences saved');
-    } catch (e) {
-      toast.showToast(e instanceof Error ? e.message : 'Failed to save', 'error');
+    } catch {
+      toast.showToast('Preferences could not be saved right now.', 'error');
     } finally {
       setSaving(false);
     }
@@ -85,7 +84,11 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
       <Reveal>
         <div className="flex items-center gap-5 mb-10">
           {userPicture ? (
-            <img src={userPicture} alt="" className="w-20 h-20 rounded-full object-cover ring-4 ring-indigo-500/20" />
+            <div
+              aria-hidden="true"
+              className="w-20 h-20 rounded-full bg-cover bg-center ring-4 ring-indigo-500/20"
+              style={{ backgroundImage: `url(${userPicture})` }}
+            />
           ) : (
             <div className="w-20 h-20 rounded-full bg-linear-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white font-bold text-2xl ring-4 ring-indigo-500/20">
               {(userName?.[0] || userEmail?.[0] || 'U').toUpperCase()}

@@ -3,6 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import {
+  LEGACY_LOCAL_STORAGE_KEYS,
+  LOCAL_STORAGE_KEYS,
+  readLocalStorageJsonWithFallback,
+} from '@/lib/local-storage-keys';
 
 interface Trip {
   id: string;
@@ -34,14 +39,25 @@ export default function UpcomingTrips({ className = '' }: { className?: string }
   const [trips, setTrips] = useState<Trip[]>([]);
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem('saved-trips') || '[]');
-      const upcoming = stored
-        .filter((t: Trip) => daysUntil(t.checkIn) >= 0)
-        .sort((a: Trip, b: Trip) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime())
-        .slice(0, 3);
-      setTrips(upcoming);
-    } catch {}
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        const stored = readLocalStorageJsonWithFallback<Trip[]>(
+          LOCAL_STORAGE_KEYS.trips,
+          [LEGACY_LOCAL_STORAGE_KEYS.trips],
+          []
+        );
+        const upcoming = stored
+          .filter((t: Trip) => daysUntil(t.checkIn) >= 0)
+          .sort((a: Trip, b: Trip) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime())
+          .slice(0, 3);
+        setTrips(upcoming);
+      } catch {}
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (trips.length === 0) {

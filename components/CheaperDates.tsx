@@ -6,7 +6,9 @@ interface Alternative {
   checkIn: string;
   checkOut: string;
   price: number;
-  provider: string;
+  provider: string | null;
+  bookingProvider?: boolean;
+  priceSourceLabel?: string;
   savings: number;
   savingsPct: number;
 }
@@ -21,6 +23,8 @@ interface CheaperDatesResult {
     month: Alternative[];
   };
   cheapestOverall: Alternative | null;
+  hasRealData?: boolean;
+  dataPolicy?: string;
 }
 
 interface Props {
@@ -48,11 +52,11 @@ export default function CheaperDates({ hotelKey, checkIn, checkOut }: Props) {
         `/api/cheaper-dates?hotelKey=${hotelKey}&checkIn=${checkIn}&checkOut=${checkOut}`
       );
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      if (!res.ok || data.error) throw new Error('Cheaper date search unavailable');
       setResult(data);
       setExpanded(true);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to find cheaper dates');
+    } catch {
+      setError('Cheaper date search is unavailable right now.');
     } finally {
       setLoading(false);
     }
@@ -81,13 +85,21 @@ export default function CheaperDates({ hotelKey, checkIn, checkOut }: Props) {
 
       {expanded && result && (
         <div className="mt-4 border border-zinc-200 rounded-lg p-4 bg-zinc-50">
+          {result.hasRealData === false && (
+            <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <p className="text-slate-700 text-sm">
+                Cheaper-date intelligence is unavailable until provider or source observations exist for these dates.
+              </p>
+            </div>
+          )}
+
           {result.cheapestOverall && result.cheapestOverall.savingsPct > 0 && (
             <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
               <p className="text-emerald-800 font-semibold text-sm">
-                Best deal: Save {result.cheapestOverall.savingsPct}% (${result.cheapestOverall.savings.toFixed(0)})
+                Lowest observed: Save {result.cheapestOverall.savingsPct}% (${result.cheapestOverall.savings.toFixed(0)})
               </p>
               <p className="text-emerald-700 text-sm">
-                {result.cheapestOverall.checkIn} → {result.cheapestOverall.checkOut} · ${result.cheapestOverall.price.toFixed(0)} via {result.cheapestOverall.provider}
+                {result.cheapestOverall.checkIn} → {result.cheapestOverall.checkOut} · ${result.cheapestOverall.price.toFixed(0)} · {result.cheapestOverall.provider || result.cheapestOverall.priceSourceLabel || 'Provider unavailable'}
               </p>
             </div>
           )}
@@ -127,7 +139,7 @@ export default function CheaperDates({ hotelKey, checkIn, checkOut }: Props) {
                     <p className="text-sm font-medium text-zinc-900">
                       {alt.checkIn} → {alt.checkOut}
                     </p>
-                    <p className="text-xs text-zinc-500">{alt.provider}</p>
+                    <p className="text-xs text-zinc-500">{alt.provider || alt.priceSourceLabel || 'Provider unavailable'}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-zinc-900">${alt.price.toFixed(0)}</p>

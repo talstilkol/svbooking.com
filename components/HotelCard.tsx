@@ -40,7 +40,7 @@ export default function HotelCard({ hotel }: { hotel: CatalogHotel }) {
         <p className="text-sm text-zinc-500 mt-0.5 mb-2">
           📍 {hotel.city}, {hotel.country}
         </p>
-        <RatingBadge hotelKey={hotel.hotelKey} size="sm" className="mb-3" />
+        <RatingBadge size="sm" className="mb-3" />
         <div className="mt-auto flex gap-2">
           <Link
             href={`/hotel/${hotel.hotelKey}`}

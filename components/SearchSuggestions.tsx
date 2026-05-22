@@ -1,6 +1,3 @@
-'use client';
-
-import { useMemo } from 'react';
 import Link from 'next/link';
 
 interface SearchSuggestionsProps {
@@ -9,7 +6,7 @@ interface SearchSuggestionsProps {
 }
 
 interface Suggestion {
-  type: 'city' | 'deal' | 'trending';
+  type: 'city';
   label: string;
   href: string;
   icon: string;
@@ -17,37 +14,23 @@ interface Suggestion {
 }
 
 const POPULAR_SEARCHES: Suggestion[] = [
-  { type: 'trending', label: 'Paris Hotels', href: '/search?city=Paris', icon: '🔥', detail: 'Most searched this week' },
-  { type: 'trending', label: 'Tokyo Stays', href: '/search?city=Tokyo', icon: '🔥', detail: 'Trending destination' },
-  { type: 'deal', label: 'Bangkok Deals', href: '/search?city=Bangkok', icon: '💰', detail: 'From $25/night' },
-  { type: 'deal', label: 'Bali Budget', href: '/search?city=Bali', icon: '💰', detail: 'From $30/night' },
-  { type: 'city', label: 'Dubai Luxury', href: '/search?city=Dubai', icon: '✨', detail: '4+ star hotels' },
-  { type: 'city', label: 'Barcelona Beach', href: '/search?city=Barcelona', icon: '🏖️', detail: 'Beachfront hotels' },
-  { type: 'city', label: 'London Central', href: '/search?city=London', icon: '🏛️', detail: 'Zone 1 hotels' },
-  { type: 'city', label: 'New York Manhattan', href: '/search?city=New%20York', icon: '🗽', detail: 'Midtown hotels' },
-  { type: 'deal', label: 'Rome Last Minute', href: '/search?city=Rome', icon: '⏰', detail: 'Book today, save 20%' },
-  { type: 'trending', label: 'Tel Aviv Beach', href: '/search?city=Tel%20Aviv', icon: '☀️', detail: 'Mediterranean stays' },
+  { type: 'city', label: 'Paris', href: '/search?city=Paris', icon: '📍', detail: 'Catalog destination' },
+  { type: 'city', label: 'Tokyo', href: '/search?city=Tokyo', icon: '📍', detail: 'Catalog destination' },
+  { type: 'city', label: 'Bangkok', href: '/search?city=Bangkok', icon: '📍', detail: 'Catalog destination' },
+  { type: 'city', label: 'Bali', href: '/search?city=Bali', icon: '📍', detail: 'Catalog destination' },
+  { type: 'city', label: 'Dubai', href: '/search?city=Dubai', icon: '📍', detail: 'Catalog destination' },
+  { type: 'city', label: 'Barcelona', href: '/search?city=Barcelona', icon: '📍', detail: 'Catalog destination' },
+  { type: 'city', label: 'London', href: '/search?city=London', icon: '📍', detail: 'Catalog destination' },
+  { type: 'city', label: 'New York', href: '/search?city=New%20York', icon: '📍', detail: 'Catalog destination' },
+  { type: 'city', label: 'Rome', href: '/search?city=Rome', icon: '📍', detail: 'Catalog destination' },
+  { type: 'city', label: 'Tel Aviv', href: '/search?city=Tel%20Aviv', icon: '📍', detail: 'Catalog destination' },
 ];
 
 export default function SearchSuggestions({ currentCity, className = '' }: SearchSuggestionsProps) {
-  const suggestions = useMemo(() => {
-    const filtered = currentCity
-      ? POPULAR_SEARCHES.filter(
-          (s) => !s.label.toLowerCase().includes(currentCity.toLowerCase())
-        )
-      : POPULAR_SEARCHES;
-
-    // Pick 6 suggestions, rotating daily
-    const dayOfYear = Math.floor(
-      (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
-    );
-    const start = dayOfYear % filtered.length;
-    const result: Suggestion[] = [];
-    for (let i = 0; i < 6; i++) {
-      result.push(filtered[(start + i) % filtered.length]);
-    }
-    return result;
-  }, [currentCity]);
+  const suggestions = (currentCity
+    ? POPULAR_SEARCHES.filter((s) => !s.label.toLowerCase().includes(currentCity.toLowerCase()))
+    : POPULAR_SEARCHES
+  ).slice(0, 6);
 
   return (
     <div className={className}>

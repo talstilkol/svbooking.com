@@ -1,6 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import {
+  LEGACY_LOCAL_STORAGE_KEYS,
+  LOCAL_STORAGE_KEYS,
+  readLocalStorageJsonWithFallback,
+  removeLocalStorageKeys,
+  writeLocalStorageJson,
+} from '@/lib/local-storage-keys';
 
 export interface HistoryItem {
   hotelKey: string;
@@ -27,25 +34,26 @@ export function useHistory() {
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
 
   useEffect(() => {
-    // Load from localStorage on mount
-    const savedHistory = localStorage.getItem('hotel_history');
-    const savedSearchHistory = localStorage.getItem('search_history');
+    let cancelled = false;
 
-    if (savedHistory) {
-      try {
-        setHistory(JSON.parse(savedHistory));
-      } catch (e) {
-        console.error('Failed to parse history:', e);
-      }
-    }
+    queueMicrotask(() => {
+      if (cancelled) return;
 
-    if (savedSearchHistory) {
-      try {
-        setSearchHistory(JSON.parse(savedSearchHistory));
-      } catch (e) {
-        console.error('Failed to parse search history:', e);
-      }
-    }
+      setHistory(readLocalStorageJsonWithFallback<HistoryItem[]>(
+        LOCAL_STORAGE_KEYS.hotelHistory,
+        [LEGACY_LOCAL_STORAGE_KEYS.hotelHistory],
+        []
+      ));
+      setSearchHistory(readLocalStorageJsonWithFallback<SearchHistoryItem[]>(
+        LOCAL_STORAGE_KEYS.searchHistory,
+        [LEGACY_LOCAL_STORAGE_KEYS.searchHistory],
+        []
+      ));
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const addToHistory = (item: Omit<HistoryItem, 'timestamp'>) => {
@@ -61,7 +69,7 @@ export function useHistory() {
       const updated = [newItem, ...filtered].slice(0, MAX_HISTORY_ITEMS);
       
       // Save to localStorage
-      localStorage.setItem('hotel_history', JSON.stringify(updated));
+      writeLocalStorageJson(LOCAL_STORAGE_KEYS.hotelHistory, updated);
       
       return updated;
     });
@@ -82,7 +90,7 @@ export function useHistory() {
       const updated = [newItem, ...filtered].slice(0, MAX_SEARCH_HISTORY);
       
       // Save to localStorage
-      localStorage.setItem('search_history', JSON.stringify(updated));
+      writeLocalStorageJson(LOCAL_STORAGE_KEYS.searchHistory, updated);
       
       return updated;
     });
@@ -90,18 +98,18 @@ export function useHistory() {
 
   const clearHistory = () => {
     setHistory([]);
-    localStorage.removeItem('hotel_history');
+    removeLocalStorageKeys([LOCAL_STORAGE_KEYS.hotelHistory, LEGACY_LOCAL_STORAGE_KEYS.hotelHistory]);
   };
 
   const clearSearchHistory = () => {
     setSearchHistory([]);
-    localStorage.removeItem('search_history');
+    removeLocalStorageKeys([LOCAL_STORAGE_KEYS.searchHistory, LEGACY_LOCAL_STORAGE_KEYS.searchHistory]);
   };
 
   const removeFromHistory = (hotelKey: string) => {
     setHistory((prev) => {
       const updated = prev.filter((h) => h.hotelKey !== hotelKey);
-      localStorage.setItem('hotel_history', JSON.stringify(updated));
+      writeLocalStorageJson(LOCAL_STORAGE_KEYS.hotelHistory, updated);
       return updated;
     });
   };

@@ -1,24 +1,39 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import {
+  LEGACY_LOCAL_STORAGE_KEYS,
+  LOCAL_STORAGE_KEYS,
+  readLocalStorageJsonWithFallback,
+  writeLocalStorageJson,
+} from '@/lib/local-storage-keys';
 
 export default function AccessibilityPanel() {
+  const panelId = 'accessibility-settings-panel';
+  const headingId = 'accessibility-settings-title';
   const [open, setOpen] = useState(false);
   const [fontSize, setFontSize] = useState(100);
   const [highContrast, setHighContrast] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
-    // Load preferences from localStorage
-    try {
-      const saved = localStorage.getItem('a11y-prefs');
-      if (saved) {
-        const prefs = JSON.parse(saved);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        const prefs = readLocalStorageJsonWithFallback<{
+          fontSize?: number;
+          highContrast?: boolean;
+          reducedMotion?: boolean;
+        }>(LOCAL_STORAGE_KEYS.accessibilityPreferences, [LEGACY_LOCAL_STORAGE_KEYS.accessibilityPreferences], {});
         if (prefs.fontSize) setFontSize(prefs.fontSize);
         if (prefs.highContrast) setHighContrast(prefs.highContrast);
         if (prefs.reducedMotion) setReducedMotion(prefs.reducedMotion);
-      }
-    } catch {}
+      } catch {}
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -39,10 +54,7 @@ export default function AccessibilityPanel() {
 
     // Save preferences
     try {
-      localStorage.setItem(
-        'a11y-prefs',
-        JSON.stringify({ fontSize, highContrast, reducedMotion })
-      );
+      writeLocalStorageJson(LOCAL_STORAGE_KEYS.accessibilityPreferences, { fontSize, highContrast, reducedMotion });
     } catch {}
   }, [fontSize, highContrast, reducedMotion]);
 
@@ -53,6 +65,8 @@ export default function AccessibilityPanel() {
         onClick={() => setOpen(!open)}
         className="fixed bottom-20 md:bottom-4 right-4 z-40 w-10 h-10 bg-slate-800 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-slate-700 transition text-sm"
         aria-label="Accessibility settings"
+        aria-expanded={open}
+        aria-controls={panelId}
         title="Accessibility settings"
       >
         <svg
@@ -73,14 +87,20 @@ export default function AccessibilityPanel() {
       {/* Panel */}
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="fixed bottom-36 md:bottom-20 right-4 z-50 bg-white rounded-xl shadow-2xl border border-slate-200 w-72 p-5">
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
+          <div
+            id={panelId}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={headingId}
+            className="fixed bottom-36 md:bottom-20 right-4 z-50 bg-white rounded-xl shadow-2xl border border-slate-200 w-72 p-5"
+          >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-800">Accessibility</h3>
+              <h3 id={headingId} className="text-sm font-semibold text-slate-800">Accessibility</h3>
               <button
                 onClick={() => setOpen(false)}
                 className="text-slate-400 hover:text-slate-600"
-                aria-label="Close"
+                aria-label="Close accessibility settings"
               >
                 ✕
               </button>

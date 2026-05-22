@@ -39,7 +39,7 @@ export default function ComparisonSummary({
     `${hotelName} (${city})`,
     `${checkIn} to ${checkOut} (${nights} night${nights !== 1 ? 's' : ''})`,
     ``,
-    `Best price: ${cheapest.currency} ${cheapest.total.toFixed(2)} on ${cheapest.provider}`,
+    `Lowest returned price: ${cheapest.currency} ${cheapest.total.toFixed(2)} on ${cheapest.provider}`,
     savingsPct > 0 ? `Save ${savingsPct}% vs most expensive option` : '',
     ``,
     `All prices:`,

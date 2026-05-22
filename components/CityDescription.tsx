@@ -24,7 +24,9 @@ export default function CityDescription({ city, className = '' }: CityDescriptio
   useEffect(() => {
     if (!city) return;
     let cancelled = false;
-    setLoading(true);
+    queueMicrotask(() => {
+      if (!cancelled) setLoading(true);
+    });
 
     fetch(`/api/city-info?city=${encodeURIComponent(city)}`)
       .then((r) => (r.ok ? r.json() : null))

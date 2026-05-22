@@ -7,7 +7,8 @@ interface Deal {
   hotel: { hotelKey: string; name: string; city: string; country: string; image: string };
   bestPrice: number;
   pricePerNight: number;
-  bestProvider: string;
+  bestProvider: string | null;
+  priceSourceLabel?: string;
   checkIn: string;
   checkOut: string;
   nights: number;
@@ -41,7 +42,7 @@ export default function TopDeals() {
   return (
     <div>
       <h2 className="text-2xl font-bold text-zinc-900 mb-4 text-center">
-        Today&apos;s Best Deals
+        Today&apos;s Available Deals
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {deals.map((deal) => (

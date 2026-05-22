@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'My Trips',
-  description: 'Plan your trips and let AI find the best hotel prices. Get personalized recommendations and cheaper date alternatives.',
+  description: 'Plan trips, compare available provider prices, and review cheaper date alternatives when verified rate data exists.',
+  robots: { index: false, follow: false },
 };
 
 export default function TripsLayout({ children }: { children: React.ReactNode }) {

@@ -31,7 +31,7 @@ export default function BookingTimeline({
     },
     {
       label: 'Compare',
-      description: `${checkIn ? 'Prices compared' : 'Select dates to compare'}`,
+      description: checkIn && checkOut ? `${checkIn} to ${checkOut}` : 'Select dates to compare',
       icon: '📊',
       status: hasCompared ? 'complete' : checkIn ? 'active' : 'upcoming',
     },

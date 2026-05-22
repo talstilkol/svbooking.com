@@ -61,7 +61,7 @@ export default function PriceComparisonChart({
               </div>
               <span className="text-[10px] w-16 text-right shrink-0">
                 {isCheapest ? (
-                  <span className="text-green-600 font-bold">Best ✓</span>
+                  <span className="text-green-600 font-bold">Lowest</span>
                 ) : range > 0 ? (
                   <span className="text-slate-400">+{savings.toFixed(0)}</span>
                 ) : null}

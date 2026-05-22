@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { LOCAL_STORAGE_KEYS, readLocalStorageJsonWithFallback, writeLocalStorageJson } from '@/lib/local-storage-keys';
 
 interface CompareItem {
   hotelKey: string;
@@ -16,16 +17,22 @@ export function useCompareList() {
   const [items, setItems] = useState<CompareItem[]>([]);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('sv-compare-list');
-      if (stored) setItems(JSON.parse(stored));
-    } catch {}
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        setItems(readLocalStorageJsonWithFallback<CompareItem[]>(LOCAL_STORAGE_KEYS.compareList, [], []));
+      } catch {}
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const save = (next: CompareItem[]) => {
     setItems(next);
     try {
-      localStorage.setItem('sv-compare-list', JSON.stringify(next));
+      writeLocalStorageJson(LOCAL_STORAGE_KEYS.compareList, next);
     } catch {}
   };
 
@@ -53,7 +60,7 @@ export default function CompareWidget({ className = '' }: { className?: string }
 
   if (items.length === 0) return null;
 
-  const compareUrl = `/compare-hotels?keys=${items.map((i) => i.hotelKey).join(',')}`;
+  const compareUrl = `/compare-hotels?hotels=${items.map((i) => i.hotelKey).join(',')}`;
 
   return (
     <div

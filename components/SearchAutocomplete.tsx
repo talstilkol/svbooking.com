@@ -28,15 +28,20 @@ export default function SearchAutocomplete() {
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const debouncedQuery = useDebounce(query, 220);
+  const listboxId = 'search-autocomplete-results';
 
   useEffect(() => {
     if (!debouncedQuery.trim()) {
-      setResults({ cities: [], hotels: [] });
-      setOpen(false);
+      queueMicrotask(() => {
+        setResults({ cities: [], hotels: [] });
+        setOpen(false);
+      });
       return;
     }
     const controller = new AbortController();
-    setLoading(true);
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) setLoading(true);
+    });
     fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`, { signal: controller.signal })
       .then((r) => r.json())
       .then((data) => {
@@ -120,9 +125,11 @@ export default function SearchAutocomplete() {
         <input
           ref={inputRef}
           type="text"
+          role="combobox"
           aria-label="Search for a hotel or city"
           aria-autocomplete="list"
           aria-expanded={open}
+          aria-controls={listboxId}
           placeholder="Search hotel or city..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -143,6 +150,7 @@ export default function SearchAutocomplete() {
 
       {open && (
         <div
+          id={listboxId}
           ref={dropdownRef}
           className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden max-h-96 overflow-y-auto"
           role="listbox"

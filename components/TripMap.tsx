@@ -1,6 +1,11 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import {
+  LEGACY_LOCAL_STORAGE_KEYS,
+  LOCAL_STORAGE_KEYS,
+  readLocalStorageJsonWithFallback,
+} from '@/lib/local-storage-keys';
 
 interface Trip {
   id: string;
@@ -53,10 +58,21 @@ export default function TripMap({ className = '' }: { className?: string }) {
   const [hoveredCity, setHoveredCity] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem('saved-trips') || '[]');
-      setTrips(stored);
-    } catch {}
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        const stored = readLocalStorageJsonWithFallback<Trip[]>(
+          LOCAL_STORAGE_KEYS.trips,
+          [LEGACY_LOCAL_STORAGE_KEYS.trips],
+          []
+        );
+        setTrips(stored);
+      } catch {}
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const cities = useMemo(() => {

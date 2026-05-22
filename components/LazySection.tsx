@@ -27,7 +27,7 @@ export default function LazySection({
     if (!el) return;
 
     if (!('IntersectionObserver' in window)) {
-      setVisible(true);
+      queueMicrotask(() => setVisible(true));
       return;
     }
 

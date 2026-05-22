@@ -13,7 +13,6 @@ const NAV_LINKS = [
   { href: '/explore', label: 'Explore' },
   { href: '/trips', label: 'Trips' },
   { href: '/favorites', label: 'Favorites' },
-  { href: '/agents', label: 'AI Agents' },
   { href: '/dashboard', label: 'Dashboard' },
 ];
 
@@ -33,7 +32,7 @@ export default function Navbar() {
 
   // Close mobile menu on route change
   useEffect(() => {
-    setMobileOpen(false);
+    queueMicrotask(() => setMobileOpen(false));
   }, [pathname]);
 
   return (
@@ -55,6 +54,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
+                aria-current={active ? 'page' : undefined}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   active
                     ? 'bg-blue-100 text-blue-700'
@@ -93,7 +93,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div id="mobile-nav" className="md:hidden bg-white border-t border-slate-200 shadow-lg" role="menu">
+        <div id="mobile-nav" className="md:hidden bg-white border-t border-slate-200 shadow-lg" aria-label="Mobile navigation">
           <div className="px-6 py-3 border-b border-slate-100">
             <CurrencySelector className="w-full" />
           </div>
@@ -106,6 +106,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
+                aria-current={active ? 'page' : undefined}
                 onClick={() => setMobileOpen(false)}
                 className={`block px-6 py-3 text-sm font-medium border-b border-slate-100 ${
                   active ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-blue-50'

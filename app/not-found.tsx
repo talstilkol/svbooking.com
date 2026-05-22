@@ -4,7 +4,7 @@ const SUGGESTIONS = [
   { href: '/search', label: 'Browse Hotels', icon: '🏨' },
   { href: '/compare', label: 'Compare Prices', icon: '💰' },
   { href: '/explore', label: 'Explore Destinations', icon: '🗺️' },
-  { href: '/agents', label: 'AI Agents', icon: '🤖' },
+  { href: '/deals', label: 'Available Deals', icon: '🔥' },
 ];
 
 export default function NotFound() {

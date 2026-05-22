@@ -18,7 +18,7 @@ const DISPLAY_CURRENCIES = [
 ];
 
 /**
- * Shows the hotel price converted to popular currencies using live rates.
+ * Shows the hotel price converted to popular currencies using exchange-rate API data.
  * Uses the free /api/exchange-rates endpoint (no auth required).
  * Displayed inline on hotel detail pages below the price comparison.
  */

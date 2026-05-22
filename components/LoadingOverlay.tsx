@@ -3,14 +3,12 @@
 import { useEffect, useState } from 'react';
 
 const MESSAGES = [
-  'Checking Booking.com...',
-  'Checking Expedia...',
-  'Checking Hotels.com...',
-  'Checking Agoda...',
-  'Checking Trip.com...',
-  'Checking Vio.com...',
-  'Comparing prices...',
-  'Finding the best deal...',
+  'Checking configured pricing sources...',
+  'Validating returned rate metadata...',
+  'Confirming provider link availability...',
+  'Checking tax disclosure fields...',
+  'Preparing unavailable states for missing data...',
+  'Comparing provider-returned prices...',
 ];
 
 interface LoadingOverlayProps {
@@ -24,8 +22,10 @@ export default function LoadingOverlay({ active, className = '' }: LoadingOverla
 
   useEffect(() => {
     if (!active) {
-      setMsgIdx(0);
-      setProgress(0);
+      queueMicrotask(() => {
+        setMsgIdx(0);
+        setProgress(0);
+      });
       return;
     }
 
@@ -34,7 +34,7 @@ export default function LoadingOverlay({ active, className = '' }: LoadingOverla
     }, 800);
 
     const progTimer = setInterval(() => {
-      setProgress((p) => Math.min(p + Math.random() * 15, 90));
+      setProgress((p) => Math.min(p + 12, 90));
     }, 500);
 
     return () => {
@@ -72,7 +72,7 @@ export default function LoadingOverlay({ active, className = '' }: LoadingOverla
           {MESSAGES[msgIdx]}
         </p>
         <p className="text-xs text-slate-400 mt-1">
-          Comparing prices from 8+ providers
+          Comparing prices from available providers
         </p>
 
         {/* Provider dots */}

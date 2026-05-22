@@ -10,64 +10,31 @@ interface PhotoGalleryProps {
 }
 
 /**
- * Shows the main hotel image with zoom-in lightbox on click.
- * In a real app, this would pull multiple photos from the hotel data.
- * Currently displays the main image with a zoom/lightbox experience.
+ * Shows the verified catalog image with a zoom-in lightbox on click.
  */
 export default function PhotoGallery({ mainImage, hotelName, city }: PhotoGalleryProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  // Generate gallery-like images from the main image with Unsplash transforms
-  // In production, these would be real hotel gallery photos
-  const images = [
-    { src: mainImage, label: 'Hotel exterior' },
-    { src: mainImage.replace('w=800', 'w=800&fit=crop&crop=bottom'), label: 'Lobby view' },
-    { src: mainImage.replace('w=800', 'w=800&fit=crop&crop=left'), label: 'Room' },
-    { src: mainImage.replace('w=800', 'w=800&fit=crop&crop=right'), label: 'Amenities' },
-  ];
-
   return (
     <>
-      <div className="grid grid-cols-4 gap-2 mt-4 rounded-xl overflow-hidden">
-        {/* Main image - spans 2 cols */}
+      <div className="mt-4 rounded-xl overflow-hidden">
         <button
           onClick={() => setLightboxOpen(true)}
-          className="col-span-2 row-span-2 relative aspect-[4/3] group cursor-zoom-in"
+          className="relative block w-full aspect-[16/9] group cursor-zoom-in"
           aria-label="View full size photo"
         >
           <Image
-            src={images[0].src}
-            alt={`${hotelName} - ${images[0].label}`}
+            src={mainImage}
+            alt={`${hotelName} in ${city}`}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 768px) 100vw, 50vw"
+            sizes="(max-width: 768px) 100vw, 80vw"
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+          <div className="absolute bottom-3 left-3 rounded bg-black/55 px-2 py-1 text-xs font-medium text-white">
+            View image
+          </div>
         </button>
-
-        {/* Smaller images */}
-        {images.slice(1).map((img, i) => (
-          <button
-            key={i}
-            onClick={() => setLightboxOpen(true)}
-            className="relative aspect-[4/3] group cursor-zoom-in"
-            aria-label={`View ${img.label}`}
-          >
-            <Image
-              src={img.src}
-              alt={`${hotelName} - ${img.label}`}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 768px) 25vw, 15vw"
-            />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-            {i === 2 && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">View all</span>
-              </div>
-            )}
-          </button>
-        ))}
       </div>
 
       {/* Lightbox */}

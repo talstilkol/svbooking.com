@@ -2,33 +2,38 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-
-interface PriceAlertData {
-  hotelKey: string;
-  hotelName: string;
-  city: string;
-  targetPrice: number;
-  currency: string;
-  createdAt: string;
-}
+import { LOCAL_STORAGE_KEYS, readLocalStorageJsonWithFallback, writeLocalStorageJson } from '@/lib/local-storage-keys';
+import {
+  type NormalizedPriceAlert,
+  type StoredPriceAlert,
+  normalizeStoredPriceAlerts,
+  priceAlertDeliveryLabel,
+  priceAlertStorageLabel,
+} from '@/lib/price-alert-local';
 
 export default function PriceAlertsDashboard({ className = '' }: { className?: string }) {
-  const [alerts, setAlerts] = useState<PriceAlertData[]>([]);
+  const [alerts, setAlerts] = useState<NormalizedPriceAlert[]>([]);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('price-alerts');
-      if (stored) {
-        setAlerts(JSON.parse(stored));
-      }
-    } catch {}
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        setAlerts(normalizeStoredPriceAlerts(
+          readLocalStorageJsonWithFallback<StoredPriceAlert[]>(LOCAL_STORAGE_KEYS.priceAlerts, [], [])
+        ));
+      } catch {}
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const removeAlert = (hotelKey: string) => {
     const updated = alerts.filter((a) => a.hotelKey !== hotelKey);
     setAlerts(updated);
     try {
-      localStorage.setItem('price-alerts', JSON.stringify(updated));
+      writeLocalStorageJson(LOCAL_STORAGE_KEYS.priceAlerts, updated);
     } catch {}
   };
 
@@ -44,7 +49,7 @@ export default function PriceAlertsDashboard({ className = '' }: { className?: s
           </p>
         </div>
         <span className="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full">
-          🔔 ACTIVE
+          WATCHING
         </span>
       </div>
 
@@ -66,6 +71,9 @@ export default function PriceAlertsDashboard({ className = '' }: { className?: s
               </Link>
               <p className="text-xs text-slate-400">
                 {alert.city} · Target: {alert.currency} {alert.targetPrice.toFixed(0)}/night
+              </p>
+              <p className="mt-1 text-[11px] text-slate-500">
+                {priceAlertStorageLabel(alert)} · {priceAlertDeliveryLabel(alert)}
               </p>
             </div>
             <button

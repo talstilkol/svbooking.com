@@ -9,7 +9,8 @@ interface Deal {
   hotel: { hotelKey: string; name: string; city: string; country: string; image: string };
   bestPrice: number;
   pricePerNight: number;
-  bestProvider: string;
+  bestProvider: string | null;
+  priceSourceLabel?: string;
   checkIn: string;
   checkOut: string;
   nights: number;
@@ -30,8 +31,11 @@ export default function DealsClient() {
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
-    setError('');
+    queueMicrotask(() => {
+      if (controller.signal.aborted) return;
+      setLoading(true);
+      setError('');
+    });
     const params = new URLSearchParams();
     if (continent) params.set('continent', continent);
     fetch(`/api/deals?${params.toString()}`, { signal: controller.signal })
@@ -42,7 +46,7 @@ export default function DealsClient() {
         if (d.scannedAt) {
           setLastScanned(new Date(d.scannedAt).toLocaleTimeString());
         } else {
-          setLastScanned(new Date().toLocaleTimeString());
+          setLastScanned('');
         }
       })
       .catch((err) => {
@@ -70,9 +74,9 @@ export default function DealsClient() {
           <div className="flex items-center gap-3 mb-3">
             <Link href="/" className="text-white/80 text-sm hover:text-white">&larr; Home</Link>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Today&apos;s Best Hotel Deals</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">Provider-Returned Hotel Deals</h1>
           <p className="text-lg opacity-90">
-            Live prices scanned by our AI agents across {CONTINENTS.length} regions
+            Verified provider data when available across {CONTINENTS.length} regions
           </p>
           {lastScanned && (
             <p className="text-sm opacity-70 mt-2">
@@ -136,7 +140,7 @@ export default function DealsClient() {
         {loading ? (
           <div className="text-center py-16">
             <div className="inline-block w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-slate-500 mt-3">Scanning hotels for the best deals...</p>
+            <p className="text-slate-500 mt-3">Scanning hotels for available rate observations...</p>
           </div>
         ) : sorted.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

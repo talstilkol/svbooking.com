@@ -8,7 +8,8 @@ interface Deal {
   hotel: { hotelKey: string; name: string; city: string; country: string; image: string };
   bestPrice: number;
   pricePerNight: number;
-  bestProvider: string;
+  bestProvider: string | null;
+  priceSourceLabel?: string;
   checkIn: string;
   checkOut: string;
   nights: number;
@@ -28,7 +29,9 @@ export default function DestinationExplorer() {
     if (!selectedContinent && !selectedCountry) return;
 
     const controller = new AbortController();
-    setLoading(true);
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) setLoading(true);
+    });
     const params = new URLSearchParams();
     if (selectedCountry) {
       params.set('country', selectedCountry);
@@ -140,7 +143,7 @@ export default function DestinationExplorer() {
       {loading && (
         <div className="text-center py-8">
           <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-zinc-500 mt-2">Finding best deals...</p>
+          <p className="text-sm text-zinc-500 mt-2">Finding available rate observations...</p>
         </div>
       )}
 

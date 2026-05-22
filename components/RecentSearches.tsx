@@ -1,7 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import {
+  LEGACY_LOCAL_STORAGE_KEYS,
+  LOCAL_STORAGE_KEYS,
+  readLocalStorageJsonWithFallback,
+  removeLocalStorageKeys,
+  writeLocalStorageJson,
+} from '@/lib/local-storage-keys';
 
 interface RecentSearch {
   query: string;
@@ -10,45 +17,40 @@ interface RecentSearch {
 }
 
 const MAX_RECENT = 8;
-const STORAGE_KEY = 'recent-searches';
+const STORAGE_KEY = LOCAL_STORAGE_KEYS.recentSearches;
+const FALLBACK_KEYS = [LEGACY_LOCAL_STORAGE_KEYS.recentSearches, LEGACY_LOCAL_STORAGE_KEYS.recentSearchesUnprefixed];
 
 export function addRecentSearch(query: string, resultCount?: number) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const searches: RecentSearch[] = raw ? JSON.parse(raw) : [];
+    const searches = readLocalStorageJsonWithFallback<RecentSearch[]>(STORAGE_KEY, FALLBACK_KEYS, []);
     // Remove duplicate
     const filtered = searches.filter(
       (s) => s.query.toLowerCase() !== query.toLowerCase()
     );
     filtered.unshift({ query, timestamp: Date.now(), resultCount });
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(filtered.slice(0, MAX_RECENT))
-    );
+    writeLocalStorageJson(STORAGE_KEY, filtered.slice(0, MAX_RECENT));
   } catch {}
 }
 
 export default function RecentSearches({ className = '' }: { className?: string }) {
-  const [searches, setSearches] = useState<RecentSearch[]>([]);
-
-  useEffect(() => {
+  const [searches, setSearches] = useState<RecentSearch[]>(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setSearches(JSON.parse(raw));
-    } catch {}
-  }, []);
+      return readLocalStorageJsonWithFallback<RecentSearch[]>(STORAGE_KEY, FALLBACK_KEYS, []);
+    } catch {
+      return [];
+    }
+  });
+  const [now] = useState(() => Date.now());
 
   const clearAll = () => {
     setSearches([]);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {}
+    removeLocalStorageKeys([STORAGE_KEY, ...FALLBACK_KEYS]);
   };
 
   if (searches.length === 0) return null;
 
   function timeAgo(ts: number): string {
-    const diff = Date.now() - ts;
+    const diff = now - ts;
     const mins = Math.floor(diff / 60000);
     if (mins < 60) return `${mins}m ago`;
     const hrs = Math.floor(mins / 60);

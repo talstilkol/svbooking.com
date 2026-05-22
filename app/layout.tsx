@@ -9,14 +9,12 @@ import BackToTop from "@/components/BackToTop";
 import CookieConsent from "@/components/CookieConsent";
 import RouteProgress from "@/components/RouteProgress";
 import MobileBottomBar from "@/components/MobileBottomBar";
-import SocialProof from "@/components/SocialProof";
 import AccessibilityPanel from "@/components/AccessibilityPanel";
 import { OrganizationJsonLd, SearchActionJsonLd } from "@/components/SchemaOrg";
 import OfflineBanner from "@/components/OfflineBanner";
 import PerformanceMonitor from "@/components/PerformanceMonitor";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import CompareWidget from "@/components/CompareWidget";
-import PriceDropAlert from "@/components/PriceDropAlert";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LocaleRuntime from "@/components/LocaleRuntime";
 
@@ -101,9 +99,7 @@ export default function RootLayout({
         <Footer />
         <BackToTop />
         <MobileBottomBar />
-        <SocialProof />
         <CompareWidget />
-        <PriceDropAlert />
         <AccessibilityPanel />
         <CookieConsent />
         <PerformanceMonitor />

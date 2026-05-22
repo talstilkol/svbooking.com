@@ -1,6 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import {
+  LOCAL_STORAGE_KEYS,
+  readLocalStorageJson,
+  writeLocalStorageJson,
+} from '@/lib/local-storage-keys';
 
 export interface Preferences {
   currency: string;
@@ -22,28 +27,30 @@ const DEFAULTS: Preferences = {
   autoCompare: true,
 };
 
-const STORAGE_KEY = 'sv-user-preferences';
-
 export function usePreferences() {
   const [prefs, setPrefs] = useState<Preferences>(DEFAULTS);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setPrefs({ ...DEFAULTS, ...JSON.parse(stored) });
-      }
-    } catch {}
-    setLoaded(true);
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      const stored = readLocalStorageJson<Partial<Preferences> | null>(
+        LOCAL_STORAGE_KEYS.userPreferences,
+        null
+      );
+      if (stored && typeof stored === 'object') setPrefs({ ...DEFAULTS, ...stored });
+      setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const update = useCallback((partial: Partial<Preferences>) => {
     setPrefs((prev) => {
       const next = { ...prev, ...partial };
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {}
+      writeLocalStorageJson(LOCAL_STORAGE_KEYS.userPreferences, next);
       return next;
     });
   }, []);

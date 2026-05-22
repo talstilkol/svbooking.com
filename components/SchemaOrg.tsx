@@ -2,6 +2,7 @@
  * Additional Schema.org structured data for SEO.
  * Complements the existing JsonLd.tsx (WebsiteJsonLd, LodgingJsonLd, BreadcrumbJsonLd).
  */
+import { serializeJsonLd } from '@/lib/utils/jsonLd';
 
 interface FAQItem {
   question: string;
@@ -25,7 +26,7 @@ export function FAQPageJsonLd({ items }: { items: FAQItem[] }) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -38,10 +39,7 @@ interface HotelOfferProps {
   pricePerNight: number;
   currency: string;
   provider: string;
-  checkIn: string;
-  checkOut: string;
-  ratingValue: number;
-  ratingCount: number;
+  url: string;
 }
 
 export function HotelOfferJsonLd({
@@ -52,11 +50,10 @@ export function HotelOfferJsonLd({
   pricePerNight,
   currency,
   provider,
-  checkIn,
-  checkOut,
-  ratingValue,
-  ratingCount,
+  url,
 }: HotelOfferProps) {
+  if (!url) return null;
+
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'LodgingBusiness',
@@ -67,32 +64,22 @@ export function HotelOfferJsonLd({
       addressLocality: city,
       addressCountry: country,
     },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue,
-      reviewCount: ratingCount,
-      bestRating: 10,
-      worstRating: 1,
-    },
     offers: {
       '@type': 'Offer',
       price: pricePerNight,
       priceCurrency: currency,
-      availability: 'https://schema.org/InStock',
-      validFrom: checkIn,
-      validThrough: checkOut,
+      url,
       seller: {
         '@type': 'Organization',
         name: provider,
       },
-      priceValidUntil: checkOut,
     },
   };
 
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -119,7 +106,7 @@ export function SearchActionJsonLd({ searchUrl }: SearchActionProps) {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
@@ -142,7 +129,7 @@ export function OrganizationJsonLd() {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
     />
   );
 }
