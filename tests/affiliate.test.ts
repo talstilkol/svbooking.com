@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getAffiliateUrl, hasAffiliateConfig, getConfiguredProviders } from '@/lib/affiliate';
+import { getAffiliateUrl, hasAffiliateConfig, getConfiguredProviders, isAllowedProviderUrl } from '@/lib/affiliate';
 
 describe('affiliate', () => {
-  const originalEnv = process.env;
-
   beforeEach(() => {
     // Reset env for each test
     vi.stubEnv('BOOKING_AFFILIATE_ID', '');
@@ -20,7 +18,7 @@ describe('affiliate', () => {
 
   describe('getAffiliateUrl', () => {
     it('returns URL unchanged for unknown provider', () => {
-      const url = 'https://example.com/hotel';
+      const url = 'https://www.booking.com/hotel/us/plaza.html';
       expect(getAffiliateUrl('UnknownOTA', url)).toBe(url);
     });
 
@@ -53,11 +51,26 @@ describe('affiliate', () => {
       expect(result).toContain('aid=99999');
     });
 
-    it('handles invalid URLs gracefully (manual append)', () => {
+    it('leaves invalid URLs unchanged instead of appending tracking params', () => {
       vi.stubEnv('BOOKING_AFFILIATE_ID', '555');
       const url = 'not-a-valid-url';
       const result = getAffiliateUrl('Booking.com', url);
-      expect(result).toContain('aid=555');
+      expect(result).toBe(url);
+    });
+
+    it('leaves non-HTTPS URLs unchanged', () => {
+      vi.stubEnv('BOOKING_AFFILIATE_ID', '555');
+      const url = 'http://www.booking.com/hotel/il/hilton-tel-aviv.html';
+      const result = getAffiliateUrl('Booking.com', url);
+      expect(result).toBe(url);
+    });
+  });
+
+  describe('isAllowedProviderUrl', () => {
+    it('allows HTTPS provider domains only', () => {
+      expect(isAllowedProviderUrl('Booking.com', 'https://www.booking.com/hotel/il/hilton-tel-aviv.html')).toBe(true);
+      expect(isAllowedProviderUrl('Booking.com', 'http://www.booking.com/hotel/il/hilton-tel-aviv.html')).toBe(false);
+      expect(isAllowedProviderUrl('Booking.com', 'https://evil-booking.com/hotel')).toBe(false);
     });
   });
 

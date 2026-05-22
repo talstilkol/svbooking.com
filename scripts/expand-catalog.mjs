@@ -16,8 +16,6 @@
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
 const XOTELO_BASE = 'https://data.xotelo.com/api';
-const UNSPLASH_FALLBACK = 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80';
-
 // Parse CLI args
 const args = process.argv.slice(2);
 function getArg(name) {
@@ -270,9 +268,9 @@ async function main() {
 
   const missingImages = [...newCities].filter((c) => !existingCitiesInFile.has(c));
   if (missingImages.length > 0) {
-    console.log('📸 New cities that need Unsplash images in CITY_IMAGES:');
+    console.log('📸 New cities that need verified HTTPS image URLs in CITY_IMAGES:');
     for (const c of missingImages.sort()) {
-      console.log(`  '${c}': 'https://images.unsplash.com/photo-XXXXXXX?w=800&q=80',`);
+      console.log(`  ${c}`);
     }
   }
 

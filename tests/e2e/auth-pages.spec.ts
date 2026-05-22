@@ -7,6 +7,12 @@ test.describe('Auth-protected pages', () => {
     expect(page.url()).toMatch(/auth|kinde|login/i);
   });
 
+  test('unauthenticated /agents redirects to login', async ({ page }) => {
+    await page.goto('/agents', { waitUntil: 'domcontentloaded' });
+    await page.waitForURL(/auth|kinde|login/i, { timeout: 10_000 }).catch(() => {});
+    expect(page.url()).toMatch(/auth|kinde|login/i);
+  });
+
   test('unauthenticated /profile redirects to login', async ({ page }) => {
     await page.goto('/profile', { waitUntil: 'domcontentloaded' });
     await page.waitForURL(/auth|kinde|login/i, { timeout: 10_000 }).catch(() => {});

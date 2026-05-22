@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Dependency audit
+        run: npm audit --audit-level=moderate
+
+      - name: Verify PostCSS override
+        run: npm ls postcss --all
+
+      - name: Guardrails
+        run: npm run audit:guardrails
+
+      - name: Catalog audit
+        run: npm run audit:catalog
+
+      - name: Documentation drift audit
+        run: npm run audit:docs
+
+      - name: Environment contract audit
+        run: npm run audit:env
+
+      - name: Secret hygiene audit
+        run: npm run audit:secrets
+
+      - name: Runtime warning audit
+        run: npm run audit:runtime
+
+      - name: External fetch audit
+        run: npm run audit:external-fetches
+
+      - name: Affiliate security audit
+        run: npm run audit:affiliate-security
+
+      - name: Shared security response audit
+        run: npm run audit:security-responses
+
+      - name: API error cache audit
+        run: npm run audit:api-errors
+
+      - name: Cron cache audit
+        run: npm run audit:cron-cache
+
+      - name: Ops readiness audit
+        run: npm run audit:ops
+
+      - name: Agent readiness audit
+        run: npm run audit:agents
+
+      - name: Duplicate helper audit
+        run: npm run audit:duplicates
+
+      - name: Provider audit
+        run: npm run audit:providers
+
+      - name: Review and property content audit
+        run: npm run audit:reviews
+
+      - name: Release deletion audit
+        run: npm run audit:release-deletions
+
+      - name: i18n readiness audit
+        run: npm run audit:i18n
+
+      - name: Price accuracy audit
+        run: npm run audit:price-accuracy
+
+      - name: PWA readiness audit
+        run: npm run audit:pwa
+
+      - name: Ops scorecard audit
+        run: npm run audit:ops-scorecard
+
+      - name: UI quality audit
+        run: npm run audit:ui-quality
+
+      - name: Accessibility audit
+        run: npm run audit:accessibility
+
+      - name: SEO integrity audit
+        run: npm run audit:seo
+
+      - name: HTML safety audit
+        run: npm run audit:html-safety
+
+      - name: CSRF mutation audit
+        run: npm run audit:csrf
+
+      - name: Storage key audit
+        run: npm run audit:storage
+
+      - name: Data retention audit
+        run: npm run audit:data-retention
+
+      - name: Privacy and user data audit
+        run: npm run audit:privacy
+
+      - name: Ops alert audit
+        run: npm run audit:alerts
+
+      - name: Production env readiness report
+        run: npm run audit:production
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit and API tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright browser
+        run: npm run test:e2e:install
+
+      - name: E2E tests
+        run: npm run test:e2e
+
+      - name: Release state strict gate
+        run: npm run release:state:strict

@@ -118,7 +118,6 @@ describe('hotels-catalog', () => {
 
     it('returns empty for empty query', () => {
       expect(searchHotels('')).toEqual([]);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect(searchHotels(null as unknown as string)).toEqual([]);
     });
 

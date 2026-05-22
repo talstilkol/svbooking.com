@@ -99,5 +99,13 @@ describe('validation', () => {
       const res = errorResponse(err);
       expect(res.status).toBe(401);
     });
+
+    it('marks validation and internal error responses as no-store', () => {
+      const validation = errorResponse(new ValidationError('bad input'));
+      const internal = errorResponse(new Error('database password leaked'));
+
+      expect(validation.headers.get('cache-control')).toBe('no-store');
+      expect(internal.headers.get('cache-control')).toBe('no-store');
+    });
   });
 });

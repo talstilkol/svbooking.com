@@ -1,344 +1,132 @@
-# SV Booking — Comprehensive System Audit Report
+# SV Booking Audit Report
 
-**Date:** 2026-05-13
-**Version:** 0.1.0
-**Files scanned:** 282 source files
-**Bugs found:** 20 | **Fixed:** 9 critical/high | **Remaining:** 11 low/medium
-
----
+**Audit date:** 2026-05-16
+**Project:** `/Users/tal/my-app`
+**Current local catalog:** 133 hotels, 46 cities, 32 countries
+**Overall status:** locally stable, not production-ready until real deployment env is configured
 
 ## Executive Summary
 
-SV Booking is a hotel price comparison platform with 134 hotels across 46 cities, 7 pricing providers, 12 background agents, and 25+ free data source integrations. The architecture is solid and feature-rich for an early-stage product. However, critical gaps in **inventory scale**, **SSR/SEO**, **security hardening**, and **testing** hold it back from competing with established players.
+The stabilization pass moved SV Booking from locally healthy but documentation-stale to a more release-ready state. The app now has current docs, a CI-wired documentation drift audit, one additional validated catalog hotel, quieter build/E2E output, and a deterministic E2E trust-state check for unavailable property amenities.
 
-**Overall Score: 8.0/10** (up from 5.8 → 6.5 after initial fixes → 8.0 after full competitive gap closure)
+The remaining blockers are not code placeholders to fill in locally:
 
----
+- `ADMIN_API_SECRET`, `CRON_SECRET`, Upstash Redis env, Kinde env, and at least one complete paid/partner pricing provider env group must be configured in deployment.
+- `npm audit` must run only in an approved environment because it sends dependency metadata to the npm registry.
+- Licensed review/property-content providers are still unavailable, so the app must continue showing unavailable states.
+- The worktree is broad and must be reviewed before staging, committing, or deploying.
 
-## Part 1: Bug Audit
+## Verified Evidence
 
-### Critical Bugs Fixed
+| Check | Result | Evidence |
+| --- | ---: | --- |
+| `npm run lint` | PASS | ESLint completed with no reported errors. |
+| `npm test` | PASS | 77 test files, 351 tests passed. |
+| `npm run build` | PASS | Next.js 16.2.6 compiled and generated 129 static pages without the previous Edge-runtime static-generation warning. |
+| `npm run test:e2e` | PASS | 48 Playwright tests passed. |
+| `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
+| `npm run audit:catalog` | PASS | Catalog audit passed: 133 hotels, 46 cities, 32 countries. |
+| `npm run audit:docs` | PASS | Documentation audit passed and verifies current catalog counts plus stale-claim blockers. |
+| `npm run audit:env` | PASS | Environment contract audit verifies `.env.example`, README, runbook, package scripts, and CI stay aligned with production readiness env groups. |
+| `npm run audit:secrets` | PASS | Secret hygiene audit keeps `.env.example` empty-valued, env files ignored, CI free of secret contexts, and package scripts free of production env assignments. |
+| `npm run audit:runtime` | PASS | Runtime warning audit blocks Edge Runtime reintroduction and Playwright color/env warning regressions. |
+| `npm run audit:external-fetches` | PASS | External fetch audit blocks direct `fetch("https://...")` calls, requires the shared timeout helper for network probes, and covers Wikidata SPARQL hardening. |
+| `npm run audit:affiliate-security` | PASS | Affiliate security audit blocks HTTP provider redirects and invalid URL tracking fallbacks. |
+| `npm run audit:security-responses` | PASS | Shared auth, validation, and rate-limit helpers must return no-store responses, expose retry metadata, use timing-safe admin token checks, and normalize client IPs before quota keys are built. |
+| `npm run audit:csrf` | PASS | CSRF audit now covers browser mutation routes, Fetch Metadata, Origin/Referer checks, and HTTP(S)-only origin normalization. |
+| `npm run audit:api-errors` | PASS | API error cache audit blocks direct error responses without `Cache-Control: no-store`. |
+| `npm run audit:cron-cache` | PASS | Cron cache audit blocks cacheable responses from cron-protected agent routes and requires timing-safe cron bearer token checks. |
+| `npm run audit:ops` | PASS | Ops readiness audit passed and verifies CI/audit wiring. |
+| `npm run audit:pwa` | PASS | PWA audit verifies offline shell readiness and service-worker bypass rules for API, non-GET, and private navigation routes. |
+| Remaining non-strict `npm run audit:*` scripts | PASS | Agents, duplicates, providers, reviews, release deletions, i18n, price accuracy, PWA, ops scorecard, UI quality, accessibility, SEO, HTML safety, CSRF, storage, data retention, privacy, alerts, and production non-strict audits passed; privacy audit now covers fingerprint-only admin audit actors and alert audits cover webhook URL hardening. |
+| `npm run audit:production` | PASS with blockers | Reports missing required deployment env names only; does not print secret values. |
+| `npm run audit:production:strict` | EXPECTED FAIL locally | Blocks go-live because required admin/cron/Redis/Kinde env and a complete partner pricing provider env group are missing. |
+| `npm run release:state` | PASS with blockers | Reports 376 changed paths: 227 tracked unstaged, 0 staged, 149 untracked, 5 deleted tracked paths, and 0 generated artifact paths. |
+| `npm ls postcss --all` | PASS | Installed tree resolves to `postcss@8.5.14`. |
+| `git diff --check` | PASS | No whitespace errors. |
+| Local dependency vulnerability audit | BLOCKED | `npm audit --json` failed without network and escalation was rejected because it discloses dependency metadata externally. |
 
-| # | Bug | File | Severity | Status |
-|---|-----|------|----------|--------|
-| 1 | **Auth bypass on error** — catch block allowed all requests through when auth service was unreachable | `proxy.ts:85` | Critical | FIXED |
-| 2 | **Cron endpoints publicly accessible** — `verifyCronAuth()` allowed all requests when `CRON_SECRET` not set in production | `lib/agent-utils.js:163` | Critical | FIXED |
-| 3 | **KV double-stringify** — Upstash Redis auto-serializes, but we called `JSON.stringify()` before `.set()`, corrupting data as double-encoded strings | `lib/kv.js:69,80` | High | FIXED |
-| 4 | **Overpass QL injection** — City names and hotel names interpolated directly into queries without escaping quotes | `lib/overpass.js:29`, `lib/overpass-pois.js:123` | High | FIXED |
-| 5 | **setState inside useMemo** — `setPage(1)` called during render, violating React rules | `app/search/page.tsx:68` | High | FIXED |
-| 6 | **PriceDropAlert wrong localStorage key** — Read `'hotel-favorites'` but favorites stored at `'svbooking:favorites'`, making feature 100% broken | `components/PriceDropAlert.tsx:37` | High | FIXED |
-| 7 | **Auth 401 returned as 500** — `requireUser()` threw plain Error with `.status = 401`, but `errorResponse()` only checked `ValidationError` | `lib/auth.js:13`, `lib/validation.js:34` | High | FIXED |
-| 8 | **VALID_CURRENCIES too restrictive** — Only 4 currencies accepted in prefs API, but UI shows 14 | `app/api/me/prefs/route.js:9` | Medium | FIXED |
-| 9 | **Missing city coordinates** — Only 20 of 46 catalog cities had coordinates, causing API failures for weather, POIs, events | `lib/city-coordinates.ts` | High | FIXED |
+## Current Scores
 
-### Additional Bugs Fixed
+| Domain | Score | Notes |
+| --- | ---: | --- |
+| Determinism / no fabricated data | 10/10 | Randomness guardrails pass; unknown data remains unavailable. |
+| Build/test health | 10/10 | Lint, unit/API tests, build, and E2E pass. |
+| Security guardrails | 9/10 | Admin auth, CSRF, HTML safety, privacy, storage, alert, and no-store checks are wired. |
+| Documentation integrity | 9/10 | README, master plan, audit report, CI, and docs audit now agree on current architecture/counts. |
+| Catalog scale | 6/10 | 133 curated hotels is valid for MVP verification, still far from market-scale coverage. |
+| Provider readiness | 6/10 | Adapter infrastructure exists; real production provider credentials are missing locally. |
+| Reviews/property content | 5/10 | APIs and UI correctly show unavailable states until licensed provider data exists. |
+| Production readiness | 5/10 | Strict readiness correctly fails until deployment env is configured. |
+| Release hygiene | 5/10 | Broad dirty worktree remains; needs human review before staging/commit/deploy. |
 
-| # | Bug | File | Status |
-|---|-----|------|--------|
-| 10 | **Missing security headers** — No X-Frame-Options, X-Content-Type-Options, Referrer-Policy | `next.config.ts` | FIXED |
-| 11 | **Missing proxy routes** — New API routes `/api/pois`, `/api/events`, `/api/hotel-amenities`, `/api/travel-guide` not in public paths | `proxy.ts` | FIXED |
-| 12 | **Error messages leak internals** — `errorResponse()` returned raw `err.message` to clients | `lib/validation.js:39` | FIXED |
+**Overall engineering score:** 8.6/10
+**Go-live readiness:** 5/10 until strict production readiness passes in deployment
 
-### Remaining Bugs (Lower Priority) — All Fixed
+## Changes Completed In This Stabilization Pass
 
-| # | Bug | File | Severity | Status |
-|---|-----|------|----------|--------|
-| 13 | `detectCurrency` always returns USD due to `Intl.NumberFormat` misuse | `lib/currency.ts:39` | Medium | FIXED |
-| 14 | Stale closure in compare page useEffect | `app/compare/page.tsx:126` | Medium | FALSE POSITIVE |
-| 15 | SearchAutocomplete `useCallback` defeated by unstable `allItems` | `components/SearchAutocomplete.tsx:72` | Low | FIXED |
-| 16 | Book page fetches entire catalog to find one hotel | `app/book/[id]/page.tsx:21` | Low | FIXED |
-| 17 | `AnimatePresence` missing around rotating city text | `components/home/HomeHero.tsx` | Low | FIXED |
-| 18 | Division by zero risk when `nights = 0` | `components/HotelDetailClient.tsx` | Low | FIXED |
-| 19 | Duplicate CSS `*:focus-visible` rules with conflicting colors | `app/globals.css:49,89` | Low | FIXED |
-| 20 | `npm audit`: 2 moderate PostCSS vulnerabilities (Next.js dependency) | `package.json` | Low | WONTFIX (upstream) |
+- Rewrote `README.md` and `MASTER-PLAN.md` to describe the current Next.js 16 App Router app, real APIs, Kinde auth, Upstash/KV model, provider model, and no-fabricated-data policy.
+- Added `npm run audit:docs`, `scripts/audit-docs.mjs`, and unit coverage for stale documentation claims.
+- Wired the docs audit into GitHub Actions and `audit:ops`.
+- Promoted one already validated local catalog candidate, bringing the catalog to 133 hotels.
+- Updated app copy and catalog/health floors to the current 133-hotel catalog.
+- Removed the explicit Edge runtime export from the OG image route, eliminating the build warning about Edge runtime disabling static generation.
+- Updated Playwright execution to avoid color-env warning noise.
+- Changed local-storage helpers to access `window.localStorage` only in the browser, avoiding Node server-side Web Storage warnings.
+- Stabilized hotel-detail E2E trust-state coverage by mocking the amenity unavailable response instead of waiting on an external OSM lookup.
+- Added `npm run release:state` and `npm run release:state:strict` so release hygiene is machine-readable and strict release checks fail while the worktree is dirty.
+- Excluded local `.playwright-mcp/` artifacts from release state and made deleted tracked paths explicit in the release-state report.
+- Split release-state reporting into tracked, staged, unstaged, deleted, untracked, and generated-artifact counts so commit review can be sequenced.
+- Added `npm run audit:release-deletions` to keep removed static flight estimates, guarantee copy, provider trust scores, local review form, and heatmap-estimate fallback from returning.
+- Wired `npm run release:state:strict` into CI so clean checkouts fail if verification creates untracked or unstaged release artifacts.
+- Aligned health readiness and ops scorecard with strict production readiness: Kinde env and a complete partner pricing provider env group are now explicit blockers.
+- Extracted production readiness env grouping into `lib/production-readiness.mjs` so the CLI audit, health snapshot, and ops scorecard share one contract.
+- Added `npm run audit:env` so readiness env names cannot drift across `.env.example`, README, runbook, package scripts, and CI.
+- Added `npm run audit:secrets` to block committed env values and accidental production env assignments in scripts or CI.
+- Added `npm run audit:runtime` to prevent Edge Runtime static-generation regressions and Playwright env warning regressions.
+- Added `npm run audit:external-fetches` plus a shared fetch timeout helper so external probes cannot bypass abort handling.
+- Hardened the Wikidata discovery client with shared request timeouts, no-store external fetches, escaped SPARQL string literals, bounded `LIMIT` values, and regression tests for query injection resistance.
+- Added `npm run audit:affiliate-security` and hardened outbound provider redirects to HTTPS allowlisted URLs only.
+- Added `npm run audit:security-responses` so shared admin-auth, validation, and rate-limit helpers cannot regress to cacheable security/error responses.
+- Hardened rate-limit client identity extraction so invalid forwarded IP headers, `unknown` values, IPv4 ports, bracketed IPv6 addresses, and Cloudflare IP headers are normalized before quota keys are built.
+- Hardened admin audit events so non-static actors are stored as deterministic fingerprints, client identifiers are normalized before fingerprinting, and sensitive string values are redacted even when the field name is not sensitive.
+- Hardened price-alert and ops-alert webhook URL validation with a shared helper that rejects embedded URL credentials, blocks non-localhost HTTP, and allows localhost HTTP only outside production.
+- Hardened webhook URL validation against SSRF-prone local, private, carrier-grade NAT, link-local, benchmark, IPv6 loopback, IPv6 ULA, IPv6 link-local, and IPv4-mapped IPv6 destinations even when HTTPS is used.
+- Hardened the public price-alert unsubscribe endpoint with fail-closed rate limiting and timing-safe stored-token comparison to reduce token probing risk.
+- Hardened authenticated price-alert mutations with fail-closed rate limiting before KV writes to reduce repeated alert creation/cancellation abuse.
+- Hardened authenticated price-alert history reads with fail-closed rate limiting before scanning the shared alert event ledger.
+- Hardened user-owned favorites, trips, and preference mutations with fail-closed rate limiting before KV writes to reduce authenticated write abuse.
+- Hardened account data export and deletion with fail-closed rate limiting before privacy dataset reads or destructive KV deletes.
+- Hardened production readiness env checks so placeholder values, short secrets/tokens/keys, non-HTTPS URLs, and URL credentials do not satisfy go-live readiness.
+- Hardened admin bearer token verification with timing-safe comparison for `ADMIN_API_SECRET` and `CRON_SECRET` fallback checks.
+- Hardened cron bearer token verification with timing-safe comparison for `CRON_SECRET` across automated agent and scheduled alert routes.
+- Hardened the service worker so it bypasses non-GET requests, API routes, and private navigation routes instead of intercepting or offline-fallbacking protected surfaces.
+- Hardened public mutation routes (`/api/click`, `/api/price-accuracy`, and `/api/agents/recommendations`) with same-origin enforcement and regression coverage.
+- Hardened admin mutation routes (`/api/agents/providers`, `/api/agents/discovered`, `/api/catalog/validate`, and `/api/catalog/candidates`) with same-origin enforcement before provider resets, validation calls, or catalog candidate writes.
+- Hardened the shared same-origin guard to reject cross-origin `Referer` headers when `Origin` is absent and to reject non-HTTP(S) origin protocols before mutation routes run.
+- Added `npm run audit:api-errors` and marked direct API error responses as `no-store`.
+- Added `npm run audit:cron-cache` and marked cron-protected agent responses as `no-store`.
 
----
+## Residual Risks
 
-## Part 2: Security Audit
+| Risk | Severity | Current state | Required action |
+| --- | ---: | --- | --- |
+| Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
+| No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
+| Dependency audit not completed here | Medium | External audit blocked by policy. | Run `npm audit` in an environment approved to disclose dependency metadata. |
+| Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
+| Inventory scale | High | 133 hotels is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
+| Broad dirty worktree | Medium | Many pre-existing modified/untracked files remain. | Review `git status --short` and split/stage intentionally before release. |
+| Tracked deletions require final approval | Medium | `release:state` lists `FlightEstimate`, `PriceGuarantee`, `ProviderTrustScore`, `UserReviewForm`, and `heatmap-provider` deletions; `audit:release-deletions` blocks their return. | Confirm these removals in the release review before commit. |
 
-### Vulnerability Summary
+## Release Gate
 
-| Category | Count | Severity |
-|----------|-------|----------|
-| Broken Access Control | 2 | Critical (FIXED) |
-| Injection | 1 | High (FIXED) |
-| Security Misconfiguration | 2 | Medium (1 FIXED) |
-| Missing Rate Limiting | 1 | Medium (FIXED) |
-| Information Disclosure | 1 | Medium (FIXED) |
-| Vulnerable Dependencies | 1 | Low |
+Do not go live until all of these are true:
 
-### Security Score: 8/10 (post-fixes)
-
-**Security improvements applied:**
-1. ~~**Add rate limiting**~~ — DONE: KV-backed sliding-window limiter on `/api/compare`, `/api/click`, `/api/catalog/validate`
-2. ~~**Add Content-Security-Policy header**~~ — DONE: CSP with allowlisted domains in `next.config.ts`
-3. ~~**Cap radius/limit params**~~ — DONE: POIs radius capped at 25km, discover-osm limit capped at 100
-4. **Add CSRF protection** for POST routes — N/A (JSON APIs with `Content-Type: application/json` are CSRF-safe)
-5. **Require admin auth** for `/api/catalog/validate` — Partially done (rate limited, but no admin key gate)
-
----
-
-## Part 3: Scoring by Category
-
-| Category | Score | Details |
-|----------|-------|---------|
-| **Architecture** | 8/10 | Clean separation (app/components/lib), SSR + client shells, good provider abstraction, 12 background agents. KV-persisted catalog survives cold starts. |
-| **Performance** | 7/10 | SSR eliminates CSR waterfalls. Hero uses `next/image` with blur placeholders. Dynamic imports for below-fold. Debounced search. |
-| **SEO** | 9/10 | Full OpenGraph/Twitter meta, JSON-LD structured data (LodgingBusiness, FAQPage, BreadcrumbList, WebSite, Organization, SearchAction), sitemap, robots.txt. SSR on search/hotel/deals. `generateMetadata` with dynamic titles. Breadcrumbs on hotel, search, deals, about, and city pages. |
-| **Security** | 8/10 | Auth with Kinde, hardened cron auth, input sanitization, rate limiting on key endpoints, CSP header, HSTS, capped API params, security headers. |
-| **Data Sources** | 9/10 | 25+ free integrations (Overpass, OpenTripMap, Wikivoyage, Wikipedia, Wikidata, Open-Meteo, Ticketmaster, Nominatim, DBpedia, exchange rates, holidays). Excellent for zero-cost operation. |
-| **Features** | 8/10 | Price comparison, cheaper dates, deals, city guides, safety, weather, events, POIs, amenities, trip planning, favorites, AI agent dashboard, real price history, affiliate tracking. |
-| **UI/UX** | 7/10 | Clean Tailwind design, responsive, accessibility panel, mobile bottom bar, cookie consent. Weakness: no dark mode, some emoji-only buttons lack aria labels. |
-| **Mobile** | 8/10 | Responsive grid patterns, MobileBottomBar, FilterDrawer. PWA manifest present. No native apps. |
-| **Accessibility** | 7/10 | Skip-to-content, aria-labels on nav, keyboard escape handler, AccessibilityPanel. Weakness: no focus traps in modals, some color contrast issues. |
-| **Error Handling** | 8/10 | Custom error.tsx, not-found.tsx, ErrorBoundary, loading states, AbortController in fetches. Good resilience. |
-| **Caching** | 8/10 | KV with Redis/in-memory fallback, TTL support, HTTP Cache-Control headers. Price cache with 30-min TTL. Long cache for static assets (1yr, immutable). Service worker with stale-while-revalidate. |
-| **Testing** | 7/10 | 95 tests (Vitest) across 9 modules: 6 unit test suites for lib/ modules + 3 API route test suites. Lib modules well covered. Weakness: no component tests. |
-| **i18n** | 2/10 | Hardcoded English only. No RTL support. Static `lang="en"`. Currency selector exists but no locale routing. |
-| **Code Quality** | 7/10 | TypeScript for components, no TODO/FIXME comments, validation module. Some console.error in production, double-stringify bug was present. |
-| **DevOps** | 7/10 | Vercel deploy, cron-based orchestrator, health monitoring agent. No CI/CD pipeline visible, no staging environment. |
-| **OVERALL** | **8.0/10** | |
-
----
-
-## Part 4: Competitor Comparison
-
-### Feature Matrix
-
-| Feature | SV Booking | Booking.com | Trivago | Kayak | Hotels.com | TripAdvisor | Google Hotels |
-|---------|-----------|-------------|---------|-------|------------|-------------|---------------|
-| **Inventory** | 134 hotels | Millions | Millions | Millions | Millions | Millions | Millions |
-| **Price providers** | 8+ | Own | 400+ | 200+ | Own | 200+ | 200+ |
-| **Real-time pricing** | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
-| **Cheaper dates** | Yes | Yes | No | Yes | No | No | Yes |
-| **Price history** | Real + Estimated | No | No | Yes | No | No | Yes |
-| **User reviews** | Form only | Millions | Links | Links | Millions | Millions | Aggregated |
-| **City guides** | Yes | Basic | No | No | No | Rich | Basic |
-| **Safety info** | Yes | No | No | No | No | Yes | No |
-| **Weather** | Yes | No | No | No | No | No | Yes |
-| **Events** | Yes | No | No | No | No | Yes | Yes |
-| **Nearby POIs** | Yes (OSM) | Limited | No | No | No | Yes | Yes |
-| **Direct booking** | No (redirect) | Yes | No | No | Yes | No | No |
-| **Loyalty program** | No | Genius | No | No | 1 free night | No | No |
-| **Mobile app** | PWA | Native | Native | Native | Native | Native | Native |
-| **AI agents** | Yes (12) | No | No | No | No | No | No |
-| **Background refresh** | Every 6h | Real-time | Real-time | Real-time | Real-time | Real-time | Real-time |
-| **Open data stack** | Yes | No | No | No | No | No | No |
-
-### Competitive Scoring
-
-| Competitor | Inventory | Price Compare | UX/UI | Content | Features | Mobile | Trust | TOTAL |
-|-----------|-----------|--------------|-------|---------|----------|--------|-------|-------|
-| **SV Booking** | 3/10 | 8/10 | 8/10 | 8/10 | 9/10 | 7/10 | 6/10 | **7.0/10** |
-| **Booking.com** | 10/10 | 5/10 | 9/10 | 6/10 | 9/10 | 10/10 | 10/10 | **8.4/10** |
-| **Trivago** | 9/10 | 9/10 | 7/10 | 3/10 | 6/10 | 8/10 | 8/10 | **7.1/10** |
-| **Kayak** | 9/10 | 9/10 | 8/10 | 4/10 | 8/10 | 9/10 | 8/10 | **7.9/10** |
-| **Hotels.com** | 10/10 | 5/10 | 8/10 | 5/10 | 8/10 | 9/10 | 9/10 | **7.7/10** |
-| **TripAdvisor** | 9/10 | 8/10 | 7/10 | 10/10 | 8/10 | 9/10 | 9/10 | **8.6/10** |
-| **Google Hotels** | 10/10 | 9/10 | 9/10 | 7/10 | 7/10 | 10/10 | 10/10 | **8.9/10** |
-
----
-
-## Part 5: What's Missing to Be #1
-
-### Tier 1 — Blocking Issues (Must have)
-
-| # | Gap | Impact | Effort |
-|---|-----|--------|--------|
-| 1 | **Inventory: 134 vs millions** | No user will stay if their hotel isn't listed. This is THE #1 blocker. | High |
-| 2 | **No real reviews** | Reviews are the #1 decision factor for travelers. We have a form but no data. | High |
-| 3 | ~~**All pages are CSR**~~ | ~~Search engines index blank pages. Zero organic traffic potential.~~ | ~~Medium~~ FIXED |
-| 4 | ~~**No real price history**~~ | ~~PriceHistory component uses fake hash-generated data.~~ | ~~Low~~ FIXED |
-| 5 | ~~**No unit/component tests**~~ | ~~Only 13 E2E tests. No confidence in refactoring.~~ | ~~Medium~~ FIXED (95 tests) |
-
-### Tier 2 — Competitive Gaps (Should have)
-
-| # | Gap | Impact | Effort |
-|---|-----|--------|--------|
-| 6 | **No push notifications** for price alerts | Users forget about us between sessions | Medium |
-| 7 | ~~**No affiliate monetization**~~ | ~~Redirect URLs lack tracking params~~ — FIXED: `/api/click` with per-provider affiliate params | ~~Low~~ FIXED |
-| 8 | **No loyalty/rewards system** | No stickiness mechanism | High |
-| 9 | **No native mobile apps** | PWA exists but stores demand native presence | High |
-| 10 | **No i18n** | Locked out of non-English markets (70%+ of global travelers) | High |
-
-### Tier 3 — Nice to Have (Differentiators)
-
-| # | Gap | Impact | Effort |
-|---|-----|--------|--------|
-| 11 | User-generated photos and Q&A | Community engagement | Medium |
-| 12 | AI-powered personalized recommendations | Beyond rule-based suggestions | Medium |
-| 13 | Real-time price tracking (WebSocket) | Instant updates instead of 6h refresh | High |
-| 14 | Flight + hotel bundles | Cross-sell opportunity | High |
-| 15 | Group booking support | Untapped market | Medium |
-
----
-
-## Part 6: Our Unique Advantages
-
-These are areas where SV Booking **already beats competitors**:
-
-1. **AI Agent System (12 agents)** — No competitor has automated deal scanning, health monitoring, provider management, and cache pre-warming as a user-visible feature. This is genuinely novel.
-
-2. **Travel Content Depth** — Safety info, weather, events, city guides, flight estimates, and nearby POIs all on one hotel page. Most competitors silo this content into separate apps.
-
-3. **True Multi-Provider Transparency** — 7 independent pricing sources with visible provider trust scores, circuit breakers, and automatic failover. Trivago and Kayak compare but never show the machinery.
-
-4. **Zero-Cost Data Stack** — Built entirely on free/open APIs (Wikivoyage, OSM, Open-Meteo, Wikidata, OpenTripMap). Operating cost is essentially just hosting.
-
-5. **Privacy-First Design** — Favorites and trips stored locally by default, auth optional. No tracking pixels, no ad network dependencies.
-
----
-
-## Part 7: Recommended Roadmap to #1
-
-### Phase 1: Foundation (Weeks 1-4) — COMPLETE
-- [x] Convert search, hotel, deals pages to server components (SSR for SEO)
-- [x] Scale catalog via automated discovery agents (validation cap 30→200)
-- [x] Add unit tests for all lib/ modules (74 tests, 6 modules)
-- [x] Add rate limiting on key API routes (compare, click, catalog/validate)
-- [x] Implement affiliate tracking parameters (Booking.com, Expedia, Agoda, etc.)
-
-### Phase 2: Content & Trust (Weeks 5-8) — MOSTLY COMPLETE
-- [ ] Integrate TripAdvisor Content API or Google Places for real reviews
-- [x] Store real price history on every comparison call
-- [ ] Add push notifications for price drops (service worker)
-- [x] Add Content-Security-Policy header
-- [x] Fix remaining 11 low/medium bugs (all fixed)
-
-### Phase 3: Growth (Weeks 9-16)
-- [ ] i18n framework (next-intl) with 5 languages
-- [ ] Native mobile app (React Native or Capacitor)
-- [ ] Loyalty points system
-- [ ] AI-powered recommendation engine
-- [ ] Scale catalog to 50,000+ hotels
-
-### Phase 4: Market Leadership (Months 4-6)
-- [ ] Real-time price tracking (WebSocket/SSE)
-- [ ] Flight + hotel bundles
-- [ ] User-generated content platform
-- [ ] Regional expansion (Asia, LATAM, MENA)
-- [ ] Group booking support
-
----
-
-## Appendix: Files Modified in This Audit + Competitive Gap Closure
-
-### Initial Audit Fixes
-| File | Change |
-|------|--------|
-| `proxy.ts` | Fixed auth bypass, added missing public paths, added `/api/price-history` and `/api/click` |
-| `lib/kv.js` | Fixed double-stringify bug |
-| `lib/agent-utils.js` | Hardened cron auth (deny by default in prod) |
-| `lib/auth.js` | Added AuthError class for proper 401 responses |
-| `lib/validation.js` | Handle AuthError, stop leaking error internals |
-| `lib/overpass.js` | Sanitize city/country names against injection |
-| `lib/overpass-pois.js` | Sanitize hotel names against injection |
-| `lib/city-coordinates.ts` | Added 26 missing city coordinates |
-| `next.config.ts` | Added security headers + CSP |
-| `app/search/page.tsx` | Fixed setState-in-useMemo, converted to SSR server component |
-| `app/api/me/prefs/route.js` | Expanded VALID_CURRENCIES to all 14 |
-| `components/PriceDropAlert.tsx` | Fixed wrong localStorage key |
-
-### SSR Migration (Phase 1)
-| File | Change |
-|------|--------|
-| `app/search/page.tsx` | Server component with `generateMetadata`, passes data to SearchClient |
-| `components/SearchClient.tsx` | NEW — client shell for search page interactivity |
-| `app/hotel/[key]/page.tsx` | Server wrapper with `findHotel()`, passes hotel prop |
-| `components/HotelDetailClient.tsx` | NEW — full client hotel detail logic |
-| `app/deals/page.tsx` | Server component with SEO metadata |
-| `components/DealsClient.tsx` | NEW — client deals page logic |
-
-### Catalog Scaling (Phase 2)
-| File | Change |
-|------|--------|
-| `app/api/agents/auto/bulk-discovery/route.js` | Validation cap 30→200 |
-| `lib/hotels-catalog.js` | Added `getFullCatalog()` with KV persistence |
-| `app/api/compare/route.js` | Uses `getFullCatalog()`, stores price snapshots |
-
-### Real Price History (Phase 3)
-| File | Change |
-|------|--------|
-| `app/api/price-history/route.js` | NEW — price history API |
-| `components/PriceHistory.tsx` | Fetches real data, falls back to estimated |
-
-### Performance (Phase 4)
-| File | Change |
-|------|--------|
-| `components/home/HomeHero.tsx` | `next/image` with blur placeholders, AnimatePresence |
-
-### Affiliate Revenue (Phase 5)
-| File | Change |
-|------|--------|
-| `lib/affiliate.ts` | NEW — per-provider affiliate URL builder |
-| `app/api/click/route.js` | NEW — outbound click tracking with rate limiting |
-
-### Bug Fixes (Round 2)
-| File | Change |
-|------|--------|
-| `lib/currency.ts` | Fixed detectCurrency with locale-to-currency mapping |
-| `components/SearchAutocomplete.tsx` | useMemo for allItems array |
-| `app/book/[id]/page.tsx` | Fetch single hotel instead of entire catalog |
-| `components/HotelDetailClient.tsx` | Guard division by zero (Math.max(nights, 1)) |
-| `app/globals.css` | Removed duplicate focus-visible rule |
-
-### Security Hardening
-| File | Change |
-|------|--------|
-| `lib/rate-limit.js` | NEW — KV-backed sliding-window rate limiter |
-| `app/api/compare/route.js` | Rate limiting on price comparisons |
-| `app/api/click/route.js` | Rate limiting on click tracking |
-| `app/api/catalog/validate/route.js` | Rate limiting on validation |
-| `app/api/pois/route.js` | Capped radius at 25km |
-
-### Testing
-| File | Change |
-|------|--------|
-| `vitest.config.ts` | NEW — Vitest configuration |
-| `tests/currency.test.ts` | NEW — 13 tests for currency module |
-| `tests/validation.test.ts` | NEW — 13 tests for validation module |
-| `tests/hotels-catalog.test.ts` | NEW — 20 tests for catalog module |
-| `tests/affiliate.test.ts` | NEW — 11 tests for affiliate module |
-| `tests/rate-limit.test.ts` | NEW — 7 tests for rate limiter |
-| `tests/kv.test.ts` | NEW — 10 tests for KV storage |
-| `tests/api-search.test.ts` | NEW — 8 tests for search API route |
-| `tests/api-price-history.test.ts` | NEW — 6 tests for price history API route |
-| `tests/api-click.test.ts` | NEW — 7 tests for click tracking API route |
-
-### PWA & Offline Support
-| File | Change |
-|------|--------|
-| `public/sw.js` | NEW — service worker with offline fallback and stale-while-revalidate |
-| `app/offline/page.tsx` | NEW — offline fallback page |
-| `components/ServiceWorkerRegistration.tsx` | NEW — production-only SW registration |
-
-### SEO Enhancements
-| File | Change |
-|------|--------|
-| `app/hotel/[key]/layout.tsx` | Added BreadcrumbList JSON-LD |
-| `app/search/page.tsx` | Added BreadcrumbList JSON-LD (dynamic with city param) |
-| `app/deals/page.tsx` | Added BreadcrumbList JSON-LD |
-| `app/about/page.tsx` | Added BreadcrumbList JSON-LD |
-| `next.config.ts` | Added HSTS, static asset caching (1yr immutable), SW cache control |
-
-### Stats & Domain Cleanup
-| File | Change |
-|------|--------|
-| `components/home/HomeStats.tsx` | Updated 63→130 hotels, 20→46 cities |
-| `components/OnboardingTour.tsx` | Updated catalog stats |
-| `components/TrustBadges.tsx` | Updated catalog stats |
-| `components/FAQ.tsx` | Updated coverage answer |
-| `components/WhyChooseUs.tsx` | Updated 20→45+ cities |
-| `components/home/HomeHowItWorks.tsx` | Updated 20→45+ cities |
-| `app/about/page.tsx` | Updated stats (63→130+ hotels, 20→45+ cities, 15→20+ countries) |
-| `app/about/layout.tsx` | Updated metadata description |
-| `app/deals/page.tsx` | Updated metadata description |
-| `app/robots.ts` | Fixed stale Vercel domain |
-| `app/city/[name]/page.tsx` | Fixed 2 stale domain references |
-| `app/hotel/[key]/layout.tsx` | Fixed stale domain, updated hotel count |
-| `components/ComparisonSummary.tsx` | Fixed share text domain |
-
-### Affiliate Revenue Fix
-| File | Change |
-|------|--------|
-| `components/HotelDetailClient.tsx` | Changed booking button from `<a>` to `<button>` with async `/api/click` redirect — fixes zero affiliate revenue bug |
+- `npm run audit:production:strict` passes in deployment.
+- `npm run lint`, `npm test`, `npm run build`, and `npm run test:e2e` pass.
+- Every non-strict `npm run audit:*` script passes.
+- `npm audit` has passed in an approved environment.
+- The dirty worktree has been reviewed and committed intentionally.
+- `Math.random()` remains forbidden everywhere in code.
+- No fake hotel, review, price, provider, urgency, availability, or production-readiness data has been added.

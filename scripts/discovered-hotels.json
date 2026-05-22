@@ -1,0 +1,492 @@
+[
+  {
+    "hotelKey": "g186338-d209237",
+    "name": "The Trafalgar St. James London, Curio Collection by Hilton",
+    "city": "London",
+    "country": "United Kingdom",
+    "valid": true
+  },
+  {
+    "hotelKey": "g186338-d195184",
+    "name": "Hilton London Hyde Park",
+    "city": "London",
+    "country": "United Kingdom",
+    "valid": true
+  },
+  {
+    "hotelKey": "g186338-d193102",
+    "name": "DoubleTree by Hilton Hotel London - West End",
+    "city": "London",
+    "country": "United Kingdom",
+    "valid": true
+  },
+  {
+    "hotelKey": "g186338-d195216",
+    "name": "DoubleTree by Hilton Hotel London - Hyde Park",
+    "city": "London",
+    "country": "United Kingdom",
+    "valid": true
+  },
+  {
+    "hotelKey": "g186338-d195185",
+    "name": "Hilton London Kensington",
+    "city": "London",
+    "country": "United Kingdom",
+    "valid": true
+  },
+  {
+    "hotelKey": "g186338-d289306",
+    "name": "DoubleTree by Hilton Hotel London ExCel",
+    "city": "London",
+    "country": "United Kingdom",
+    "valid": true
+  },
+  {
+    "hotelKey": "g186338-d23906171",
+    "name": "Lost Property St Paul's London - Curio Collection by Hilton",
+    "city": "London",
+    "country": "United Kingdom",
+    "valid": true
+  },
+  {
+    "hotelKey": "g186338-d195204",
+    "name": "DoubleTree by Hilton Hotel London - Victoria",
+    "city": "London",
+    "country": "United Kingdom",
+    "valid": true
+  },
+  {
+    "hotelKey": "g186338-d199848",
+    "name": "100 Queen's Gate Hotel London, Curio Collection by Hilton",
+    "city": "London",
+    "country": "United Kingdom",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187791-d190138",
+    "name": "Rome Cavalieri, A Waldorf Astoria Hotel",
+    "city": "Rome",
+    "country": "Italy",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187870-d32976113",
+    "name": "Hampton by Hilton Venice Isola Nuova",
+    "city": "Venice",
+    "country": "Italy",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187791-d203094",
+    "name": "Hilton Garden Inn Rome Colosseum",
+    "city": "Rome",
+    "country": "Italy",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187438-d28897091",
+    "name": "Hampton by Hilton Malaga Martiricos",
+    "city": "Málaga",
+    "country": "Spain",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187441-d1025279",
+    "name": "Senator Granada Spa Hotel",
+    "city": "Granada",
+    "country": "Spain",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187323-d191438",
+    "name": "Hilton Berlin",
+    "city": "Berlin",
+    "country": "Germany",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187323-d1858856",
+    "name": "Hampton by Hilton Berlin City West",
+    "city": "Berlin",
+    "country": "Germany",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187399-d199740",
+    "name": "Hilton Dresden",
+    "city": "Dresden",
+    "country": "Germany",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187309-d14102023",
+    "name": "Hilton Garden Inn Munich City West",
+    "city": "Munich",
+    "country": "Germany",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187309-d14149849",
+    "name": "Hampton by Hilton Munich City West",
+    "city": "Munich",
+    "country": "Germany",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187323-d2481544",
+    "name": "Waldorf Astoria Berlin",
+    "city": "Berlin",
+    "country": "Germany",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187323-d12239014",
+    "name": "Hampton by Hilton Berlin City Centre Alexanderplatz",
+    "city": "Berlin",
+    "country": "Germany",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187309-d1879138",
+    "name": "Adagio Muenchen City",
+    "city": "Munich",
+    "country": "Germany",
+    "valid": true
+  },
+  {
+    "hotelKey": "g187309-d23891304",
+    "name": "Hampton by Hilton Munich City North",
+    "city": "Munich",
+    "country": "Germany",
+    "valid": true
+  },
+  {
+    "hotelKey": "g189400-d28030390",
+    "name": "Anise Aluma Athens, Tapestry Collection by Hilton",
+    "city": "Athens",
+    "country": "Greece",
+    "valid": true
+  },
+  {
+    "hotelKey": "g189400-d34175623",
+    "name": "Conrad Athens The Ilisian",
+    "city": "Athens",
+    "country": "Greece",
+    "valid": true
+  },
+  {
+    "hotelKey": "g303272-d15336700",
+    "name": "Hotel Fasano Salvador",
+    "city": "Salvador",
+    "country": "Brazil",
+    "valid": true
+  },
+  {
+    "hotelKey": "g303272-d940061",
+    "name": "Gran Hotel Stella Maris",
+    "city": "Salvador",
+    "country": "Brazil",
+    "valid": true
+  },
+  {
+    "hotelKey": "g303272-d3723986",
+    "name": "Hotel da Bahia",
+    "city": "Salvador",
+    "country": "Brazil",
+    "valid": true
+  },
+  {
+    "hotelKey": "g303272-d299387",
+    "name": "Hotel Quatro Rodas",
+    "city": "Salvador",
+    "country": "Brazil",
+    "valid": true
+  },
+  {
+    "hotelKey": "g303272-d300919",
+    "name": "Novotel Salvador Rio Vermelho",
+    "city": "Salvador",
+    "country": "Brazil",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294201-d1597516",
+    "name": "Kempinski Nile Hotel Cairo",
+    "city": "Cairo",
+    "country": "Egypt",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294201-d13327782",
+    "name": "Cleopatra Hotel",
+    "city": "Cairo",
+    "country": "Egypt",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294201-d12527818",
+    "name": "St. Regis Cairo",
+    "city": "Cairo",
+    "country": "Egypt",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294201-d302720",
+    "name": "Conrad Cairo",
+    "city": "Cairo",
+    "country": "Egypt",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294201-d308077",
+    "name": "Four Seasons Hotel Cairo at Nile Plaza",
+    "city": "Cairo",
+    "country": "Egypt",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294201-d304481",
+    "name": "Sofitel Cairo El Gezirah",
+    "city": "Cairo",
+    "country": "Egypt",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294201-d580690",
+    "name": "Fairmont Nile City",
+    "city": "Cairo",
+    "country": "Egypt",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294201-d299719",
+    "name": "Cairo Marriott Hotel & Omar Khayyam Casino",
+    "city": "Cairo",
+    "country": "Egypt",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294201-d460113",
+    "name": "Victoria Cairo Hotel",
+    "city": "Cairo",
+    "country": "Egypt",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294201-d21223645",
+    "name": "Madina Hostel",
+    "city": "Cairo",
+    "country": "Egypt",
+    "valid": true
+  },
+  {
+    "hotelKey": "g304551-d2463248",
+    "name": "DoubleTree by Hilton Hotel Gurgaon - New Delhi NCR",
+    "city": "New Delhi",
+    "country": "India",
+    "valid": true
+  },
+  {
+    "hotelKey": "g304555-d6540893",
+    "name": "Hilton Jaipur",
+    "city": "Jaipur",
+    "country": "India",
+    "valid": true
+  },
+  {
+    "hotelKey": "g304551-d1546198",
+    "name": "Hilton Garden Inn New Delhi/Saket",
+    "city": "New Delhi",
+    "country": "India",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294197-d3477158",
+    "name": "Conrad Seoul",
+    "city": "Seoul",
+    "country": "South Korea",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294197-d9764280",
+    "name": "Handpicked Hotel & Collections",
+    "city": "Seoul",
+    "country": "South Korea",
+    "valid": true
+  },
+  {
+    "hotelKey": "g298570-d12616250",
+    "name": "Hilton Garden Inn Kuala Lumpur Jalan Tuanku Abdul Rahman North",
+    "city": "Kuala Lumpur",
+    "country": "Malaysia",
+    "valid": true
+  },
+  {
+    "hotelKey": "g298570-d1759018",
+    "name": "DoubleTree by Hilton Hotel Kuala Lumpur",
+    "city": "Kuala Lumpur",
+    "country": "Malaysia",
+    "valid": true
+  },
+  {
+    "hotelKey": "g298570-d14938612",
+    "name": "Hilton Garden Inn Kuala Lumpur Jalan Tuanku Abdul Rahman South",
+    "city": "Kuala Lumpur",
+    "country": "Malaysia",
+    "valid": true
+  },
+  {
+    "hotelKey": "g298570-d555433",
+    "name": "Hilton Kuala Lumpur",
+    "city": "Kuala Lumpur",
+    "country": "Malaysia",
+    "valid": true
+  },
+  {
+    "hotelKey": "g255103-d255646",
+    "name": "Parmelia Hilton Perth",
+    "city": "Perth",
+    "country": "Australia",
+    "valid": true
+  },
+  {
+    "hotelKey": "g255068-d33251079",
+    "name": "InterContinental Brisbane",
+    "city": "Brisbane",
+    "country": "Australia",
+    "valid": true
+  },
+  {
+    "hotelKey": "g255060-d255650",
+    "name": "Hilton Sydney",
+    "city": "Sydney",
+    "country": "Australia",
+    "valid": true
+  },
+  {
+    "hotelKey": "g255100-d276183",
+    "name": "DoubleTree by Hilton Hotel Melbourne - Flinders Street",
+    "city": "Melbourne",
+    "country": "Australia",
+    "valid": true
+  },
+  {
+    "hotelKey": "g189158-d227433",
+    "name": "Ramada by Wyndham Lisbon",
+    "city": "Lisbon",
+    "country": "Portugal",
+    "valid": true
+  },
+  {
+    "hotelKey": "g189158-d674862",
+    "name": "DoubleTree by Hilton Lisbon - Fontana Park",
+    "city": "Lisbon",
+    "country": "Portugal",
+    "valid": true
+  },
+  {
+    "hotelKey": "g189180-d25401610",
+    "name": "Arts Hotel Porto, Tapestry Collection by Hilton",
+    "city": "Porto",
+    "country": "Portugal",
+    "valid": true
+  },
+  {
+    "hotelKey": "g190454-d227146",
+    "name": "Hilton Vienna Waterfront",
+    "city": "Vienna",
+    "country": "Austria",
+    "valid": true
+  },
+  {
+    "hotelKey": "g190454-d227145",
+    "name": "Hilton Vienna Plaza",
+    "city": "Vienna",
+    "country": "Austria",
+    "valid": true
+  },
+  {
+    "hotelKey": "g190454-d2216081",
+    "name": "DoubleTree by Hilton Vienna Schonbrunn",
+    "city": "Vienna",
+    "country": "Austria",
+    "valid": true
+  },
+  {
+    "hotelKey": "g190454-d228207",
+    "name": "Hilton Vienna Park",
+    "city": "Vienna",
+    "country": "Austria",
+    "valid": true
+  },
+  {
+    "hotelKey": "g155019-d6678171",
+    "name": "Delta Toronto Hotel",
+    "city": "Toronto",
+    "country": "Canada",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294207-d1158294",
+    "name": "Tribe Hotel",
+    "city": "Nairobi",
+    "country": "Kenya",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294207-d13996430",
+    "name": "Trademark Hotel",
+    "city": "Nairobi",
+    "country": "Kenya",
+    "valid": true
+  },
+  {
+    "hotelKey": "g294454-d15120354",
+    "name": "Canopy by Hilton Zagreb - City Centre",
+    "city": "Zagreb",
+    "country": "Croatia",
+    "valid": true
+  },
+  {
+    "hotelKey": "g274887-d25631806",
+    "name": "Hampton by Hilton Budapest City Centre",
+    "city": "Budapest",
+    "country": "Hungary",
+    "valid": true
+  },
+  {
+    "hotelKey": "g293962-d300682",
+    "name": "Hilton Colombo Residences",
+    "city": "Colombo",
+    "country": "Sri Lanka",
+    "valid": true
+  },
+  {
+    "hotelKey": "g295419-d13613394",
+    "name": "The Hotel Galleria Jeddah, Curio Collection by Hilton",
+    "city": "Jeddah",
+    "country": "Saudi Arabia",
+    "valid": true
+  },
+  {
+    "hotelKey": "g293995-d7178459",
+    "name": "DoubleTree by Hilton Riyadh - Al Muroj Business Gate",
+    "city": "Riyadh",
+    "country": "Saudi Arabia",
+    "valid": true
+  },
+  {
+    "hotelKey": "g189934-d26687987",
+    "name": "Waldorf Astoria Helsinki",
+    "city": "Helsinki",
+    "country": "Finland",
+    "valid": true
+  },
+  {
+    "hotelKey": "g189934-d228677",
+    "name": "Hilton Helsinki Kalastajatorppa",
+    "city": "Helsinki",
+    "country": "Finland",
+    "valid": true
+  }
+]

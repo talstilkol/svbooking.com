@@ -24,6 +24,7 @@ describe('GET /api/price-history', () => {
   it('returns 400 when hotelKey is missing', async () => {
     const res = await GET(makeRequest(''));
     expect(res.status).toBe(400);
+    expect(res.headers.get('Cache-Control')).toBe('no-store');
     const data = await res.json();
     expect(data.error).toContain('hotelKey');
   });
@@ -33,6 +34,7 @@ describe('GET /api/price-history', () => {
     const data = await res.json();
     expect(data.hasRealData).toBe(false);
     expect(data.points).toEqual([]);
+    expect(data.dataPolicy).toBe('verified-provider-observations-only');
   });
 
   it('returns real price history data', async () => {
@@ -48,6 +50,33 @@ describe('GET /api/price-history', () => {
     expect(data.points.length).toBe(1);
     expect(data.points[0].price).toBe(150);
     expect(data.points[0].provider).toBe('Booking.com');
+    expect(data.dataPolicy).toBe('verified-provider-observations-only');
+  });
+
+  it('filters out unverified price history entries', async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const history = [
+      { date: today, price: 0, provider: 'Booking.com', source: 'xotelo' },
+      { date: today, price: 120, provider: 'unknown', source: 'xotelo' },
+      { date: today, price: 130, provider: 'Expedia', source: 'heatmap' },
+      { date: '2026-02-30', price: 140, provider: 'Expedia', source: 'xotelo' },
+      { date: today, price: 150, provider: 'Booking.com', source: 'xotelo' },
+    ];
+    mockStore.set('price-history:g123-d456', history);
+
+    const res = await GET(makeRequest('hotelKey=g123-d456'));
+    const data = await res.json();
+    expect(data.hasRealData).toBe(true);
+    expect(data.points).toEqual([
+      {
+        date: today,
+        price: 150,
+        provider: 'Booking.com',
+        source: 'xotelo',
+        lastCheckedAt: null,
+      },
+    ]);
+    expect(data.totalPoints).toBe(1);
   });
 
   it('filters by period', async () => {

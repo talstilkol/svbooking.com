@@ -1,0 +1,73 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+
+const root = process.cwd();
+const failures = [];
+
+async function readProjectFile(relativePath) {
+  return readFile(path.join(root, relativePath), 'utf8');
+}
+
+function requireIncludes(source, relativePath, snippets) {
+  for (const snippet of snippets) {
+    if (!source.includes(snippet)) failures.push(`${relativePath} is missing: ${snippet}`);
+  }
+}
+
+const i18n = await readProjectFile('lib/i18n.js');
+requireIncludes(i18n, 'lib/i18n.js', [
+  'SUPPORTED_LOCALES',
+  "code: 'en'",
+  "code: 'he'",
+  "dir: 'rtl'",
+  'CORE_TRANSLATIONS',
+  'resolveLocale',
+  'getDictionary',
+  'getTranslation',
+  'formatLocalizedDate',
+  'formatLocalizedCurrency',
+  'buildLocalePayload',
+  'getI18nReadiness',
+  "contentTranslation: 'partial'",
+  'fallbackPolicy',
+]);
+
+const route = await readProjectFile('app/api/i18n/route.js');
+requireIncludes(route, 'app/api/i18n/route.js', [
+  'getI18nReadiness',
+  'buildLocalePayload',
+  'accept-language',
+  'Cache-Control',
+  'no-store',
+]);
+
+const layout = await readProjectFile('app/layout.tsx');
+requireIncludes(layout, 'app/layout.tsx', [
+  'lang="en"',
+  'dir="ltr"',
+  'LocaleRuntime',
+]);
+
+const runtime = await readProjectFile('components/LocaleRuntime.tsx');
+requireIncludes(runtime, 'components/LocaleRuntime.tsx', [
+  'LOCAL_STORAGE_KEYS.locale',
+  'document.documentElement.lang',
+  'document.documentElement.dir',
+  'dataset.localeDirection',
+  'URLSearchParams',
+  'resolveLocale',
+]);
+
+const health = await readProjectFile('lib/health-readiness.js');
+requireIncludes(health, 'lib/health-readiness.js', [
+  'getI18nReadiness',
+  'i18n',
+]);
+
+if (failures.length > 0) {
+  console.error('i18n audit failures:');
+  for (const failure of failures) console.error(`- ${failure}`);
+  process.exit(1);
+}
+
+console.log('i18n audit passed');

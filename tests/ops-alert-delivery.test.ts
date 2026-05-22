@@ -1,0 +1,120 @@
+import { describe, expect, it } from 'vitest';
+import {
+  deliverOpsAlertReport,
+  isOpsAlertDeliveryConfigured,
+} from '@/lib/ops-alert-delivery';
+
+const report = {
+  service: 'sv-booking',
+  checkedAt: '2026-05-14T12:00:00.000Z',
+  status: 'critical',
+  summary: { total: 1, critical: 1, warning: 0, info: 0, apiKey: 'summary-secret' },
+  alerts: [{
+    id: 'cache-not-durable',
+    severity: 'critical',
+    domain: 'production-readiness',
+    message: 'Persistent KV cache is not configured.',
+    evidence: {
+      cacheMode: 'memory',
+      webhookSecret: 'alert-evidence-secret',
+      nested: { authorization: 'Bearer hidden' },
+    },
+    action: 'Configure persistent Redis/KV before production scale.',
+    internalToken: 'alert-token',
+  }],
+  evidence: {
+    healthStatus: 'error',
+    providerApiKey: 'provider-secret',
+  },
+};
+
+describe('ops alert delivery', () => {
+  it('requires a valid webhook URL and secret before reporting configured', () => {
+    expect(isOpsAlertDeliveryConfigured({
+      OPS_ALERT_WEBHOOK_URL: '',
+      OPS_ALERT_WEBHOOK_SECRET: '',
+    })).toBe(false);
+    expect(isOpsAlertDeliveryConfigured({
+      OPS_ALERT_WEBHOOK_URL: 'http://ops.svbooking.invalid/hook',
+      OPS_ALERT_WEBHOOK_SECRET: 'secret',
+    })).toBe(false);
+    expect(isOpsAlertDeliveryConfigured({
+      OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
+      OPS_ALERT_WEBHOOK_SECRET: 'secret',
+    })).toBe(true);
+    expect(isOpsAlertDeliveryConfigured({
+      NODE_ENV: 'development',
+      OPS_ALERT_WEBHOOK_URL: 'http://localhost:8787/hook',
+      OPS_ALERT_WEBHOOK_SECRET: 'secret',
+    })).toBe(true);
+    expect(isOpsAlertDeliveryConfigured({
+      NODE_ENV: 'production',
+      OPS_ALERT_WEBHOOK_URL: 'http://localhost:8787/hook',
+      OPS_ALERT_WEBHOOK_SECRET: 'secret',
+    })).toBe(false);
+    expect(isOpsAlertDeliveryConfigured({
+      OPS_ALERT_WEBHOOK_URL: 'https://user:pass@ops.svbooking.invalid/hook',
+      OPS_ALERT_WEBHOOK_SECRET: 'secret',
+    })).toBe(false);
+  });
+
+  it('sends only sanitized alert evidence to the configured webhook', async () => {
+    const calls: Array<{ url: string; init: RequestInit }> = [];
+    const result = await deliverOpsAlertReport(report, {
+      env: {
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'ops-secret-value',
+      },
+      fetchImpl: async (url, init) => {
+        calls.push({ url: String(url), init: init || {} });
+        return new Response('{}', { status: 202 });
+      },
+    });
+
+    expect(result).toEqual({ configured: true, status: 'sent', httpStatus: 202 });
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toBe('https://ops.svbooking.invalid/hook');
+    expect((calls[0].init.headers as Record<string, string>).Authorization).toBe('Bearer ops-secret-value');
+
+    const payload = JSON.parse(String(calls[0].init.body));
+    expect(payload.service).toBe('sv-booking');
+    expect(payload.alerts).toHaveLength(1);
+    expect(payload.alerts[0]).toEqual({
+      id: 'cache-not-durable',
+      severity: 'critical',
+      domain: 'production-readiness',
+      message: 'Persistent KV cache is not configured.',
+      evidence: {
+        cacheMode: 'memory',
+        webhookSecret: '[redacted]',
+        nested: { authorization: '[redacted]' },
+      },
+      action: 'Configure persistent Redis/KV before production scale.',
+    });
+    expect(JSON.stringify(payload)).not.toContain('ops-secret-value');
+    expect(JSON.stringify(payload)).not.toContain('alert-token');
+    expect(JSON.stringify(payload)).not.toContain('provider-secret');
+    expect(JSON.stringify(payload)).not.toContain('summary-secret');
+    expect(JSON.stringify(payload)).not.toContain('Bearer hidden');
+  });
+
+  it('returns explicit unavailable states without attempting delivery', async () => {
+    const missing = await deliverOpsAlertReport(report, {
+      env: {
+        OPS_ALERT_WEBHOOK_URL: '',
+        OPS_ALERT_WEBHOOK_SECRET: '',
+      },
+      fetchImpl: async () => new Response('{}'),
+    });
+    const invalid = await deliverOpsAlertReport(report, {
+      env: {
+        OPS_ALERT_WEBHOOK_URL: 'ftp://ops.svbooking.invalid/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'secret',
+      },
+      fetchImpl: async () => new Response('{}'),
+    });
+
+    expect(missing).toEqual({ configured: false, status: 'not-configured' });
+    expect(invalid).toEqual({ configured: false, status: 'invalid-config' });
+  });
+});
