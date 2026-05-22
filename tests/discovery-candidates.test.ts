@@ -54,7 +54,8 @@ describe('free-only discovery candidates', () => {
         osmType: 'node',
         stars: 5,
       },
-    });
+      resolved: undefined,
+    } as Parameters<typeof buildOsmCandidate>[0]);
 
     expect(candidate).toEqual(expect.objectContaining({
       hotelKey: 'g187147-d188732',
@@ -79,6 +80,8 @@ describe('free-only discovery candidates', () => {
         lat: 48.865167,
         lon: 2.327972,
       },
-    })).toBeNull();
+      cityGeoId: undefined,
+      resolved: undefined,
+    } as Parameters<typeof buildOsmCandidate>[0])).toBeNull();
   });
 });

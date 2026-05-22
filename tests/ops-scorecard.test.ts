@@ -12,7 +12,7 @@ describe('ops scorecard', () => {
       env: {
         ADMIN_API_SECRET: 'admin-secret-value',
         PRICE_ALERT_WEBHOOK_SECRET: 'webhook-secret-value',
-      },
+      } as unknown as NodeJS.ProcessEnv,
       now: new Date('2026-05-14T12:00:00.000Z'),
     });
 
@@ -52,7 +52,7 @@ describe('ops scorecard', () => {
         KINDE_POST_LOGOUT_REDIRECT_URL: 'https://svbooking.com',
         KINDE_POST_LOGIN_REDIRECT_URL: 'https://svbooking.com/dashboard',
         SERPAPI_KEY: 'svbooking-serpapi-key-scorecard-0001',
-      },
+      } as unknown as NodeJS.ProcessEnv,
       now: new Date('2026-05-14T12:00:00.000Z'),
     });
 
@@ -69,7 +69,7 @@ describe('ops scorecard', () => {
         ADMIN_API_SECRET: 'admin-secret-value',
         UPSTASH_REDIS_REST_URL: 'https://redis.svbooking.com',
         UPSTASH_REDIS_REST_TOKEN: 'svbooking-redis-token-scorecard-0001',
-      },
+      } as unknown as NodeJS.ProcessEnv,
       now: new Date('2026-05-14T12:00:00.000Z'),
     });
     const production = scorecard.domains.find((domain) => domain.id === 'production-readiness');
@@ -87,7 +87,7 @@ describe('ops scorecard', () => {
         ADMIN_API_SECRET: 'admin-secret-value',
         OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
         OPS_ALERT_WEBHOOK_SECRET: 'ops-webhook-secret',
-      },
+      } as unknown as NodeJS.ProcessEnv,
       now: new Date('2026-05-14T12:00:00.000Z'),
     });
     const observability = scorecard.domains.find((domain) => domain.id === 'observability');
@@ -103,16 +103,16 @@ describe('ops scorecard', () => {
     vi.stubEnv('ADMIN_API_SECRET', 'admin-scorecard-secret');
 
     const denied = await getOpsScorecard(new Request('http://localhost:3000/api/ops/scorecard'));
-    expect(denied.status).toBe(401);
-    expect(denied.headers.get('cache-control')).toBe('no-store');
+    expect(denied!.status).toBe(401);
+    expect(denied!.headers.get('cache-control')).toBe('no-store');
 
     const accepted = await getOpsScorecard(new Request('http://localhost:3000/api/ops/scorecard', {
       headers: { Authorization: 'Bearer admin-scorecard-secret' },
     }));
-    const body = await accepted.json();
+    const body = await accepted!.json();
 
-    expect(accepted.status).toBe(200);
-    expect(accepted.headers.get('cache-control')).toBe('no-store');
+    expect(accepted!.status).toBe(200);
+    expect(accepted!.headers.get('cache-control')).toBe('no-store');
     expect(body.domains.some((domain: { id: string }) => domain.id === 'inventory-scale')).toBe(true);
     expect(JSON.stringify(body)).not.toContain('admin-scorecard-secret');
   });

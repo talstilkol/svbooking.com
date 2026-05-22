@@ -75,8 +75,8 @@ describe('ops alert evaluator route', () => {
 
     const response = await GET(new Request('http://localhost:3000/api/ops/alerts/evaluate'));
 
-    expect(response.status).toBe(401);
-    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response!.status).toBe(401);
+    expect(response!.headers.get('cache-control')).toBe('no-store');
     expect(mocks.buildOpsAlerts).not.toHaveBeenCalled();
     expect(mocks.deliverOpsAlertReport).not.toHaveBeenCalled();
   });
@@ -111,10 +111,10 @@ describe('ops alert evaluator route', () => {
     mocks.deliverOpsAlertReport.mockResolvedValueOnce({ configured: true, status: 'sent', httpStatus: 202 });
 
     const response = await GET(new Request('http://localhost:3000/api/ops/alerts/evaluate'));
-    const body = await response.json();
+    const body = await response!.json();
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response!.status).toBe(200);
+    expect(response!.headers.get('cache-control')).toBe('no-store');
     expect(mocks.deliverOpsAlertReport).toHaveBeenCalledTimes(1);
     const deliveredReport = mocks.deliverOpsAlertReport.mock.calls[0][0];
     expect(deliveredReport.alerts.map((alert: { id: string }) => alert.id)).toEqual([
@@ -145,9 +145,9 @@ describe('ops alert evaluator route', () => {
     }]));
 
     const response = await GET(new Request('http://localhost:3000/api/ops/alerts/evaluate'));
-    const body = await response.json();
+    const body = await response!.json();
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
     expect(mocks.deliverOpsAlertReport).not.toHaveBeenCalled();
     expect(body.delivery).toEqual({
       configured: false,

@@ -144,19 +144,19 @@ describe('GET /api/click/stats', () => {
     vi.stubEnv('CRON_SECRET', '');
 
     const res = await GET(makeStatsRequest());
-    expect(res.status).toBe(403);
+    expect(res!.status).toBe(403);
   });
 
   it('rejects missing bearer token when admin secret exists', async () => {
     const res = await GET(makeStatsRequest());
-    expect(res.status).toBe(401);
+    expect(res!.status).toBe(401);
   });
 
   it('returns stats with zero clicks when authenticated and no data exists', async () => {
     const res = await GET(makeAuthedStatsRequest());
-    expect(res.status).toBe(200);
-    expect(res.headers.get('Cache-Control')).toBe('no-store');
-    const data = await res.json();
+    expect(res!.status).toBe(200);
+    expect(res!.headers.get('Cache-Control')).toBe('no-store');
+    const data = await res!.json();
     expect(data.totalClicks).toBe(0);
     expect(data.byProvider).toBeDefined();
     expect(data.byDay).toBeDefined();
@@ -165,8 +165,8 @@ describe('GET /api/click/stats', () => {
   it('caps days at 30', async () => {
     const req = makeAuthedStatsRequest('http://localhost:3000/api/click?days=100');
     const res = await GET(req);
-    expect(res.status).toBe(200);
-    const data = await res.json();
+    expect(res!.status).toBe(200);
+    const data = await res!.json();
     // Should have at most 30 day entries
     expect(Object.keys(data.byDay).length).toBeLessThanOrEqual(30);
   });
@@ -181,7 +181,7 @@ describe('GET /api/click/stats', () => {
 
     const req = makeAuthedStatsRequest('http://localhost:3000/api/click?days=1');
     const res = await GET(req);
-    const data = await res.json();
+    const data = await res!.json();
     expect(data.totalClicks).toBe(3);
     expect(data.byProvider['Booking.com']).toBe(2);
     expect(data.byProvider['Expedia']).toBe(1);

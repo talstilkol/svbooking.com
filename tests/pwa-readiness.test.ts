@@ -3,7 +3,7 @@ import { getPwaReadiness, isPushConfigured } from '@/lib/pwa-readiness';
 
 describe('PWA readiness', () => {
   it('reports installable offline shell without requiring fake push state', () => {
-    const readiness = getPwaReadiness({ env: {} });
+    const readiness = getPwaReadiness({ env: {} as NodeJS.ProcessEnv });
 
     expect(readiness.installable).toBe(true);
     expect(readiness.status).toBe('installable-offline-shell');
@@ -15,21 +15,21 @@ describe('PWA readiness', () => {
     expect(readiness.push.requiresUserPermission).toBe(true);
     expect(readiness.push.delivery).toBe('disabled-without-keys');
     expect(readiness.gaps[0]).toContain('Push notification keys are not configured');
-    expect(isPushConfigured({})).toBe(false);
+    expect(isPushConfigured({} as NodeJS.ProcessEnv)).toBe(false);
   });
 
   it('marks push readiness only when both public and private push keys exist', () => {
-    expect(isPushConfigured({ NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'public-key' })).toBe(false);
+    expect(isPushConfigured({ NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'public-key' } as unknown as NodeJS.ProcessEnv)).toBe(false);
     expect(isPushConfigured({
       NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'public-key',
       PUSH_PRIVATE_KEY: 'private-key',
-    })).toBe(true);
+    } as unknown as NodeJS.ProcessEnv)).toBe(true);
 
     const readiness = getPwaReadiness({
       env: {
         NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'public-key',
         PUSH_PRIVATE_KEY: 'private-key',
-      },
+      } as unknown as NodeJS.ProcessEnv,
     });
 
     expect(readiness.status).toBe('push-ready');

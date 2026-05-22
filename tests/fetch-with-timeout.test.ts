@@ -16,10 +16,10 @@ describe('fetchWithTimeout', () => {
 
     const response = await fetchWithTimeout('https://example.com/status', {
       timeoutMs: 1000,
-      cache: 'no-store',
+      cache: 'no-store' as RequestCache,
       headers: { Accept: 'application/json' },
       fetchImpl: fetchImpl as typeof fetch,
-    });
+    } as Parameters<typeof fetchWithTimeout>[1]);
 
     expect(response.ok).toBe(true);
     expect(fetchImpl).toHaveBeenCalledTimes(1);

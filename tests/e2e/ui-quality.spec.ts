@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 const pages = [
   '/',
@@ -14,7 +14,7 @@ const viewports = [
   { name: 'mobile', width: 390, height: 844 },
 ];
 
-async function visibleInteractiveWithoutName(page) {
+async function visibleInteractiveWithoutName(page: Page) {
   return page.evaluate(() => {
     const elements = Array.from(document.querySelectorAll('a, button, input, select, textarea'));
     return elements
@@ -37,8 +37,8 @@ async function visibleInteractiveWithoutName(page) {
               .map((id) => document.getElementById(id)?.textContent || '')
               .join(' ')
           : '';
-        const labelsText = 'labels' in element && element.labels
-          ? Array.from(element.labels).map((label) => label.textContent || '').join(' ')
+        const labelsText = 'labels' in element && (element as HTMLInputElement).labels
+          ? Array.from((element as HTMLInputElement).labels!).map((label: HTMLLabelElement) => label.textContent || '').join(' ')
           : '';
         const descendantImageAlt = Array.from(element.querySelectorAll('img'))
           .map((image) => image.getAttribute('alt') || '')

@@ -48,7 +48,7 @@ describe('price cache', () => {
       city: 'Paris',
       checkIn: '2026-06-01',
       checkOut: '2026-06-03',
-    });
+    } as Parameters<typeof getCachedRates>[0]);
 
     expect(getHotelRates).toHaveBeenCalledWith(expect.objectContaining({
       hotelKey: 'g1-d1',
@@ -81,7 +81,7 @@ describe('price cache', () => {
       hotelKey: 'g1-d1',
       checkIn: '2026-06-01',
       checkOut: '2026-06-03',
-    });
+    } as Parameters<typeof getCachedRates>[0]);
 
     expect(result.fromCache).toBe(true);
     expect(result.freshness).toBe('stale');
@@ -90,7 +90,7 @@ describe('price cache', () => {
   });
 
   it('keeps heatmap data labeled as a price source, not a booking provider', async () => {
-    const result = await getCachedHeatmap({ hotelKey: 'g1-d1', checkOut: '2026-06-03' });
+    const result = await getCachedHeatmap({ hotelKey: 'g1-d1', checkOut: '2026-06-03' } as Parameters<typeof getCachedHeatmap>[0]);
 
     expect(getHeatmap).toHaveBeenCalled();
     expect(result.provider).toBe('xotelo');

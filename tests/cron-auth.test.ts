@@ -20,11 +20,11 @@ describe('verifyCronAuth', () => {
     vi.stubEnv('CRON_SECRET', '');
 
     const auth = verifyCronAuth(request({ host: 'svbooking.example' }));
-    const body = await auth.response.json();
+    const body = await auth.response!.json();
 
     expect(auth.authorized).toBe(false);
-    expect(auth.response.status).toBe(403);
-    expect(auth.response.headers.get('cache-control')).toBe('no-store');
+    expect(auth.response!.status).toBe(403);
+    expect(auth.response!.headers.get('cache-control')).toBe('no-store');
     expect(body.error).toBe('CRON_SECRET not configured');
   });
 
@@ -43,9 +43,9 @@ describe('verifyCronAuth', () => {
     const missingBearer = verifyCronAuth(request({ Authorization: 'cron-secret' }));
 
     expect(shortToken.authorized).toBe(false);
-    expect(shortToken.response.status).toBe(401);
-    expect(shortToken.response.headers.get('cache-control')).toBe('no-store');
+    expect(shortToken.response!.status).toBe(401);
+    expect(shortToken.response!.headers.get('cache-control')).toBe('no-store');
     expect(missingBearer.authorized).toBe(false);
-    expect(missingBearer.response.status).toBe(401);
+    expect(missingBearer.response!.status).toBe(401);
   });
 });

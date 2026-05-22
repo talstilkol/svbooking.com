@@ -148,7 +148,7 @@ describe('admin mutation auth', () => {
     const res = await resetProviderStatus(
       makePostRequest('/api/agents/providers', { action: 'reset', providerId: 'xotelo' })
     );
-    expect(res.status).toBe(403);
+    expect(res!.status).toBe(403);
   });
 
   it('rejects missing bearer token when admin secret exists', async () => {
@@ -158,7 +158,7 @@ describe('admin mutation auth', () => {
     const res = await resetProviderStatus(
       makePostRequest('/api/agents/providers', { action: 'reset', providerId: 'xotelo' })
     );
-    expect(res.status).toBe(401);
+    expect(res!.status).toBe(401);
   });
 
   it('rejects unknown provider IDs even with valid admin auth', async () => {
@@ -172,7 +172,7 @@ describe('admin mutation auth', () => {
         'admin-test-secret'
       )
     );
-    expect(res.status).toBe(400);
+    expect(res!.status).toBe(400);
     expect(resetProvider).not.toHaveBeenCalled();
   });
 
@@ -183,7 +183,7 @@ describe('admin mutation auth', () => {
     const res = await resetProviderStatus(
       makePostRequest('/api/agents/providers', { action: 'reset', providerId: 'xotelo' }, 'admin-test-secret')
     );
-    expect(res.status).toBe(200);
+    expect(res!.status).toBe(200);
     expect(resetProvider).toHaveBeenCalledWith('xotelo');
     expect(recordAdminAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -206,10 +206,10 @@ describe('admin mutation auth', () => {
         { origin: 'https://evil.example' }
       )
     );
-    const body = await res.json();
+    const body = await res!.json();
 
-    expect(res.status).toBe(403);
-    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res!.status).toBe(403);
+    expect(res!.headers.get('cache-control')).toBe('no-store');
     expect(body.error).toBe('Same-origin request required');
     expect(resetProvider).not.toHaveBeenCalled();
   });
@@ -226,7 +226,7 @@ describe('admin mutation auth', () => {
         country: 'France',
       })
     );
-    expect(denied.status).toBe(401);
+    expect(denied!.status).toBe(401);
 
     const accepted = await addDiscovered(
       makePostRequest(
@@ -246,8 +246,8 @@ describe('admin mutation auth', () => {
         'admin-test-secret'
       )
     );
-    expect(accepted.status).toBe(200);
-    const body = await accepted.json();
+    expect(accepted!.status).toBe(200);
+    const body = await accepted!.json();
     expect(body.queued).toBe(true);
     expect(body.candidate.status).toBe('pending');
     expect(addAndPersistHotel).not.toHaveBeenCalled();
@@ -266,7 +266,7 @@ describe('admin mutation auth', () => {
         'admin-test-secret'
       )
     );
-    expect(approved.status).toBe(200);
+    expect(approved!.status).toBe(200);
     expect(addAndPersistHotel).toHaveBeenCalledWith({
       hotelKey: 'verified-hotel-key',
       name: 'Verified Hotel',
@@ -297,10 +297,10 @@ describe('admin mutation auth', () => {
         { origin: 'https://evil.example' }
       )
     );
-    const body = await res.json();
+    const body = await res!.json();
 
-    expect(res.status).toBe(403);
-    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res!.status).toBe(403);
+    expect(res!.headers.get('cache-control')).toBe('no-store');
     expect(body.error).toBe('Same-origin request required');
     expect(addAndPersistHotel).not.toHaveBeenCalled();
   });
@@ -314,7 +314,7 @@ describe('admin mutation auth', () => {
         hotels: [{ hotelKey: 'verified-hotel-key', name: 'Verified Hotel' }],
       })
     );
-    expect(res.status).toBe(403);
+    expect(res!.status).toBe(403);
     expect(getRates).not.toHaveBeenCalled();
   });
 
@@ -327,7 +327,7 @@ describe('admin mutation auth', () => {
         hotels: [{ hotelKey: 'verified-hotel-key', name: 'Verified Hotel' }],
       })
     );
-    expect(res.status).toBe(401);
+    expect(res!.status).toBe(401);
     expect(getRates).not.toHaveBeenCalled();
   });
 
@@ -344,8 +344,8 @@ describe('admin mutation auth', () => {
         'admin-test-secret'
       )
     );
-    const body = await res.json();
-    expect(res.status).toBe(200);
+    const body = await res!.json();
+    expect(res!.status).toBe(200);
     expect(body.valid).toBe(1);
     expect(getRates).toHaveBeenCalledWith(
       expect.objectContaining({ hotelKey: 'verified-hotel-key', timeoutMs: 10000 })
@@ -373,10 +373,10 @@ describe('admin mutation auth', () => {
         { origin: 'https://evil.example' }
       )
     );
-    const body = await res.json();
+    const body = await res!.json();
 
-    expect(res.status).toBe(403);
-    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res!.status).toBe(403);
+    expect(res!.headers.get('cache-control')).toBe('no-store');
     expect(body.error).toBe('Same-origin request required');
     expect(getRates).not.toHaveBeenCalled();
   });
@@ -386,12 +386,12 @@ describe('admin mutation auth', () => {
     vi.stubEnv('CRON_SECRET', '');
 
     const denied = await getProviders(makeGetRequest('/api/agents/providers'));
-    expect(denied.status).toBe(401);
-    expect(denied.headers.get('cache-control')).toBe('no-store');
+    expect(denied!.status).toBe(401);
+    expect(denied!.headers.get('cache-control')).toBe('no-store');
 
     const accepted = await getProviders(makeGetRequest('/api/agents/providers', 'admin-test-secret'));
-    expect(accepted.status).toBe(200);
-    expect(accepted.headers.get('cache-control')).toBe('no-store');
+    expect(accepted!.status).toBe(200);
+    expect(accepted!.headers.get('cache-control')).toBe('no-store');
   });
 
   it('protects discovered catalog reads', async () => {
@@ -399,11 +399,11 @@ describe('admin mutation auth', () => {
     vi.stubEnv('CRON_SECRET', '');
 
     const denied = await getDiscovered(makeGetRequest('/api/agents/discovered?stats=true'));
-    expect(denied.status).toBe(401);
+    expect(denied!.status).toBe(401);
 
     const accepted = await getDiscovered(makeGetRequest('/api/agents/discovered?stats=true', 'admin-test-secret'));
-    expect(accepted.status).toBe(200);
-    expect(accepted.headers.get('cache-control')).toBe('no-store');
+    expect(accepted!.status).toBe(200);
+    expect(accepted!.headers.get('cache-control')).toBe('no-store');
   });
 
   it('protects expensive agent health probes before provider calls', async () => {
@@ -411,11 +411,11 @@ describe('admin mutation auth', () => {
     vi.stubEnv('CRON_SECRET', '');
 
     const denied = await getAgentHealth(makeGetRequest('/api/agents/health-check'));
-    expect(denied.status).toBe(401);
+    expect(denied!.status).toBe(401);
 
     const accepted = await getAgentHealth(makeGetRequest('/api/agents/health-check', 'admin-test-secret'));
-    expect(accepted.status).toBe(200);
-    expect(accepted.headers.get('cache-control')).toBe('no-store');
+    expect(accepted!.status).toBe(200);
+    expect(accepted!.headers.get('cache-control')).toBe('no-store');
   });
 
   it('protects background agent status reads', async () => {
@@ -423,11 +423,11 @@ describe('admin mutation auth', () => {
     vi.stubEnv('CRON_SECRET', '');
 
     const denied = await getAgentStatus(makeGetRequest('/api/agents/auto/status'));
-    expect(denied.status).toBe(401);
+    expect(denied!.status).toBe(401);
 
     const accepted = await getAgentStatus(makeGetRequest('/api/agents/auto/status', 'admin-test-secret'));
-    expect(accepted.status).toBe(200);
-    expect(accepted.headers.get('cache-control')).toBe('no-store');
+    expect(accepted!.status).toBe(200);
+    expect(accepted!.headers.get('cache-control')).toBe('no-store');
   });
 
   it('protects catalog discovery reads', async () => {
@@ -435,11 +435,11 @@ describe('admin mutation auth', () => {
     vi.stubEnv('CRON_SECRET', '');
 
     const denied = await discoverCatalog(makeGetRequest('/api/catalog/discover?city=Paris'));
-    expect(denied.status).toBe(401);
+    expect(denied!.status).toBe(401);
 
     const accepted = await discoverCatalog(makeGetRequest('/api/catalog/discover?city=Paris', 'admin-test-secret'));
-    expect(accepted.status).toBe(200);
-    expect(accepted.headers.get('cache-control')).toBe('no-store');
+    expect(accepted!.status).toBe(200);
+    expect(accepted!.headers.get('cache-control')).toBe('no-store');
   });
 
   it('protects OSM catalog discovery reads', async () => {
@@ -447,12 +447,12 @@ describe('admin mutation auth', () => {
     vi.stubEnv('CRON_SECRET', '');
 
     const denied = await discoverCatalogOsm(makeGetRequest('/api/catalog/discover-osm?city=Paris'));
-    expect(denied.status).toBe(401);
+    expect(denied!.status).toBe(401);
 
     const accepted = await discoverCatalogOsm(
       makeGetRequest('/api/catalog/discover-osm?city=Paris&source=count', 'admin-test-secret')
     );
-    expect(accepted.status).toBe(200);
-    expect(accepted.headers.get('cache-control')).toBe('no-store');
+    expect(accepted!.status).toBe(200);
+    expect(accepted!.headers.get('cache-control')).toBe('no-store');
   });
 });

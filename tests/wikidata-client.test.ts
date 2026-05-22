@@ -11,7 +11,7 @@ function stubWikidata(payload: unknown) {
 }
 
 function capturedQuery(fetchMock: ReturnType<typeof stubWikidata>, callIndex = 0) {
-  const input = fetchMock.mock.calls[callIndex]?.[0];
+  const input = (fetchMock.mock.calls as unknown[][])[callIndex]?.[0];
   if (!input) throw new Error('Expected Wikidata fetch call');
   return new URL(String(input)).searchParams.get('query') || '';
 }
@@ -50,7 +50,7 @@ describe('Wikidata client hardening', () => {
     expect(query).not.toContain('?country rdfs:label "France"@en . ?evil');
     expect(query).toContain('LIMIT 1');
 
-    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const init = (fetchMock.mock.calls as unknown[][])[0]?.[1] as RequestInit;
     expect(init.cache).toBe('no-store');
     expect(init.signal).toBeInstanceOf(AbortSignal);
     expect(init.headers).toMatchObject({

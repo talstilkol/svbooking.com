@@ -104,7 +104,7 @@ describe('ops alerts', () => {
       providerCount: 0,
       successRatePct: null,
       providers: [],
-    });
+    } as unknown as Awaited<ReturnType<typeof getProviderUptimeMetrics>>);
     vi.mocked(getPriceAccuracyMetrics).mockResolvedValueOnce({
       days: 7,
       observations: 0,
@@ -123,16 +123,16 @@ describe('ops alerts', () => {
 
   it('protects ops alerts behind admin auth and no-store', async () => {
     const denied = await GET(new Request('http://localhost:3000/api/ops/alerts'));
-    expect(denied.status).toBe(401);
-    expect(denied.headers.get('Cache-Control')).toBe('no-store');
+    expect(denied!.status).toBe(401);
+    expect(denied!.headers.get('Cache-Control')).toBe('no-store');
 
     const accepted = await GET(new Request('http://localhost:3000/api/ops/alerts', {
       headers: { Authorization: 'Bearer admin-secret' },
     }));
-    const body = await accepted.json();
+    const body = await accepted!.json();
 
-    expect(accepted.status).toBe(200);
-    expect(accepted.headers.get('Cache-Control')).toBe('no-store');
+    expect(accepted!.status).toBe(200);
+    expect(accepted!.headers.get('Cache-Control')).toBe('no-store');
     expect(body.service).toBe('sv-booking');
     expect(body.alerts.length).toBeGreaterThan(0);
   });

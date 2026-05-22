@@ -139,7 +139,7 @@ describe('admin audit log', () => {
 
     expect(first?.id).not.toBe(second?.id);
     const events = await getAdminAuditEvents(10);
-    expect(events.map((event) => event.id)).toEqual([second?.id, first?.id]);
+    expect(events.map((event: { id: string }) => event.id)).toEqual([second?.id, first?.id]);
   });
 
   it('protects the audit read endpoint and returns redacted events', async () => {
@@ -164,15 +164,15 @@ describe('admin audit log', () => {
     });
 
     const denied = await getAuditRoute(new Request('http://localhost:3000/api/agents/audit'));
-    expect(denied.status).toBe(401);
+    expect(denied!.status).toBe(401);
 
     const accepted = await getAuditRoute(new Request('http://localhost:3000/api/agents/audit?limit=5', {
       headers: { authorization: 'Bearer admin-test-secret' },
     }));
 
-    expect(accepted.status).toBe(200);
-    expect(accepted.headers.get('cache-control')).toBe('no-store');
-    const body = await accepted.json();
+    expect(accepted!.status).toBe(200);
+    expect(accepted!.headers.get('cache-control')).toBe('no-store');
+    const body = await accepted!.json();
     expect(body.count).toBe(1);
     expect(body.events[0].details.token).toBe('[redacted]');
     expect(JSON.stringify(body)).not.toContain('must-not-leak');

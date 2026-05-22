@@ -21,7 +21,7 @@ function runReleaseState(cwd: string, args: string[] = []) {
     env: {
       PATH: process.env.PATH,
       HOME: process.env.HOME,
-    },
+    } as unknown as NodeJS.ProcessEnv,
   });
 
   return {

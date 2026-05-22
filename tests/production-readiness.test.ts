@@ -17,7 +17,7 @@ const requiredEnv = {
   KINDE_SITE_URL: 'https://svbooking.com',
   KINDE_POST_LOGOUT_REDIRECT_URL: 'https://svbooking.com',
   KINDE_POST_LOGIN_REDIRECT_URL: 'https://svbooking.com/dashboard',
-};
+} as unknown as NodeJS.ProcessEnv;
 
 describe('production readiness shared contract', () => {
   it('keeps Kinde env as an all-or-nothing production requirement', () => {

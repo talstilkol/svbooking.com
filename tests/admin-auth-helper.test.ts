@@ -17,11 +17,11 @@ describe('verifyAdminAuth', () => {
     vi.stubEnv('CRON_SECRET', '');
 
     const auth = verifyAdminAuth(request());
-    const body = await auth.response.json();
+    const body = await auth.response!.json();
 
     expect(auth.authorized).toBe(false);
-    expect(auth.response.status).toBe(403);
-    expect(auth.response.headers.get('cache-control')).toBe('no-store');
+    expect(auth.response!.status).toBe(403);
+    expect(auth.response!.headers.get('cache-control')).toBe('no-store');
     expect(body.error).toBe('Admin API secret is not configured');
   });
 
@@ -30,11 +30,11 @@ describe('verifyAdminAuth', () => {
     vi.stubEnv('CRON_SECRET', '');
 
     const auth = verifyAdminAuth(request('wrong-secret'));
-    const body = await auth.response.json();
+    const body = await auth.response!.json();
 
     expect(auth.authorized).toBe(false);
-    expect(auth.response.status).toBe(401);
-    expect(auth.response.headers.get('cache-control')).toBe('no-store');
+    expect(auth.response!.status).toBe(401);
+    expect(auth.response!.headers.get('cache-control')).toBe('no-store');
     expect(body.error).toBe('Unauthorized');
   });
 
@@ -57,10 +57,10 @@ describe('verifyAdminAuth', () => {
     }));
 
     expect(shortToken.authorized).toBe(false);
-    expect(shortToken.response.status).toBe(401);
-    expect(shortToken.response.headers.get('cache-control')).toBe('no-store');
+    expect(shortToken.response!.status).toBe(401);
+    expect(shortToken.response!.headers.get('cache-control')).toBe('no-store');
     expect(missingBearer.authorized).toBe(false);
-    expect(missingBearer.response.status).toBe(401);
+    expect(missingBearer.response!.status).toBe(401);
   });
 
   it('accepts cron fallback bearer tokens through the same verifier', () => {

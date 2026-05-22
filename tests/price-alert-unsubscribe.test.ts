@@ -9,7 +9,7 @@ import {
 
 describe('price alert unsubscribe tokens', () => {
   it('are deterministic and secret-backed without randomness', () => {
-    const env = { PRICE_ALERT_UNSUBSCRIBE_SECRET: 'unsubscribe-secret' };
+    const env = { PRICE_ALERT_UNSUBSCRIBE_SECRET: 'unsubscribe-secret' } as unknown as NodeJS.ProcessEnv;
     const input = { uid: 'user_1', alertId: 'h_alert' };
 
     const first = createPriceAlertUnsubscribeToken(input, env);
@@ -32,8 +32,8 @@ describe('price alert unsubscribe tokens', () => {
   });
 
   it('stays unavailable without a configured secret', () => {
-    expect(isPriceAlertUnsubscribeConfigured({})).toBe(false);
-    expect(createPriceAlertUnsubscribeToken({ uid: 'user_1', alertId: 'h_alert' }, {})).toBeNull();
+    expect(isPriceAlertUnsubscribeConfigured({} as unknown as NodeJS.ProcessEnv)).toBe(false);
+    expect(createPriceAlertUnsubscribeToken({ uid: 'user_1', alertId: 'h_alert' }, {} as unknown as NodeJS.ProcessEnv)).toBeNull();
     expect(validPriceAlertUnsubscribeToken('bad-token')).toBeNull();
   });
 });

@@ -19,11 +19,11 @@ const event = {
 describe('price alert delivery', () => {
   it('does not send when webhook config is missing', async () => {
     const fetchImpl = vi.fn();
-    const result = await deliverPriceAlertEvent(event, { env: {}, fetchImpl });
+    const result = await deliverPriceAlertEvent(event, { env: {} as unknown as NodeJS.ProcessEnv, fetchImpl });
 
     expect(result).toEqual({ configured: false, status: 'not-configured' });
     expect(fetchImpl).not.toHaveBeenCalled();
-    expect(isPriceAlertDeliveryConfigured({})).toBe(false);
+    expect(isPriceAlertDeliveryConfigured({} as unknown as NodeJS.ProcessEnv)).toBe(false);
   });
 
   it('rejects non-HTTPS webhook URLs outside localhost', async () => {
@@ -32,7 +32,7 @@ describe('price alert delivery', () => {
       env: {
         PRICE_ALERT_WEBHOOK_URL: 'http://alerts.example.com/hooks/sv-booking',
         PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
-      },
+      } as unknown as NodeJS.ProcessEnv,
       fetchImpl,
     });
 
@@ -41,41 +41,41 @@ describe('price alert delivery', () => {
     expect(isPriceAlertDeliveryConfigured({
       PRICE_ALERT_WEBHOOK_URL: 'http://alerts.example.com/hooks/sv-booking',
       PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
-    })).toBe(false);
+    } as unknown as NodeJS.ProcessEnv)).toBe(false);
     expect(isPriceAlertDeliveryConfigured({
       NODE_ENV: 'development',
       PRICE_ALERT_WEBHOOK_URL: 'http://localhost:8787/hooks/sv-booking',
       PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
-    })).toBe(true);
+    } as unknown as NodeJS.ProcessEnv)).toBe(true);
     expect(isPriceAlertDeliveryConfigured({
       NODE_ENV: 'production',
       PRICE_ALERT_WEBHOOK_URL: 'http://localhost:8787/hooks/sv-booking',
       PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
-    })).toBe(false);
+    } as unknown as NodeJS.ProcessEnv)).toBe(false);
     expect(isPriceAlertDeliveryConfigured({
       PRICE_ALERT_WEBHOOK_URL: 'https://user:pass@alerts.example.com/hooks/sv-booking',
       PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
-    })).toBe(false);
+    } as unknown as NodeJS.ProcessEnv)).toBe(false);
   });
 
   it('sends only sanitized event payload when webhook config exists', async () => {
-    const fetchImpl = vi.fn(async () => ({ ok: true, status: 202 }));
+    const fetchImpl = vi.fn(async () => ({ ok: true, status: 202 })) as unknown as typeof fetch;
     const result = await deliverPriceAlertEvent(event, {
       env: {
         PRICE_ALERT_WEBHOOK_URL: 'https://alerts.example.com/hooks/sv-booking',
         PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
-      },
+      } as unknown as NodeJS.ProcessEnv,
       fetchImpl,
     });
 
     expect(result).toEqual({ configured: true, status: 'sent', httpStatus: 202 });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    const [, request] = fetchImpl.mock.calls[0];
-    const body = JSON.parse(request.body);
+    const [, request] = (fetchImpl as ReturnType<typeof vi.fn>).mock.calls[0] as [string, Record<string, unknown>];
+    const body = JSON.parse(request!.body as string);
     expect(body.userFingerprint).toBe('h_user');
     expect(body.unsubscribeToken).toBe('u_0123456789abcdef0123456789abcdef');
     expect(body.unsubscribePath).toContain('/api/price-alerts/unsubscribe');
     expect(JSON.stringify(body)).not.toContain('user_1');
-    expect(request.headers.Authorization).toBe('Bearer secret-value');
+    expect((request! as Record<string, unknown> & { headers: Record<string, string> }).headers.Authorization).toBe('Bearer secret-value');
   });
 });

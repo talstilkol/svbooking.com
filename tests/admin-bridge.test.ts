@@ -38,9 +38,9 @@ describe('/api/admin bridge', () => {
     mocks.user = { id: 'user-2', email: 'reader@example.com' };
 
     const response = await GET(request('/api/admin/agents/providers'));
-    const body = await response.json();
+    const body = await response!.json();
 
-    expect(response.status).toBe(403);
+    expect(response!.status).toBe(403);
     expect(body.error).toMatch(/admin dashboard access/i);
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
@@ -49,10 +49,10 @@ describe('/api/admin bridge', () => {
     mocks.fetch.mockResolvedValueOnce(Response.json({ providers: [] }));
 
     const response = await GET(request('/api/admin/agents/providers?limit=10'));
-    const body = await response.json();
+    const body = await response!.json();
     const [target, init] = mocks.fetch.mock.calls[0];
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
     expect(body.providers).toEqual([]);
     expect(String(target)).toBe('http://localhost:3000/api/agents/providers?limit=10');
     expect(init.headers.get('Authorization')).toBe('Bearer admin-bridge-secret-value');
@@ -70,7 +70,7 @@ describe('/api/admin bridge', () => {
       body: JSON.stringify({ action: 'reset', providerId: 'xotelo' }),
     }));
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
     expect(mocks.recordAdminAuditEvent).toHaveBeenCalledWith(expect.objectContaining({
       actor: 'kinde:admin-1',
       action: 'admin.bridge.forward',

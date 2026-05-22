@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { mockedHotels } = vi.hoisted(() => ({
   mockedHotels: [
-  { hotelKey: 'g1-d1', name: 'Alpha London', city: 'London', country: 'UK' },
-  { hotelKey: 'g1-d2', name: 'Beta London', city: 'London', country: 'UK' },
-  { hotelKey: 'g2-d1', name: 'Cairo One', city: 'Cairo', country: 'Egypt' },
-  { hotelKey: 'g3-d1', name: 'Paris One', city: 'Paris', country: 'France' },
+  { hotelKey: 'g1-d1', name: 'Alpha London', city: 'London', country: 'UK', image: '' },
+  { hotelKey: 'g1-d2', name: 'Beta London', city: 'London', country: 'UK', image: '' },
+  { hotelKey: 'g2-d1', name: 'Cairo One', city: 'Cairo', country: 'Egypt', image: '' },
+  { hotelKey: 'g3-d1', name: 'Paris One', city: 'Paris', country: 'France', image: '' },
   ],
 }));
 
@@ -75,7 +75,7 @@ describe('price cache agent', () => {
       today: '2026-05-14',
       hotels: mockedHotels,
       limit: 2,
-    });
+    } as Parameters<typeof buildCatalogDatedRateWorkItems>[0]);
 
     expect(workItems).toHaveLength(4);
     expect(workItems[0]).toMatchObject({
@@ -103,10 +103,10 @@ describe('price cache agent', () => {
     const response = await GET(new Request('http://localhost:3000/api/agents/auto/price-cache?catalogLimit=2&heatmapLimit=2', {
       headers: { host: 'localhost:3000' },
     }));
-    const body = await response.json();
+    const body = await response!.json();
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(response!.status).toBe(200);
+    expect(response!.headers.get('Cache-Control')).toBe('no-store');
     expect(body.result.mode).toBe('dated-provider-rates-plus-heatmap-price-sources');
     expect(body.result.config).toEqual({
       catalogDatedHotelLimit: 2,

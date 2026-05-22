@@ -288,22 +288,22 @@ describe('price alerts API', () => {
     const response = await evaluateAlerts(new Request('http://localhost:3000/api/price-alerts/evaluate', {
       headers: { host: 'localhost:3000' },
     }));
-    const body = await response.json();
+    const body = await response!.json();
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
     expect(body.evaluated).toBe(1);
     expect(body.triggered).toBe(1);
     expect(body.delivery).toBe('not-configured');
 
     const denied = await getAlertEvents(new Request('http://localhost:3000/api/price-alerts/events'));
-    expect(denied.status).toBe(401);
+    expect(denied!.status).toBe(401);
 
     const accepted = await getAlertEvents(new Request('http://localhost:3000/api/price-alerts/events', {
       headers: { Authorization: 'Bearer admin-test-secret' },
     }));
-    const eventsBody = await accepted.json();
+    const eventsBody = await accepted!.json();
 
-    expect(accepted.status).toBe(200);
+    expect(accepted!.status).toBe(200);
     expect(eventsBody.deliveryStatus).toBe('not-configured');
     expect(eventsBody.events).toHaveLength(1);
     expect(eventsBody.events[0].userFingerprint).toMatch(/^h_[0-9a-z]+$/);
@@ -351,16 +351,16 @@ describe('price alerts API', () => {
     const response = await evaluateAlerts(new Request('http://localhost:3000/api/price-alerts/evaluate', {
       headers: { host: 'localhost:3000' },
     }));
-    const body = await response.json();
+    const body = await response!.json();
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
     expect(body.evaluated).toBe(1);
     expect(body.triggered).toBe(0);
 
     const events = await getAlertEvents(new Request('http://localhost:3000/api/price-alerts/events', {
       headers: { Authorization: 'Bearer admin-test-secret' },
     }));
-    const eventsBody = await events.json();
+    const eventsBody = await events!.json();
     expect(eventsBody.events).toHaveLength(0);
 
     const listed = await listAlerts();

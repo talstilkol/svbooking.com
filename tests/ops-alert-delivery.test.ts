@@ -33,29 +33,29 @@ describe('ops alert delivery', () => {
     expect(isOpsAlertDeliveryConfigured({
       OPS_ALERT_WEBHOOK_URL: '',
       OPS_ALERT_WEBHOOK_SECRET: '',
-    })).toBe(false);
+    } as unknown as NodeJS.ProcessEnv)).toBe(false);
     expect(isOpsAlertDeliveryConfigured({
       OPS_ALERT_WEBHOOK_URL: 'http://ops.svbooking.invalid/hook',
       OPS_ALERT_WEBHOOK_SECRET: 'secret',
-    })).toBe(false);
+    } as unknown as NodeJS.ProcessEnv)).toBe(false);
     expect(isOpsAlertDeliveryConfigured({
       OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
       OPS_ALERT_WEBHOOK_SECRET: 'secret',
-    })).toBe(true);
+    } as unknown as NodeJS.ProcessEnv)).toBe(true);
     expect(isOpsAlertDeliveryConfigured({
       NODE_ENV: 'development',
       OPS_ALERT_WEBHOOK_URL: 'http://localhost:8787/hook',
       OPS_ALERT_WEBHOOK_SECRET: 'secret',
-    })).toBe(true);
+    } as unknown as NodeJS.ProcessEnv)).toBe(true);
     expect(isOpsAlertDeliveryConfigured({
       NODE_ENV: 'production',
       OPS_ALERT_WEBHOOK_URL: 'http://localhost:8787/hook',
       OPS_ALERT_WEBHOOK_SECRET: 'secret',
-    })).toBe(false);
+    } as unknown as NodeJS.ProcessEnv)).toBe(false);
     expect(isOpsAlertDeliveryConfigured({
       OPS_ALERT_WEBHOOK_URL: 'https://user:pass@ops.svbooking.invalid/hook',
       OPS_ALERT_WEBHOOK_SECRET: 'secret',
-    })).toBe(false);
+    } as unknown as NodeJS.ProcessEnv)).toBe(false);
   });
 
   it('sends only sanitized alert evidence to the configured webhook', async () => {
@@ -64,7 +64,7 @@ describe('ops alert delivery', () => {
       env: {
         OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
         OPS_ALERT_WEBHOOK_SECRET: 'ops-secret-value',
-      },
+      } as unknown as NodeJS.ProcessEnv,
       fetchImpl: async (url, init) => {
         calls.push({ url: String(url), init: init || {} });
         return new Response('{}', { status: 202 });
@@ -103,14 +103,14 @@ describe('ops alert delivery', () => {
       env: {
         OPS_ALERT_WEBHOOK_URL: '',
         OPS_ALERT_WEBHOOK_SECRET: '',
-      },
+      } as unknown as NodeJS.ProcessEnv,
       fetchImpl: async () => new Response('{}'),
     });
     const invalid = await deliverOpsAlertReport(report, {
       env: {
         OPS_ALERT_WEBHOOK_URL: 'ftp://ops.svbooking.invalid/hook',
         OPS_ALERT_WEBHOOK_SECRET: 'secret',
-      },
+      } as unknown as NodeJS.ProcessEnv,
       fetchImpl: async () => new Response('{}'),
     });
 

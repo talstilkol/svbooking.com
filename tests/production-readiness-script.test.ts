@@ -12,7 +12,7 @@ function runAudit(env: Record<string, string | undefined> = {}) {
         PATH: process.env.PATH,
         HOME: process.env.HOME,
         ...env,
-      },
+      } as unknown as NodeJS.ProcessEnv,
     });
     return { status: 0, stdout };
   } catch (error) {

@@ -193,12 +193,12 @@ describe('health APIs', () => {
 
     for (let i = 0; i < 10; i++) {
       const allowed = await getAgentHealth(request);
-      expect(allowed.status).toBe(200);
+      expect(allowed!.status).toBe(200);
     }
 
     const blocked = await getAgentHealth(request);
-    expect(blocked.status).toBe(429);
-    expect(blocked.headers.get('cache-control')).toBe('no-store');
+    expect(blocked!.status).toBe(429);
+    expect(blocked!.headers.get('cache-control')).toBe('no-store');
     expect(getRates).toHaveBeenCalledTimes(10);
     expect(getHeatmap).toHaveBeenCalledTimes(10);
   });

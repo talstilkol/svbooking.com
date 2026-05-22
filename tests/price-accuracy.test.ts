@@ -100,14 +100,14 @@ describe('price accuracy ledger', () => {
     }));
 
     const denied = await GET(new Request('http://localhost:3000/api/price-accuracy?days=1'));
-    expect(denied.status).toBe(401);
+    expect(denied!.status).toBe(401);
 
     const accepted = await GET(new Request('http://localhost:3000/api/price-accuracy?days=1', {
       headers: { Authorization: 'Bearer admin-price-secret' },
     }));
-    const body = await accepted.json();
+    const body = await accepted!.json();
 
-    expect(accepted.status).toBe(200);
+    expect(accepted!.status).toBe(200);
     expect(body.observations).toBe(1);
     expect(body.mismatches).toBe(1);
     expect(body.byProvider['Booking.com'].mismatchRate).toBe(1);

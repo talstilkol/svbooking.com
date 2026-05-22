@@ -68,8 +68,8 @@ describe('/api/catalog/candidates', () => {
 
   it('requires admin auth and returns no-store', async () => {
     const denied = await GET(request('/api/catalog/candidates'));
-    expect(denied.status).toBe(401);
-    expect(denied.headers.get('cache-control')).toBe('no-store');
+    expect(denied!.status).toBe(401);
+    expect(denied!.headers.get('cache-control')).toBe('no-store');
   });
 
   it('rejects cross-origin catalog candidate mutations', async () => {
@@ -79,10 +79,10 @@ describe('/api/catalog/candidates', () => {
       { action: 'approve', id: 'g297930-d305178' },
       { origin: 'https://evil.example' }
     ));
-    const body = await response.json();
+    const body = await response!.json();
 
-    expect(response.status).toBe(403);
-    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response!.status).toBe(403);
+    expect(response!.headers.get('cache-control')).toBe('no-store');
     expect(body.error).toBe('Same-origin request required');
     expect(addAndPersistHotel).not.toHaveBeenCalled();
   });
@@ -96,15 +96,15 @@ describe('/api/catalog/candidates', () => {
       country: 'France',
       source: 'unknown',
     }));
-    const body = await ingested.json();
+    const body = await ingested!.json();
 
-    expect(ingested.status).toBe(200);
+    expect(ingested!.status).toBe(200);
     expect(body.candidate.status).toBe('pending');
     expect(body.candidate.missingProvenance).toBe(true);
     expect(addAndPersistHotel).not.toHaveBeenCalled();
 
     const missing = await GET(request('/api/catalog/candidates?missingProvenance=true', 'admin-candidate-secret'));
-    const missingBody = await missing.json();
+    const missingBody = await missing!.json();
     expect(missingBody.total).toBe(1);
 
     const stale = await POST(request('/api/catalog/candidates', 'admin-candidate-secret', {
@@ -112,8 +112,8 @@ describe('/api/catalog/candidates', () => {
       id: body.candidate.id,
       reason: 'source unavailable',
     }));
-    const staleBody = await stale.json();
-    expect(stale.status).toBe(200);
+    const staleBody = await stale!.json();
+    expect(stale!.status).toBe(200);
     expect(staleBody.candidate.status).toBe('stale');
   });
 
@@ -128,9 +128,9 @@ describe('/api/catalog/candidates', () => {
     }));
 
     const response = await GET(request('/api/catalog/candidates?duplicate=true', 'admin-candidate-secret'));
-    const body = await response.json();
+    const body = await response!.json();
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
     expect(body.total).toBe(1);
     expect(body.candidates[0].duplicate).toBe(true);
   });

@@ -39,7 +39,7 @@ describe('i18n readiness', () => {
       sampleDate: '2026-06-01',
       sampleAmount: 120,
       currency: 'USD',
-    });
+    } as Parameters<typeof buildLocalePayload>[0]);
 
     expect(payload.locale).toBe('he');
     expect(payload.dir).toBe('rtl');

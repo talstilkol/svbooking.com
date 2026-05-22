@@ -83,8 +83,8 @@ describe('provider observability', () => {
 
   it('protects provider uptime metrics behind admin auth and no-store', async () => {
     const denied = await getProviderUptime(new Request('http://localhost:3000/api/agents/providers/uptime'));
-    expect(denied.status).toBe(401);
-    expect(denied.headers.get('Cache-Control')).toBe('no-store');
+    expect(denied!.status).toBe(401);
+    expect(denied!.headers.get('Cache-Control')).toBe('no-store');
 
     await recordProviderUptimeEvent({
       providerId: 'xotelo',
@@ -98,10 +98,10 @@ describe('provider observability', () => {
     const accepted = await getProviderUptime(new Request('http://localhost:3000/api/agents/providers/uptime', {
       headers: { Authorization: 'Bearer admin-secret' },
     }));
-    const body = await accepted.json();
+    const body = await accepted!.json();
 
-    expect(accepted.status).toBe(200);
-    expect(accepted.headers.get('Cache-Control')).toBe('no-store');
+    expect(accepted!.status).toBe(200);
+    expect(accepted!.headers.get('Cache-Control')).toBe('no-store');
     expect(body.uptime.status).toBe('available');
     expect(body.uptime.providers[0]).toMatchObject({
       providerId: 'xotelo',

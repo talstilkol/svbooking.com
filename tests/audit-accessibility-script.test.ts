@@ -21,10 +21,7 @@ function runAccessibilityAudit(cwd: string) {
     cwd,
     encoding: 'utf8',
     stdio: 'pipe',
-    env: {
-      PATH: process.env.PATH,
-      HOME: process.env.HOME,
-    },
+    env: { ...process.env, PATH: process.env.PATH, HOME: process.env.HOME },
   });
 
   return {

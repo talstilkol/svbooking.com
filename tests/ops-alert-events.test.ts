@@ -75,8 +75,8 @@ describe('ops alert delivery events', () => {
     });
 
     const denied = await GET(new Request('http://localhost:3000/api/ops/alerts/events'));
-    expect(denied.status).toBe(401);
-    expect(denied.headers.get('cache-control')).toBe('no-store');
+    expect(denied!.status).toBe(401);
+    expect(denied!.headers.get('cache-control')).toBe('no-store');
 
     mocks.store.set(OPS_ALERT_EVENTS_KEY, [{
       id: 'ops-event-2',
@@ -94,10 +94,10 @@ describe('ops alert delivery events', () => {
     mocks.isOpsAlertDeliveryConfigured.mockReturnValueOnce(true);
 
     const accepted = await GET(new Request('http://localhost:3000/api/ops/alerts/events?limit=1'));
-    const body = await accepted.json();
+    const body = await accepted!.json();
 
-    expect(accepted.status).toBe(200);
-    expect(accepted.headers.get('cache-control')).toBe('no-store');
+    expect(accepted!.status).toBe(200);
+    expect(accepted!.headers.get('cache-control')).toBe('no-store');
     expect(body).toEqual({
       count: 1,
       deliveryConfigured: true,
