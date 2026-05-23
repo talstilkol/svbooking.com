@@ -29,6 +29,10 @@ export default function Footer() {
       { href: '/city/Dubai', label: 'Hotels in Dubai' },
       { href: `/city/${encodeURIComponent('New York')}`, label: 'Hotels in New York' },
       { href: '/city/Bangkok', label: 'Hotels in Bangkok' },
+      { href: '/city/Barcelona', label: 'Hotels in Barcelona' },
+      { href: '/city/Rome', label: 'Hotels in Rome' },
+      { href: `/city/${encodeURIComponent('San Francisco')}`, label: 'Hotels in San Francisco' },
+      { href: '/city/Singapore', label: 'Hotels in Singapore' },
     ],
   };
 
