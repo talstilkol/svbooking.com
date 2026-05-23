@@ -250,7 +250,7 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                       className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm"
                     >
                       {d}
-                      <button onClick={() => removeDestination(d)} className="ml-1 hover:text-indigo-900">
+                      <button onClick={() => removeDestination(d)} className="ml-1 hover:text-indigo-900" aria-label={`Remove ${d}`}>
                         ×
                       </button>
                     </motion.span>
