@@ -115,8 +115,8 @@ test.describe('Compare API', () => {
     const res = await request.get('/api/compare');
     expect(res.ok()).toBeTruthy();
     const body = await res.json();
-    expect(body.hotels.length).toBeGreaterThanOrEqual(133);
-    expect(body.cities.length).toBeGreaterThanOrEqual(46);
+    expect(body.hotels.length).toBeGreaterThanOrEqual(500);
+    expect(body.cities.length).toBeGreaterThanOrEqual(100);
   });
 
   test('known hotel lookup returns catalog data without external price lookup', async ({ request }) => {

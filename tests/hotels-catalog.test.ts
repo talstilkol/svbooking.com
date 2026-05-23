@@ -11,8 +11,8 @@ import {
 
 describe('hotels-catalog', () => {
   describe('HOTELS', () => {
-    it('has at least 100 hotels', () => {
-      expect(HOTELS.length).toBeGreaterThanOrEqual(100);
+    it('has at least 500 hotels', () => {
+      expect(HOTELS.length).toBeGreaterThanOrEqual(500);
     });
 
     it('every hotel has required fields', () => {

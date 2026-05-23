@@ -3,7 +3,7 @@ import { HOTELS, listCities } from '@/lib/hotels-catalog';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com';
-  const lastReviewedAt = new Date('2026-05-14T00:00:00.000Z');
+  const lastReviewedAt = new Date('2026-05-23T00:00:00.000Z');
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: lastReviewedAt, changeFrequency: 'daily', priority: 1 },

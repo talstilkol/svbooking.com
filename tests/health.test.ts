@@ -50,7 +50,7 @@ describe('health APIs', () => {
     expect(body.launchReadiness.freeOnlyLaunchReady).toBe(false);
     expect(body.launchReadiness.globalParityReady).toBe(false);
     expect(body.launchReadiness.blockers).toContain('Persistent KV cache is not configured');
-    expect(body.checks.catalog.hotels).toBeGreaterThanOrEqual(133);
+    expect(body.checks.catalog.hotels).toBeGreaterThanOrEqual(500);
     expect(body.checks.providers.available).toBeGreaterThan(0);
     expect(body.checks.alerts.deliveryStatus).toBe('not-configured');
     expect(body.checks.alerts.unsubscribeStatus).toBe('not-configured');
