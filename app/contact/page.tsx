@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { FAQPageJsonLd } from '@/components/SchemaOrg';
 
 export const metadata: Metadata = {
   title: 'Contact Us',
@@ -52,6 +53,7 @@ const FAQ_ITEMS = [
 export default function ContactPage() {
   return (
     <div className="min-h-screen">
+      <FAQPageJsonLd items={FAQ_ITEMS.map((item) => ({ question: item.q, answer: item.a }))} />
       {/* Gradient header */}
       <div className="bg-linear-to-r from-sky-500 via-blue-500 to-indigo-500 text-white py-10 px-4 mb-8">
         <div className="max-w-4xl mx-auto">

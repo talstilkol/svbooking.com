@@ -52,6 +52,8 @@ export default function FAQ() {
             >
               <button
                 onClick={() => setOpen(open === i ? null : i)}
+                aria-expanded={open === i}
+                aria-controls={`faq-answer-${i}`}
                 className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
               >
                 <span className="font-medium text-slate-800">{faq.q}</span>
@@ -62,12 +64,13 @@ export default function FAQ() {
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
               {open === i && (
-                <div className="px-5 pb-4 text-slate-600 text-sm leading-relaxed border-t border-slate-100 pt-3">
+                <div id={`faq-answer-${i}`} role="region" aria-labelledby={`faq-q-${i}`} className="px-5 pb-4 text-slate-600 text-sm leading-relaxed border-t border-slate-100 pt-3">
                   {faq.a}
                 </div>
               )}
