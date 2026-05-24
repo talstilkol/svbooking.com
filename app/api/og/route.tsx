@@ -7,6 +7,7 @@ const ogLimiter = rateLimit({ namespace: 'og-image', limit: 15, window: 60, fail
 export const revalidate = 86400; // OG images are deterministic — cache 24h
 
 export async function GET(request: Request) {
+  try {
   const ip = getClientIp(request);
   const { success, reset } = await ogLimiter.check(ip);
   if (!success) return rateLimitResponse(reset);
@@ -110,4 +111,8 @@ export async function GET(request: Request) {
       height: 630,
     },
   );
+  } catch (err) {
+    console.error('GET /api/og error:', err);
+    return new Response('OG image generation failed', { status: 500 });
+  }
 }
