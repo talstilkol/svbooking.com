@@ -5,6 +5,8 @@ const isDev = process.env.NODE_ENV !== 'production';
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  poweredByHeader: false,
+  compress: false, // Vercel handles brotli/gzip at the edge
   headers: async () => [
     {
       source: '/(.*)',
