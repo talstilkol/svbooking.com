@@ -70,6 +70,10 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['framer-motion', 'lucide-react'],
+    staleTimes: {
+      dynamic: 30,   // Cache dynamic pages for 30s on client navigation
+      static: 300,   // Cache static pages for 5 min on client navigation
+    },
   },
 };
 
