@@ -239,7 +239,7 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
           />
         ) : (
           <>
-            <p className="text-sm text-zinc-500 mb-4">
+            <p className="text-sm text-zinc-500 mb-4" aria-live="polite" aria-atomic="true">
               Showing{' '}
               <strong>
                 {(page - 1) * PAGE_SIZE + 1}&ndash;{Math.min(page * PAGE_SIZE, filtered.length)}
@@ -255,35 +255,57 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-10">
+              <nav aria-label="Search results pagination" className="flex justify-center items-center gap-1.5 mt-10">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
+                  aria-label="Previous page"
                   className="px-4 py-2 bg-white border border-zinc-300 rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-zinc-50 transition"
                 >
                   &larr; Prev
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`w-9 h-9 rounded-lg text-sm font-medium transition ${
-                      p === page
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white border border-zinc-300 text-zinc-700 hover:bg-zinc-50'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
+                {(() => {
+                  const pages: (number | 'ellipsis')[] = [];
+                  if (totalPages <= 7) {
+                    for (let i = 1; i <= totalPages; i++) pages.push(i);
+                  } else {
+                    pages.push(1);
+                    if (page > 3) pages.push('ellipsis');
+                    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
+                      pages.push(i);
+                    }
+                    if (page < totalPages - 2) pages.push('ellipsis');
+                    pages.push(totalPages);
+                  }
+                  return pages.map((p, idx) =>
+                    p === 'ellipsis' ? (
+                      <span key={`ellipsis-${idx}`} className="px-1 text-zinc-400">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p)}
+                        aria-label={`Page ${p}`}
+                        aria-current={p === page ? 'page' : undefined}
+                        className={`w-9 h-9 rounded-lg text-sm font-medium transition ${
+                          p === page
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white border border-zinc-300 text-zinc-700 hover:bg-zinc-50'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  );
+                })()}
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
+                  aria-label="Next page"
                   className="px-4 py-2 bg-white border border-zinc-300 rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-zinc-50 transition"
                 >
                   Next &rarr;
                 </button>
-              </div>
+              </nav>
             )}
           </>
         )}
