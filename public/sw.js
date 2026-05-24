@@ -14,8 +14,10 @@ const PRIVATE_NAVIGATION_PREFIXES = [
 const PRE_CACHE = [
   '/',
   '/offline',
+  '/favicon.ico',
   '/icon-192.png',
   '/icon-512.png',
+  '/apple-touch-icon.png',
 ];
 
 function toSameOriginUrl(value) {
