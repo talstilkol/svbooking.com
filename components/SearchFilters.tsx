@@ -145,6 +145,7 @@ export default function SearchFilters({
                         value={priceRange[0]}
                         disabled
                         title={DATA_FILTER_NOTICE}
+                        aria-label="Minimum price"
                         onChange={(e) => handlePriceChange(0, parseInt(e.target.value) || 0)}
                         className="w-full bg-transparent outline-none disabled:cursor-not-allowed"
                         placeholder="Min"
@@ -160,6 +161,7 @@ export default function SearchFilters({
                         value={priceRange[1]}
                         disabled
                         title={DATA_FILTER_NOTICE}
+                        aria-label="Maximum price"
                         onChange={(e) => handlePriceChange(1, parseInt(e.target.value) || 0)}
                         className="w-full bg-transparent outline-none disabled:cursor-not-allowed"
                         placeholder="Max"
@@ -198,8 +200,9 @@ export default function SearchFilters({
 
               {/* Sort */}
               <div>
-                <label className="text-sm font-semibold mb-2 block">Sort By</label>
+                <label htmlFor="search-sort" className="text-sm font-semibold mb-2 block">Sort By</label>
                 <select
+                  id="search-sort"
                   value={filters.sort}
                   onChange={(e) => handleSortChange(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white"
