@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: 'Contact Us',
   description: 'Get in touch with SV Booking. We\'d love to hear your feedback, partnership inquiries, or support questions.',
   alternates: { canonical: '/contact' },
+  openGraph: {
+    title: 'Contact SV Booking',
+    description: 'Get in touch — feedback, partnership inquiries, or support questions.',
+    type: 'website',
+  },
 };
 
 export default function ContactLayout({ children }: { children: React.ReactNode }) {

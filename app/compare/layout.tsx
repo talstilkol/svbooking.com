@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: 'Price Comparison',
   description: 'Compare provider-returned hotel prices from configured sources when rates are available.',
   alternates: { canonical: '/compare' },
+  openGraph: {
+    title: 'Hotel Price Comparison | SV Booking',
+    description: 'Compare hotel rates across multiple booking providers to find the best deal.',
+    type: 'website',
+  },
 };
 
 export default function CompareLayout({ children }: { children: React.ReactNode }) {
