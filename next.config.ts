@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https://images.unsplash.com https://cf.bstatic.com https://photos.hotelbeds.com",
             "font-src 'self'",
-            "connect-src 'self' https://*.vercel-insights.com https://*.upstash.io",
+            "connect-src 'self' https://*.vercel-insights.com https://vitals.vercel-insights.com https://*.upstash.io",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
@@ -65,6 +65,9 @@ const nextConfig: NextConfig = {
   },
   turbopack: {
     root: path.resolve(__dirname),
+  },
+  experimental: {
+    optimizePackageImports: ['framer-motion', 'lucide-react'],
   },
 };
 

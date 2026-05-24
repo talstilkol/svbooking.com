@@ -111,6 +111,8 @@ function CompareInner() {
   const [rooms, setRooms] = useState(1);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const HOTELS_PER_PAGE = 20;
 
   const compareHotelWithDates = useCallback(async (hotel: Hotel, ci: string, co: string) => {
     setComparing(hotel.hotelKey);
@@ -169,6 +171,18 @@ function CompareInner() {
     ? hotels.filter((h) => h.city === selectedCity)
     : hotels;
 
+  const totalPages = Math.ceil(filteredHotels.length / HOTELS_PER_PAGE);
+  const paginatedHotels = filteredHotels.slice(
+    (page - 1) * HOTELS_PER_PAGE,
+    page * HOTELS_PER_PAGE
+  );
+
+  // Reset to page 1 when city filter changes
+  const handleCityChange = (city: string) => {
+    setSelectedCity(city);
+    setPage(1);
+  };
+
   const compareHotel = (hotel: Hotel) => compareHotelWithDates(hotel, checkIn, checkOut);
 
   return (
@@ -206,7 +220,7 @@ function CompareInner() {
               <select
                 id="compare-city"
                 value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)}
+                onChange={(e) => handleCityChange(e.target.value)}
                 className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900"
               >
                 <option value="">All cities</option>
@@ -266,7 +280,7 @@ function CompareInner() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredHotels.map((hotel) => {
+            {paginatedHotels.map((hotel) => {
               const isComparing = comparing === hotel.hotelKey;
               const result = comparison?.hotel.hotelKey === hotel.hotelKey ? comparison : null;
               return (
@@ -456,6 +470,29 @@ function CompareInner() {
               );
             })}
           </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && totalPages > 1 && (
+          <nav aria-label="Hotel list pagination" className="flex items-center justify-center gap-2 mt-8">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
+            >
+              ← Prev
+            </button>
+            <span className="text-sm text-slate-600 px-3">
+              Page {page} of {totalPages} ({filteredHotels.length} hotels)
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
+            >
+              Next →
+            </button>
+          </nav>
         )}
       </div>
       </div>

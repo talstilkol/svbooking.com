@@ -17,6 +17,8 @@ import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import CompareWidget from "@/components/CompareWidget";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LocaleRuntime from "@/components/LocaleRuntime";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -114,6 +116,8 @@ export default function RootLayout({
         <PerformanceMonitor />
         <ServiceWorkerRegistration />
         </ToastProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
