@@ -1,4 +1,5 @@
 import { listCities, getHotelsByCity } from '@/lib/hotels-catalog';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -49,6 +50,7 @@ export default async function CityPage({ params }: Props) {
   const { name } = await params;
   const city = decodeURIComponent(name);
   const hotels = getHotelsByCity(city);
+  if (hotels.length === 0) notFound();
   const country = hotels[0]?.country || '';
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com';

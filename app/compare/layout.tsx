@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { BreadcrumbJsonLd } from '@/components/JsonLd';
 
 export const metadata: Metadata = {
   title: 'Price Comparison',
@@ -7,5 +8,13 @@ export const metadata: Metadata = {
 };
 
 export default function CompareLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <BreadcrumbJsonLd items={[
+        { name: 'Home', url: 'https://svbooking.com' },
+        { name: 'Compare Prices', url: 'https://svbooking.com/compare' },
+      ]} />
+      {children}
+    </>
+  );
 }

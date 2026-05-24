@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { BreadcrumbJsonLd } from '@/components/JsonLd';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -7,5 +8,13 @@ export const metadata: Metadata = {
 };
 
 export default function TermsLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <BreadcrumbJsonLd items={[
+        { name: 'Home', url: 'https://svbooking.com' },
+        { name: 'Terms of Service', url: 'https://svbooking.com/terms' },
+      ]} />
+      {children}
+    </>
+  );
 }
