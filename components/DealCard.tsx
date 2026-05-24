@@ -34,6 +34,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
           width={400}
           height={160}
           className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
         <div className="absolute top-2 right-2 px-2.5 py-1 bg-emerald-600 text-white text-xs font-bold rounded-lg shadow">
           {currency} {deal.pricePerNight.toFixed(0)}/night
