@@ -86,6 +86,9 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://data.xotelo.com" />
         <link rel="dns-prefetch" href="https://data.xotelo.com" />
+        <link rel="dns-prefetch" href="https://serpapi.com" />
+        <link rel="dns-prefetch" href="https://booking-com.p.rapidapi.com" />
+        <link rel="dns-prefetch" href="https://test.api.amadeus.com" />
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>

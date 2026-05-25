@@ -226,11 +226,47 @@ function emptyStats(totalRequests) {
   };
 }
 
+/**
+ * Reorder work items so stale/missing cache entries come first.
+ * This maximizes value per cron run: if the run is interrupted or rate-limited,
+ * the most impactful refreshes have already happened.
+ */
+async function prioritizeByFreshness(workItems, keyFn) {
+  if (workItems.length === 0) return workItems;
+  const keys = workItems.map(keyFn);
+  let cached;
+  try {
+    cached = await kv.mget(keys);
+  } catch {
+    return workItems; // Can't check — keep original order
+  }
+
+  // Score: 0 = missing, 1 = stale (has data but old), 2 = fresh (skip-friendly)
+  const now = Date.now();
+  const scored = workItems.map((item, i) => {
+    const entry = cached[i];
+    if (!entry) return { item, priority: 0 };
+    const cachedAt = entry?.cachedAt || entry?.result?.lastCheckedAt;
+    const age = cachedAt ? (now - Date.parse(cachedAt)) / 1000 : Infinity;
+    // Treat anything older than 1h as stale, under 1h as fresh
+    return { item, priority: age > 3600 ? 1 : 2 };
+  });
+
+  // Stable sort: missing → stale → fresh (preserves original order within tiers)
+  scored.sort((a, b) => a.priority - b.priority);
+  return scored.map((s) => s.item);
+}
+
 async function prewarmDatedRates(workItems) {
   const stats = emptyStats(workItems.length);
   const bySource = {};
 
-  await withConcurrency(workItems, 8, async (item) => {
+  // Reorder: stale/missing items first for maximum cron value
+  const ordered = await prioritizeByFreshness(workItems, (item) =>
+    `price:${item.hotelKey}:${item.checkIn}:${item.checkOut}:${item.currency || 'USD'}`
+  );
+
+  await withConcurrency(ordered, 8, async (item) => {
     bySource[item.source] = (bySource[item.source] || 0) + 1;
     try {
       const result = await getCachedRates({
@@ -262,7 +298,12 @@ async function prewarmDatedRates(workItems) {
 async function prewarmHeatmaps(workItems) {
   const stats = emptyStats(workItems.length);
 
-  await withConcurrency(workItems, 8, async ({ hotel, checkOut }) => {
+  // Reorder: stale/missing heatmaps first
+  const ordered = await prioritizeByFreshness(workItems, (item) =>
+    `heatmap:${item.hotel.hotelKey}:${item.checkOut}`
+  );
+
+  await withConcurrency(ordered, 8, async ({ hotel, checkOut }) => {
     try {
       const result = await getCachedHeatmap({
         hotelKey: hotel.hotelKey,
