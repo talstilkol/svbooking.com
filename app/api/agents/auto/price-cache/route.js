@@ -21,6 +21,18 @@ const MAX_ALERT_DATED_ITEMS = 100;
 const DATED_RATE_CHECK_IN_OFFSETS = [3, 7, 14, 30];
 const HEATMAP_CHECK_OUT_OFFSETS = DATED_RATE_CHECK_IN_OFFSETS.map((offset) => offset + DEFAULT_NIGHTS);
 
+/** Get days until the next Friday from a base date (always > 0, never same day) */
+function daysUntilFriday(baseDateStr) {
+  const d = new Date(baseDateStr);
+  const day = d.getDay(); // 0=Sun, 5=Fri
+  return (5 - day + 7) % 7 || 7;
+}
+
+/** Get days until the 2nd Friday from a base date */
+function daysUntilSecondFriday(baseDateStr) {
+  return daysUntilFriday(baseDateStr) + 7;
+}
+
 function parseLimit(value, fallback, max) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
@@ -134,8 +146,19 @@ export function buildCatalogDatedRateWorkItems({
   popularity = {},
 } = {}) {
   const baseDate = today || new Date().toISOString().split('T')[0];
+
+  // Weekend offsets: next Friday and Friday after that (Fri-Sun, 2 nights)
+  // These are dynamic — they land on actual Fridays regardless of what day today is.
+  const weekendOffsets = [
+    daysUntilFriday(baseDate),
+    daysUntilSecondFriday(baseDate),
+  ];
+
+  // Combine: static offsets + weekend offsets (deduplication happens via rateWorkItemKey)
+  const allOffsets = [...new Set([...DATED_RATE_CHECK_IN_OFFSETS, ...weekendOffsets])].sort((a, b) => a - b);
+
   return selectPriorityCatalogHotels(hotels, limit, cohort, popularity).flatMap((hotel) =>
-    DATED_RATE_CHECK_IN_OFFSETS.map((offset) => {
+    allOffsets.map((offset) => {
       const checkIn = addDays(baseDate, offset);
       return {
         source: 'catalog-priority',

@@ -74,6 +74,9 @@ function CompareHotelsInner() {
   const addHotel = (key: string) => {
     if (key && !selectedKeys.includes(key) && selectedKeys.length < 4) {
       setSelectedKeys((prev) => [...prev, key]);
+      // Speculative pre-fetch: warm cache for this hotel immediately.
+      // By the time user selects all hotels and clicks Compare, data is cached.
+      fetch(`/api/compare/prefetch?hotelKey=${key}`, { priority: 'low' as RequestPriority }).catch(() => {});
     }
   };
 
