@@ -49,33 +49,63 @@ function dedupeBy(items, keyFn) {
   return deduped;
 }
 
-export function selectPriorityCatalogHotels(hotels = HOTELS, limit = DEFAULT_CATALOG_DATED_HOTEL_LIMIT) {
+/**
+ * Sort catalog hotels by city density (deterministic).
+ * Stable ordering ensures cohort rotation is predictable.
+ */
+function sortCatalogByPriority(hotels = HOTELS) {
   const cityCounts = new Map();
   for (const hotel of hotels) {
     cityCounts.set(hotel.city, (cityCounts.get(hotel.city) || 0) + 1);
   }
 
-  return [...hotels]
-    .sort((a, b) => {
-      const countDiff = (cityCounts.get(b.city) || 0) - (cityCounts.get(a.city) || 0);
-      if (countDiff !== 0) return countDiff;
-      return [
-        a.country.localeCompare(b.country),
-        a.city.localeCompare(b.city),
-        a.name.localeCompare(b.name),
-        a.hotelKey.localeCompare(b.hotelKey),
-      ].find((result) => result !== 0) || 0;
-    })
-    .slice(0, limit);
+  return [...hotels].sort((a, b) => {
+    const countDiff = (cityCounts.get(b.city) || 0) - (cityCounts.get(a.city) || 0);
+    if (countDiff !== 0) return countDiff;
+    return [
+      a.country.localeCompare(b.country),
+      a.city.localeCompare(b.city),
+      a.name.localeCompare(b.name),
+      a.hotelKey.localeCompare(b.hotelKey),
+    ].find((result) => result !== 0) || 0;
+  });
+}
+
+/**
+ * Select catalog hotels for pre-warming with cohort rotation.
+ * Each cron run picks a different slice of the sorted catalog so that
+ * over N runs/day, the entire catalog gets covered.
+ *
+ * @param {Object} opts
+ * @param {Array} opts.hotels - Full catalog
+ * @param {number} opts.limit - Hotels per run
+ * @param {number} opts.cohort - Cohort index (0-based), defaults to hour-based rotation
+ */
+export function selectPriorityCatalogHotels(hotels = HOTELS, limit = DEFAULT_CATALOG_DATED_HOTEL_LIMIT, cohort = -1) {
+  const sorted = sortCatalogByPriority(hotels);
+  if (limit >= sorted.length) return sorted;
+
+  // Determine cohort: how many full cohorts fit in the catalog
+  const totalCohorts = Math.ceil(sorted.length / limit);
+  const cohortIndex = cohort >= 0 ? cohort % totalCohorts : Math.floor(new Date().getUTCHours() / 12) % totalCohorts;
+  const offset = cohortIndex * limit;
+
+  // Wrap around if offset + limit exceeds catalog size
+  const slice = [];
+  for (let i = 0; i < limit && i < sorted.length; i++) {
+    slice.push(sorted[(offset + i) % sorted.length]);
+  }
+  return slice;
 }
 
 export function buildCatalogDatedRateWorkItems({
   today,
   hotels = HOTELS,
   limit = DEFAULT_CATALOG_DATED_HOTEL_LIMIT,
+  cohort = -1,
 } = {}) {
   const baseDate = today || new Date().toISOString().split('T')[0];
-  return selectPriorityCatalogHotels(hotels, limit).flatMap((hotel) =>
+  return selectPriorityCatalogHotels(hotels, limit, cohort).flatMap((hotel) =>
     DATED_RATE_CHECK_IN_OFFSETS.map((offset) => {
       const checkIn = addDays(baseDate, offset);
       return {
@@ -206,15 +236,22 @@ async function prewarmHeatmaps(workItems) {
 async function runPriceCache({
   catalogLimit = DEFAULT_CATALOG_DATED_HOTEL_LIMIT,
   heatmapLimit = DEFAULT_HEATMAP_HOTEL_LIMIT,
+  cohort = -1,
 } = {}) {
   const today = new Date().toISOString().split('T')[0];
-  const catalogDated = buildCatalogDatedRateWorkItems({ today, limit: catalogLimit });
+  const catalogDated = buildCatalogDatedRateWorkItems({ today, limit: catalogLimit, cohort });
   const alertDated = await collectActiveAlertRateWorkItems();
   const datedWorkItems = dedupeBy([...alertDated, ...catalogDated], rateWorkItemKey);
   const heatmapWorkItems = dedupeBy(buildHeatmapWorkItems({ today, limit: heatmapLimit }), heatmapWorkItemKey);
 
   const datedRates = await prewarmDatedRates(datedWorkItems);
   const heatmaps = await prewarmHeatmaps(heatmapWorkItems);
+
+  // Resolve actual cohort index for reporting
+  const totalCohorts = Math.ceil(HOTELS.length / catalogLimit);
+  const resolvedCohort = cohort >= 0
+    ? cohort % totalCohorts
+    : Math.floor(new Date().getUTCHours() / 12) % totalCohorts;
 
   return {
     mode: 'dated-provider-rates-plus-heatmap-price-sources',
@@ -227,6 +264,8 @@ async function runPriceCache({
     config: {
       catalogDatedHotelLimit: catalogLimit,
       heatmapHotelLimit: heatmapLimit,
+      cohort: resolvedCohort,
+      totalCohorts,
     },
   };
 }
@@ -247,9 +286,10 @@ export async function GET(request) {
       DEFAULT_HEATMAP_HOTEL_LIMIT,
       MAX_HEATMAP_HOTEL_LIMIT
     );
+    const cohort = searchParams.has('cohort') ? Number(searchParams.get('cohort')) : -1;
     const status = await runAgent(
       AGENT_NAMES.PRICE_CACHE,
-      () => runPriceCache({ catalogLimit, heatmapLimit })
+      () => runPriceCache({ catalogLimit, heatmapLimit, cohort: Number.isFinite(cohort) ? cohort : -1 })
     );
     return Response.json(status, { headers: NO_STORE_HEADERS });
   } catch (err) {

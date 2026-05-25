@@ -65,7 +65,7 @@ describe('price cache agent', () => {
   });
 
   it('selects catalog hotels deterministically by observed catalog density', () => {
-    const selected = selectPriorityCatalogHotels(mockedHotels, 3);
+    const selected = selectPriorityCatalogHotels(mockedHotels, 3, 0);
 
     expect(selected.map((hotel) => hotel.hotelKey)).toEqual(['g1-d1', 'g1-d2', 'g2-d1']);
   });
@@ -75,6 +75,7 @@ describe('price cache agent', () => {
       today: '2026-05-14',
       hotels: mockedHotels,
       limit: 2,
+      cohort: 0,
     } as Parameters<typeof buildCatalogDatedRateWorkItems>[0]);
 
     expect(workItems).toHaveLength(6);
@@ -100,7 +101,7 @@ describe('price cache agent', () => {
       currency: 'EUR',
     }]);
 
-    const response = await GET(new Request('http://localhost:3000/api/agents/auto/price-cache?catalogLimit=2&heatmapLimit=2', {
+    const response = await GET(new Request('http://localhost:3000/api/agents/auto/price-cache?catalogLimit=2&heatmapLimit=2&cohort=0', {
       headers: { host: 'localhost:3000' },
     }));
     const body = await response!.json();
@@ -111,6 +112,8 @@ describe('price cache agent', () => {
     expect(body.result.config).toEqual({
       catalogDatedHotelLimit: 2,
       heatmapHotelLimit: 2,
+      cohort: 0,
+      totalCohorts: 2,
     });
     expect(body.result.datedRates.totalRequests).toBe(7);
     expect(body.result.datedRates.bySource).toEqual({
