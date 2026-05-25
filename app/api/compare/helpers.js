@@ -129,5 +129,6 @@ export function buildComparisonResponse({ result, hotel, checkIn, checkOut, curr
     providerSource: result?.provider || null,
     mergedProviders: result?.mergedProviders || 1,
     lastCheckedAt: result?.lastCheckedAt || null,
+    estimatedFromDates: result?.estimatedFromDates || null,
   };
 }

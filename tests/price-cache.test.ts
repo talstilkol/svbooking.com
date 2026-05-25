@@ -89,6 +89,68 @@ describe('price cache', () => {
     expect(result.rates[0].name).toBe('Cached Provider');
   });
 
+  it('returns estimated rates from nearby cached dates on cache miss', async () => {
+    // Simulate a "latest rates" entry from a nearby date (2 days off)
+    await kv.setWithTTL('latest-rates:g1-d1:USD', {
+      result: {
+        rates: [{ name: 'Estimated Provider', rate: 110, tax: 10 }],
+        currency: 'USD',
+        provider: 'Xotelo',
+        source: 'xotelo',
+        lastCheckedAt: '2026-05-20T00:00:00.000Z',
+      },
+      cachedAt: '2026-05-20T00:00:00.000Z',
+      forDates: { checkIn: '2026-06-03', checkOut: '2026-06-05' },
+    }, 7200);
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      hotelName: 'Test Hotel',
+      city: 'Paris',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    // Should return estimated data from nearby date
+    expect(result.freshness).toBe('estimated');
+    expect(result.partial).toBe(true);
+    expect(result.fromCache).toBe(true);
+    expect(result.estimatedFromDates).toEqual({ checkIn: '2026-06-03', checkOut: '2026-06-05' });
+    expect(result.rates[0].name).toBe('Estimated Provider');
+
+    // Should also trigger a live fetch in background
+    expect(getHotelRates).toHaveBeenCalledWith(expect.objectContaining({
+      hotelKey: 'g1-d1',
+      checkIn: '2026-06-01',
+    }));
+  });
+
+  it('does not use fuzzy cache for dates too far apart', async () => {
+    await kv.setWithTTL('latest-rates:g1-d1:USD', {
+      result: {
+        rates: [{ name: 'Far Away Provider', rate: 500, tax: 0 }],
+        currency: 'USD',
+        provider: 'Xotelo',
+        source: 'xotelo',
+      },
+      cachedAt: '2026-05-20T00:00:00.000Z',
+      forDates: { checkIn: '2026-08-01', checkOut: '2026-08-03' },
+    }, 7200);
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      hotelName: 'Test Hotel',
+      city: 'Paris',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    // Should NOT use fuzzy cache (dates are 61 days apart)
+    expect(result.freshness).toBe('live');
+    expect(result.fromCache).toBe(false);
+    expect(result.estimatedFromDates).toBeUndefined();
+  });
+
   it('keeps heatmap data labeled as a price source, not a booking provider', async () => {
     const result = await getCachedHeatmap({ hotelKey: 'g1-d1', checkOut: '2026-06-03' } as Parameters<typeof getCachedHeatmap>[0]);
 
