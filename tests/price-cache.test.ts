@@ -274,6 +274,51 @@ describe('price cache', () => {
     expect(result.fromCache).toBe(false);
   });
 
+  it('returns fallback data when live fetch fails and fuzzy cache exists', async () => {
+    // Make live fetch fail
+    vi.mocked(getHotelRates).mockRejectedValueOnce(new Error('all providers failed'));
+
+    // Seed fuzzy cache so fallback has something to return
+    await kv.setWithTTL('latest-rates:g1-d1:USD', {
+      result: {
+        rates: [{ name: 'Fallback Provider', rate: 130, tax: 10 }],
+        currency: 'USD',
+        provider: 'Xotelo',
+        source: 'xotelo',
+        lastCheckedAt: '2026-05-20T00:00:00.000Z',
+      },
+      cachedAt: '2026-05-20T00:00:00.000Z',
+      forDates: { checkIn: '2026-07-15', checkOut: '2026-07-17' },
+    }, 7200);
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      hotelName: 'Test Hotel',
+      city: 'Paris',
+      // Request dates far from fuzzy cache → fuzzy match skipped → goes to live fetch → fails → fallback
+      checkIn: '2026-09-01',
+      checkOut: '2026-09-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(result.freshness).toBe('fallback');
+    expect(result.fromCache).toBe(true);
+    expect(result.partial).toBe(true);
+    expect(result.rates[0].name).toBe('Fallback Provider');
+    expect(result.estimatedFromDates).toEqual({ checkIn: '2026-07-15', checkOut: '2026-07-17' });
+  });
+
+  it('throws when live fetch fails and no fallback data exists', async () => {
+    vi.mocked(getHotelRates).mockRejectedValueOnce(new Error('all providers failed'));
+
+    await expect(getCachedRates({
+      hotelKey: 'g1-d1',
+      hotelName: 'Test Hotel',
+      city: 'Paris',
+      checkIn: '2026-09-01',
+      checkOut: '2026-09-03',
+    } as Parameters<typeof getCachedRates>[0])).rejects.toThrow('all providers failed');
+  });
+
   it('seeds fuzzy date cache from heatmap data', async () => {
     await getCachedHeatmap({ hotelKey: 'g1-d1', checkOut: '2026-06-03' } as Parameters<typeof getCachedHeatmap>[0]);
 

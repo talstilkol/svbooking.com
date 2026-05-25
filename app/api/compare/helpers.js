@@ -119,6 +119,7 @@ export function buildComparisonResponse({ result, hotel, checkIn, checkOut, curr
   const refreshAfterMs =
     freshness === 'stale' ? 3000 :
     freshness === 'estimated' ? 5000 :
+    freshness === 'fallback' ? 5000 :
     null;
 
   return {
