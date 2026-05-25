@@ -72,6 +72,7 @@ interface Comparison {
   fromCache?: boolean;
   lastCheckedAt?: string | null;
   estimatedFromDates?: { checkIn: string; checkOut: string } | null;
+  refreshAfterMs?: number | null;
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -177,6 +178,36 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
     } catch { /* refresh failed silently — stale data remains */ }
     setRefreshing(false);
   }, [hotelKey, checkIn, checkOut, currency, refreshing]);
+
+  // Auto-refresh: when API returns stale/estimated data, poll for fresh data.
+  // The server includes `refreshAfterMs` as a hint. Max 2 retries to avoid loops.
+  const autoRefreshCount = useRef(0);
+  useEffect(() => {
+    if (!data?.refreshAfterMs || refreshing || loading) return;
+    if (autoRefreshCount.current >= 2) return;
+
+    const timer = setTimeout(async () => {
+      autoRefreshCount.current++;
+      try {
+        const res = await fetch(
+          `/api/compare?hotelKey=${hotelKey}&checkIn=${data.checkIn}&checkOut=${data.checkOut}&currency=${currency}`
+        );
+        if (!res.ok) return;
+        const json = await res.json();
+        // Only update if we got fresher data
+        if (json.freshness === 'live' || json.freshness === 'fresh') {
+          setData(json);
+        }
+      } catch { /* silent — stale data remains visible */ }
+    }, data.refreshAfterMs);
+
+    return () => clearTimeout(timer);
+  }, [data?.refreshAfterMs, data?.checkIn, data?.checkOut, hotelKey, currency, refreshing, loading]);
+
+  // Reset auto-refresh counter when dates change
+  useEffect(() => {
+    autoRefreshCount.current = 0;
+  }, [checkIn, checkOut]);
 
   // Auto-compare when URL has date params (from shared links / deep links)
   useEffect(() => {

@@ -110,6 +110,17 @@ export function buildComparisonResponse({ result, hotel, checkIn, checkOut, curr
       ? Math.round(((mostExpensive.total - cheapest.total) / mostExpensive.total) * 100)
       : 0;
 
+  const freshness = result?.freshness || 'unknown';
+
+  // Hint to clients: auto-refresh after N ms when data is stale or estimated.
+  // Stale data has a background refresh already in-flight — poll after 3s.
+  // Estimated data (from fuzzy date cache) — poll after 5s (provider fetch may be slower).
+  // Fresh/live data — no refresh needed.
+  const refreshAfterMs =
+    freshness === 'stale' ? 3000 :
+    freshness === 'estimated' ? 5000 :
+    null;
+
   return {
     hotel,
     checkIn: result?.chk_in || checkIn,
@@ -123,12 +134,13 @@ export function buildComparisonResponse({ result, hotel, checkIn, checkOut, curr
     savingsAmount: cheapest && mostExpensive ? Number((mostExpensive.total - cheapest.total).toFixed(2)) : 0,
     providerCount: rates.length,
     fromCache: Boolean(result?.fromCache),
-    freshness: result?.freshness || 'unknown',
+    freshness,
     partial: Boolean(result?.partial),
     source: result?.source || null,
     providerSource: result?.provider || null,
     mergedProviders: result?.mergedProviders || 1,
     lastCheckedAt: result?.lastCheckedAt || null,
     estimatedFromDates: result?.estimatedFromDates || null,
+    refreshAfterMs,
   };
 }
