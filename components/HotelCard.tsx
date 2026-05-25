@@ -6,13 +6,8 @@ import { useFavorites } from '@/lib/useLocalStorage';
 import { useToast } from '@/components/Toast';
 import RatingBadge from '@/components/RatingBadge';
 
-export interface CatalogHotel {
-  hotelKey: string;
-  name: string;
-  city: string;
-  country: string;
-  image: string;
-}
+import type { CatalogHotel } from '@/lib/types';
+export type { CatalogHotel } from '@/lib/types';
 
 export default function HotelCard({ hotel }: { hotel: CatalogHotel }) {
   const { isFavorite, toggleFavorite, hydrated } = useFavorites();

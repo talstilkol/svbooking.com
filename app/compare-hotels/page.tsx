@@ -6,27 +6,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import RatingBadge from '@/components/RatingBadge';
 import { PageSkeleton } from '@/components/Skeleton';
+import type { CatalogHotel, ProviderRate } from '@/lib/types';
 
-interface Hotel {
-  hotelKey: string;
-  name: string;
-  city: string;
-  country: string;
-  image: string;
-}
-
-interface Rate {
-  provider: string;
-  code?: string;
-  total: number;
-  currency: string;
-  source?: string | null;
-  freshness?: string;
-  partial?: boolean;
-  deepLink?: string | null;
-  taxesIncluded?: boolean | null;
-  priceAccuracyState?: string;
-}
+type Hotel = CatalogHotel;
+type Rate = ProviderRate;
 
 interface ComparisonResult {
   hotel: Hotel;

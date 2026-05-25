@@ -4,14 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import RatingBadge from '@/components/RatingBadge';
+import type { CatalogHotel } from '@/lib/types';
 
-interface Hotel {
-  hotelKey: string;
-  name: string;
-  city: string;
-  country: string;
-  image: string;
-}
+type Hotel = CatalogHotel;
 
 interface SimilarHotelsProps {
   currentHotelKey: string;

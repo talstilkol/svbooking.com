@@ -1,12 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import type { ProviderRate } from '@/lib/types';
 
-interface Rate {
-  provider: string;
-  total: number;
-  currency: string;
-}
+type Rate = ProviderRate;
 
 interface ComparisonSummaryProps {
   hotelName: string;

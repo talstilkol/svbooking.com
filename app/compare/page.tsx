@@ -15,29 +15,10 @@ import ProviderInfo from '@/components/ProviderInfo';
 import { CompareCardSkeleton, PageSkeleton } from '@/components/Skeleton';
 import GuestSelector from '@/components/GuestSelector';
 import ShareBar from '@/components/ShareBar';
+import type { CatalogHotel, ProviderRate } from '@/lib/types';
 
-interface Hotel {
-  hotelKey: string;
-  name: string;
-  city: string;
-  country: string;
-  image: string;
-}
-
-interface Rate {
-  provider: string;
-  code: string;
-  rate: number;
-  tax: number;
-  total: number;
-  currency: string;
-  source?: string | null;
-  freshness?: string;
-  partial?: boolean;
-  deepLink?: string | null;
-  taxesIncluded?: boolean | null;
-  priceAccuracyState?: string;
-}
+type Hotel = CatalogHotel;
+type Rate = ProviderRate;
 
 interface Comparison {
   hotel: Hotel;

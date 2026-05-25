@@ -6,14 +6,9 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { MapPin } from 'lucide-react';
 import Reveal from '@/components/ui/Reveal';
+import type { CatalogHotel } from '@/lib/types';
 
-interface Hotel {
-  hotelKey: string;
-  name: string;
-  city: string;
-  country: string;
-  image: string;
-}
+type Hotel = CatalogHotel;
 
 export default function HomeTrending() {
   const [hotels, setHotels] = useState<Hotel[]>([]);

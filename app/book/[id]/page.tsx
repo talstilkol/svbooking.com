@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import type { CatalogHotel } from '@/lib/types';
 
-interface Hotel { hotelKey: string; name: string; city: string; country: string; image: string; }
+type Hotel = CatalogHotel;
 
 export default function BookPage() {
   const { id } = useParams<{ id: string }>();

@@ -7,23 +7,9 @@ import Link from 'next/link';
 import { useTrips, SavedTrip } from '@/lib/useLocalStorage';
 import CheaperDates from '@/components/CheaperDates';
 import { PageSkeleton } from '@/components/Skeleton';
+import type { CatalogHotel, ProviderRate } from '@/lib/types';
 
-interface CatalogHotel {
-  hotelKey: string;
-  name: string;
-  city: string;
-  country: string;
-  image: string;
-}
-
-interface Rate {
-  provider: string;
-  code: string;
-  total: number;
-  currency: string;
-  score?: number;
-  scoreBasis?: string;
-}
+type Rate = ProviderRate;
 
 interface AgentResponse {
   hotel: { hotelKey: string; name: string };

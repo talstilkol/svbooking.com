@@ -20,6 +20,7 @@ import ViewTracker from '@/components/ViewTracker';
 import HotelBadges from '@/components/HotelBadges';
 import PriceComparisonChart from '@/components/PriceComparisonChart';
 import { HotelOfferJsonLd } from '@/components/SchemaOrg';
+import type { CatalogHotel, ProviderRate } from '@/lib/types';
 
 // Dynamic imports for below-the-fold components (reduces initial JS bundle)
 const PriceTrend = dynamic(() => import('@/components/PriceTrend'), { ssr: false });
@@ -54,28 +55,8 @@ const ProviderDataNotice = dynamic(() => import('@/components/ProviderDataNotice
 const FlightDataNotice = dynamic(() => import('@/components/FlightDataNotice'), { ssr: false });
 const PriceHistory = dynamic(() => import('@/components/PriceHistory'), { ssr: false });
 
-interface Hotel {
-  hotelKey: string;
-  name: string;
-  city: string;
-  country: string;
-  image: string;
-}
-
-interface Rate {
-  provider: string;
-  code: string;
-  rate: number;
-  tax: number;
-  total: number;
-  currency: string;
-  source?: string | null;
-  freshness?: string;
-  partial?: boolean;
-  deepLink?: string | null;
-  taxesIncluded?: boolean | null;
-  priceAccuracyState?: string;
-}
+type Hotel = CatalogHotel;
+type Rate = ProviderRate;
 
 interface Comparison {
   hotel: Hotel;

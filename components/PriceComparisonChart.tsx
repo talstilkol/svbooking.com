@@ -1,10 +1,8 @@
 'use client';
 
-interface Rate {
-  provider: string;
-  total: number;
-  currency: string;
-}
+import type { ProviderRate } from '@/lib/types';
+
+type Rate = ProviderRate;
 
 interface PriceComparisonChartProps {
   rates: Rate[];
