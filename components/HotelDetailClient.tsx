@@ -130,15 +130,13 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hotel.hotelKey]);
 
-  // Prefetch prices for default dates on mount (warms cache silently).
-  // Skip if URL params are present — auto-compare will fetch instead.
+  // Speculative pre-fetch: warm cache for common date ranges on mount.
+  // Uses lightweight /api/compare/prefetch (returns 202 immediately).
+  // Warms: next weekend, +7d, +14d — so data is ready before user clicks Compare.
   useEffect(() => {
-    if (urlCheckIn && urlCheckOut) return;
     const controller = new AbortController();
-    const defaultCheckIn = today();
-    const defaultCheckOut = tomorrow();
     fetch(
-      `/api/compare?hotelKey=${hotel.hotelKey}&checkIn=${defaultCheckIn}&checkOut=${defaultCheckOut}&currency=USD`,
+      `/api/compare/prefetch?hotelKey=${hotel.hotelKey}`,
       { signal: controller.signal, priority: 'low' as RequestPriority }
     ).catch(() => {});
     return () => controller.abort();
