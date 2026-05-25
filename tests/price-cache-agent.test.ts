@@ -131,6 +131,30 @@ describe('price cache agent', () => {
     expect(g2CheckIns).not.toContain('2026-05-19'); // no +5 days
   });
 
+  it('pre-warms popular regional hotels in local currency too', () => {
+    // g1-d1 is in UK → GBP, g3-d1 is in France → EUR
+    const popularity = { 'g1-d1': 20, 'g3-d1': 15 };
+    const workItems = buildCatalogDatedRateWorkItems({
+      today: '2026-05-14',
+      hotels: mockedHotels,
+      limit: 4,
+      cohort: 0,
+      popularity,
+    } as Parameters<typeof buildCatalogDatedRateWorkItems>[0]);
+
+    // Popular UK hotel should have GBP items
+    const g1GBP = workItems.filter((w) => w.hotelKey === 'g1-d1' && w.currency === 'GBP');
+    expect(g1GBP.length).toBe(3); // 3 key offsets (3, 7, 14)
+
+    // Popular France hotel should have EUR items
+    const g3EUR = workItems.filter((w) => w.hotelKey === 'g3-d1' && w.currency === 'EUR');
+    expect(g3EUR.length).toBe(3);
+
+    // Non-popular hotels should only have USD
+    const g2Currencies = [...new Set(workItems.filter((w) => w.hotelKey === 'g2-d1').map((w) => w.currency))];
+    expect(g2Currencies).toEqual(['USD']);
+  });
+
   it('builds dated provider-rate work items with static + weekend offsets', () => {
     // 2026-05-14 is a Thursday → next Friday is May 15 (1 day), second Friday is May 22 (8 days)
     // Static offsets: 1, 3, 7, 14, 30 → combined unique with weekends: 1, 3, 7, 8, 14, 30 = 6 offsets

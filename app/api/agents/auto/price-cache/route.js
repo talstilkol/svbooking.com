@@ -11,6 +11,17 @@ import { getHotelPopularity } from '@/lib/hotel-popularity';
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 const DEFAULT_NIGHTS = 2;
+
+/** Regional currencies for multi-currency pre-warming of popular hotels.
+ *  Popular hotels in these countries also get pre-warmed in the local currency. */
+const REGIONAL_CURRENCIES = {
+  France: 'EUR', Italy: 'EUR', Spain: 'EUR', Germany: 'EUR', Greece: 'EUR',
+  Portugal: 'EUR', Netherlands: 'EUR', Austria: 'EUR', Belgium: 'EUR',
+  Ireland: 'EUR', Finland: 'EUR', Croatia: 'EUR',
+  UK: 'GBP', 'United Kingdom': 'GBP',
+  Japan: 'JPY', Thailand: 'THB', India: 'INR',
+  Turkey: 'EUR', Morocco: 'EUR', Egypt: 'EUR',
+};
 const DEFAULT_CATALOG_DATED_HOTEL_LIMIT = 80;
 /** Top N popular hotels are pre-warmed in EVERY cron run regardless of cohort */
 const ALWAYS_WARM_TOP_N = 20;
@@ -170,8 +181,11 @@ export function buildCatalogDatedRateWorkItems({
   const expandedOffsets = [...new Set([...baseOffsets, ...POPULAR_EXTRA_OFFSETS])].sort((a, b) => a - b);
 
   return selectPriorityCatalogHotels(hotels, limit, cohort, popularity).flatMap((hotel) => {
-    const offsets = popularKeys.has(hotel.hotelKey) ? expandedOffsets : baseOffsets;
-    return offsets.map((offset) => {
+    const isPopular = popularKeys.has(hotel.hotelKey);
+    const offsets = isPopular ? expandedOffsets : baseOffsets;
+
+    // Base USD items
+    const items = offsets.map((offset) => {
       const checkIn = addDays(baseDate, offset);
       return {
         source: 'catalog-priority',
@@ -183,6 +197,29 @@ export function buildCatalogDatedRateWorkItems({
         currency: 'USD',
       };
     });
+
+    // Popular hotels in regions with a local currency also get pre-warmed in
+    // that currency (e.g., EUR for Paris hotels). Only 3 key offsets to keep volume manageable.
+    if (isPopular) {
+      const localCurrency = REGIONAL_CURRENCIES[hotel.country];
+      if (localCurrency && localCurrency !== 'USD') {
+        const keyOffsets = [3, 7, 14]; // Near-term only for local currency
+        for (const offset of keyOffsets) {
+          const checkIn = addDays(baseDate, offset);
+          items.push({
+            source: 'catalog-priority',
+            hotelKey: hotel.hotelKey,
+            hotelName: hotel.name,
+            city: hotel.city,
+            checkIn,
+            checkOut: addDays(checkIn, DEFAULT_NIGHTS),
+            currency: localCurrency,
+          });
+        }
+      }
+    }
+
+    return items;
   });
 }
 
@@ -279,7 +316,9 @@ async function prewarmDatedRates(workItems) {
     `price:${item.hotelKey}:${item.checkIn}:${item.checkOut}:${item.currency || 'USD'}`
   );
 
-  await withConcurrency(ordered, 8, async (item) => {
+  // Higher concurrency (12) — Xotelo is free/unlimited so we can push throughput.
+  // Adaptive delay: skip delay on cache hits, 80ms between provider calls.
+  await withConcurrency(ordered, 12, async (item) => {
     bySource[item.source] = (bySource[item.source] || 0) + 1;
     try {
       const result = await getCachedRates({
@@ -299,7 +338,7 @@ async function prewarmDatedRates(workItems) {
       stats.errors++;
       return { ok: false };
     }
-  }, (r) => r?.value?.cached ? 0 : 100);
+  }, (r) => r?.value?.cached ? 0 : 80);
 
   return {
     ...stats,
@@ -316,7 +355,7 @@ async function prewarmHeatmaps(workItems) {
     `heatmap:${item.hotel.hotelKey}:${item.checkOut}`
   );
 
-  await withConcurrency(ordered, 8, async ({ hotel, checkOut }) => {
+  await withConcurrency(ordered, 12, async ({ hotel, checkOut }) => {
     try {
       const result = await getCachedHeatmap({
         hotelKey: hotel.hotelKey,
