@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useFavorites, useRecentlyViewed } from '@/lib/useLocalStorage';
 import { useCurrency } from '@/components/CurrencySelector';
@@ -97,10 +97,15 @@ interface HotelDetailClientProps {
 
 export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const hotelKey = hotel.hotelKey;
+  const autoCompared = useRef(false);
 
-  const [checkIn, setCheckIn] = useState(today());
-  const [checkOut, setCheckOut] = useState(tomorrow());
+  // Read dates from URL params (for shared/deep links) or use defaults
+  const urlCheckIn = searchParams.get('checkIn');
+  const urlCheckOut = searchParams.get('checkOut');
+  const [checkIn, setCheckIn] = useState(urlCheckIn || today());
+  const [checkOut, setCheckOut] = useState(urlCheckOut || tomorrow());
   const [data, setData] = useState<Comparison | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -121,6 +126,21 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
       country: hotel.country,
       image: hotel.image,
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hotel.hotelKey]);
+
+  // Prefetch prices for default dates on mount (warms cache silently).
+  // Skip if URL params are present — auto-compare will fetch instead.
+  useEffect(() => {
+    if (urlCheckIn && urlCheckOut) return;
+    const controller = new AbortController();
+    const defaultCheckIn = today();
+    const defaultCheckOut = tomorrow();
+    fetch(
+      `/api/compare?hotelKey=${hotel.hotelKey}&checkIn=${defaultCheckIn}&checkOut=${defaultCheckOut}&currency=USD`,
+      { signal: controller.signal, priority: 'low' as RequestPriority }
+    ).catch(() => {});
+    return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hotel.hotelKey]);
 
@@ -158,6 +178,15 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
     } catch { /* refresh failed silently — stale data remains */ }
     setRefreshing(false);
   }, [hotelKey, checkIn, checkOut, currency, refreshing]);
+
+  // Auto-compare when URL has date params (from shared links / deep links)
+  useEffect(() => {
+    if (urlCheckIn && urlCheckOut && !autoCompared.current) {
+      autoCompared.current = true;
+      handleCompare();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlCheckIn, urlCheckOut]);
 
   // Use comparison hotel if available (might have extra data), otherwise server-provided hotel
   const displayHotel = data?.hotel || hotel;

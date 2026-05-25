@@ -19,13 +19,44 @@ function fallbackCode(provider, index) {
   return String(provider || `provider-${index + 1}`).toLowerCase().replace(/[^a-z0-9]+/g, '-') || `provider-${index + 1}`;
 }
 
+/**
+ * Compute a quality score (0-100) for a rate based on data completeness and freshness.
+ * Higher score = more reliable price observation.
+ */
+function computeRateScore(rate, result) {
+  let score = 50; // Base score for having a total price
+
+  // Freshness bonus
+  const freshness = rate?.freshness || result?.freshness;
+  if (freshness === 'live') score += 20;
+  else if (freshness === 'fresh') score += 10;
+  else if (freshness === 'stale') score -= 10;
+
+  // Tax clarity bonus
+  if (rate?.taxesIncluded === true || rate?.taxesIncluded === false) score += 10;
+
+  // Has separate tax amount
+  if (toNumber(rate?.tax) > 0) score += 5;
+
+  // Deep link available (verifiable)
+  if (rate?.deepLink) score += 5;
+
+  // Room name specified
+  if (rate?.roomName) score += 5;
+
+  // Not partial
+  if (!rate?.partial && !result?.partial) score += 5;
+
+  return Math.max(0, Math.min(100, score));
+}
+
 function normalizePublicRate(rate, result, index) {
   const provider = rate?.provider || rate?.name || result?.provider || result?.source || 'Unknown provider';
   const baseRate = toNumber(rate?.rate);
   const tax = toNumber(rate?.tax);
   const total = toNumber(rate?.total) || baseRate + tax;
 
-  return {
+  const normalized = {
     provider,
     code: rate?.code || fallbackCode(provider, index),
     rate: baseRate,
@@ -42,6 +73,11 @@ function normalizePublicRate(rate, result, index) {
     lastCheckedAt: rate?.lastCheckedAt || result?.lastCheckedAt || null,
     priceAccuracyState: rate?.priceAccuracyState || 'unobserved',
   };
+
+  normalized.score = computeRateScore(normalized, result);
+  normalized.scoreBasis = normalized.score >= 70 ? 'high' : normalized.score >= 40 ? 'medium' : 'low';
+
+  return normalized;
 }
 
 // GET /api/compare
