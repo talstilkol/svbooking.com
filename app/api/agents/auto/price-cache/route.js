@@ -12,6 +12,8 @@ import { getHotelPopularity } from '@/lib/hotel-popularity';
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 const DEFAULT_NIGHTS = 2;
 const DEFAULT_CATALOG_DATED_HOTEL_LIMIT = 80;
+/** Top N popular hotels are pre-warmed in EVERY cron run regardless of cohort */
+const ALWAYS_WARM_TOP_N = 20;
 const DEFAULT_HEATMAP_HOTEL_LIMIT = HOTELS.length;
 const MAX_CATALOG_DATED_HOTEL_LIMIT = 200;
 const MAX_HEATMAP_HOTEL_LIMIT = HOTELS.length;
@@ -98,17 +100,30 @@ export function selectPriorityCatalogHotels(hotels = HOTELS, limit = DEFAULT_CAT
   const sorted = sortCatalogByPriority(hotels, popularity);
   if (limit >= sorted.length) return sorted;
 
-  // Determine cohort: how many full cohorts fit in the catalog
-  const totalCohorts = Math.ceil(sorted.length / limit);
-  const cohortIndex = cohort >= 0 ? cohort % totalCohorts : Math.floor(new Date().getUTCHours() / 12) % totalCohorts;
-  const offset = cohortIndex * limit;
+  // Always-warm tier: top N popular hotels are included in EVERY run.
+  // This ensures high-demand hotels (those users actually search for) always
+  // have fresh data, while lower-demand hotels still rotate through cohorts.
+  const hasPopularity = Object.keys(popularity).length > 0;
+  const alwaysWarmCount = hasPopularity ? Math.min(ALWAYS_WARM_TOP_N, Math.floor(limit * 0.3), sorted.length) : 0;
+  const alwaysWarm = sorted.slice(0, alwaysWarmCount);
+  const alwaysWarmKeys = new Set(alwaysWarm.map((h) => h.hotelKey));
 
-  // Wrap around if offset + limit exceeds catalog size
-  const slice = [];
-  for (let i = 0; i < limit && i < sorted.length; i++) {
-    slice.push(sorted[(offset + i) % sorted.length]);
+  // Remaining catalog (excluding always-warm hotels)
+  const remaining = sorted.filter((h) => !alwaysWarmKeys.has(h.hotelKey));
+  const cohortSlots = limit - alwaysWarmCount;
+
+  // Determine cohort: how many full cohorts fit in the remaining catalog
+  const totalCohorts = Math.max(1, Math.ceil(remaining.length / cohortSlots));
+  const cohortIndex = cohort >= 0 ? cohort % totalCohorts : Math.floor(new Date().getUTCHours() / 8) % totalCohorts;
+  const offset = cohortIndex * cohortSlots;
+
+  // Fill cohort slots from remaining hotels (wrap around)
+  const cohortSlice = [];
+  for (let i = 0; i < cohortSlots && i < remaining.length; i++) {
+    cohortSlice.push(remaining[(offset + i) % remaining.length]);
   }
-  return slice;
+
+  return [...alwaysWarm, ...cohortSlice];
 }
 
 export function buildCatalogDatedRateWorkItems({
@@ -267,7 +282,11 @@ async function runPriceCache({
 
   // Resolve actual cohort index for reporting.
   // With 3 daily runs (every 8 hours), rotate through cohorts automatically.
-  const totalCohorts = Math.ceil(HOTELS.length / catalogLimit);
+  const hasPopularity = Object.keys(popularity).length > 0;
+  const alwaysWarmCount = hasPopularity ? Math.min(ALWAYS_WARM_TOP_N, Math.floor(catalogLimit * 0.3), HOTELS.length) : 0;
+  const cohortSlots = catalogLimit - alwaysWarmCount;
+  const remainingHotels = HOTELS.length - alwaysWarmCount;
+  const totalCohorts = Math.max(1, Math.ceil(remainingHotels / cohortSlots));
   const resolvedCohort = cohort >= 0
     ? cohort % totalCohorts
     : Math.floor(new Date().getUTCHours() / 8) % totalCohorts;
@@ -285,6 +304,7 @@ async function runPriceCache({
       heatmapHotelLimit: heatmapLimit,
       cohort: resolvedCohort,
       totalCohorts,
+      alwaysWarmHotels: alwaysWarmCount,
     },
   };
 }

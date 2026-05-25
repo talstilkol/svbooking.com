@@ -79,6 +79,32 @@ describe('price cache agent', () => {
     expect(selected[1].hotelKey).toBe('g2-d1');
   });
 
+  it('always includes top popular hotels regardless of cohort rotation', () => {
+    // With high popularity data and a large enough limit, top hotels appear in every cohort
+    const popularity = { 'g3-d1': 100, 'g2-d1': 50 };
+    // limit=3 with 4 hotels: Math.floor(3*0.3)=0 → too small for always-warm
+    // So we test with a limit of 4 which can hold 1 always-warm (floor(4*0.3)=1)
+    const cohort0 = selectPriorityCatalogHotels(mockedHotels, 4, 0, popularity);
+    const cohort1 = selectPriorityCatalogHotels(mockedHotels, 4, 1, popularity);
+
+    // With limit=4 and only 4 hotels, both cohorts return all hotels
+    expect(cohort0).toHaveLength(4);
+    expect(cohort1).toHaveLength(4);
+
+    // Most popular hotel (g3-d1) should appear first in both cohorts
+    expect(cohort0[0].hotelKey).toBe('g3-d1');
+    expect(cohort1[0].hotelKey).toBe('g3-d1');
+  });
+
+  it('without popularity data skips always-warm tier', () => {
+    // No popularity → pure cohort rotation (backwards compatible)
+    const cohort0 = selectPriorityCatalogHotels(mockedHotels, 2, 0, {});
+    const cohort1 = selectPriorityCatalogHotels(mockedHotels, 2, 1, {});
+
+    // Different cohorts should give different hotels (deterministic rotation)
+    expect(cohort0.map((h) => h.hotelKey)).not.toEqual(cohort1.map((h) => h.hotelKey));
+  });
+
   it('builds dated provider-rate work items instead of heatmap-only work', () => {
     const workItems = buildCatalogDatedRateWorkItems({
       today: '2026-05-14',
@@ -125,6 +151,7 @@ describe('price cache agent', () => {
       heatmapHotelLimit: 2,
       cohort: 0,
       totalCohorts: 2,
+      alwaysWarmHotels: 0,
     });
     // 1 alert + 2 hotels × 4 offsets = 9 dated, 2 hotels × 4 offsets = 8 heatmaps
     expect(body.result.datedRates.totalRequests).toBe(9);
