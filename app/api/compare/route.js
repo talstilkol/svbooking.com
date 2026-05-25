@@ -121,8 +121,15 @@ export async function GET(request) {
         checkOut,
         currency,
       });
+      const nights = Math.max(1, Math.round(
+        (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
+      ));
       const rates = (result?.rates || [])
-        .map((r, index) => normalizePublicRate(r, result, index))
+        .map((r, index) => {
+          const normalized = normalizePublicRate(r, result, index);
+          normalized.perNight = Number((normalized.total / nights).toFixed(2));
+          return normalized;
+        })
         .filter((r) => r.total > 0)
         .sort((a, b) => a.total - b.total);
 
@@ -137,6 +144,7 @@ export async function GET(request) {
         hotel,
         checkIn: result?.chk_in || checkIn,
         checkOut: result?.chk_out || checkOut,
+        nights,
         currency: result?.currency || currency,
         rates,
         cheapest,
@@ -237,8 +245,15 @@ export async function POST(request) {
       currency,
     });
 
+    const nights = Math.max(1, Math.round(
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
+    ));
     const rates = (result?.rates || [])
-      .map((r, index) => normalizePublicRate(r, result, index))
+      .map((r, index) => {
+        const normalized = normalizePublicRate(r, result, index);
+        normalized.perNight = Number((normalized.total / nights).toFixed(2));
+        return normalized;
+      })
       .filter((r) => r.total > 0)
       .sort((a, b) => a.total - b.total);
 
@@ -253,6 +268,7 @@ export async function POST(request) {
       hotel,
       checkIn: result?.chk_in || checkIn,
       checkOut: result?.chk_out || checkOut,
+      nights,
       currency: result?.currency || currency,
       rates,
       cheapest,
