@@ -67,6 +67,7 @@ interface ProviderInfo {
   quotaUsedPct: number;
   p50LatencyMs: number | null;
   successRatePct: number | null;
+  hasPreFlightCheck: boolean;
   lastSuccess: string | null;
   lastError: { message: string; at: string } | null;
 }
@@ -454,6 +455,9 @@ export default function AgentDashboard() {
                         <span className={p.successRatePct < 50 ? 'text-red-500' : p.successRatePct < 80 ? 'text-amber-600' : 'text-emerald-600'}>
                           {p.successRatePct}% success
                         </span>
+                      )}
+                      {p.hasPreFlightCheck && (
+                        <span className="text-blue-500" title="This provider skips requests it cannot handle">pre-flight</span>
                       )}
                     </div>
                   )}
