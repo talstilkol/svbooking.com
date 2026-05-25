@@ -59,11 +59,13 @@ function CompareHotelsInner() {
   const [catalogLoading, setCatalogLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/compare')
+    const controller = new AbortController();
+    fetch('/api/compare', { signal: controller.signal })
       .then((r) => r.json())
       .then((d) => setAllHotels(d.hotels || []))
-      .catch((err) => { console.warn('compare-hotels: catalog fetch failed', err); })
+      .catch((err) => { if (err instanceof Error && err.name !== 'AbortError') console.warn('compare-hotels: catalog fetch failed', err); })
       .finally(() => setCatalogLoading(false));
+    return () => controller.abort();
   }, []);
 
   const addHotel = (key: string) => {

@@ -19,10 +19,12 @@ export default function BookPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/compare?hotelKey=${encodeURIComponent(id)}`).then(r => r.json()).then(d => {
+    const controller = new AbortController();
+    fetch(`/api/compare?hotelKey=${encodeURIComponent(id)}`, { signal: controller.signal }).then(r => r.json()).then(d => {
       const h = d.hotel || (d.hotels || []).find((x: Hotel) => x.hotelKey === id);
       if (h) setHotel(h); else setError('Hotel not found');
-    }).catch(() => setError('Failed to load'));
+    }).catch((err) => { if (err instanceof Error && err.name !== 'AbortError') setError('Failed to load'); });
+    return () => controller.abort();
   }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -18,11 +18,11 @@ export default function SimilarHotels({ currentHotelKey, city, country }: Simila
   const [hotels, setHotels] = useState<Hotel[]>([]);
 
   useEffect(() => {
-    fetch('/api/compare')
+    const controller = new AbortController();
+    fetch('/api/compare', { signal: controller.signal })
       .then((r) => r.json())
       .then((data) => {
         const all: Hotel[] = data.hotels || [];
-        // Same city first, then same country, exclude current
         const sameCity = all.filter(
           (h) => h.city === city && h.hotelKey !== currentHotelKey
         );
@@ -32,6 +32,7 @@ export default function SimilarHotels({ currentHotelKey, city, country }: Simila
         setHotels([...sameCity, ...sameCountry].slice(0, 4));
       })
       .catch(() => {});
+    return () => controller.abort();
   }, [currentHotelKey, city, country]);
 
   if (hotels.length === 0) return null;

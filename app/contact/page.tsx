@@ -1,11 +1,5 @@
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FAQPageJsonLd } from '@/components/SchemaOrg';
-
-export const metadata: Metadata = {
-  title: 'Contact Us',
-  description: 'Get in touch with the SV Booking team — questions, feedback, partnerships, or support.',
-};
 
 const CONTACT_METHODS = [
   {

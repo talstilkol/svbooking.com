@@ -14,10 +14,12 @@ export default function HomeTrending() {
   const [hotels, setHotels] = useState<Hotel[]>([]);
 
   useEffect(() => {
-    fetch('/api/compare')
+    const controller = new AbortController();
+    fetch('/api/compare', { signal: controller.signal })
       .then((r) => r.json())
       .then((d) => setHotels((d.hotels || []).slice(0, 6)))
       .catch(() => {});
+    return () => controller.abort();
   }, []);
 
   if (hotels.length === 0) return null;
