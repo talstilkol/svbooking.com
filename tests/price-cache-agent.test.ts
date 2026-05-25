@@ -107,7 +107,8 @@ describe('price cache agent', () => {
 
   it('builds dated provider-rate work items with static + weekend offsets', () => {
     // 2026-05-14 is a Thursday → next Friday is May 15 (1 day), second Friday is May 22 (8 days)
-    // Static offsets: 3, 7, 14, 30 → combined unique with weekends: 1, 3, 7, 8, 14, 30 = 6 offsets
+    // Static offsets: 1, 3, 7, 14, 30 → combined unique with weekends: 1, 3, 7, 8, 14, 30 = 6 offsets
+    // (1 from static and 1 from weekend collapse into one)
     const workItems = buildCatalogDatedRateWorkItems({
       today: '2026-05-14',
       hotels: mockedHotels,
@@ -118,12 +119,13 @@ describe('price cache agent', () => {
     // 2 hotels × 6 unique offsets = 12 work items
     expect(workItems).toHaveLength(12);
 
-    // Check that weekend Friday (May 15) is included
+    // Check that weekend Friday (May 15) is included — also the +1 day static offset
     const checkIns = workItems.filter((w) => w.hotelKey === 'g1-d1').map((w) => w.checkIn);
-    expect(checkIns).toContain('2026-05-15'); // next Friday
+    expect(checkIns).toContain('2026-05-15'); // +1 day AND next Friday (deduplicated)
     expect(checkIns).toContain('2026-05-22'); // second Friday (also 8 days)
     expect(checkIns).toContain('2026-05-17'); // +3 days
     expect(checkIns).toContain('2026-05-21'); // +7 days
+    expect(checkIns).toContain('2026-05-28'); // +14 days
 
     expect(workItems[0]).toMatchObject({
       source: 'catalog-priority',
@@ -160,13 +162,13 @@ describe('price cache agent', () => {
       totalCohorts: 2,
       alwaysWarmHotels: 0,
     });
-    // Work items = 1 alert + 2 hotels × (4 static + 2 weekend offsets, deduped).
+    // Work items = 1 alert + 2 hotels × (5 static + 2 weekend offsets, deduped).
     // Exact count depends on what day the test simulates — check structure not exact count.
-    expect(body.result.datedRates.totalRequests).toBeGreaterThanOrEqual(9);
+    expect(body.result.datedRates.totalRequests).toBeGreaterThanOrEqual(11);
     expect(body.result.datedRates.bySource['active-price-alert']).toBe(1);
-    expect(body.result.datedRates.bySource['catalog-priority']).toBeGreaterThanOrEqual(8);
-    // Heatmaps still use HEATMAP_CHECK_OUT_OFFSETS (from static offsets only)
-    expect(body.result.heatmaps.totalRequests).toBe(8);
+    expect(body.result.datedRates.bySource['catalog-priority']).toBeGreaterThanOrEqual(10);
+    // Heatmaps use HEATMAP_CHECK_OUT_OFFSETS (5 static offsets × 2 hotels = 10)
+    expect(body.result.heatmaps.totalRequests).toBe(10);
     expect(getCachedRates).toHaveBeenCalledTimes(body.result.datedRates.totalRequests);
     expect(getCachedRates).toHaveBeenNthCalledWith(1, expect.objectContaining({
       hotelKey: 'g3-d1',
@@ -174,6 +176,6 @@ describe('price cache agent', () => {
       checkOut: '2026-07-04',
       currency: 'EUR',
     }));
-    expect(getCachedHeatmap).toHaveBeenCalledTimes(8);
+    expect(getCachedHeatmap).toHaveBeenCalledTimes(10);
   });
 });

@@ -5,6 +5,10 @@
       "schedule": "0 2,10,18 * * *"
     },
     {
+      "path": "/api/agents/auto/price-cache?cohort=1",
+      "schedule": "0 5,13,21 * * *"
+    },
+    {
       "path": "/api/price-alerts/evaluate",
       "schedule": "0 */6 * * *"
     },

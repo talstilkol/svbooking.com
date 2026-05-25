@@ -18,7 +18,7 @@ const DEFAULT_HEATMAP_HOTEL_LIMIT = HOTELS.length;
 const MAX_CATALOG_DATED_HOTEL_LIMIT = 200;
 const MAX_HEATMAP_HOTEL_LIMIT = HOTELS.length;
 const MAX_ALERT_DATED_ITEMS = 100;
-const DATED_RATE_CHECK_IN_OFFSETS = [3, 7, 14, 30];
+const DATED_RATE_CHECK_IN_OFFSETS = [1, 3, 7, 14, 30];
 const HEATMAP_CHECK_OUT_OFFSETS = DATED_RATE_CHECK_IN_OFFSETS.map((offset) => offset + DEFAULT_NIGHTS);
 
 /** Get days until the next Friday from a base date (always > 0, never same day) */
