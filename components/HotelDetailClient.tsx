@@ -71,6 +71,7 @@ interface Comparison {
   freshness?: string;
   fromCache?: boolean;
   lastCheckedAt?: string | null;
+  estimatedFromDates?: { checkIn: string; checkOut: string } | null;
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -422,12 +423,21 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
               checkOut={data.checkOut}
               currency={data.currency}
             />
-            {data.freshness === 'stale' && (
+            {data.freshness === 'estimated' && (
+              <span
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5"
+                title={data.estimatedFromDates ? `Based on prices for ${data.estimatedFromDates.checkIn} to ${data.estimatedFromDates.checkOut}` : 'Estimated from nearby dates'}
+              >
+                <span>~</span>
+                Estimated prices — updating live
+              </span>
+            )}
+            {(data.freshness === 'stale' || data.freshness === 'estimated') && (
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-3 py-1.5 transition disabled:opacity-50"
-                title="Cached prices may be outdated — click to fetch live prices from providers"
+                title="Click to fetch live prices from providers"
               >
                 {refreshing ? (
                   <span className="inline-block w-3 h-3 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
