@@ -6,6 +6,8 @@ type Props = {
   params: Promise<{ key: string }>;
 };
 
+export const revalidate = 86400;
+
 export function generateStaticParams() {
   return HOTELS.map((h: { hotelKey: string }) => ({ key: h.hotelKey }));
 }
