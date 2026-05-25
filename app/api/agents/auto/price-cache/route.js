@@ -192,7 +192,7 @@ async function prewarmDatedRates(workItems) {
   const stats = emptyStats(workItems.length);
   const bySource = {};
 
-  await withConcurrency(workItems, 6, async (item) => {
+  await withConcurrency(workItems, 8, async (item) => {
     bySource[item.source] = (bySource[item.source] || 0) + 1;
     try {
       const result = await getCachedRates({
@@ -212,7 +212,7 @@ async function prewarmDatedRates(workItems) {
       stats.errors++;
       return { ok: false };
     }
-  }, 200);
+  }, 100);
 
   return {
     ...stats,
@@ -224,7 +224,7 @@ async function prewarmDatedRates(workItems) {
 async function prewarmHeatmaps(workItems) {
   const stats = emptyStats(workItems.length);
 
-  await withConcurrency(workItems, 6, async ({ hotel, checkOut }) => {
+  await withConcurrency(workItems, 8, async ({ hotel, checkOut }) => {
     try {
       const result = await getCachedHeatmap({
         hotelKey: hotel.hotelKey,
@@ -239,7 +239,7 @@ async function prewarmHeatmaps(workItems) {
       stats.errors++;
       return { ok: false };
     }
-  }, 400);
+  }, 200);
 
   return {
     ...stats,
@@ -265,11 +265,12 @@ async function runPriceCache({
     prewarmHeatmaps(heatmapWorkItems),
   ]);
 
-  // Resolve actual cohort index for reporting
+  // Resolve actual cohort index for reporting.
+  // With 3 daily runs (every 8 hours), rotate through cohorts automatically.
   const totalCohorts = Math.ceil(HOTELS.length / catalogLimit);
   const resolvedCohort = cohort >= 0
     ? cohort % totalCohorts
-    : Math.floor(new Date().getUTCHours() / 12) % totalCohorts;
+    : Math.floor(new Date().getUTCHours() / 8) % totalCohorts;
 
   return {
     mode: 'dated-provider-rates-plus-heatmap-price-sources',

@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/agents/auto/orchestrate",
-      "schedule": "0 6,18 * * *"
+      "schedule": "0 2,10,18 * * *"
     },
     {
       "path": "/api/price-alerts/evaluate",
