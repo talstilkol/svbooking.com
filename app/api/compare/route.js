@@ -1,10 +1,12 @@
-import { getCachedRates } from '@/lib/price-cache';
+import { getCachedRates, invalidateRates } from '@/lib/price-cache';
 import { listCities, getHotelsByCity, findHotel, getFullCatalog } from '@/lib/hotels-catalog';
 import { kv } from '@/lib/kv';
 import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 // Rate limiter: 30 price comparisons per minute per IP
 const compareLimiter = rateLimit({ namespace: 'compare', limit: 30, window: 60, failOpen: false });
+// Stricter limiter for refresh: 5 per minute per IP (forces live fetch)
+const refreshLimiter = rateLimit({ namespace: 'compare-refresh', limit: 5, window: 60, failOpen: false });
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 
 function toNumber(value) {
@@ -154,6 +156,78 @@ export async function GET(request) {
     );
   } catch (err) {
     console.error('GET /api/compare error:', err);
+    return Response.json({ error: 'Internal server error' }, { status: 500, headers: NO_STORE_HEADERS });
+  }
+}
+
+// POST /api/compare — Force-refresh prices (invalidate cache, then fetch live)
+// Body: { hotelKey, checkIn, checkOut, currency? }
+export async function POST(request) {
+  try {
+    const ip = getClientIp(request);
+    const { success, reset } = await refreshLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
+
+    const body = await request.json();
+    const { hotelKey, checkIn, checkOut, currency = 'USD' } = body || {};
+
+    if (!hotelKey || !checkIn || !checkOut) {
+      return Response.json(
+        { error: 'Missing required fields: hotelKey, checkIn, checkOut' },
+        { status: 400, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    const hotel = findHotel(hotelKey);
+    if (!hotel) {
+      return Response.json({ error: 'Hotel not found' }, { status: 404, headers: NO_STORE_HEADERS });
+    }
+
+    // Invalidate cached entry so getCachedRates fetches live
+    await invalidateRates({ hotelKey, checkIn, checkOut, currency }).catch(() => {});
+
+    // Fetch fresh rates (will go to providers since cache is now empty)
+    const result = await getCachedRates({
+      hotelKey,
+      hotelName: hotel.name,
+      city: hotel.city,
+      checkIn,
+      checkOut,
+      currency,
+    });
+
+    const rates = (result?.rates || [])
+      .map((r, index) => normalizePublicRate(r, result, index))
+      .filter((r) => r.total > 0)
+      .sort((a, b) => a.total - b.total);
+
+    const cheapest = rates[0] || null;
+    const mostExpensive = rates[rates.length - 1] || null;
+    const savingsPct =
+      cheapest && mostExpensive && mostExpensive.total > 0
+        ? Math.round(((mostExpensive.total - cheapest.total) / mostExpensive.total) * 100)
+        : 0;
+
+    return Response.json({
+      hotel,
+      checkIn: result?.chk_in || checkIn,
+      checkOut: result?.chk_out || checkOut,
+      currency: result?.currency || currency,
+      rates,
+      cheapest,
+      mostExpensive,
+      savingsPct,
+      savingsAmount: cheapest && mostExpensive ? Number((mostExpensive.total - cheapest.total).toFixed(2)) : 0,
+      providerCount: rates.length,
+      fromCache: false,
+      freshness: 'live',
+      partial: false,
+      source: result?.source || null,
+      providerSource: result?.provider || null,
+      lastCheckedAt: result?.lastCheckedAt || null,
+    }, { headers: NO_STORE_HEADERS });
+  } catch (err) {
+    console.error('POST /api/compare error:', err);
     return Response.json({ error: 'Internal server error' }, { status: 500, headers: NO_STORE_HEADERS });
   }
 }

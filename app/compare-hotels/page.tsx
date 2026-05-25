@@ -16,6 +16,9 @@ interface ComparisonResult {
   rates: Rate[];
   cheapest: Rate | null;
   providerCount: number;
+  freshness?: string;
+  fromCache?: boolean;
+  lastCheckedAt?: string | null;
 }
 
 function localDate(offsetDays: number) {
@@ -83,6 +86,8 @@ function CompareHotelsInner() {
     });
   };
 
+  const [refreshingKeys, setRefreshingKeys] = useState<Set<string>>(new Set());
+
   const compareAll = async () => {
     if (selectedKeys.length === 0 || !checkIn || !checkOut) return;
     setLoading(true);
@@ -103,6 +108,26 @@ function CompareHotelsInner() {
 
     setResults(newResults);
     setLoading(false);
+  };
+
+  const refreshHotel = async (key: string) => {
+    setRefreshingKeys((prev) => new Set(prev).add(key));
+    try {
+      const res = await fetch('/api/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hotelKey: key, checkIn, checkOut }),
+      });
+      const data = await res.json();
+      if (res.ok && data.hotel) {
+        setResults((prev) => ({ ...prev, [key]: data }));
+      }
+    } catch (err) { console.warn(`compare-hotels: refresh failed for ${key}`, err); }
+    setRefreshingKeys((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
   };
 
   const selectedHotels = selectedKeys
@@ -238,6 +263,19 @@ function CompareHotelsInner() {
                           <div className="font-semibold text-slate-900 text-sm">{r.hotel.name}</div>
                           <div className="text-xs text-slate-500">{r.hotel.city}</div>
                           <RatingBadge size="sm" className="mt-1 justify-center" />
+                          {r.freshness === 'stale' && (
+                            <button
+                              onClick={() => refreshHotel(key)}
+                              disabled={refreshingKeys.has(key)}
+                              className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-full px-2 py-0.5 transition disabled:opacity-50"
+                              title="Prices may be outdated — click to fetch live prices"
+                            >
+                              {refreshingKeys.has(key) ? (
+                                <span className="inline-block w-2.5 h-2.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                              ) : '↻'}{' '}
+                              {refreshingKeys.has(key) ? 'Refreshing...' : 'Refresh prices'}
+                            </button>
+                          )}
                         </th>
                       );
                     })}
