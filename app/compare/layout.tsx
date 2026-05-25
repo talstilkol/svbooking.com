@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/compare' },
   openGraph: {
     title: 'Hotel Price Comparison | SV Booking',
-    description: 'Compare hotel rates across multiple booking providers to find the best deal.',
+    description: 'Compare hotel rates across multiple booking providers when available.',
     type: 'website',
   },
 };

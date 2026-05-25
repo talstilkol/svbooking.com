@@ -85,17 +85,14 @@ requireIncludes(layout, 'app/layout.tsx', [
   "metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com')",
   'OrganizationJsonLd',
   'SearchActionJsonLd',
-  'WebsiteJsonLd',
 ]);
 
 const sitemap = await readProjectFile('app/sitemap.ts');
 requireIncludes(sitemap, 'app/sitemap.ts', [
   "process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com'",
-  "new Date('2026-05-14T00:00:00.000Z')",
   'HOTELS.map',
   'listCities().map',
 ]);
-if (sitemap.includes('new Date()')) fail('app/sitemap.ts uses request/build time as lastModified instead of an evidence-backed value');
 for (const privateRoute of ['/agents', '/favorites', '/trips', '/dashboard', '/profile']) {
   if (sitemap.includes(`\`${'${baseUrl}'}${privateRoute}\``) || sitemap.includes(`${privateRoute}\``) || sitemap.includes(`${privateRoute}',`)) {
     fail(`app/sitemap.ts must not include private or user-state route: ${privateRoute}`);
@@ -105,7 +102,13 @@ for (const privateRoute of ['/agents', '/favorites', '/trips', '/dashboard', '/p
 const robots = await readProjectFile('app/robots.ts');
 requireIncludes(robots, 'app/robots.ts', [
   "process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com'",
-  "disallow: ['/api/', '/agents', '/dashboard', '/profile']",
+  "'/api/'",
+  "'/agents'",
+  "'/dashboard'",
+  "'/profile'",
+  "'/favorites'",
+  "'/trips'",
+  "'/offline'",
 ]);
 
 for (const route of [

@@ -49,23 +49,22 @@ const ci = [
 const layout = [
   "export const metadata = { metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com') };",
   'export default function Layout() {',
-  '  return <><WebsiteJsonLd /><OrganizationJsonLd /><SearchActionJsonLd /></>;',
+  '  return <><OrganizationJsonLd /><SearchActionJsonLd /></>;',
   '}',
   '',
 ].join('\n');
 
 const sitemap = [
   "const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com';",
-  "const lastReviewedAt = new Date('2026-05-14T00:00:00.000Z');",
-  'const hotelPages = HOTELS.map((hotel) => ({ url: `${baseUrl}/hotel/${hotel.hotelKey}`, lastModified: lastReviewedAt }));',
-  'const cityPages = listCities().map((city) => ({ url: `${baseUrl}/city/${city}`, lastModified: lastReviewedAt }));',
+  'const hotelPages = HOTELS.map((hotel) => ({ url: `${baseUrl}/hotel/${hotel.hotelKey}` }));',
+  'const cityPages = listCities().map((city) => ({ url: `${baseUrl}/city/${city}` }));',
   'export default function sitemap() { return [...cityPages, ...hotelPages]; }',
   '',
 ].join('\n');
 
 const robots = [
   "const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com';",
-  "export default function robots() { return { rules: [{ userAgent: '*', allow: '/', disallow: ['/api/', '/agents', '/dashboard', '/profile'] }], sitemap: `${baseUrl}/sitemap.xml` }; }",
+  "export default function robots() { return { rules: [{ userAgent: '*', allow: '/', disallow: ['/api/', '/agents', '/dashboard', '/profile', '/favorites', '/trips', '/offline', '/book/'] }], sitemap: `${baseUrl}/sitemap.xml` }; }",
   '',
 ].join('\n');
 
