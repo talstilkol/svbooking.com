@@ -6,6 +6,10 @@ vi.mock('@/lib/kv', () => {
     __store: store,
     kv: {
       get: vi.fn(async (key: string) => store.get(key) || null),
+      mget: vi.fn(async (...keys: (string | string[])[]) => {
+        const flat = keys.flat();
+        return flat.map((k) => store.get(k) || null);
+      }),
       setWithTTL: vi.fn(async (key: string, value: unknown) => {
         store.set(key, value);
       }),
@@ -32,7 +36,7 @@ vi.mock('@/lib/xotelo', () => ({
 import { kv } from '@/lib/kv';
 import { getHotelRates } from '@/lib/hotel-pricing';
 import { getHeatmap } from '@/lib/xotelo';
-import { getCachedHeatmap, getCachedRates } from '@/lib/price-cache';
+import { getCachedHeatmap, getCachedRates, getCachedRatesBatch } from '@/lib/price-cache';
 
 describe('price cache', () => {
   beforeEach(async () => {
@@ -149,6 +153,66 @@ describe('price cache', () => {
     expect(result.freshness).toBe('live');
     expect(result.fromCache).toBe(false);
     expect(result.estimatedFromDates).toBeUndefined();
+  });
+
+  it('batch-fetches rates using mget for reduced round-trips', async () => {
+    // Pre-populate cache for one hotel
+    await kv.setWithTTL('price:g1-d1:2026-06-01:2026-06-03:USD', {
+      cachedAt: new Date().toISOString(),
+      result: {
+        rates: [{ name: 'Cached Hotel', rate: 80, tax: 10 }],
+        currency: 'USD',
+        provider: 'Xotelo',
+        source: 'xotelo',
+        lastCheckedAt: new Date().toISOString(),
+      },
+    }, 7200);
+
+    const results = await getCachedRatesBatch([
+      { hotelKey: 'g1-d1', hotelName: 'Hotel A', city: 'Paris', checkIn: '2026-06-01', checkOut: '2026-06-03' },
+      { hotelKey: 'g2-d2', hotelName: 'Hotel B', city: 'London', checkIn: '2026-06-01', checkOut: '2026-06-03' },
+    ]);
+
+    expect(results).toHaveLength(2);
+
+    // First hotel served from cache
+    expect(results[0].fromCache).toBe(true);
+    expect(results[0].freshness).toBe('fresh');
+    expect(results[0].rates[0].provider).toBe('Cached Hotel');
+
+    // Second hotel fetched live (cache miss)
+    expect(results[1].fromCache).toBe(false);
+    expect(results[1].freshness).toBe('live');
+
+    // Only one live fetch needed (the miss)
+    expect(getHotelRates).toHaveBeenCalledTimes(1);
+    expect(getHotelRates).toHaveBeenCalledWith(expect.objectContaining({ hotelKey: 'g2-d2' }));
+  });
+
+  it('batch returns fuzzy estimates for misses with nearby cached dates', async () => {
+    // Seed fuzzy cache for one hotel
+    await kv.setWithTTL('latest-rates:g1-d1:USD', {
+      result: {
+        rates: [{ name: 'Nearby Provider', rate: 95, tax: 5 }],
+        currency: 'USD',
+        provider: 'Xotelo',
+        source: 'xotelo',
+        lastCheckedAt: '2026-05-20T00:00:00.000Z',
+      },
+      cachedAt: '2026-05-20T00:00:00.000Z',
+      forDates: { checkIn: '2026-06-03', checkOut: '2026-06-05' },
+    }, 7200);
+
+    const results = await getCachedRatesBatch([
+      { hotelKey: 'g1-d1', hotelName: 'Hotel A', city: 'Paris', checkIn: '2026-06-01', checkOut: '2026-06-03' },
+    ]);
+
+    expect(results[0].freshness).toBe('estimated');
+    expect(results[0].fromCache).toBe(true);
+    expect(results[0].estimatedFromDates).toEqual({ checkIn: '2026-06-03', checkOut: '2026-06-05' });
+
+    // Should still trigger background live fetch
+    expect(getHotelRates).toHaveBeenCalledTimes(1);
   });
 
   it('keeps heatmap data labeled as a price source, not a booking provider', async () => {

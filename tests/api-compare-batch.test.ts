@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/price-cache', () => ({
-  getCachedRates: vi.fn(async (params: { hotelKey: string }) => ({
+function makeMockResult(hotelKey: string) {
+  return {
     rates: [
       {
         provider: 'Booking.com',
         code: 'bookingcom',
-        rate: params.hotelKey === 'g187147-d188728' ? 100 : 200,
+        rate: hotelKey === 'g187147-d188728' ? 100 : 200,
         tax: 20,
-        total: params.hotelKey === 'g187147-d188728' ? 120 : 220,
+        total: hotelKey === 'g187147-d188728' ? 120 : 220,
         currency: 'USD',
         source: 'xotelo',
         freshness: 'live',
@@ -28,7 +28,13 @@ vi.mock('@/lib/price-cache', () => ({
     lastCheckedAt: '2026-05-14T12:00:00.000Z',
     chk_in: '2026-06-01',
     chk_out: '2026-06-03',
-  })),
+  };
+}
+
+vi.mock('@/lib/price-cache', () => ({
+  getCachedRatesBatch: vi.fn(async (paramsList: Array<{ hotelKey: string }>) =>
+    paramsList.map((p) => makeMockResult(p.hotelKey))
+  ),
 }));
 
 vi.mock('@/lib/kv', () => ({
@@ -47,7 +53,7 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 
 import { POST } from '@/app/api/compare/batch/route';
-import { getCachedRates } from '@/lib/price-cache';
+import { getCachedRatesBatch } from '@/lib/price-cache';
 
 function batchRequest(body: unknown) {
   return new Request('http://localhost:3000/api/compare/batch', {
@@ -83,8 +89,14 @@ describe('POST /api/compare/batch', () => {
     expect(body.results['g187147-d188728'].cheapest.total).toBe(120);
     expect(body.results['g187147-d197539'].cheapest.total).toBe(220);
 
-    // Should call getCachedRates once per hotel
-    expect(getCachedRates).toHaveBeenCalledTimes(2);
+    // Should call getCachedRatesBatch once with both hotels
+    expect(getCachedRatesBatch).toHaveBeenCalledTimes(1);
+    expect(getCachedRatesBatch).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ hotelKey: 'g187147-d188728' }),
+        expect.objectContaining({ hotelKey: 'g187147-d197539' }),
+      ])
+    );
   });
 
   it('reports unknown hotel keys in failedKeys', async () => {
@@ -110,7 +122,8 @@ describe('POST /api/compare/batch', () => {
     const body = await response.json();
 
     expect(body.totalHotels).toBe(1);
-    expect(getCachedRates).toHaveBeenCalledTimes(1);
+    expect(getCachedRatesBatch).toHaveBeenCalledTimes(1);
+    expect((getCachedRatesBatch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toHaveLength(1);
   });
 
   it('rejects requests missing required fields', async () => {

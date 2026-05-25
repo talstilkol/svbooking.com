@@ -8,7 +8,7 @@
  * Response: { results: { [hotelKey]: ComparisonResult }, totalHotels, successCount, failedKeys }
  */
 
-import { getCachedRates } from '@/lib/price-cache';
+import { getCachedRatesBatch } from '@/lib/price-cache';
 import { findHotel } from '@/lib/hotels-catalog';
 import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 import { bumpHotelPopularity } from '@/lib/hotel-popularity';
@@ -43,39 +43,45 @@ export async function POST(request) {
       (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
     ));
 
-    // Fetch all hotels in parallel
+    // Resolve hotels and split valid from unknown
     const results = {};
     const failedKeys = [];
+    const validEntries = [];
 
-    await Promise.all(
-      keys.map(async (hotelKey) => {
+    for (const hotelKey of keys) {
+      const hotel = findHotel(hotelKey);
+      if (!hotel) {
+        failedKeys.push(hotelKey);
+        continue;
+      }
+      bumpHotelPopularity(hotelKey);
+      validEntries.push({ hotelKey, hotel });
+    }
+
+    // Batch KV lookup: 2 mget round-trips instead of N individual gets
+    if (validEntries.length > 0) {
+      const paramsList = validEntries.map(({ hotelKey, hotel }) => ({
+        hotelKey,
+        hotelName: hotel.name,
+        city: hotel.city,
+        checkIn,
+        checkOut,
+        currency,
+      }));
+
+      const batchResults = await getCachedRatesBatch(paramsList);
+
+      for (let i = 0; i < validEntries.length; i++) {
+        const { hotelKey, hotel } = validEntries[i];
         try {
-          const hotel = findHotel(hotelKey);
-          if (!hotel) {
-            failedKeys.push(hotelKey);
-            return;
-          }
-
-          // Fire-and-forget: bump popularity
-          bumpHotelPopularity(hotelKey);
-
-          const result = await getCachedRates({
-            hotelKey,
-            hotelName: hotel.name,
-            city: hotel.city,
-            checkIn,
-            checkOut,
-            currency,
-          });
-
           results[hotelKey] = buildComparisonResponse({
-            result, hotel, checkIn, checkOut, currency, nights,
+            result: batchResults[i], hotel, checkIn, checkOut, currency, nights,
           });
         } catch {
           failedKeys.push(hotelKey);
         }
-      })
-    );
+      }
+    }
 
     return Response.json({
       results,
