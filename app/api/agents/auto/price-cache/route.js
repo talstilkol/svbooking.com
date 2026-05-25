@@ -19,6 +19,8 @@ const MAX_CATALOG_DATED_HOTEL_LIMIT = 200;
 const MAX_HEATMAP_HOTEL_LIMIT = HOTELS.length;
 const MAX_ALERT_DATED_ITEMS = 100;
 const DATED_RATE_CHECK_IN_OFFSETS = [1, 3, 7, 14, 30];
+/** Extra offsets for popular hotels — fills gaps to give top hotels broader date coverage */
+const POPULAR_EXTRA_OFFSETS = [5, 10, 21];
 const HEATMAP_CHECK_OUT_OFFSETS = DATED_RATE_CHECK_IN_OFFSETS.map((offset) => offset + DEFAULT_NIGHTS);
 
 /** Get days until the next Friday from a base date (always > 0, never same day) */
@@ -154,11 +156,22 @@ export function buildCatalogDatedRateWorkItems({
     daysUntilSecondFriday(baseDate),
   ];
 
-  // Combine: static offsets + weekend offsets (deduplication happens via rateWorkItemKey)
-  const allOffsets = [...new Set([...DATED_RATE_CHECK_IN_OFFSETS, ...weekendOffsets])].sort((a, b) => a - b);
+  // Base offsets: static + weekend (deduplication happens via rateWorkItemKey)
+  const baseOffsets = [...new Set([...DATED_RATE_CHECK_IN_OFFSETS, ...weekendOffsets])].sort((a, b) => a - b);
 
-  return selectPriorityCatalogHotels(hotels, limit, cohort, popularity).flatMap((hotel) =>
-    allOffsets.map((offset) => {
+  // Popular hotels get extra date offsets to fill gaps (5d, 10d, 21d)
+  // This gives high-demand hotels broader cache coverage so users more often
+  // hit a cached result regardless of which dates they search.
+  const popularKeys = new Set(
+    Object.entries(popularity)
+      .filter(([, count]) => count >= 5) // At least 5 requests in the last week
+      .map(([key]) => key)
+  );
+  const expandedOffsets = [...new Set([...baseOffsets, ...POPULAR_EXTRA_OFFSETS])].sort((a, b) => a - b);
+
+  return selectPriorityCatalogHotels(hotels, limit, cohort, popularity).flatMap((hotel) => {
+    const offsets = popularKeys.has(hotel.hotelKey) ? expandedOffsets : baseOffsets;
+    return offsets.map((offset) => {
       const checkIn = addDays(baseDate, offset);
       return {
         source: 'catalog-priority',
@@ -169,8 +182,8 @@ export function buildCatalogDatedRateWorkItems({
         checkOut: addDays(checkIn, DEFAULT_NIGHTS),
         currency: 'USD',
       };
-    })
-  );
+    });
+  });
 }
 
 export function buildHeatmapWorkItems({

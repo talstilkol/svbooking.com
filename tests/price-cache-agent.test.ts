@@ -105,6 +105,32 @@ describe('price cache agent', () => {
     expect(cohort0.map((h) => h.hotelKey)).not.toEqual(cohort1.map((h) => h.hotelKey));
   });
 
+  it('gives popular hotels extra date offsets for broader cache coverage', () => {
+    const popularity = { 'g1-d1': 10, 'g2-d1': 2 }; // g1-d1 popular (≥5), g2-d1 not
+    const workItems = buildCatalogDatedRateWorkItems({
+      today: '2026-05-14',
+      hotels: mockedHotels,
+      limit: 2,
+      cohort: 0,
+      popularity,
+    } as Parameters<typeof buildCatalogDatedRateWorkItems>[0]);
+
+    const g1Items = workItems.filter((w) => w.hotelKey === 'g1-d1');
+    const g2Items = workItems.filter((w) => w.hotelKey === 'g2-d1');
+
+    // Popular hotel gets extra offsets (5, 10, 21) → more work items
+    expect(g1Items.length).toBeGreaterThan(g2Items.length);
+
+    // Check that popular hotel has the extra 5-day and 10-day offsets
+    const g1CheckIns = g1Items.map((w) => w.checkIn);
+    expect(g1CheckIns).toContain('2026-05-19'); // +5 days
+    expect(g1CheckIns).toContain('2026-05-24'); // +10 days
+
+    // Non-popular hotel should NOT have the 5-day offset
+    const g2CheckIns = g2Items.map((w) => w.checkIn);
+    expect(g2CheckIns).not.toContain('2026-05-19'); // no +5 days
+  });
+
   it('builds dated provider-rate work items with static + weekend offsets', () => {
     // 2026-05-14 is a Thursday → next Friday is May 15 (1 day), second Friday is May 22 (8 days)
     // Static offsets: 1, 3, 7, 14, 30 → combined unique with weekends: 1, 3, 7, 8, 14, 30 = 6 offsets
