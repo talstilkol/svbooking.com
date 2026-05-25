@@ -91,22 +91,22 @@ function CompareHotelsInner() {
   const compareAll = async () => {
     if (selectedKeys.length === 0 || !checkIn || !checkOut) return;
     setLoading(true);
-    const newResults: Record<string, ComparisonResult> = {};
 
-    await Promise.all(
-      selectedKeys.map(async (key) => {
-        try {
-          const params = new URLSearchParams({ hotelKey: key, checkIn, checkOut });
-          const res = await fetch(`/api/compare?${params}`);
-          const data = await res.json();
-          if (res.ok && data.hotel) {
-            newResults[key] = data;
-          }
-        } catch (err) { console.warn(`compare-hotels: fetch failed for ${key}`, err); }
-      })
-    );
+    try {
+      // Single batch request instead of N individual requests
+      const res = await fetch('/api/compare/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hotelKeys: selectedKeys, checkIn, checkOut }),
+      });
+      const data = await res.json();
+      if (res.ok && data.results) {
+        setResults(data.results);
+      }
+    } catch (err) {
+      console.warn('compare-hotels: batch fetch failed', err);
+    }
 
-    setResults(newResults);
     setLoading(false);
   };
 

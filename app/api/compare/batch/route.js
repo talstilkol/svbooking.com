@@ -1,0 +1,92 @@
+/**
+ * POST /api/compare/batch — Compare prices for multiple hotels in one request.
+ *
+ * Reduces HTTP roundtrips for the compare-hotels page (1 request instead of N).
+ * Server-side parallelism: all hotels fetched concurrently.
+ *
+ * Body: { hotelKeys: string[], checkIn: string, checkOut: string, currency?: string }
+ * Response: { results: { [hotelKey]: ComparisonResult }, totalHotels, successCount, failedKeys }
+ */
+
+import { getCachedRates } from '@/lib/price-cache';
+import { findHotel } from '@/lib/hotels-catalog';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { bumpHotelPopularity } from '@/lib/hotel-popularity';
+import { buildComparisonResponse } from '../helpers';
+
+const MAX_BATCH_SIZE = 5;
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
+
+// Rate limiter: 10 batch requests per minute per IP
+const batchLimiter = rateLimit({ namespace: 'compare-batch', limit: 10, window: 60, failOpen: false });
+
+export async function POST(request) {
+  try {
+    const ip = getClientIp(request);
+    const { success, reset } = await batchLimiter.check(ip);
+    if (!success) return rateLimitResponse(reset);
+
+    const body = await request.json();
+    const { hotelKeys, checkIn, checkOut, currency = 'USD' } = body || {};
+
+    if (!Array.isArray(hotelKeys) || hotelKeys.length === 0 || !checkIn || !checkOut) {
+      return Response.json(
+        { error: 'Missing required fields: hotelKeys (array), checkIn, checkOut' },
+        { status: 400, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    // Enforce batch size limit
+    const keys = [...new Set(hotelKeys)].slice(0, MAX_BATCH_SIZE);
+
+    const nights = Math.max(1, Math.round(
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
+    ));
+
+    // Fetch all hotels in parallel
+    const results = {};
+    const failedKeys = [];
+
+    await Promise.all(
+      keys.map(async (hotelKey) => {
+        try {
+          const hotel = findHotel(hotelKey);
+          if (!hotel) {
+            failedKeys.push(hotelKey);
+            return;
+          }
+
+          // Fire-and-forget: bump popularity
+          bumpHotelPopularity(hotelKey);
+
+          const result = await getCachedRates({
+            hotelKey,
+            hotelName: hotel.name,
+            city: hotel.city,
+            checkIn,
+            checkOut,
+            currency,
+          });
+
+          results[hotelKey] = buildComparisonResponse({
+            result, hotel, checkIn, checkOut, currency, nights,
+          });
+        } catch {
+          failedKeys.push(hotelKey);
+        }
+      })
+    );
+
+    return Response.json({
+      results,
+      totalHotels: keys.length,
+      successCount: Object.keys(results).length,
+      failedKeys,
+    }, {
+      headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
+    });
+  } catch (err) {
+    console.error('POST /api/compare/batch error:', err);
+    return Response.json({ error: 'Internal server error' }, { status: 500, headers: NO_STORE_HEADERS });
+  }
+}

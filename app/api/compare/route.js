@@ -3,99 +3,13 @@ import { listCities, getHotelsByCity, findHotel, getFullCatalog } from '@/lib/ho
 import { kv } from '@/lib/kv';
 import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 import { bumpHotelPopularity } from '@/lib/hotel-popularity';
+import { buildComparisonResponse } from './helpers';
 
 // Rate limiter: 30 price comparisons per minute per IP
 const compareLimiter = rateLimit({ namespace: 'compare', limit: 30, window: 60, failOpen: false });
 // Stricter limiter for refresh: 5 per minute per IP (forces live fetch)
 const refreshLimiter = rateLimit({ namespace: 'compare-refresh', limit: 5, window: 60, failOpen: false });
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
-
-function toNumber(value) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : 0;
-}
-
-function fallbackCode(provider, index) {
-  return String(provider || `provider-${index + 1}`).toLowerCase().replace(/[^a-z0-9]+/g, '-') || `provider-${index + 1}`;
-}
-
-/**
- * Compute a quality score (0-100) for a rate based on data completeness and freshness.
- * Higher score = more reliable price observation.
- */
-function computeRateScore(rate, result) {
-  let score = 50; // Base score for having a total price
-
-  // Freshness bonus
-  const freshness = rate?.freshness || result?.freshness;
-  if (freshness === 'live') score += 20;
-  else if (freshness === 'fresh') score += 10;
-  else if (freshness === 'stale') score -= 10;
-
-  // Tax clarity bonus
-  if (rate?.taxesIncluded === true || rate?.taxesIncluded === false) score += 10;
-
-  // Has separate tax amount
-  if (toNumber(rate?.tax) > 0) score += 5;
-
-  // Deep link available (verifiable)
-  if (rate?.deepLink) score += 5;
-
-  // Room name specified
-  if (rate?.roomName) score += 5;
-
-  // Not partial
-  if (!rate?.partial && !result?.partial) score += 5;
-
-  return Math.max(0, Math.min(100, score));
-}
-
-function normalizePublicRate(rate, result, index) {
-  const provider = rate?.provider || rate?.name || result?.provider || result?.source || 'Unknown provider';
-  const baseRate = toNumber(rate?.rate);
-  const tax = toNumber(rate?.tax);
-  const total = toNumber(rate?.total) || baseRate + tax;
-
-  const normalized = {
-    provider,
-    code: rate?.code || fallbackCode(provider, index),
-    rate: baseRate,
-    tax,
-    total,
-    currency: rate?.currency || result?.currency || 'USD',
-    source: rate?.source || result?.source || null,
-    freshness: rate?.freshness || result?.freshness || 'unknown',
-    partial: Boolean(rate?.partial ?? result?.partial),
-    deepLink: rate?.deepLink || null,
-    taxesIncluded: rate?.taxesIncluded ?? result?.taxesIncluded ?? null,
-    cancellationPolicy: rate?.cancellationPolicy || null,
-    roomName: rate?.roomName || null,
-    lastCheckedAt: rate?.lastCheckedAt || result?.lastCheckedAt || null,
-    priceAccuracyState: rate?.priceAccuracyState || 'unobserved',
-  };
-
-  normalized.score = computeRateScore(normalized, result);
-  normalized.scoreBasis = normalized.score >= 70 ? 'high' : normalized.score >= 40 ? 'medium' : 'low';
-
-  return normalized;
-}
-
-/**
- * Deduplicate rates by OTA code. When multiple rates share the same code
- * (e.g., two Booking.com prices from different providers), keep the cheapest.
- * Ties broken by quality score.
- */
-function deduplicateByOTA(rates) {
-  const byCode = new Map();
-  for (const rate of rates) {
-    const existing = byCode.get(rate.code);
-    if (!existing || rate.total < existing.total ||
-        (rate.total === existing.total && rate.score > existing.score)) {
-      byCode.set(rate.code, rate);
-    }
-  }
-  return Array.from(byCode.values());
-}
 
 // GET /api/compare
 //   ?city=Paris                                      -> list hotels in city
@@ -138,57 +52,23 @@ export async function GET(request) {
         checkOut,
         currency,
       });
-      const nights = Math.max(1, Math.round(
-        (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
-      ));
-      const rates = deduplicateByOTA(
-        (result?.rates || [])
-          .map((r, index) => {
-            const normalized = normalizePublicRate(r, result, index);
-            normalized.perNight = Number((normalized.total / nights).toFixed(2));
-            return normalized;
-          })
-          .filter((r) => r.total > 0)
-      ).sort((a, b) => a.total - b.total);
 
-      const cheapest = rates[0] || null;
-      const mostExpensive = rates[rates.length - 1] || null;
-      const savingsPct =
-        cheapest && mostExpensive && mostExpensive.total > 0
-          ? Math.round(((mostExpensive.total - cheapest.total) / mostExpensive.total) * 100)
-          : 0;
-
-      const responseData = {
-        hotel,
-        checkIn: result?.chk_in || checkIn,
-        checkOut: result?.chk_out || checkOut,
-        nights,
-        currency: result?.currency || currency,
-        rates,
-        cheapest,
-        mostExpensive,
-        savingsPct,
-        savingsAmount: cheapest && mostExpensive ? Number((mostExpensive.total - cheapest.total).toFixed(2)) : 0,
-        providerCount: rates.length,
-        fromCache: Boolean(result?.fromCache),
-        freshness: result?.freshness || 'unknown',
-        partial: Boolean(result?.partial),
-        source: result?.source || null,
-        providerSource: result?.provider || null,
-        mergedProviders: result?.mergedProviders || 1,
-        lastCheckedAt: result?.lastCheckedAt || null,
-      };
+      const responseData = buildComparisonResponse({ result, hotel, checkIn, checkOut, currency,
+        nights: Math.max(1, Math.round(
+          (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
+        )),
+      });
 
       // Store price history only for fresh live observations, never for stale cache replays.
-      if (cheapest && result?.freshness === 'live' && !result?.fromCache) {
+      if (responseData.cheapest && result?.freshness === 'live' && !result?.fromCache) {
         (async () => {
           try {
             const snapshot = {
               date: new Date().toISOString().split('T')[0],
-              price: cheapest.total,
-              provider: cheapest.provider,
-              source: cheapest.source,
-              lastCheckedAt: cheapest.lastCheckedAt,
+              price: responseData.cheapest.total,
+              provider: responseData.cheapest.provider,
+              source: responseData.cheapest.source,
+              lastCheckedAt: responseData.cheapest.lastCheckedAt,
             };
             const historyKey = `price-history:${hotelKey}`;
             const history = (await kv.get(historyKey)) || [];
@@ -264,46 +144,18 @@ export async function POST(request) {
       currency,
     });
 
-    const nights = Math.max(1, Math.round(
-      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
-    ));
-    const rates = deduplicateByOTA(
-      (result?.rates || [])
-        .map((r, index) => {
-          const normalized = normalizePublicRate(r, result, index);
-          normalized.perNight = Number((normalized.total / nights).toFixed(2));
-          return normalized;
-        })
-        .filter((r) => r.total > 0)
-    ).sort((a, b) => a.total - b.total);
+    const responseData = buildComparisonResponse({ result, hotel, checkIn, checkOut, currency,
+      nights: Math.max(1, Math.round(
+        (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
+      )),
+    });
 
-    const cheapest = rates[0] || null;
-    const mostExpensive = rates[rates.length - 1] || null;
-    const savingsPct =
-      cheapest && mostExpensive && mostExpensive.total > 0
-        ? Math.round(((mostExpensive.total - cheapest.total) / mostExpensive.total) * 100)
-        : 0;
+    // Ensure live fetch metadata even if price cache layer has a stale envelope
+    responseData.fromCache = false;
+    responseData.freshness = 'live';
+    responseData.partial = false;
 
-    return Response.json({
-      hotel,
-      checkIn: result?.chk_in || checkIn,
-      checkOut: result?.chk_out || checkOut,
-      nights,
-      currency: result?.currency || currency,
-      rates,
-      cheapest,
-      mostExpensive,
-      savingsPct,
-      savingsAmount: cheapest && mostExpensive ? Number((mostExpensive.total - cheapest.total).toFixed(2)) : 0,
-      providerCount: rates.length,
-      fromCache: false,
-      freshness: 'live',
-      partial: false,
-      source: result?.source || null,
-      providerSource: result?.provider || null,
-      mergedProviders: result?.mergedProviders || 1,
-      lastCheckedAt: result?.lastCheckedAt || null,
-    }, { headers: NO_STORE_HEADERS });
+    return Response.json(responseData, { headers: NO_STORE_HEADERS });
   } catch (err) {
     console.error('POST /api/compare error:', err);
     return Response.json({ error: 'Internal server error' }, { status: 500, headers: NO_STORE_HEADERS });
