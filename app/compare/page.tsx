@@ -476,7 +476,7 @@ function CompareInner() {
         {!loading && totalPages > 1 && (
           <nav aria-label="Hotel list pagination" className="flex items-center justify-center gap-2 mt-8">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
               disabled={page === 1}
               className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
             >
@@ -486,7 +486,7 @@ function CompareInner() {
               Page {page} of {totalPages} ({filteredHotels.length} hotels)
             </span>
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
               disabled={page === totalPages}
               className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
             >

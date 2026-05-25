@@ -257,7 +257,7 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
             {totalPages > 1 && (
               <nav aria-label="Search results pagination" className="flex justify-center items-center gap-1.5 mt-10">
                 <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   disabled={page === 1}
                   aria-label="Previous page"
                   className="px-4 py-2 bg-white border border-zinc-300 rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-zinc-50 transition"
@@ -283,7 +283,7 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
                     ) : (
                       <button
                         key={p}
-                        onClick={() => setPage(p)}
+                        onClick={() => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         aria-label={`Page ${p}`}
                         aria-current={p === page ? 'page' : undefined}
                         className={`w-9 h-9 rounded-lg text-sm font-medium transition ${
@@ -298,7 +298,7 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
                   );
                 })()}
                 <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   disabled={page === totalPages}
                   aria-label="Next page"
                   className="px-4 py-2 bg-white border border-zinc-300 rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-zinc-50 transition"
