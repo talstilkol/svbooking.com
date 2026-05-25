@@ -65,9 +65,18 @@ describe('price cache agent', () => {
   });
 
   it('selects catalog hotels deterministically by observed catalog density', () => {
-    const selected = selectPriorityCatalogHotels(mockedHotels, 3, 0);
+    const selected = selectPriorityCatalogHotels(mockedHotels, 3, 0, {});
 
     expect(selected.map((hotel) => hotel.hotelKey)).toEqual(['g1-d1', 'g1-d2', 'g2-d1']);
+  });
+
+  it('prioritizes popular hotels over city density', () => {
+    const popularity = { 'g3-d1': 50, 'g2-d1': 30 };
+    const selected = selectPriorityCatalogHotels(mockedHotels, 3, 0, popularity);
+
+    // Paris One (50 requests) and Cairo One (30 requests) should come first
+    expect(selected[0].hotelKey).toBe('g3-d1');
+    expect(selected[1].hotelKey).toBe('g2-d1');
   });
 
   it('builds dated provider-rate work items instead of heatmap-only work', () => {

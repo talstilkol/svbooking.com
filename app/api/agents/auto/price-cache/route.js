@@ -7,6 +7,7 @@ import { HOTELS, findHotel } from '@/lib/hotels-catalog';
 import { kv } from '@/lib/kv';
 import { addDays } from '@/lib/utils/date';
 import { PRICE_ALERT_USER_INDEX_KEY, userDataKey } from '@/lib/user-data';
+import { getHotelPopularity } from '@/lib/hotel-popularity';
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 const DEFAULT_NIGHTS = 2;
@@ -50,18 +51,30 @@ function dedupeBy(items, keyFn) {
 }
 
 /**
- * Sort catalog hotels by city density (deterministic).
- * Stable ordering ensures cohort rotation is predictable.
+ * Sort catalog hotels by a composite priority:
+ *   1. Popularity (user request count from last 7 days) — higher is better
+ *   2. City density (more hotels in city = higher priority)
+ *   3. Alphabetical tiebreaker (deterministic)
+ *
+ * @param {Array} hotels
+ * @param {Object} popularity - { [hotelKey]: requestCount } from KV
  */
-function sortCatalogByPriority(hotels = HOTELS) {
+function sortCatalogByPriority(hotels = HOTELS, popularity = {}) {
   const cityCounts = new Map();
   for (const hotel of hotels) {
     cityCounts.set(hotel.city, (cityCounts.get(hotel.city) || 0) + 1);
   }
 
   return [...hotels].sort((a, b) => {
+    // Popular hotels first (higher request count = higher priority)
+    const popDiff = (popularity[b.hotelKey] || 0) - (popularity[a.hotelKey] || 0);
+    if (popDiff !== 0) return popDiff;
+
+    // Then by city density
     const countDiff = (cityCounts.get(b.city) || 0) - (cityCounts.get(a.city) || 0);
     if (countDiff !== 0) return countDiff;
+
+    // Deterministic tiebreaker
     return [
       a.country.localeCompare(b.country),
       a.city.localeCompare(b.city),
@@ -81,8 +94,8 @@ function sortCatalogByPriority(hotels = HOTELS) {
  * @param {number} opts.limit - Hotels per run
  * @param {number} opts.cohort - Cohort index (0-based), defaults to hour-based rotation
  */
-export function selectPriorityCatalogHotels(hotels = HOTELS, limit = DEFAULT_CATALOG_DATED_HOTEL_LIMIT, cohort = -1) {
-  const sorted = sortCatalogByPriority(hotels);
+export function selectPriorityCatalogHotels(hotels = HOTELS, limit = DEFAULT_CATALOG_DATED_HOTEL_LIMIT, cohort = -1, popularity = {}) {
+  const sorted = sortCatalogByPriority(hotels, popularity);
   if (limit >= sorted.length) return sorted;
 
   // Determine cohort: how many full cohorts fit in the catalog
@@ -103,9 +116,10 @@ export function buildCatalogDatedRateWorkItems({
   hotels = HOTELS,
   limit = DEFAULT_CATALOG_DATED_HOTEL_LIMIT,
   cohort = -1,
+  popularity = {},
 } = {}) {
   const baseDate = today || new Date().toISOString().split('T')[0];
-  return selectPriorityCatalogHotels(hotels, limit, cohort).flatMap((hotel) =>
+  return selectPriorityCatalogHotels(hotels, limit, cohort, popularity).flatMap((hotel) =>
     DATED_RATE_CHECK_IN_OFFSETS.map((offset) => {
       const checkIn = addDays(baseDate, offset);
       return {
@@ -239,7 +253,8 @@ async function runPriceCache({
   cohort = -1,
 } = {}) {
   const today = new Date().toISOString().split('T')[0];
-  const catalogDated = buildCatalogDatedRateWorkItems({ today, limit: catalogLimit, cohort });
+  const popularity = await getHotelPopularity();
+  const catalogDated = buildCatalogDatedRateWorkItems({ today, limit: catalogLimit, cohort, popularity });
   const alertDated = await collectActiveAlertRateWorkItems();
   const datedWorkItems = dedupeBy([...alertDated, ...catalogDated], rateWorkItemKey);
   const heatmapWorkItems = dedupeBy(buildHeatmapWorkItems({ today, limit: heatmapLimit }), heatmapWorkItemKey);

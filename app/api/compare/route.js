@@ -2,6 +2,7 @@ import { getCachedRates, invalidateRates } from '@/lib/price-cache';
 import { listCities, getHotelsByCity, findHotel, getFullCatalog } from '@/lib/hotels-catalog';
 import { kv } from '@/lib/kv';
 import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { bumpHotelPopularity } from '@/lib/hotel-popularity';
 
 // Rate limiter: 30 price comparisons per minute per IP
 const compareLimiter = rateLimit({ namespace: 'compare', limit: 30, window: 60, failOpen: false });
@@ -72,6 +73,10 @@ export async function GET(request) {
 
       const hotel = findHotel(hotelKey);
       if (!hotel) return Response.json({ error: 'Hotel not found' }, { status: 404, headers: NO_STORE_HEADERS });
+
+      // Fire-and-forget: bump popularity counter for pre-warm prioritization
+      bumpHotelPopularity(hotelKey);
+
       const result = await getCachedRates({
         hotelKey,
         hotelName: hotel.name,
