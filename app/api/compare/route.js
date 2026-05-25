@@ -80,6 +80,23 @@ function normalizePublicRate(rate, result, index) {
   return normalized;
 }
 
+/**
+ * Deduplicate rates by OTA code. When multiple rates share the same code
+ * (e.g., two Booking.com prices from different providers), keep the cheapest.
+ * Ties broken by quality score.
+ */
+function deduplicateByOTA(rates) {
+  const byCode = new Map();
+  for (const rate of rates) {
+    const existing = byCode.get(rate.code);
+    if (!existing || rate.total < existing.total ||
+        (rate.total === existing.total && rate.score > existing.score)) {
+      byCode.set(rate.code, rate);
+    }
+  }
+  return Array.from(byCode.values());
+}
+
 // GET /api/compare
 //   ?city=Paris                                      -> list hotels in city
 //   ?hotelKey=g187147-d188728&checkIn=...&checkOut=...  -> compare prices across OTAs
@@ -124,14 +141,15 @@ export async function GET(request) {
       const nights = Math.max(1, Math.round(
         (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
       ));
-      const rates = (result?.rates || [])
-        .map((r, index) => {
-          const normalized = normalizePublicRate(r, result, index);
-          normalized.perNight = Number((normalized.total / nights).toFixed(2));
-          return normalized;
-        })
-        .filter((r) => r.total > 0)
-        .sort((a, b) => a.total - b.total);
+      const rates = deduplicateByOTA(
+        (result?.rates || [])
+          .map((r, index) => {
+            const normalized = normalizePublicRate(r, result, index);
+            normalized.perNight = Number((normalized.total / nights).toFixed(2));
+            return normalized;
+          })
+          .filter((r) => r.total > 0)
+      ).sort((a, b) => a.total - b.total);
 
       const cheapest = rates[0] || null;
       const mostExpensive = rates[rates.length - 1] || null;
@@ -157,6 +175,7 @@ export async function GET(request) {
         partial: Boolean(result?.partial),
         source: result?.source || null,
         providerSource: result?.provider || null,
+        mergedProviders: result?.mergedProviders || 1,
         lastCheckedAt: result?.lastCheckedAt || null,
       };
 
@@ -248,14 +267,15 @@ export async function POST(request) {
     const nights = Math.max(1, Math.round(
       (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000
     ));
-    const rates = (result?.rates || [])
-      .map((r, index) => {
-        const normalized = normalizePublicRate(r, result, index);
-        normalized.perNight = Number((normalized.total / nights).toFixed(2));
-        return normalized;
-      })
-      .filter((r) => r.total > 0)
-      .sort((a, b) => a.total - b.total);
+    const rates = deduplicateByOTA(
+      (result?.rates || [])
+        .map((r, index) => {
+          const normalized = normalizePublicRate(r, result, index);
+          normalized.perNight = Number((normalized.total / nights).toFixed(2));
+          return normalized;
+        })
+        .filter((r) => r.total > 0)
+    ).sort((a, b) => a.total - b.total);
 
     const cheapest = rates[0] || null;
     const mostExpensive = rates[rates.length - 1] || null;
@@ -281,6 +301,7 @@ export async function POST(request) {
       partial: false,
       source: result?.source || null,
       providerSource: result?.provider || null,
+      mergedProviders: result?.mergedProviders || 1,
       lastCheckedAt: result?.lastCheckedAt || null,
     }, { headers: NO_STORE_HEADERS });
   } catch (err) {
