@@ -77,12 +77,12 @@ describe('price cache agent', () => {
       limit: 2,
     } as Parameters<typeof buildCatalogDatedRateWorkItems>[0]);
 
-    expect(workItems).toHaveLength(4);
+    expect(workItems).toHaveLength(6);
     expect(workItems[0]).toMatchObject({
       source: 'catalog-priority',
       hotelKey: 'g1-d1',
-      checkIn: '2026-05-28',
-      checkOut: '2026-05-30',
+      checkIn: '2026-05-21',
+      checkOut: '2026-05-23',
       currency: 'USD',
     });
   });
@@ -112,19 +112,19 @@ describe('price cache agent', () => {
       catalogDatedHotelLimit: 2,
       heatmapHotelLimit: 2,
     });
-    expect(body.result.datedRates.totalRequests).toBe(5);
+    expect(body.result.datedRates.totalRequests).toBe(7);
     expect(body.result.datedRates.bySource).toEqual({
       'active-price-alert': 1,
-      'catalog-priority': 4,
+      'catalog-priority': 6,
     });
-    expect(body.result.heatmaps.totalRequests).toBe(4);
-    expect(getCachedRates).toHaveBeenCalledTimes(5);
+    expect(body.result.heatmaps.totalRequests).toBe(6);
+    expect(getCachedRates).toHaveBeenCalledTimes(7);
     expect(getCachedRates).toHaveBeenNthCalledWith(1, expect.objectContaining({
       hotelKey: 'g3-d1',
       checkIn: '2026-07-01',
       checkOut: '2026-07-04',
       currency: 'EUR',
     }));
-    expect(getCachedHeatmap).toHaveBeenCalledTimes(4);
+    expect(getCachedHeatmap).toHaveBeenCalledTimes(6);
   });
 });

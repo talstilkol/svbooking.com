@@ -10,12 +10,12 @@ import { PRICE_ALERT_USER_INDEX_KEY, userDataKey } from '@/lib/user-data';
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 const DEFAULT_NIGHTS = 2;
-const DEFAULT_CATALOG_DATED_HOTEL_LIMIT = 36;
+const DEFAULT_CATALOG_DATED_HOTEL_LIMIT = 80;
 const DEFAULT_HEATMAP_HOTEL_LIMIT = HOTELS.length;
-const MAX_CATALOG_DATED_HOTEL_LIMIT = 100;
+const MAX_CATALOG_DATED_HOTEL_LIMIT = 200;
 const MAX_HEATMAP_HOTEL_LIMIT = HOTELS.length;
 const MAX_ALERT_DATED_ITEMS = 100;
-const DATED_RATE_CHECK_IN_OFFSETS = [14, 30];
+const DATED_RATE_CHECK_IN_OFFSETS = [7, 14, 30];
 const HEATMAP_CHECK_OUT_OFFSETS = DATED_RATE_CHECK_IN_OFFSETS.map((offset) => offset + DEFAULT_NIGHTS);
 
 function parseLimit(value, fallback, max) {
@@ -148,7 +148,7 @@ async function prewarmDatedRates(workItems) {
   const stats = emptyStats(workItems.length);
   const bySource = {};
 
-  await withConcurrency(workItems, 3, async (item) => {
+  await withConcurrency(workItems, 6, async (item) => {
     bySource[item.source] = (bySource[item.source] || 0) + 1;
     try {
       const result = await getCachedRates({
@@ -168,7 +168,7 @@ async function prewarmDatedRates(workItems) {
       stats.errors++;
       return { ok: false };
     }
-  }, 500);
+  }, 200);
 
   return {
     ...stats,
@@ -180,7 +180,7 @@ async function prewarmDatedRates(workItems) {
 async function prewarmHeatmaps(workItems) {
   const stats = emptyStats(workItems.length);
 
-  await withConcurrency(workItems, 4, async ({ hotel, checkOut }) => {
+  await withConcurrency(workItems, 6, async ({ hotel, checkOut }) => {
     try {
       const result = await getCachedHeatmap({
         hotelKey: hotel.hotelKey,
@@ -195,7 +195,7 @@ async function prewarmHeatmaps(workItems) {
       stats.errors++;
       return { ok: false };
     }
-  }, 1000);
+  }, 400);
 
   return {
     ...stats,
