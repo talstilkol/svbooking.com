@@ -52,7 +52,7 @@ vi.mock('@/lib/rate-limit', () => ({
   rateLimitResponse: vi.fn((reset: number) => Response.json({ error: 'Rate limit exceeded', reset }, { status: 429 })),
 }));
 
-import { POST } from '@/app/api/compare/batch/route';
+import { GET, POST } from '@/app/api/compare/batch/route';
 import { getCachedRatesBatch } from '@/lib/price-cache';
 
 function batchRequest(body: unknown) {
@@ -132,6 +132,20 @@ describe('POST /api/compare/batch', () => {
 
     const body = await response.json();
     expect(body.error).toContain('Missing required fields');
+  });
+
+  it('supports GET with query params for CDN caching', async () => {
+    const response = await GET(new Request(
+      'http://localhost:3000/api/compare/batch?hotelKeys=g187147-d188728,g187147-d197539&checkIn=2026-06-01&checkOut=2026-06-03'
+    ));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.totalHotels).toBe(2);
+    expect(body.successCount).toBe(2);
+    expect(body.results['g187147-d188728']).toBeDefined();
+    // CDN-cacheable header
+    expect(response.headers.get('Cache-Control')).toContain('s-maxage');
   });
 
   it('enforces batch size limit of 5', async () => {

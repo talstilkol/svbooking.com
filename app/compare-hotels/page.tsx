@@ -110,12 +110,13 @@ function CompareHotelsInner() {
     setLoading(true);
 
     try {
-      // Single batch request instead of N individual requests
-      const res = await fetch('/api/compare/batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hotelKeys: selectedKeys, checkIn, checkOut }),
+      // Single batch GET request — enables CDN edge caching (unlike POST)
+      const batchParams = new URLSearchParams({
+        hotelKeys: selectedKeys.join(','),
+        checkIn,
+        checkOut,
       });
+      const res = await fetch(`/api/compare/batch?${batchParams}`);
       const data = await res.json();
       if (res.ok && data.results) {
         setResults(data.results);
