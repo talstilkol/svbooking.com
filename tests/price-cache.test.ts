@@ -273,4 +273,18 @@ describe('price cache', () => {
     expect(result.priceSource).toBe('heatmap');
     expect(result.fromCache).toBe(false);
   });
+
+  it('seeds fuzzy date cache from heatmap data', async () => {
+    await getCachedHeatmap({ hotelKey: 'g1-d1', checkOut: '2026-06-03' } as Parameters<typeof getCachedHeatmap>[0]);
+
+    // Give the async seeding a tick to complete
+    await new Promise((r) => setTimeout(r, 10));
+
+    // Should have seeded latest-rates for the hotel
+    const seeded = await kv.get('latest-rates:g1-d1:USD');
+    expect(seeded).toBeTruthy();
+    expect(seeded.result.rates[0].name).toBe('Xotelo (heatmap)');
+    expect(seeded.result.rates[0].rate).toBe(120);
+    expect(seeded.forDates).toBeTruthy();
+  });
 });

@@ -227,7 +227,7 @@ async function prewarmDatedRates(workItems) {
       stats.errors++;
       return { ok: false };
     }
-  }, 100);
+  }, (r) => r?.value?.cached ? 0 : 100);
 
   return {
     ...stats,
@@ -254,7 +254,7 @@ async function prewarmHeatmaps(workItems) {
       stats.errors++;
       return { ok: false };
     }
-  }, 200);
+  }, (r) => r?.value?.cached ? 0 : 200);
 
   return {
     ...stats,
