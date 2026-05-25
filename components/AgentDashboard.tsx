@@ -65,6 +65,8 @@ interface ProviderInfo {
   errors: number;
   consecutiveErrors: number;
   quotaUsedPct: number;
+  p50LatencyMs: number | null;
+  successRatePct: number | null;
   lastSuccess: string | null;
   lastError: { message: string; at: string } | null;
 }
@@ -439,10 +441,20 @@ export default function AgentDashboard() {
                     )}
                   </div>
                   {p.configured && (
-                    <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500">
+                    <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500 flex-wrap">
                       <span>Today: {p.callsToday}{p.dailyLimit > 0 ? `/${p.dailyLimit}` : ''}</span>
                       <span>Month: {p.callsThisMonth}{p.monthlyLimit > 0 ? `/${p.monthlyLimit}` : ''}</span>
                       {p.errors > 0 && <span className="text-amber-600">Errors: {p.errors}</span>}
+                      {p.p50LatencyMs !== null && (
+                        <span className={p.p50LatencyMs > 5000 ? 'text-red-500' : p.p50LatencyMs > 2000 ? 'text-amber-600' : 'text-emerald-600'}>
+                          p50: {p.p50LatencyMs}ms
+                        </span>
+                      )}
+                      {p.successRatePct !== null && (
+                        <span className={p.successRatePct < 50 ? 'text-red-500' : p.successRatePct < 80 ? 'text-amber-600' : 'text-emerald-600'}>
+                          {p.successRatePct}% success
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
