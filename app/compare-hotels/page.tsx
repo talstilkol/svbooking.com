@@ -71,6 +71,20 @@ function CompareHotelsInner() {
     return () => controller.abort();
   }, []);
 
+  // When dates change, prefetch rates for all selected hotels in the background.
+  // By the time user clicks "Compare", cache is warm for the new date range.
+  useEffect(() => {
+    if (selectedKeys.length === 0 || !checkIn || !checkOut) return;
+    const controller = new AbortController();
+    for (const key of selectedKeys) {
+      fetch(`/api/compare?hotelKey=${encodeURIComponent(key)}&checkIn=${checkIn}&checkOut=${checkOut}`, {
+        signal: controller.signal,
+        priority: 'low' as RequestPriority,
+      }).catch(() => {});
+    }
+    return () => controller.abort();
+  }, [checkIn, checkOut]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const addHotel = (key: string) => {
     if (key && !selectedKeys.includes(key) && selectedKeys.length < 4) {
       setSelectedKeys((prev) => [...prev, key]);
