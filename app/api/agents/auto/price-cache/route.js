@@ -244,8 +244,11 @@ async function runPriceCache({
   const datedWorkItems = dedupeBy([...alertDated, ...catalogDated], rateWorkItemKey);
   const heatmapWorkItems = dedupeBy(buildHeatmapWorkItems({ today, limit: heatmapLimit }), heatmapWorkItemKey);
 
-  const datedRates = await prewarmDatedRates(datedWorkItems);
-  const heatmaps = await prewarmHeatmaps(heatmapWorkItems);
+  // Run dated rates and heatmaps in parallel — they use different APIs
+  const [datedRates, heatmaps] = await Promise.all([
+    prewarmDatedRates(datedWorkItems),
+    prewarmHeatmaps(heatmapWorkItems),
+  ]);
 
   // Resolve actual cohort index for reporting
   const totalCohorts = Math.ceil(HOTELS.length / catalogLimit);
