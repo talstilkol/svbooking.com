@@ -68,6 +68,9 @@ interface Comparison {
   savingsPct: number;
   savingsAmount: number;
   providerCount: number;
+  freshness?: string;
+  fromCache?: boolean;
+  lastCheckedAt?: string | null;
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -100,6 +103,7 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
   const [checkOut, setCheckOut] = useState(tomorrow());
   const [data, setData] = useState<Comparison | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
 
@@ -139,6 +143,21 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
       setLoading(false);
     }
   }, [hotelKey, checkIn, checkOut, currency]);
+
+  const handleRefresh = useCallback(async () => {
+    if (!checkIn || !checkOut || refreshing) return;
+    setRefreshing(true);
+    try {
+      const res = await fetch('/api/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hotelKey, checkIn, checkOut, currency }),
+      });
+      const json = await res.json();
+      if (res.ok) setData(json);
+    } catch { /* refresh failed silently — stale data remains */ }
+    setRefreshing(false);
+  }, [hotelKey, checkIn, checkOut, currency, refreshing]);
 
   // Use comparison hotel if available (might have extra data), otherwise server-provided hotel
   const displayHotel = data?.hotel || hotel;
@@ -365,7 +384,7 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
           </div>
         )}
 
-        {/* Comparison meta + last updated */}
+        {/* Comparison meta + last updated + refresh */}
         {!loading && data && data.rates.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <ComparisonMeta
@@ -374,6 +393,21 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
               checkOut={data.checkOut}
               currency={data.currency}
             />
+            {data.freshness === 'stale' && (
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-3 py-1.5 transition disabled:opacity-50"
+                title="Cached prices may be outdated — click to fetch live prices from providers"
+              >
+                {refreshing ? (
+                  <span className="inline-block w-3 h-3 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span>↻</span>
+                )}
+                {refreshing ? 'Refreshing...' : 'Refresh prices'}
+              </button>
+            )}
           </div>
         )}
 
