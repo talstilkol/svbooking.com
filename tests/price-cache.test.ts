@@ -215,6 +215,56 @@ describe('price cache', () => {
     expect(getHotelRates).toHaveBeenCalledTimes(1);
   });
 
+  it('uses longer fresh window for far-future check-in dates', async () => {
+    // Cache a result with cachedAt = 90 minutes ago.
+    // For near-term (7-day) dates, 90min > 1h fresh TTL → stale.
+    // For far-term (30-day) dates, 90min < 4h fresh TTL → still fresh.
+    const ninetyMinAgo = new Date(Date.now() - 90 * 60 * 1000).toISOString();
+    const cachedResult = {
+      rates: [{ name: 'Adaptive TTL Hotel', rate: 150, tax: 15 }],
+      currency: 'USD',
+      provider: 'Xotelo',
+      source: 'xotelo',
+      lastCheckedAt: ninetyMinAgo,
+    };
+
+    // Near-term check-in (7 days out) — should be STALE (90min > 1h fresh window)
+    const nearDate = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+    const nearCheckOut = new Date(Date.now() + 9 * 86400000).toISOString().split('T')[0];
+    await kv.setWithTTL(`price:g1-d1:${nearDate}:${nearCheckOut}:USD`, {
+      cachedAt: ninetyMinAgo,
+      result: cachedResult,
+    }, 7200);
+
+    const nearResult = await getCachedRates({
+      hotelKey: 'g1-d1', hotelName: 'Test', city: 'Paris',
+      checkIn: nearDate, checkOut: nearCheckOut,
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(nearResult.fromCache).toBe(true);
+    expect(nearResult.freshness).toBe('stale');
+
+    vi.clearAllMocks();
+
+    // Far-term check-in (30 days out) — should be FRESH (90min < 4h fresh window)
+    const farDate = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+    const farCheckOut = new Date(Date.now() + 32 * 86400000).toISOString().split('T')[0];
+    await kv.setWithTTL(`price:g1-d1:${farDate}:${farCheckOut}:USD`, {
+      cachedAt: ninetyMinAgo,
+      result: cachedResult,
+    }, 7200);
+
+    const farResult = await getCachedRates({
+      hotelKey: 'g1-d1', hotelName: 'Test', city: 'Paris',
+      checkIn: farDate, checkOut: farCheckOut,
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(farResult.fromCache).toBe(true);
+    expect(farResult.freshness).toBe('fresh');
+    // No background revalidation needed for fresh result
+    expect(getHotelRates).not.toHaveBeenCalled();
+  });
+
   it('keeps heatmap data labeled as a price source, not a booking provider', async () => {
     const result = await getCachedHeatmap({ hotelKey: 'g1-d1', checkOut: '2026-06-03' } as Parameters<typeof getCachedHeatmap>[0]);
 
