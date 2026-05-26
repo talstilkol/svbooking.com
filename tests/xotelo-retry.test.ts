@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Track fetch calls to verify retry behavior
 const fetchCalls: Array<{ url: string; attempt: number }> = [];
 let fetchAttempt = 0;
-let fetchBehavior: 'succeed' | 'fail-then-succeed' | 'always-fail' | 'timeout-then-succeed' = 'succeed';
+let fetchBehavior: 'succeed' | 'fail-then-succeed' | 'always-fail' | 'timeout-then-succeed' | 'error-with-rates' | 'error-no-rates' = 'succeed';
 
 vi.stubGlobal('fetch', vi.fn(async (url: string) => {
   fetchAttempt++;
@@ -31,6 +31,18 @@ vi.stubGlobal('fetch', vi.fn(async (url: string) => {
 
   if (fetchBehavior === 'always-fail') {
     return new Response('Server Error', { status: 500 });
+  }
+
+  if (fetchBehavior === 'error-with-rates') {
+    // Xotelo sometimes returns error=true but still includes partial rates
+    return new Response(JSON.stringify({
+      error: true,
+      result: { rates: [{ name: 'Booking.com', rate: 80, tax: 10 }], currency: 'USD' },
+    }), { status: 200 });
+  }
+
+  if (fetchBehavior === 'error-no-rates') {
+    return new Response(JSON.stringify({ error: true, result: { rates: [] } }), { status: 200 });
   }
 
   return new Response('Not Found', { status: 404 });
@@ -83,5 +95,21 @@ describe('xotelo retry', () => {
 
     // Should have attempted twice (original + 1 retry)
     expect(fetchCalls).toHaveLength(2);
+  });
+
+  it('extracts partial rates even when error flag is set', async () => {
+    fetchBehavior = 'error-with-rates';
+    const result = await getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' });
+
+    // Should return the rates despite the error flag
+    expect(result.rates).toHaveLength(1);
+    expect(result.rates[0].rate).toBe(80);
+  });
+
+  it('throws when error flag is set and no rates are available', async () => {
+    fetchBehavior = 'error-no-rates';
+    await expect(
+      getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' })
+    ).rejects.toThrow('Xotelo: rates unavailable');
   });
 });
