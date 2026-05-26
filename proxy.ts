@@ -52,13 +52,14 @@ const PUBLIC_API_BYPASS_PATHS = [
   '/api/events',
   '/api/catalog/stats',
   '/api/price-history',
-  '/api/price-alerts/unsubscribe',
+  '/api/price-alerts',
   '/api/reviews',
   '/api/property-content',
   '/api/i18n',
 ];
 
 const INTERNAL_AUTH_API_BYPASS_PATHS = [
+  '/api/admin',
   '/api/data-retention',
   '/api/ops/scorecard',
   '/api/ops/alerts',
