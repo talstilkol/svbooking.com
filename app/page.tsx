@@ -53,27 +53,37 @@ export default function Home() {
       </Suspense>
 
       {/* Trending Hotels — large image cards with hover */}
-      <Suspense fallback={null}>
-        <HomeTrending />
-      </Suspense>
+      <LazySection>
+        <Suspense fallback={null}>
+          <HomeTrending />
+        </Suspense>
+      </LazySection>
 
       {/* Top Deals */}
-      <div className="max-w-7xl mx-auto px-4 pt-10 pb-8">
-        <Suspense fallback={null}>
-          <TopDeals />
-        </Suspense>
-      </div>
+      <LazySection>
+        <div className="max-w-7xl mx-auto px-4 pt-10 pb-8">
+          <Suspense fallback={null}>
+            <TopDeals />
+          </Suspense>
+        </div>
+      </LazySection>
 
       {/* How it works — animated step cards */}
-      <HomeHowItWorks />
+      <LazySection>
+        <HomeHowItWorks />
+      </LazySection>
 
       {/* Popular Cities */}
-      <PopularCities />
+      <LazySection>
+        <PopularCities />
+      </LazySection>
 
       {/* City Weather Grid */}
-      <div className="max-w-7xl mx-auto px-4 py-10">
-        <CityWeatherGrid />
-      </div>
+      <LazySection>
+        <div className="max-w-7xl mx-auto px-4 py-10">
+          <CityWeatherGrid />
+        </div>
+      </LazySection>
 
       {/* Destination Explorer */}
       <LazySection>
