@@ -53,7 +53,7 @@ describe('data retention policy', () => {
     const request = new Request('http://localhost/api/data-retention', {
       headers: { Authorization: `Bearer ${TEST_ADMIN_SECRET}` },
     });
-    const response = await getDataRetention(request);
+    const response = await getDataRetention(request) as Response;
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -70,7 +70,7 @@ describe('data retention policy', () => {
     vi.stubEnv('CRON_SECRET', '');
 
     const request = new Request('http://localhost/api/data-retention');
-    const response = await getDataRetention(request);
+    const response = await getDataRetention(request) as Response;
 
     expect(response.status).toBe(401);
 

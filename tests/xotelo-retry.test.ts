@@ -63,7 +63,7 @@ describe('xotelo retry', () => {
 
   it('succeeds on first attempt without retrying', async () => {
     fetchBehavior = 'succeed';
-    const result = await getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' });
+    const result = await getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 10000 });
 
     expect(result.rates).toHaveLength(1);
     expect(fetchCalls).toHaveLength(1);
@@ -71,7 +71,7 @@ describe('xotelo retry', () => {
 
   it('retries once on 500 and succeeds', async () => {
     fetchBehavior = 'fail-then-succeed';
-    const result = await getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' });
+    const result = await getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 10000 });
 
     expect(result.rates).toHaveLength(1);
     expect(fetchCalls).toHaveLength(2);
@@ -81,7 +81,7 @@ describe('xotelo retry', () => {
 
   it('retries once on timeout and succeeds', async () => {
     fetchBehavior = 'timeout-then-succeed';
-    const result = await getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' });
+    const result = await getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 10000 });
 
     expect(result.rates).toHaveLength(1);
     expect(fetchCalls).toHaveLength(2);
@@ -90,7 +90,7 @@ describe('xotelo retry', () => {
   it('throws after retry also fails', async () => {
     fetchBehavior = 'always-fail';
     await expect(
-      getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' })
+      getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 10000 })
     ).rejects.toThrow('Xotelo HTTP 500');
 
     // Should have attempted twice (original + 1 retry)
@@ -99,7 +99,7 @@ describe('xotelo retry', () => {
 
   it('extracts partial rates even when error flag is set', async () => {
     fetchBehavior = 'error-with-rates';
-    const result = await getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' });
+    const result = await getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 10000 });
 
     // Should return the rates despite the error flag
     expect(result.rates).toHaveLength(1);
@@ -109,7 +109,7 @@ describe('xotelo retry', () => {
   it('throws when error flag is set and no rates are available', async () => {
     fetchBehavior = 'error-no-rates';
     await expect(
-      getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' })
+      getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 10000 })
     ).rejects.toThrow('Xotelo: rates unavailable');
   });
 });

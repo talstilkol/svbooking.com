@@ -1,5 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Extended result type for merge tests — fetchRates returns additional fields beyond the base type
+interface MergeResult {
+  rates: Array<{ name: string; code: string; rate: number; tax: number; total: number; source?: string; roomName?: string; deepLink?: string; [key: string]: unknown }>;
+  currency: string;
+  source: string;
+  provider: string;
+  mergedProviders?: number;
+  noRatesReason?: string;
+}
+
 /**
  * Tests for the provider registry's merge-and-dedup logic.
  *
@@ -58,7 +68,6 @@ describe('provider merge and dedup', () => {
 
     // Fresh registry each test
     const mod = await import('@/lib/providers/registry');
-    // @ts-expect-error — access class for testing
     registry = new mod.ProviderRegistry();
   });
 
@@ -75,7 +84,7 @@ describe('provider merge and dedup', () => {
     });
 
     registry.register(provider);
-    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' });
+    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' }) as MergeResult;
 
     expect(result.rates).toHaveLength(2);
     expect(result.source).toBe('xotelo');
@@ -109,7 +118,7 @@ describe('provider merge and dedup', () => {
     registry.register(xotelo);
     registry.register(serpapi);
 
-    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' });
+    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' }) as MergeResult;
 
     // 3 unique OTAs: booking (from xotelo, cheaper), expedia, google
     expect(result.rates).toHaveLength(3);
@@ -118,14 +127,14 @@ describe('provider merge and dedup', () => {
     expect(result.source).toContain('serpapi');
 
     // Booking.com should be the cheaper one (230 from xotelo, not 235 from serpapi)
-    const bookingRate = result.rates.find((r: { code: string }) => r.code === 'booking');
+    const bookingRate = result.rates.find((r) => r.code === 'booking');
     expect(bookingRate).toBeDefined();
-    expect(bookingRate.total).toBe(230);
+    expect(bookingRate!.total).toBe(230);
 
     // Google Hotels should be included from serpapi
-    const googleRate = result.rates.find((r: { code: string }) => r.code === 'google');
+    const googleRate = result.rates.find((r) => r.code === 'google');
     expect(googleRate).toBeDefined();
-    expect(googleRate.total).toBe(210);
+    expect(googleRate!.total).toBe(210);
   });
 
   it('normalizes OTA code variations to canonical form', async () => {
@@ -153,7 +162,7 @@ describe('provider merge and dedup', () => {
     registry.register(xotelo);
     registry.register(serpapi);
 
-    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' });
+    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' }) as MergeResult;
 
     // "bookingcom" and "booking" should merge into one "booking" entry
     expect(result.rates).toHaveLength(1);
@@ -187,7 +196,7 @@ describe('provider merge and dedup', () => {
     registry.register(xotelo);
     registry.register(serpapi);
 
-    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' });
+    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' }) as MergeResult;
 
     // Same price, but xotelo's rate has deepLink + roomName — should win
     expect(result.rates).toHaveLength(1);
@@ -200,7 +209,7 @@ describe('provider merge and dedup', () => {
     providerErrors.set('xotelo', new Error('Upstream timeout'));
 
     registry.register(xotelo);
-    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' });
+    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' }) as MergeResult;
 
     expect(result.rates).toEqual([]);
     expect(result.noRatesReason).toBe('all-providers-returned-empty');
@@ -222,7 +231,7 @@ describe('provider merge and dedup', () => {
     registry.register(xotelo);
     registry.register(serpapi);
 
-    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' });
+    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' }) as MergeResult;
 
     expect(result.rates).toHaveLength(1);
     expect(result.source).toBe('xotelo');
@@ -250,12 +259,12 @@ describe('provider merge and dedup', () => {
     registry.register(xotelo);
     registry.register(serpapi);
 
-    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' });
+    const result = await registry.fetchRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03' }) as MergeResult;
 
-    const bookingRate = result.rates.find((r: { code: string }) => r.code === 'booking');
-    const googleRate = result.rates.find((r: { code: string }) => r.code === 'google');
+    const bookingRate = result.rates.find((r) => r.code === 'booking');
+    const googleRate = result.rates.find((r) => r.code === 'google');
 
-    expect(bookingRate.source).toBe('xotelo');
-    expect(googleRate.source).toBe('serpapi');
+    expect(bookingRate!.source).toBe('xotelo');
+    expect(googleRate!.source).toBe('serpapi');
   });
 });
