@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 interface PerfMetrics {
   lcp: number | null;
-  fid: number | null;
+  inp: number | null;
   cls: number | null;
   ttfb: number | null;
   fcp: number | null;
@@ -13,7 +13,7 @@ interface PerfMetrics {
 export default function PerformanceMonitor({ className = '' }: { className?: string }) {
   const [metrics, setMetrics] = useState<PerfMetrics>({
     lcp: null,
-    fid: null,
+    inp: null,
     cls: null,
     ttfb: null,
     fcp: null,
@@ -33,13 +33,20 @@ export default function PerformanceMonitor({ className = '' }: { className?: str
       lcpObs.observe({ type: 'largest-contentful-paint', buffered: true });
     } catch {}
 
-    // FID
+    // INP (Interaction to Next Paint — replaced FID as Core Web Vital March 2024)
     try {
-      const fidObs = new PerformanceObserver((list) => {
-        const entry = list.getEntries()[0] as PerformanceEventTiming;
-        if (entry) setMetrics((m) => ({ ...m, fid: entry.processingStart - entry.startTime }));
+      let maxInp = 0;
+      const inpObs = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          const e = entry as PerformanceEventTiming;
+          const duration = e.duration || 0;
+          if (duration > maxInp) {
+            maxInp = duration;
+            setMetrics((m) => ({ ...m, inp: maxInp }));
+          }
+        }
       });
-      fidObs.observe({ type: 'first-input', buffered: true });
+      inpObs.observe({ type: 'event', buffered: true, durationThreshold: 16 } as PerformanceObserverInit);
     } catch {}
 
     // CLS
@@ -80,7 +87,7 @@ export default function PerformanceMonitor({ className = '' }: { className?: str
     if (value === null) return 'text-slate-400';
     switch (metric) {
       case 'lcp': return value <= 2500 ? 'text-green-600' : value <= 4000 ? 'text-amber-600' : 'text-red-600';
-      case 'fid': return value <= 100 ? 'text-green-600' : value <= 300 ? 'text-amber-600' : 'text-red-600';
+      case 'inp': return value <= 200 ? 'text-green-600' : value <= 500 ? 'text-amber-600' : 'text-red-600';
       case 'cls': return value <= 0.1 ? 'text-green-600' : value <= 0.25 ? 'text-amber-600' : 'text-red-600';
       case 'ttfb': return value <= 800 ? 'text-green-600' : value <= 1800 ? 'text-amber-600' : 'text-red-600';
       case 'fcp': return value <= 1800 ? 'text-green-600' : value <= 3000 ? 'text-amber-600' : 'text-red-600';
@@ -108,7 +115,7 @@ export default function PerformanceMonitor({ className = '' }: { className?: str
           <div className="space-y-2">
             {[
               { key: 'lcp', label: 'LCP', unit: 'ms', desc: 'Largest Contentful Paint' },
-              { key: 'fid', label: 'FID', unit: 'ms', desc: 'First Input Delay' },
+              { key: 'inp', label: 'INP', unit: 'ms', desc: 'Interaction to Next Paint' },
               { key: 'cls', label: 'CLS', unit: '', desc: 'Cumulative Layout Shift' },
               { key: 'ttfb', label: 'TTFB', unit: 'ms', desc: 'Time to First Byte' },
               { key: 'fcp', label: 'FCP', unit: 'ms', desc: 'First Contentful Paint' },

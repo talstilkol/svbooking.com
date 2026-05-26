@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import HomeHero from "@/components/home/HomeHero";
 import HomeStats from "@/components/home/HomeStats";
 import HomeHowItWorks from "@/components/home/HomeHowItWorks";
@@ -16,6 +17,17 @@ import FeatureHighlight from "@/components/FeatureHighlight";
 import LazySection from "@/components/LazySection";
 import Link from "next/link";
 import { Suspense } from "react";
+import { CATALOG_STATS } from "@/lib/catalog-stats";
+
+export const metadata: Metadata = {
+  title: "SV Booking - Compare Hotel Prices Across Providers",
+  description: `Compare hotel prices from multiple providers across ${CATALOG_STATS.hotels} hotels in ${CATALOG_STATS.cities} cities. Find the cheapest rates, discover the best time to book, and save on your next trip.`,
+  openGraph: {
+    title: "SV Booking - Compare Hotel Prices Across Providers",
+    description: `Compare hotel prices across ${CATALOG_STATS.hotels} hotels in ${CATALOG_STATS.cities} cities worldwide. Find the cheapest rates instantly.`,
+  },
+  alternates: { canonical: '/' },
+};
 
 export default function Home() {
   return (

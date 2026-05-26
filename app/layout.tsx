@@ -1,24 +1,27 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ToastProvider } from "@/components/Toast";
-import BackToTop from "@/components/BackToTop";
-import CookieConsent from "@/components/CookieConsent";
 import RouteProgress from "@/components/RouteProgress";
-import MobileBottomBar from "@/components/MobileBottomBar";
-import AccessibilityPanel from "@/components/AccessibilityPanel";
 import { OrganizationJsonLd, SearchActionJsonLd } from "@/components/SchemaOrg";
-import OfflineBanner from "@/components/OfflineBanner";
-import PerformanceMonitor from "@/components/PerformanceMonitor";
-import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
-import CompareWidget from "@/components/CompareWidget";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LocaleRuntime from "@/components/LocaleRuntime";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+
+// Non-critical components — dynamically imported for code-splitting (reduces initial JS bundle)
+const BackToTop = dynamic(() => import("@/components/BackToTop"));
+const CookieConsent = dynamic(() => import("@/components/CookieConsent"));
+const MobileBottomBar = dynamic(() => import("@/components/MobileBottomBar"));
+const AccessibilityPanel = dynamic(() => import("@/components/AccessibilityPanel"));
+const OfflineBanner = dynamic(() => import("@/components/OfflineBanner"));
+const PerformanceMonitor = dynamic(() => import("@/components/PerformanceMonitor"));
+const ServiceWorkerRegistration = dynamic(() => import("@/components/ServiceWorkerRegistration"));
+const CompareWidget = dynamic(() => import("@/components/CompareWidget"));
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
