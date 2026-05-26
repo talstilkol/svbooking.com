@@ -28,10 +28,12 @@ function nextFriday(fromDateStr) {
   return addDays(fromDateStr, daysUntilFriday);
 }
 
-/** Build speculative date ranges: next weekend, +7d, +14d */
+/** Build speculative date ranges: +1d, +3d, next weekend, +7d, +14d */
 function buildPrefetchDates(today) {
   const friday = nextFriday(today);
   return [
+    { checkIn: addDays(today, 1), checkOut: addDays(today, 1 + DEFAULT_NIGHTS) },
+    { checkIn: addDays(today, 3), checkOut: addDays(today, 3 + DEFAULT_NIGHTS) },
     { checkIn: friday, checkOut: addDays(friday, DEFAULT_NIGHTS) },
     { checkIn: addDays(today, 7), checkOut: addDays(today, 7 + DEFAULT_NIGHTS) },
     { checkIn: addDays(today, 14), checkOut: addDays(today, 14 + DEFAULT_NIGHTS) },

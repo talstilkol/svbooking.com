@@ -328,7 +328,7 @@ async function prewarmDatedRates(workItems) {
         checkIn: item.checkIn,
         checkOut: item.checkOut,
         currency: item.currency,
-        timeoutMs: 8000,
+        timeoutMs: 5000, // Tighter than user-facing (10s) — cron has volume priority
       });
       stats.processed++;
       if (result.fromCache) stats.cacheHits++;
@@ -360,7 +360,7 @@ async function prewarmHeatmaps(workItems) {
       const result = await getCachedHeatmap({
         hotelKey: hotel.hotelKey,
         checkOut,
-        timeoutMs: 12000,
+        timeoutMs: 8000, // Tighter for cron (user-facing gets 12s)
       });
       stats.processed++;
       if (result.fromCache) stats.cacheHits++;

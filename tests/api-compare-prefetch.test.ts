@@ -50,8 +50,8 @@ describe('GET /api/compare/prefetch', () => {
     // Give background promises a tick to fire
     await new Promise((r) => setTimeout(r, 10));
 
-    // Should have called getCachedRates 3 times (weekend, +7d, +14d)
-    expect(getCachedRates).toHaveBeenCalledTimes(3);
+    // Should have called getCachedRates 5 times (+1d, +3d, weekend, +7d, +14d)
+    expect(getCachedRates).toHaveBeenCalledTimes(5);
   });
 
   it('returns 400 for missing hotelKey', async () => {
@@ -77,18 +77,24 @@ describe('prefetch date helpers', () => {
     expect(nextFriday('2026-05-31')).toBe('2026-06-05');
   });
 
-  it('buildPrefetchDates returns 3 date ranges', () => {
+  it('buildPrefetchDates returns 5 date ranges', () => {
     const dates = buildPrefetchDates('2026-05-25'); // Monday
 
-    expect(dates).toHaveLength(3);
+    expect(dates).toHaveLength(5);
+
+    // +1 day (May 26) for 2 nights
+    expect(dates[0]).toEqual({ checkIn: '2026-05-26', checkOut: '2026-05-28' });
+
+    // +3 days (May 28) for 2 nights
+    expect(dates[1]).toEqual({ checkIn: '2026-05-28', checkOut: '2026-05-30' });
 
     // Next Friday (May 29) for 2 nights
-    expect(dates[0]).toEqual({ checkIn: '2026-05-29', checkOut: '2026-05-31' });
+    expect(dates[2]).toEqual({ checkIn: '2026-05-29', checkOut: '2026-05-31' });
 
     // +7 days (June 1) for 2 nights
-    expect(dates[1]).toEqual({ checkIn: '2026-06-01', checkOut: '2026-06-03' });
+    expect(dates[3]).toEqual({ checkIn: '2026-06-01', checkOut: '2026-06-03' });
 
     // +14 days (June 8) for 2 nights
-    expect(dates[2]).toEqual({ checkIn: '2026-06-08', checkOut: '2026-06-10' });
+    expect(dates[4]).toEqual({ checkIn: '2026-06-08', checkOut: '2026-06-10' });
   });
 });

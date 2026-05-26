@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState, useMemo } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import HotelCard, { CatalogHotel } from '@/components/HotelCard';
 import QuickSearchChips from '@/components/QuickSearchChips';
@@ -73,6 +73,24 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
   useEffect(() => {
     queueMicrotask(() => setPage(1));
   }, [debouncedQuery, activeCountry, activeSort]);
+
+  // Speculative prefetch: warm cache for top visible hotels.
+  // When results change (city filter, search), prefetch rates for the first 3
+  // hotels so that clicking through to a hotel page shows prices faster.
+  const prefetchedRef = useRef<Set<string>>(new Set());
+  const prefetchTopResults = useCallback((hotels: CatalogHotel[]) => {
+    const toPrefetch = hotels.slice(0, 3).filter((h) => !prefetchedRef.current.has(h.hotelKey));
+    for (const hotel of toPrefetch) {
+      prefetchedRef.current.add(hotel.hotelKey);
+      fetch(`/api/compare/prefetch?hotelKey=${hotel.hotelKey}`, {
+        priority: 'low' as RequestPriority,
+      }).catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    if (filtered.length > 0) prefetchTopResults(filtered);
+  }, [filtered, prefetchTopResults]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
