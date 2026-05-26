@@ -6,8 +6,11 @@ test.describe('Home page', () => {
     await expect(page.getByRole('navigation', { name: /main navigation/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /compare hotel rates/i })).toBeVisible();
     await expect(page.getByLabel(/search for a hotel or city/i)).toBeVisible();
-    await expect(page.getByRole('heading', { name: /how it works/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Catalog destinations', exact: true })).toBeVisible();
+    // "How it works" and "Catalog destinations" are inside LazySection —
+    // scroll down to trigger IntersectionObserver, then wait for render
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect(page.getByRole('heading', { name: /how it works/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: 'Catalog destinations', exact: true })).toBeVisible({ timeout: 10_000 });
   });
 
   test('hero search navigates to /search', async ({ page }) => {
