@@ -57,24 +57,34 @@ export async function GET(request) {
       return Response.json({ error: 'Hotel not found' }, { status: 404 });
     }
 
+    const requestedCurrency = searchParams.get('currency');
+
     // Fire-and-forget: bump popularity + warm cache
     bumpHotelPopularity(hotelKey);
 
     const today = toIsoDate();
     const dates = buildPrefetchDates(today);
 
+    // Build currency list: always warm USD, plus the user's preferred currency
+    const currencies = ['USD'];
+    if (requestedCurrency && requestedCurrency !== 'USD') {
+      currencies.push(requestedCurrency);
+    }
+
     // Background warming — don't await, return immediately
     Promise.all(
-      dates.map((d) =>
-        getCachedRates({
-          hotelKey,
-          hotelName: hotel.name,
-          city: hotel.city,
-          checkIn: d.checkIn,
-          checkOut: d.checkOut,
-          currency: 'USD',
-          timeoutMs: 10000,
-        }).catch(() => {})
+      currencies.flatMap((curr) =>
+        dates.map((d) =>
+          getCachedRates({
+            hotelKey,
+            hotelName: hotel.name,
+            city: hotel.city,
+            checkIn: d.checkIn,
+            checkOut: d.checkOut,
+            currency: curr,
+            timeoutMs: 10000,
+          }).catch(() => {})
+        )
       )
     ).catch(() => {});
 

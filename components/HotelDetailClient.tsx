@@ -142,16 +142,15 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
 
   // Speculative pre-fetch: warm cache for common date ranges on mount.
   // Uses lightweight /api/compare/prefetch (returns 202 immediately).
-  // Warms: next weekend, +7d, +14d — so data is ready before user clicks Compare.
+  // Warms: +1d, +3d, next weekend, +7d, +14d — so data is ready before user clicks Compare.
+  // Includes user's currency so cache is warm for their preferred currency.
   useEffect(() => {
     const controller = new AbortController();
-    fetch(
-      `/api/compare/prefetch?hotelKey=${hotel.hotelKey}`,
-      { signal: controller.signal, priority: 'low' as RequestPriority }
-    ).catch(() => {});
+    const prefetchUrl = `/api/compare/prefetch?hotelKey=${hotel.hotelKey}${currency !== 'USD' ? `&currency=${currency}` : ''}`;
+    fetch(prefetchUrl, { signal: controller.signal, priority: 'low' as RequestPriority }).catch(() => {});
     return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hotel.hotelKey]);
+  }, [hotel.hotelKey, currency]);
 
   const handleCompare = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
