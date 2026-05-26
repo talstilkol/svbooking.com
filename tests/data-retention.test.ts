@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   RETENTION_SECONDS,
   getDataRetentionPolicies,
@@ -6,6 +6,8 @@ import {
 } from '@/lib/data-retention';
 import { getUserDataPrivacyReadiness } from '@/lib/user-data';
 import { GET as getDataRetention } from '@/app/api/data-retention/route';
+
+const TEST_ADMIN_SECRET = 'test-admin-secret';
 
 describe('data retention policy', () => {
   it('defines retention windows for operational data classes', () => {
@@ -44,8 +46,14 @@ describe('data retention policy', () => {
     expect(JSON.stringify(readiness)).not.toContain('secret');
   });
 
-  it('exposes a public no-store retention policy endpoint', async () => {
-    const response = await getDataRetention();
+  it('exposes an authenticated no-store retention policy endpoint', async () => {
+    vi.stubEnv('ADMIN_API_SECRET', TEST_ADMIN_SECRET);
+    vi.stubEnv('CRON_SECRET', '');
+
+    const request = new Request('http://localhost/api/data-retention', {
+      headers: { Authorization: `Bearer ${TEST_ADMIN_SECRET}` },
+    });
+    const response = await getDataRetention(request);
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -53,5 +61,19 @@ describe('data retention policy', () => {
     expect(body.service).toBe('sv-booking');
     expect(body.policies.length).toBeGreaterThan(0);
     expect(body.readiness.rawSecretStorage).toBe('not-allowed');
+
+    vi.unstubAllEnvs();
+  });
+
+  it('rejects unauthenticated requests to retention endpoint', async () => {
+    vi.stubEnv('ADMIN_API_SECRET', TEST_ADMIN_SECRET);
+    vi.stubEnv('CRON_SECRET', '');
+
+    const request = new Request('http://localhost/api/data-retention');
+    const response = await getDataRetention(request);
+
+    expect(response.status).toBe(401);
+
+    vi.unstubAllEnvs();
   });
 });

@@ -1,5 +1,3 @@
-'use client';
-
 interface ProviderDataNoticeProps {
   provider: string;
   className?: string;

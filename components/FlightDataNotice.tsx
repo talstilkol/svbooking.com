@@ -1,5 +1,3 @@
-'use client';
-
 interface FlightDataNoticeProps {
   city: string;
   className?: string;
