@@ -141,7 +141,7 @@ export default function FavoritesPage() {
                     </p>
                     <div className="flex items-center gap-2 mt-2">
                       <RatingBadge size="sm" />
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-slate-500">
                         Added {new Date(fav.addedAt).toLocaleDateString()}
                       </span>
                     </div>

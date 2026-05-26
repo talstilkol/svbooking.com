@@ -54,7 +54,7 @@ export default function StickyCompareBar({
               {currency} {cheapestPrice.toFixed(0)}
             </p>
             {nights > 1 && (
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-slate-500">
                 {currency} {(cheapestPrice / nights).toFixed(0)}/night
               </p>
             )}

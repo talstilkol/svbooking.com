@@ -83,7 +83,7 @@ export default function UserPreferences({ className = '' }: UserPreferencesProps
             <h3 className="text-lg font-bold text-slate-900">⚙️ Your Preferences</h3>
             <button
               onClick={() => setOpen(false)}
-              className="text-slate-400 hover:text-slate-600 transition"
+              className="text-slate-500 hover:text-slate-600 transition"
             >
               ✕
             </button>
@@ -173,7 +173,7 @@ export default function UserPreferences({ className = '' }: UserPreferencesProps
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-800">{opt.label}</p>
-                  <p className="text-[10px] text-slate-400">{opt.desc}</p>
+                  <p className="text-[10px] text-slate-500">{opt.desc}</p>
                 </div>
               </label>
             ))}

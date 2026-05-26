@@ -107,7 +107,7 @@ export default function UpcomingTrips({ className = '' }: { className?: string }
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-slate-800 truncate">{trip.hotelName}</p>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-slate-500">
                   {trip.city} · {nights} night{nights !== 1 ? 's' : ''} · {trip.guests} guest{trip.guests !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -115,7 +115,7 @@ export default function UpcomingTrips({ className = '' }: { className?: string }
                 <p className={`text-xs font-bold ${isUrgent ? 'text-red-600' : 'text-slate-700'}`}>
                   {days === 0 ? 'Today!' : days === 1 ? 'Tomorrow' : `${days} days`}
                 </p>
-                <p className="text-[9px] text-slate-400">{trip.checkIn}</p>
+                <p className="text-[9px] text-slate-500">{trip.checkIn}</p>
               </div>
             </Link>
           );

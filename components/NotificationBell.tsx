@@ -38,7 +38,7 @@ export default function NotificationBell({ className = '' }: { className?: strin
             <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
           </div>
 
-          <p className="p-6 text-center text-sm text-slate-400">
+          <p className="p-6 text-center text-sm text-slate-500">
             No verified notifications
           </p>
 

@@ -82,12 +82,12 @@ export default function BookingTimeline({
                     ? 'text-green-700'
                     : step.status === 'active'
                     ? 'text-blue-700'
-                    : 'text-slate-400'
+                    : 'text-slate-500'
                 }`}
               >
                 {step.label}
               </span>
-              <span className="text-[10px] text-slate-400 mt-0.5 max-w-[80px]">
+              <span className="text-[10px] text-slate-500 mt-0.5 max-w-[80px]">
                 {step.description}
               </span>
             </div>

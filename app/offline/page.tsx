@@ -28,7 +28,7 @@ export default function OfflinePage() {
             Go to homepage
           </Link>
         </div>
-        <p className="mt-8 text-xs text-slate-400">
+        <p className="mt-8 text-xs text-slate-500">
           Your favorites and recent searches are saved locally and will be
           available when you reconnect.
         </p>

@@ -85,12 +85,12 @@ export default function NearbyAttractions({ city, className = '' }: NearbyAttrac
             <span className="text-lg">{a.icon}</span>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium text-slate-800 truncate">{a.name}</p>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-slate-500">
                 {a.type} · Distance: {a.distance}
               </p>
             </div>
             {a.rate ? (
-              <span className="text-[10px] text-slate-400">{a.rate.toFixed(1)}</span>
+              <span className="text-[10px] text-slate-500">{a.rate.toFixed(1)}</span>
             ) : null}
           </div>
         ))}

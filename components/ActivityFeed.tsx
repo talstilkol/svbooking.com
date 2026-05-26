@@ -165,18 +165,18 @@ export default function ActivityFeed({ className = '' }: { className?: string })
                 <span className="text-lg shrink-0">{ICONS[a.type]}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-slate-800 truncate">{a.title}</p>
-                  <p className="text-[10px] text-slate-400">{a.detail}</p>
+                  <p className="text-[10px] text-slate-500">{a.detail}</p>
                 </div>
-                <span className="text-[10px] text-slate-400 shrink-0">{timeAgo(a.timestamp)}</span>
+                <span className="text-[10px] text-slate-500 shrink-0">{timeAgo(a.timestamp)}</span>
               </Link>
             ) : (
               <div className="flex items-center gap-3">
                 <span className="text-lg shrink-0">{ICONS[a.type]}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-slate-800 truncate">{a.title}</p>
-                  <p className="text-[10px] text-slate-400">{a.detail}</p>
+                  <p className="text-[10px] text-slate-500">{a.detail}</p>
                 </div>
-                <span className="text-[10px] text-slate-400 shrink-0">{timeAgo(a.timestamp)}</span>
+                <span className="text-[10px] text-slate-500 shrink-0">{timeAgo(a.timestamp)}</span>
               </div>
             )}
           </div>

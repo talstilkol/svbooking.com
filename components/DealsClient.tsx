@@ -149,7 +149,7 @@ export default function DealsClient() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 text-slate-400">
+          <div className="text-center py-16 text-slate-500">
             <div className="text-5xl mb-4">&#128270;</div>
             <p className="text-lg">No deals available right now</p>
             <p className="text-sm mt-2">Try a different region or check back later</p>

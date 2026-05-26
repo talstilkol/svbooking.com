@@ -59,7 +59,7 @@ export default function RecentlyCompared() {
             {hotel.cheapest && (
               <div className="text-sm font-bold text-emerald-600 mt-1">
                 {hotel.cheapest.currency} {hotel.cheapest.total.toFixed(0)}
-                <span className="text-xs font-normal text-slate-400 ml-1">
+                <span className="text-xs font-normal text-slate-500 ml-1">
                   on {hotel.cheapest.provider}
                 </span>
               </div>

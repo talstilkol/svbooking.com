@@ -42,7 +42,7 @@ export default function SavedAlertsList({ className = '' }: { className?: string
     <div className={`bg-white border border-slate-200 rounded-2xl overflow-hidden ${className}`}>
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
         <h3 className="text-sm font-bold text-slate-900">🔔 Active Price Alerts</h3>
-        <span className="text-[10px] text-slate-400">{alerts.length} alert{alerts.length !== 1 ? 's' : ''}</span>
+        <span className="text-[10px] text-slate-500">{alerts.length} alert{alerts.length !== 1 ? 's' : ''}</span>
       </div>
       <div className="divide-y divide-slate-50">
         {alerts.map((alert) => (
@@ -54,7 +54,7 @@ export default function SavedAlertsList({ className = '' }: { className?: string
               >
                 {alert.hotelName}
               </Link>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-slate-500">
                 {alert.city} · Target: {alert.currency} {alert.targetPrice}/night
               </p>
               <p className="text-[10px] text-slate-500">
@@ -65,7 +65,7 @@ export default function SavedAlertsList({ className = '' }: { className?: string
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Active" />
               <button
                 onClick={() => removeAlert(alert.hotelKey)}
-                className="text-xs text-slate-400 hover:text-red-500 transition"
+                className="text-xs text-slate-500 hover:text-red-500 transition"
                 aria-label={`Remove alert for ${alert.hotelName}`}
               >
                 ✕

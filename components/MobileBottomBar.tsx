@@ -33,7 +33,7 @@ export default function MobileBottomBar() {
               className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
                 isActive
                   ? 'text-blue-600'
-                  : 'text-slate-400 hover:text-slate-600'
+                  : 'text-slate-500 hover:text-slate-600'
               }`}
               aria-current={isActive ? 'page' : undefined}
             >
@@ -42,7 +42,7 @@ export default function MobileBottomBar() {
               </span>
               <span
                 className={`text-[10px] mt-0.5 font-medium ${
-                  isActive ? 'text-blue-600' : 'text-slate-400'
+                  isActive ? 'text-blue-600' : 'text-slate-500'
                 }`}
               >
                 {tab.label}

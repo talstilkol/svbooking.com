@@ -14,7 +14,7 @@ const QUICK_SEARCHES = [
 export default function QuickSearchChips({ className = '' }: { className?: string }) {
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
-      <span className="text-xs text-slate-400 self-center mr-1">Popular:</span>
+      <span className="text-xs text-slate-500 self-center mr-1">Popular:</span>
       {QUICK_SEARCHES.map((s) => (
         <Link
           key={s.query}

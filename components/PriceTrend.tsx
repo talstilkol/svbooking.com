@@ -50,7 +50,7 @@ export default function PriceTrend({ hotelKey, nights = 1, currency = 'USD' }: P
   if (loading) {
     return (
       <div className="h-24 bg-slate-50 rounded-xl animate-pulse flex items-center justify-center">
-        <span className="text-xs text-slate-400">Loading price trend…</span>
+        <span className="text-xs text-slate-500">Loading price trend…</span>
       </div>
     );
   }
@@ -70,7 +70,7 @@ export default function PriceTrend({ hotelKey, nights = 1, currency = 'USD' }: P
     <div className="bg-white rounded-xl border border-slate-200 p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-slate-700">30-day price trend</h3>
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-slate-500">
           {currency} {min.toFixed(0)} – {max.toFixed(0)}/night
         </span>
       </div>
@@ -114,13 +114,13 @@ export default function PriceTrend({ hotelKey, nights = 1, currency = 'USD' }: P
         {points.map((p, idx) => (
           <div key={p.date} className="flex-1 text-center">
             {idx % 5 === 0 && (
-              <span className="text-[10px] text-slate-400">{p.label}</span>
+              <span className="text-[10px] text-slate-500">{p.label}</span>
             )}
           </div>
         ))}
       </div>
 
-      <p className="text-xs text-slate-400 mt-2 text-center">
+      <p className="text-xs text-slate-500 mt-2 text-center">
         Cheapest observed date · Hover bars for exact price{sourceLabel ? ` · ${sourceLabel}` : ''}
       </p>
     </div>

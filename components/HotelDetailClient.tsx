@@ -736,13 +736,13 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
 
         {/* Initial prompt */}
         {!loading && !searched && (
-          <div className="text-center py-12 text-slate-400">
+          <div className="text-center py-12 text-slate-500">
             <div className="text-5xl mb-4">&#128197;</div>
             <p className="text-lg">Select dates above to compare provider-returned prices when available</p>
             {initialPrice && initialPrice.price > 0 && (
               <p className="mt-3 text-sm text-slate-500">
                 Recently seen from <span className="font-medium text-slate-600">${initialPrice.price.toLocaleString()}</span> {initialPrice.currency}/night via {initialPrice.provider}
-                <span className="text-xs text-slate-400 ml-1">(approximate)</span>
+                <span className="text-xs text-slate-500 ml-1">(approximate)</span>
               </p>
             )}
           </div>

@@ -48,7 +48,7 @@ export default function SearchSuggestions({ currentCity, className = '' }: Searc
                 {s.label}
               </p>
               {s.detail && (
-                <p className="text-[9px] text-slate-400">{s.detail}</p>
+                <p className="text-[9px] text-slate-500">{s.detail}</p>
               )}
             </div>
           </Link>

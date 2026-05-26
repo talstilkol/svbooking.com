@@ -37,7 +37,7 @@ export default function RatingBadge({ size = 'md', className = '' }: RatingBadge
       </span>
       <div>
         <p className="text-sm font-medium text-slate-700">Rating unavailable</p>
-        <p className="text-xs text-slate-400">No verified review source connected</p>
+        <p className="text-xs text-slate-500">No verified review source connected</p>
       </div>
     </div>
   );

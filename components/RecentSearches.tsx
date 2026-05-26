@@ -62,10 +62,10 @@ export default function RecentSearches({ className = '' }: { className?: string 
   return (
     <div className={`${className}`}>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs font-medium text-slate-400">Recent searches</h3>
+        <h3 className="text-xs font-medium text-slate-500">Recent searches</h3>
         <button
           onClick={clearAll}
-          className="text-[10px] text-slate-300 hover:text-red-400 transition"
+          className="text-[10px] text-slate-500 hover:text-red-400 transition"
         >
           Clear all
         </button>
@@ -79,7 +79,7 @@ export default function RecentSearches({ className = '' }: { className?: string 
           >
             <span className="text-slate-300 group-hover:text-blue-400">🕐</span>
             <span>{s.query}</span>
-            <span className="text-[10px] text-slate-300">{timeAgo(s.timestamp)}</span>
+            <span className="text-[10px] text-slate-500">{timeAgo(s.timestamp)}</span>
           </Link>
         ))}
       </div>

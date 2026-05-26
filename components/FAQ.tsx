@@ -58,7 +58,7 @@ export default function FAQ() {
               >
                 <span className="font-medium text-slate-800">{faq.q}</span>
                 <svg
-                  className={`w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200 ${
+                  className={`w-5 h-5 text-slate-500 shrink-0 transition-transform duration-200 ${
                     open === i ? 'rotate-180' : ''
                   }`}
                   fill="none"

@@ -62,7 +62,7 @@ export default function Newsletter() {
             Subscribe
           </button>
         </form>
-        <p className="text-xs text-slate-400 mt-3">No spam. Unsubscribe anytime.</p>
+        <p className="text-xs text-slate-500 mt-3">No spam. Unsubscribe anytime.</p>
       </div>
     </section>
   );

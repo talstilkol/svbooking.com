@@ -122,7 +122,7 @@ export default function TripCostCalculator({
             {currency} {breakdown.total.toFixed(0)}
           </span>
         </div>
-        <div className="flex justify-between text-xs text-slate-400">
+        <div className="flex justify-between text-xs text-slate-500">
           <span>{currency} {breakdown.perPerson.toFixed(0)}/person</span>
           <span>{currency} {breakdown.perNight.toFixed(0)}/night total</span>
         </div>

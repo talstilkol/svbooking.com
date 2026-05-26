@@ -73,7 +73,7 @@ export default function TravelChecklist({ hotelKey, className = '' }: TravelChec
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold text-slate-700">✅ Travel Checklist</h3>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               {checkedCount}/{items.length} items completed
             </p>
           </div>
@@ -96,13 +96,13 @@ export default function TravelChecklist({ hotelKey, className = '' }: TravelChec
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-semibold text-slate-700">✅ Travel Checklist</h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             {checkedCount} of {items.length} done
           </p>
         </div>
         <button
           onClick={() => setExpanded(false)}
-          className="text-xs text-slate-400 hover:text-slate-600"
+          className="text-xs text-slate-500 hover:text-slate-600"
         >
           Collapse ↑
         </button>

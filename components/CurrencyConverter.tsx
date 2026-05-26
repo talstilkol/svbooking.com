@@ -45,7 +45,7 @@ export default function CurrencyConverter({ className = '' }: { className?: stri
 
       <div className="space-y-3">
         <div>
-          <label className="text-[10px] text-slate-400 block mb-1">Amount</label>
+          <label className="text-[10px] text-slate-500 block mb-1">Amount</label>
           <input
             type="number"
             min="0"
@@ -57,7 +57,7 @@ export default function CurrencyConverter({ className = '' }: { className?: stri
 
         <div className="flex items-center gap-2">
           <div className="flex-1">
-            <label className="text-[10px] text-slate-400 block mb-1">From</label>
+            <label className="text-[10px] text-slate-500 block mb-1">From</label>
             <select
               value={from}
               onChange={(e) => setFrom(e.target.value)}
@@ -78,7 +78,7 @@ export default function CurrencyConverter({ className = '' }: { className?: stri
           </button>
 
           <div className="flex-1">
-            <label className="text-[10px] text-slate-400 block mb-1">To</label>
+            <label className="text-[10px] text-slate-500 block mb-1">To</label>
             <select
               value={to}
               onChange={(e) => setTo(e.target.value)}
@@ -98,12 +98,12 @@ export default function CurrencyConverter({ className = '' }: { className?: stri
           <p className="text-2xl font-bold text-blue-700 mt-1">
             {SYMBOLS[to]}{result.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {to}
           </p>
-          <p className="text-[9px] text-slate-400 mt-1">
+          <p className="text-[9px] text-slate-500 mt-1">
             Rate: 1 {from} = {convert(1, from, to).toFixed(4)} {to}
           </p>
         </div>
 
-        <p className="text-[9px] text-slate-400 text-center">
+        <p className="text-[9px] text-slate-500 text-center">
           Indicative rates only. Actual rates may vary by provider.
         </p>
       </div>

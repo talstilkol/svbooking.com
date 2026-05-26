@@ -94,7 +94,7 @@ export default function FilterDrawer({
             <h2 className="text-lg font-semibold text-slate-800">Filters</h2>
             <button
               onClick={() => setOpen(false)}
-              className="text-slate-400 hover:text-slate-600 text-xl"
+              className="text-slate-500 hover:text-slate-600 text-xl"
               aria-label="Close filters"
             >
               ✕

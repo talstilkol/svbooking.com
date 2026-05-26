@@ -71,7 +71,7 @@ export default function LoadingOverlay({ active, className = '' }: LoadingOverla
         <p className="text-sm font-medium text-slate-600 animate-pulse">
           {MESSAGES[msgIdx]}
         </p>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-slate-500 mt-1">
           Comparing prices from available providers
         </p>
 

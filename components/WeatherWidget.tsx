@@ -80,7 +80,7 @@ export default function WeatherWidget({
       <h3 className="text-sm font-semibold text-slate-700 mb-1">
         Weather in {city}
       </h3>
-      <p className="text-[10px] text-slate-400 mb-3">Live 7-day forecast via Open-Meteo</p>
+      <p className="text-[10px] text-slate-500 mb-3">Live 7-day forecast via Open-Meteo</p>
 
       <div className="space-y-1.5">
         {forecast.map((day) => (
@@ -110,7 +110,7 @@ export default function WeatherWidget({
               </span>
             </div>
             {(day.rainChance || 0) > 20 && (
-              <span className="text-[10px] text-blue-500 font-medium w-10 text-right">
+              <span className="text-[10px] text-blue-600 font-medium w-10 text-right">
                 {day.rainChance}%
               </span>
             )}

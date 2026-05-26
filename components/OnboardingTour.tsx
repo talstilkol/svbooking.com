@@ -105,14 +105,14 @@ export default function OnboardingTour({ className = '' }: { className?: string 
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
         <div>
           <h3 className="text-sm font-bold text-slate-900">🚀 Getting Started</h3>
-          <p className="text-[10px] text-slate-400">{completedCount}/{steps.length} completed</p>
+          <p className="text-[10px] text-slate-500">{completedCount}/{steps.length} completed</p>
         </div>
         <button
           onClick={() => {
             setDismissed(true);
             writeLocalStorageJson(LOCAL_STORAGE_KEYS.onboardingDismissed, 'true');
           }}
-          className="text-xs text-slate-400 hover:text-slate-600 transition"
+          className="text-xs text-slate-500 hover:text-slate-600 transition"
         >
           Dismiss
         </button>
@@ -139,7 +139,7 @@ export default function OnboardingTour({ className = '' }: { className?: string 
               <p className={`text-xs font-semibold ${step.completed ? 'text-green-700 line-through' : 'text-slate-800'}`}>
                 {step.title}
               </p>
-              <p className="text-[10px] text-slate-400">{step.description}</p>
+              <p className="text-[10px] text-slate-500">{step.description}</p>
             </div>
             {!step.completed && (
               <Link

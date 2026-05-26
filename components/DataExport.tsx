@@ -146,7 +146,7 @@ export default function DataExport({ className = '' }: { className?: string }) {
           </label>
         </div>
 
-        <p className="text-[10px] text-slate-400">
+        <p className="text-[10px] text-slate-500">
           Export includes local device records and signed-in account records when available. Import restores local-device records only.
         </p>
 

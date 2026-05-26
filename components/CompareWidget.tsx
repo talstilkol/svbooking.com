@@ -99,11 +99,11 @@ export default function CompareWidget({ className = '' }: { className?: string }
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-slate-800 truncate">{item.name}</p>
-                  <p className="text-[10px] text-slate-400">{item.city}</p>
+                  <p className="text-[10px] text-slate-500">{item.city}</p>
                 </div>
                 <button
                   onClick={() => remove(item.hotelKey)}
-                  className="text-slate-400 hover:text-red-500 transition text-xs p-1"
+                  className="text-slate-500 hover:text-red-500 transition text-xs p-1"
                   aria-label={`Remove ${item.name} from compare`}
                 >
                   ✕

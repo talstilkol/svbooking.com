@@ -74,7 +74,7 @@ export default function PriceBreakdown({
               <span className="font-bold text-slate-900">Total</span>
               <span className="font-bold text-slate-900 text-lg">{currency}{total}</span>
             </div>
-            <p className="text-[10px] text-slate-400 mt-1">
+            <p className="text-[10px] text-slate-500 mt-1">
               This is the provider-reported total returned for the selected dates. A line-item
               tax and fee breakdown is unavailable in SV Booking.
             </p>

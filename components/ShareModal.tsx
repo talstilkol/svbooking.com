@@ -108,12 +108,12 @@ export default function ShareModal({
                 <h3 className="text-lg font-semibold text-slate-800">Share</h3>
                 <button
                   onClick={() => setOpen(false)}
-                  className="text-slate-400 hover:text-slate-600 text-xl"
+                  className="text-slate-500 hover:text-slate-600 text-xl"
                 >
                   ✕
                 </button>
               </div>
-              <p className="text-xs text-slate-400 mt-1 truncate">{title}</p>
+              <p className="text-xs text-slate-500 mt-1 truncate">{title}</p>
             </div>
 
             {/* Platform buttons */}

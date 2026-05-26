@@ -307,7 +307,7 @@ function CompareHotelsInner() {
                     </td>
                     {selectedKeys.map((key) => {
                       const r = results[key];
-                      if (!r?.cheapest) return <td key={key} className="p-4 text-center text-slate-400">—</td>;
+                      if (!r?.cheapest) return <td key={key} className="p-4 text-center text-slate-500">—</td>;
                       return (
                         <td key={key} className="p-4 text-center">
                           <div className="text-xl font-bold text-green-700">
@@ -341,7 +341,7 @@ function CompareHotelsInner() {
                         const isCheapest = rate && r?.cheapest && rate.provider === r.cheapest.provider && rate.total === r.cheapest.total;
                         if (!rate) {
                           return (
-                            <td key={key} className="p-4 text-center text-slate-400 text-sm">
+                            <td key={key} className="p-4 text-center text-slate-500 text-sm">
                               No provider-returned rate
                             </td>
                           );
@@ -417,14 +417,14 @@ function CompareHotelsInner() {
 
         {/* Empty states */}
         {!loading && selectedKeys.length < 2 && (
-          <div className="text-center py-16 text-slate-400">
+          <div className="text-center py-16 text-slate-500">
             <div className="text-5xl mb-4">&#9878;&#65039;</div>
             <p className="text-lg">Select at least 2 hotels above to compare them side by side</p>
           </div>
         )}
 
         {!loading && selectedKeys.length >= 2 && Object.keys(results).length === 0 && (
-          <div className="text-center py-16 text-slate-400">
+          <div className="text-center py-16 text-slate-500">
             <div className="text-5xl mb-4">&#128200;</div>
             <p className="text-lg">Click &quot;Compare&quot; to fetch provider-returned prices for all selected hotels</p>
           </div>

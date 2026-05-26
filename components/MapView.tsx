@@ -59,7 +59,7 @@ export default function MapView({
     <div className={`bg-white rounded-xl border border-slate-200 overflow-hidden ${className}`}>
       <div className="p-4 border-b border-slate-100">
         <h3 className="text-sm font-semibold text-slate-700">Hotel Map</h3>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-500">
           {markers.length} markers · {hotels.length} hotels · Exact pins appear when verified coordinates exist
         </p>
       </div>

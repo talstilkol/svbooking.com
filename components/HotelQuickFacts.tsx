@@ -38,7 +38,7 @@ export default function HotelQuickFacts({
           >
             <span className="text-sm">{fact.icon}</span>
             <div className="min-w-0">
-              <p className="text-[10px] text-slate-400">{fact.label}</p>
+              <p className="text-[10px] text-slate-500">{fact.label}</p>
               <p className="text-xs text-slate-700 font-medium truncate">{fact.value}</p>
             </div>
           </div>

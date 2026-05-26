@@ -44,7 +44,7 @@ export default function PriceAlertsDashboard({ className = '' }: { className?: s
       <div className="p-4 border-b border-slate-100 flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-slate-700">Price Alerts</h3>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             {alerts.length} active alert{alerts.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -69,7 +69,7 @@ export default function PriceAlertsDashboard({ className = '' }: { className?: s
               >
                 {alert.hotelName}
               </Link>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 {alert.city} · Target: {alert.currency} {alert.targetPrice.toFixed(0)}/night
               </p>
               <p className="mt-1 text-[11px] text-slate-500">

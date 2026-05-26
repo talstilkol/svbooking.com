@@ -64,7 +64,7 @@ export default function SafetyInfo({ city, className = '' }: SafetyInfoProps) {
         <div className="space-y-3">
           {Array.isArray(data.tips) && data.tips.length > 0 && (
             <div>
-              <h4 className="text-[10px] text-slate-400 uppercase font-bold mb-1.5">Tips</h4>
+              <h4 className="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Tips</h4>
               <ul className="space-y-1">
                 {data.tips.map((tip) => (
                   <li key={tip} className="text-xs text-slate-600 flex items-start gap-1.5">
@@ -78,7 +78,7 @@ export default function SafetyInfo({ city, className = '' }: SafetyInfoProps) {
 
           {Array.isArray(data.areas) && data.areas.length > 0 && (
             <div>
-              <h4 className="text-[10px] text-slate-400 uppercase font-bold mb-1.5">Areas</h4>
+              <h4 className="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Areas</h4>
               <div className="space-y-1">
                 {data.areas.map((area) => (
                   <div key={area.name} className="flex items-center gap-2 text-xs">
@@ -86,7 +86,7 @@ export default function SafetyInfo({ city, className = '' }: SafetyInfoProps) {
                       {area.safe ? '+' : '!'}
                     </span>
                     <span className="font-medium text-slate-700">{area.name}</span>
-                    <span className="text-slate-400">- {area.note}</span>
+                    <span className="text-slate-500">- {area.note}</span>
                   </div>
                 ))}
               </div>
@@ -97,13 +97,13 @@ export default function SafetyInfo({ city, className = '' }: SafetyInfoProps) {
             <div className="grid grid-cols-2 gap-2">
               {data.vaccinations && (
                 <div className="p-2 bg-slate-50 rounded-lg">
-                  <p className="text-[10px] text-slate-400">Vaccinations</p>
+                  <p className="text-[10px] text-slate-500">Vaccinations</p>
                   <p className="text-xs text-slate-700 font-medium">{data.vaccinations}</p>
                 </div>
               )}
               {data.waterSafety && (
                 <div className="p-2 bg-slate-50 rounded-lg">
-                  <p className="text-[10px] text-slate-400">Water</p>
+                  <p className="text-[10px] text-slate-500">Water</p>
                   <p className="text-xs text-slate-700 font-medium">{data.waterSafety}</p>
                 </div>
               )}

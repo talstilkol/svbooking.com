@@ -61,7 +61,7 @@ export default function PriceComparisonChart({
                 {isCheapest ? (
                   <span className="text-green-600 font-bold">Lowest</span>
                 ) : range > 0 ? (
-                  <span className="text-slate-400">+{savings.toFixed(0)}</span>
+                  <span className="text-slate-500">+{savings.toFixed(0)}</span>
                 ) : null}
               </span>
             </div>
@@ -70,7 +70,7 @@ export default function PriceComparisonChart({
       </div>
 
       {range > 0 && (
-        <p className="text-[10px] text-slate-400 mt-2 text-center">
+        <p className="text-[10px] text-slate-500 mt-2 text-center">
           Spread: {rates[0]?.currency} {range.toFixed(0)} ({((range / maxTotal) * 100).toFixed(0)}%) between providers
         </p>
       )}

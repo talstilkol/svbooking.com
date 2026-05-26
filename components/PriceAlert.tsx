@@ -155,7 +155,7 @@ export default function PriceAlert({ hotelKey, hotelName, city, checkIn, checkOu
             </button>
             <button
               onClick={() => setOpen(false)}
-              className="text-slate-400 hover:text-slate-600 text-sm"
+              className="text-slate-500 hover:text-slate-600 text-sm"
             >
               ✕
             </button>

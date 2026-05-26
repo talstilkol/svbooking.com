@@ -29,13 +29,13 @@ export default function CityWeatherGrid({ className = '' }: { className?: string
             className="bg-white rounded-xl border border-slate-200 p-3 hover:border-blue-300 hover:shadow-md transition-all group"
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-semibold text-slate-400">Catalog</span>
+              <span className="text-xs font-semibold text-slate-500">Catalog</span>
               <span className="text-lg font-bold text-slate-700">{c.hotelCount}</span>
             </div>
             <h3 className="text-sm font-semibold text-slate-800 group-hover:text-blue-600 transition">
               {c.city}
             </h3>
-            <p className="text-[10px] text-blue-500 mt-1">
+            <p className="text-[10px] text-blue-600 mt-1">
               verified catalog hotel{c.hotelCount !== 1 ? 's' : ''}
             </p>
           </Link>

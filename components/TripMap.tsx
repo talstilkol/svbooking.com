@@ -235,7 +235,7 @@ export default function TripMap({ className = '' }: { className?: string }) {
     <div className={`bg-white border border-slate-200 rounded-2xl overflow-hidden ${className}`}>
       <div className="px-5 py-4 border-b border-slate-100">
         <h3 className="text-sm font-bold text-slate-900">🗺️ Your Trip Map</h3>
-        <p className="text-[10px] text-slate-400">{cities.size} destination{cities.size !== 1 ? 's' : ''}</p>
+        <p className="text-[10px] text-slate-500">{cities.size} destination{cities.size !== 1 ? 's' : ''}</p>
       </div>
 
       <div className="p-4">

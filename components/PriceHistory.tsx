@@ -135,21 +135,21 @@ export default function PriceHistory({ hotelKey, className = '' }: PriceHistoryP
       {/* Stats */}
       <div className="flex gap-4 mb-3">
         <div>
-          <p className="text-[10px] text-slate-400">Current</p>
+          <p className="text-[10px] text-slate-500">Current</p>
           <p className={`text-sm font-bold ${isDown ? 'text-green-600' : 'text-slate-900'}`}>
             ${currentPrice}
           </p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-400">Average</p>
+          <p className="text-[10px] text-slate-500">Average</p>
           <p className="text-sm font-bold text-slate-900">${avgPrice}</p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-400">Lowest</p>
+          <p className="text-[10px] text-slate-500">Lowest</p>
           <p className="text-sm font-bold text-green-600">${minPrice}</p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-400">Highest</p>
+          <p className="text-[10px] text-slate-500">Highest</p>
           <p className="text-sm font-bold text-red-600">${maxPrice}</p>
         </div>
       </div>

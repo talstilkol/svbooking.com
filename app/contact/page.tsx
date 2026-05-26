@@ -71,7 +71,7 @@ export default function ContactPage() {
             >
               <span className="text-3xl block mb-3">{m.icon}</span>
               <h3 className="font-semibold text-slate-800 mb-1">{m.title}</h3>
-              <p className="text-xs text-slate-400 mb-2">{m.desc}</p>
+              <p className="text-xs text-slate-500 mb-2">{m.desc}</p>
               <span className="text-sm text-blue-600 font-medium">{m.value}</span>
             </a>
           ))}

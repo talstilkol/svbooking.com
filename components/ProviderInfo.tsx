@@ -63,7 +63,7 @@ export default function ProviderInfo({ provider, className = '' }: ProviderInfoP
     <span className={`relative inline-block ${className}`}>
       <button
         onClick={() => setOpen(!open)}
-        className="text-slate-400 hover:text-blue-500 transition text-xs"
+        className="text-slate-500 hover:text-blue-500 transition text-xs"
         aria-label={`Info about ${provider}`}
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
@@ -80,7 +80,7 @@ export default function ProviderInfo({ provider, className = '' }: ProviderInfoP
               <span className="font-semibold text-sm text-slate-800">{info.name}</span>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">{info.desc}</p>
-            <p className="text-xs text-slate-400 mt-1">Founded: {info.founded}</p>
+            <p className="text-xs text-slate-500 mt-1">Founded: {info.founded}</p>
           </div>
         </>
       )}

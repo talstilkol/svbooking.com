@@ -119,7 +119,7 @@ export default function SearchAutocomplete() {
   return (
     <div className="relative w-full">
       <div className="flex items-center gap-2 bg-white rounded-xl border-2 border-slate-200 focus-within:border-blue-500 transition-colors px-4 py-3 shadow-sm">
-        <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
@@ -135,14 +135,14 @@ export default function SearchAutocomplete() {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => { if (results.cities.length || results.hotels.length) setOpen(true); }}
           onKeyDown={handleKeyDown}
-          className="flex-1 outline-none text-slate-900 placeholder:text-slate-400 bg-transparent text-base"
+          className="flex-1 outline-none text-slate-900 placeholder:text-slate-500 bg-transparent text-base"
         />
         {loading && (
           <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />
         )}
         {query && !loading && (
           <button onClick={() => { setQuery(''); setOpen(false); }} aria-label="Clear search"
-            className="text-slate-400 hover:text-slate-600 shrink-0">
+            className="text-slate-500 hover:text-slate-600 shrink-0">
             ✕
           </button>
         )}
@@ -157,7 +157,7 @@ export default function SearchAutocomplete() {
         >
           {results.cities.length > 0 && (
             <div>
-              <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50">
+              <div className="px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50">
                 Cities
               </div>
               {results.cities.map((city, i) => (
@@ -182,7 +182,7 @@ export default function SearchAutocomplete() {
 
           {results.hotels.length > 0 && (
             <div>
-              <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50">
+              <div className="px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50">
                 Hotels
               </div>
               {results.hotels.map((hotel, i) => {

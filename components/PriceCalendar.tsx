@@ -110,7 +110,7 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold text-slate-700">Price Calendar</h3>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               See observed source prices for this hotel
             </p>
           </div>
@@ -128,7 +128,7 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
           <h3 className="text-sm font-semibold text-slate-700">Price Calendar</h3>
           <button
             onClick={() => setExpanded(false)}
-            className="text-xs text-slate-400 hover:text-slate-600"
+            className="text-xs text-slate-500 hover:text-slate-600"
           >
             Collapse ↑
           </button>
@@ -166,7 +166,7 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
           <div className="h-48 flex items-center justify-center text-center">
             <div>
               <p className="text-sm font-medium text-slate-600">Price calendar unavailable</p>
-              <p className="text-xs text-slate-400 mt-1">No verified source observations for this month.</p>
+              <p className="text-xs text-slate-500 mt-1">No verified source observations for this month.</p>
             </div>
           </div>
         ) : (
@@ -174,7 +174,7 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
             {/* Day headers */}
             <div className="grid grid-cols-7 gap-1 mb-1">
               {DAY_LABELS.map((d) => (
-                <div key={d} className="text-center text-[10px] font-medium text-slate-400 py-1">
+                <div key={d} className="text-center text-[10px] font-medium text-slate-500 py-1">
                   {d}
                 </div>
               ))}
@@ -222,7 +222,7 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
 
             {/* Legend */}
             {prices.length > 0 && (
-              <div className="flex items-center justify-center gap-3 mt-3 text-[10px] text-slate-400">
+              <div className="flex items-center justify-center gap-3 mt-3 text-[10px] text-slate-500">
                 <span className="flex items-center gap-1">
                   <span className="w-3 h-3 rounded bg-green-100 border border-green-200" />
                   Cheapest
