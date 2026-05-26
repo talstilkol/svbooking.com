@@ -35,7 +35,6 @@ const PUBLIC_API_BYPASS_PATHS = [
   '/api/agent',
   '/api/cheaper-dates',
   '/api/deals',
-  '/api/data-retention',
   '/api/og',
   '/api/agents/deals',
   '/api/agents/recommendations',
@@ -60,6 +59,7 @@ const PUBLIC_API_BYPASS_PATHS = [
 ];
 
 const INTERNAL_AUTH_API_BYPASS_PATHS = [
+  '/api/data-retention',
   '/api/ops/scorecard',
   '/api/ops/alerts',
   '/api/me',
@@ -104,7 +104,34 @@ function redirectToLogin(req: NextRequest): NextResponse {
   return NextResponse.redirect(loginUrl);
 }
 
+/** Common exploit paths that bots probe — return 404 immediately to reduce noise */
+const EXPLOIT_PATHS = [
+  '/wp-admin', '/wp-login', '/wp-content', '/wp-includes', '/xmlrpc.php',
+  '/.env', '/.git', '/.svn', '/phpmyadmin', '/admin.php', '/config.php',
+  '/cgi-bin', '/wp-json', '/vendor', '/.well-known/security.txt',
+];
+
+function isExploitPath(pathname: string): boolean {
+  const lower = pathname.toLowerCase();
+  return EXPLOIT_PATHS.some((p) => lower.startsWith(p));
+}
+
 export async function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // Block common exploit probes — return 404 immediately
+  if (isExploitPath(pathname)) {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  // Add request ID for tracing/debugging
+  const requestId = crypto.randomUUID();
+  const response = await handleRoute(req);
+  response.headers.set('X-Request-Id', requestId);
+  return response;
+}
+
+async function handleRoute(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Let route handlers own auth for public APIs and internally-authenticated APIs.
