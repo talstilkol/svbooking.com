@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import path from 'path';
+import bundleAnalyzer from '@next/bundle-analyzer';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -79,4 +80,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
+
+export default withBundleAnalyzer(nextConfig);
