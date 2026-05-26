@@ -49,28 +49,47 @@ function comparisonBody(hotel: typeof HOTELS[number], total: number, source: str
 
 test.describe('Side-by-side hotel comparison', () => {
   test('accepts saved compare keys and discloses rate provenance per hotel', async ({ page }) => {
+    // Single handler for all /api/compare* endpoints — avoids route-ordering issues
     await page.route('**/api/compare**', async (route) => {
       const url = new URL(route.request().url());
-      const hotelKey = url.searchParams.get('hotelKey');
 
-      if (!hotelKey) {
+      // Batch endpoint: /api/compare/batch?hotelKeys=...
+      if (url.pathname.endsWith('/batch')) {
+        const leMeurice = HOTELS.find((h) => h.hotelKey === 'g187147-d188728')!;
+        const patong = HOTELS.find((h) => h.hotelKey === 'g297930-d305178')!;
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ cities: ['Paris', 'Phuket'], hotels: HOTELS }),
+          body: JSON.stringify({
+            results: {
+              'g187147-d188728': comparisonBody(leMeurice, 520, 'xotelo', null),
+              'g297930-d305178': comparisonBody(patong, 140, 'partner-provider', 'https://provider.example/hotel'),
+            },
+          }),
         });
         return;
       }
 
-      const hotel = HOTELS.find((entry) => entry.hotelKey === hotelKey)!;
-      const body = hotelKey === 'g187147-d188728'
-        ? comparisonBody(hotel, 520, 'xotelo', null)
-        : comparisonBody(hotel, 140, 'partner-provider', 'https://provider.example/hotel');
+      // Individual comparison: /api/compare?hotelKey=...
+      const hotelKey = url.searchParams.get('hotelKey');
+      if (hotelKey) {
+        const hotel = HOTELS.find((entry) => entry.hotelKey === hotelKey)!;
+        const body = hotelKey === 'g187147-d188728'
+          ? comparisonBody(hotel, 520, 'xotelo', null)
+          : comparisonBody(hotel, 140, 'partner-provider', 'https://provider.example/hotel');
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(body),
+        });
+        return;
+      }
 
+      // Catalog endpoint: /api/compare (no params)
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(body),
+        body: JSON.stringify({ cities: ['Paris', 'Phuket'], hotels: HOTELS }),
       });
     });
 

@@ -13,8 +13,10 @@ import { HOTELS, listCities } from '@/lib/hotels-catalog';
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://svbooking.com';
 
-  // Use a stable date — updated on each deploy, not per-request
-  const deployDate = new Date(process.env.VERCEL_GIT_COMMIT_SHA ? Date.now() : '2026-05-26');
+  // Build-time date — stable within a deployment, updates on each deploy.
+  // On Vercel this runs at build time so Date.now() is the deploy timestamp.
+  // Locally it re-runs per request, but that's acceptable for dev.
+  const deployDate = new Date();
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: deployDate, changeFrequency: 'daily', priority: 1 },

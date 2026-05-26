@@ -20,6 +20,7 @@ export default defineConfig({
   use: {
     baseURL,
     headless: true,
+    serviceWorkers: 'block',
   },
   webServer: useExistingServer ? undefined : {
     command: 'npm run build && npm run start -- --port 3456',
