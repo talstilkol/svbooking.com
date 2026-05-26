@@ -4,6 +4,7 @@ import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 const ogLimiter = rateLimit({ namespace: 'og-image', limit: 15, window: 60, failOpen: true });
 
+export const dynamic = 'force-dynamic'; // Uses request.headers for rate limiting
 export const revalidate = 86400; // OG images are deterministic — cache 24h
 
 export async function GET(request: Request) {
