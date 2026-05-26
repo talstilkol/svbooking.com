@@ -93,11 +93,20 @@ function tomorrow() {
   return d.toISOString().split('T')[0];
 }
 
-interface HotelDetailClientProps {
-  hotel: Hotel;
+interface InitialPriceHint {
+  price: number;
+  provider: string;
+  currency: string;
+  freshness: string;
+  forDates: { checkIn: string; checkOut: string } | null;
 }
 
-export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
+interface HotelDetailClientProps {
+  hotel: Hotel;
+  initialPrice?: InitialPriceHint | null;
+}
+
+export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const hotelKey = hotel.hotelKey;
@@ -204,9 +213,37 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
     return () => clearTimeout(timer);
   }, [data?.refreshAfterMs, data?.checkIn, data?.checkOut, hotelKey, currency, refreshing, loading]);
 
+  // Estimated-freshness polling: when the fuzzy date cache served estimated prices,
+  // poll every 5s (max 3 attempts) for the background live fetch to populate the cache.
+  const estimatedPollCount = useRef(0);
+  useEffect(() => {
+    if (data?.freshness !== 'estimated' || refreshing || loading) return;
+    if (estimatedPollCount.current >= 3) return;
+
+    const timer = setInterval(async () => {
+      estimatedPollCount.current++;
+      try {
+        const res = await fetch(
+          `/api/compare?hotelKey=${hotelKey}&checkIn=${data.checkIn}&checkOut=${data.checkOut}&currency=${currency}`
+        );
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json.freshness !== 'estimated') {
+          setData(json);
+        }
+      } catch {}
+      if (estimatedPollCount.current >= 3) {
+        clearInterval(timer);
+      }
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [data?.freshness, data?.checkIn, data?.checkOut, hotelKey, currency, refreshing, loading]);
+
   // Reset auto-refresh counter when dates change
   useEffect(() => {
     autoRefreshCount.current = 0;
+    estimatedPollCount.current = 0;
   }, [checkIn, checkOut]);
 
   // Auto-compare when URL has date params (from shared links / deep links)
@@ -703,6 +740,12 @@ export default function HotelDetailClient({ hotel }: HotelDetailClientProps) {
           <div className="text-center py-12 text-slate-400">
             <div className="text-5xl mb-4">&#128197;</div>
             <p className="text-lg">Select dates above to compare provider-returned prices when available</p>
+            {initialPrice && initialPrice.price > 0 && (
+              <p className="mt-3 text-sm text-slate-500">
+                Recently seen from <span className="font-medium text-slate-600">${initialPrice.price.toLocaleString()}</span> {initialPrice.currency}/night via {initialPrice.provider}
+                <span className="text-xs text-slate-400 ml-1">(approximate)</span>
+              </p>
+            )}
           </div>
         )}
 
