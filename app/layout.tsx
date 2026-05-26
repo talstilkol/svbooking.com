@@ -96,13 +96,6 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://test.api.amadeus.com" />
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
-        {/* Preload hero LCP image so the browser starts fetching before JS hydration */}
-        <link
-          rel="preload"
-          as="image"
-          href="https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=1200&q=75"
-          fetchPriority="high"
-        />
       </head>
       <body className="min-h-full flex flex-col bg-linear-to-b from-sky-50 via-white to-amber-50/30">
         <ToastProvider>

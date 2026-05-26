@@ -30,10 +30,16 @@ export default function HomeHero() {
   const y = useTransform(scrollY, [0, 600], [0, 150]);
   const opacity = useTransform(scrollY, [0, 400], [1, 0]);
   const [bgIdx, setBgIdx] = useState(0);
+  const [prevBgIdx, setPrevBgIdx] = useState(0);
   const [cityIdx, setCityIdx] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setBgIdx((i) => (i + 1) % HERO_BG_IMAGES.length), 6000);
+    const t = setInterval(() => {
+      setBgIdx((i) => {
+        setPrevBgIdx(i);
+        return (i + 1) % HERO_BG_IMAGES.length;
+      });
+    }, 6000);
     return () => clearInterval(t);
   }, []);
   useEffect(() => {
@@ -43,28 +49,34 @@ export default function HomeHero() {
 
   return (
     <section ref={ref} className="relative overflow-hidden min-h-[640px] flex items-center">
-      {HERO_BG_IMAGES.map((src, i) => (
-        <motion.div
-          key={src}
-          className="absolute inset-0"
-          aria-hidden="true"
-          style={{ y }}
-          animate={{ opacity: i === bgIdx ? 0.35 : 0 }}
-          transition={{ duration: 1.6, ease: 'easeInOut' }}
-        >
-          <Image
-            src={src}
-            alt=""
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={i === 0}
-            quality={75}
-            placeholder="blur"
-            blurDataURL={BLUR_DATA_URL}
-          />
-        </motion.div>
-      ))}
+      {/* Only mount active + previous image for crossfade — avoids loading all 4 upfront */}
+      {HERO_BG_IMAGES.map((src, i) => {
+        const isActive = i === bgIdx;
+        const isPrev = i === prevBgIdx;
+        if (!isActive && !isPrev) return null;
+        return (
+          <motion.div
+            key={src}
+            className="absolute inset-0"
+            aria-hidden="true"
+            style={{ y }}
+            animate={{ opacity: isActive ? 0.35 : 0 }}
+            transition={{ duration: 1.6, ease: 'easeInOut' }}
+          >
+            <Image
+              src={src}
+              alt=""
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority={i === 0}
+              quality={75}
+              placeholder="blur"
+              blurDataURL={BLUR_DATA_URL}
+            />
+          </motion.div>
+        );
+      })}
       <motion.div
         style={{ opacity }}
         className="absolute inset-0 bg-linear-to-b from-blue-900/60 via-blue-800/40 to-sky-50"
