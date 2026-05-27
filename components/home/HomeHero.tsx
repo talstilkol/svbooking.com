@@ -10,11 +10,12 @@ import ProviderLogos from '@/components/ProviderLogos';
 
 const ROTATING_CITIES = ['Tel Aviv', 'Paris', 'Tokyo', 'New York', 'Dubai', 'Barcelona', 'Rome', 'London'];
 
+// Self-hosted hero images — eliminates Unsplash CDN latency for LCP
 const HERO_BG_IMAGES = [
-  'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=1200&q=75',
-  'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=75',
-  'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=1200&q=75',
-  'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200&q=75',
+  '/images/hero/hero-beach.webp',
+  '/images/hero/hero-paris.webp',
+  '/images/hero/hero-pool.webp',
+  '/images/hero/hero-hotel.webp',
 ];
 
 const POPULAR_CHIPS = ['Tel Aviv', 'Paris', 'Tokyo', 'New York', 'Dubai'];
