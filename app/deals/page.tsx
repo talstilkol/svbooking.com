@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import DealsClient from '@/components/DealsClient';
-import { BreadcrumbJsonLd } from '@/components/JsonLd';
+import { BreadcrumbJsonLd, ItemListJsonLd } from '@/components/JsonLd';
+import { HOTELS } from '@/lib/hotels-catalog';
 
 export const metadata: Metadata = {
   title: 'Hotel Deals — Compare Provider Prices | SVBooking',
@@ -23,6 +24,14 @@ export default function DealsPage() {
           { name: 'Home', url: 'https://svbooking.com' },
           { name: 'Deals', url: 'https://svbooking.com/deals' },
         ]}
+      />
+      <ItemListJsonLd
+        name="Hotel Deals"
+        items={HOTELS.slice(0, 20).map((h) => ({
+          name: h.name,
+          url: `https://svbooking.com/hotel/${h.hotelKey}`,
+          image: h.image,
+        }))}
       />
       <DealsClient />
     </>

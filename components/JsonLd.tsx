@@ -53,3 +53,31 @@ export function BreadcrumbJsonLd({ items }: { items: { name: string; url: string
 }
 
 // WebsiteJsonLd removed — replaced by SearchActionJsonLd in SchemaOrg.tsx to avoid duplicate @type:WebSite schemas
+
+interface ItemListJsonLdProps {
+  name: string;
+  items: { name: string; url: string; image?: string; position?: number }[];
+}
+
+/** ItemList JSON-LD — enables Google carousel rich results for hotel listings */
+export function ItemListJsonLd({ name, items }: ItemListJsonLdProps) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name,
+    numberOfItems: items.length,
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: item.position ?? i + 1,
+      name: item.name,
+      url: item.url,
+      ...(item.image ? { image: item.image } : {}),
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: serializeJsonLd(schema) }}
+    />
+  );
+}

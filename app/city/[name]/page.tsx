@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { BreadcrumbJsonLd } from '@/components/JsonLd';
+import { BreadcrumbJsonLd, ItemListJsonLd } from '@/components/JsonLd';
 import CityGuide from '@/components/CityGuide';
 import LocalEvents from '@/components/LocalEvents';
 import SafetyInfo from '@/components/SafetyInfo';
@@ -65,6 +65,14 @@ export default async function CityPage({ params }: Props) {
           { name: 'Hotels', url: `${baseUrl}/search` },
           { name: city, url: `${baseUrl}/city/${encodeURIComponent(city)}` },
         ]}
+      />
+      <ItemListJsonLd
+        name={`Hotels in ${city}`}
+        items={hotels.map((h) => ({
+          name: h.name,
+          url: `${baseUrl}/hotel/${h.hotelKey}`,
+          image: h.image,
+        }))}
       />
       {/* Hero */}
       <div className="relative h-48 md:h-64 bg-zinc-900 overflow-hidden">
