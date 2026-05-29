@@ -1,16 +1,25 @@
-import { CATALOG_STATS } from '@/lib/catalog-stats';
+'use client';
 
-const BADGES = [
-  { icon: '🔒', label: 'Secure & Private', desc: 'No sign-up required' },
-  { icon: '💯', label: 'Free To Browse', desc: 'No SV Booking fee' },
-  { icon: '⚡', label: 'Provider Rates', desc: 'When providers return data' },
-  { icon: '🌍', label: `${CATALOG_STATS.cities} Cities`, desc: `${CATALOG_STATS.hotels} catalog hotels` },
-];
+import { CATALOG_STATS } from '@/lib/catalog-stats';
+import { useLocale } from '@/components/LocaleProvider';
 
 export default function TrustBadges({ className = '' }: { className?: string }) {
+  const { t } = useLocale();
+
+  const badges = [
+    { icon: '🔒', label: t('trustSecure'), desc: t('trustSecureDesc') },
+    { icon: '💯', label: t('trustFree'), desc: t('trustFreeDesc') },
+    { icon: '⚡', label: t('trustRates'), desc: t('trustRatesDesc') },
+    {
+      icon: '🌍',
+      label: `${CATALOG_STATS.cities} ${t('trustCities')}`,
+      desc: `${CATALOG_STATS.hotels} ${t('trustCatalogHotels')}`,
+    },
+  ];
+
   return (
     <div className={`flex flex-wrap justify-center gap-6 ${className}`}>
-      {BADGES.map((badge) => (
+      {badges.map((badge) => (
         <div key={badge.label} className="flex items-center gap-2 text-sm">
           <span className="text-lg" aria-hidden="true">{badge.icon}</span>
           <div>
