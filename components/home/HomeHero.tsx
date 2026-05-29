@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { Sparkles } from 'lucide-react';
 import SearchAutocomplete from '@/components/SearchAutocomplete';
 import ProviderLogos from '@/components/ProviderLogos';
+import { useLocale } from '@/components/LocaleProvider';
 
 const ROTATING_CITIES = ['Tel Aviv', 'Paris', 'Tokyo', 'New York', 'Dubai', 'Barcelona', 'Rome', 'London'];
 
@@ -26,6 +27,7 @@ const BLUR_DATA_URL =
 
 export default function HomeHero() {
   const router = useRouter();
+  const { t } = useLocale();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 600], [0, 150]);
@@ -97,11 +99,11 @@ export default function HomeHero() {
             className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur text-white text-xs font-semibold mb-6"
           >
             <Sparkles className="w-3 h-3" />
-            AI-powered hotel price comparison
+            {t('heroBadge')}
           </motion.div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05] text-white drop-shadow-lg">
-            Compare hotel rates in{' '}
+            {t('heroHeadline')}{' '}
             <span className="relative inline-block">
               <AnimatePresence mode="wait">
                 <motion.span
@@ -118,7 +120,7 @@ export default function HomeHero() {
             </span>
           </h1>
           <p className="mt-6 text-lg md:text-xl text-white/90 max-w-2xl drop-shadow">
-            Compare provider-returned rates from configured partners when verified data is available.
+            {t('heroSubtext')}
           </p>
 
           <motion.div
@@ -137,7 +139,7 @@ export default function HomeHero() {
             transition={{ delay: 0.6 }}
             className="mt-5 flex flex-wrap gap-2"
           >
-            <span className="text-sm text-white/80 mr-1">Popular:</span>
+            <span className="text-sm text-white/80 mr-1">{t('popular')}</span>
             {POPULAR_CHIPS.map((c, i) => (
               <motion.button
                 key={c}
