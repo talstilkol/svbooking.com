@@ -15,7 +15,8 @@ import WhyChooseUs from "@/components/WhyChooseUs";
 import CityWeatherGrid from "@/components/CityWeatherGrid";
 import FeatureHighlight from "@/components/FeatureHighlight";
 import LazySection from "@/components/LazySection";
-import Link from "next/link";
+import HomeExploreHeading from "@/components/home/HomeExploreHeading";
+import HomeQuickLinks from "@/components/home/HomeQuickLinks";
 import { Suspense } from "react";
 import { CATALOG_STATS } from "@/lib/catalog-stats";
 
@@ -95,12 +96,7 @@ export default function Home() {
       {/* Destination Explorer */}
       <LazySection>
         <div className="max-w-7xl mx-auto px-4 py-12">
-          <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">
-            Explore by destination
-          </h2>
-          <p className="text-center text-slate-500 mb-8">
-            Select a region to see available rate observations
-          </p>
+          <HomeExploreHeading />
           <DestinationExplorer />
         </div>
       </LazySection>
@@ -133,23 +129,7 @@ export default function Home() {
       </LazySection>
 
       {/* Quick Links */}
-      <div className="max-w-7xl mx-auto px-4 py-12 text-center">
-        <h2 className="text-xl font-bold text-slate-800 mb-6">Get started</h2>
-        <div className="flex justify-center gap-3 flex-wrap">
-          <Link href="/search" className="px-6 py-3 bg-white text-slate-700 rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all font-medium">
-            Browse Hotels
-          </Link>
-          <Link href="/compare" className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium shadow-sm">
-            Compare Prices
-          </Link>
-          <Link href="/deals" className="px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors font-medium shadow-sm">
-            Today&apos;s Deals
-          </Link>
-          <Link href="/explore" className="px-6 py-3 bg-white text-slate-700 rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all font-medium">
-            Explore Destinations
-          </Link>
-        </div>
-      </div>
+      <HomeQuickLinks />
     </div>
   );
 }
