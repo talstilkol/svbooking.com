@@ -50,7 +50,9 @@ requireIncludes(reviews, 'lib/reviews.js', [
 
 const reviewsRoute = await readProjectFile('app/api/reviews/[hotelKey]/route.js');
 requireIncludes(reviewsRoute, 'app/api/reviews/[hotelKey]/route.js', [
-  'getUnavailableReviewSummary',
+  // getReviewSummary dispatches to a licensed provider when configured, and
+  // otherwise returns getUnavailableReviewSummary (the honest fallback).
+  'getReviewSummary',
   'Cache-Control',
   'no-store',
 ]);

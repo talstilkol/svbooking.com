@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "lighthouse": "node scripts/lighthouse.mjs",
     "release:state": "node scripts/release-state.mjs",
     "release:state:strict": "node scripts/release-state.mjs --strict",
     "audit:guardrails": "node scripts/audit-guardrails.mjs",

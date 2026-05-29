@@ -56,7 +56,7 @@ requireIncludes(uiQuality, 'tests/e2e/ui-quality.spec.ts', [
   "visibleInteractiveWithoutName",
   "document.documentElement.scrollWidth",
   "document.body.scrollWidth",
-  'element.labels',
+  "'labels' in element",
   "querySelectorAll('img')",
   "page.locator('main')",
   "page.locator('h1')",

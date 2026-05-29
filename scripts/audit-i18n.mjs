@@ -45,11 +45,11 @@ const layout = await readProjectFile('app/layout.tsx');
 requireIncludes(layout, 'app/layout.tsx', [
   'lang="en"',
   'dir="ltr"',
-  'LocaleRuntime',
+  'LocaleProvider',
 ]);
 
-const runtime = await readProjectFile('components/LocaleRuntime.tsx');
-requireIncludes(runtime, 'components/LocaleRuntime.tsx', [
+const runtime = await readProjectFile('components/LocaleProvider.tsx');
+requireIncludes(runtime, 'components/LocaleProvider.tsx', [
   'LOCAL_STORAGE_KEYS.locale',
   'document.documentElement.lang',
   'document.documentElement.dir',

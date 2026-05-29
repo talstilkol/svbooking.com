@@ -62,7 +62,7 @@ const validUiQuality = [
   "const viewports = [{ name: 'desktop' }, { name: 'mobile' }];",
   'async function visibleInteractiveWithoutName(page) {',
   '  return page.evaluate(() => {',
-  '    const labels = element.labels;',
+  "    const labels = 'labels' in element ? element.labels : null;",
   "    const images = element.querySelectorAll('img');",
   '    const documentWidth = document.documentElement.scrollWidth;',
   '    const bodyWidth = document.body.scrollWidth;',
