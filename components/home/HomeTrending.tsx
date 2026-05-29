@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 import { MapPin } from 'lucide-react';
 import Reveal from '@/components/ui/Reveal';
 import type { CatalogHotel } from '@/lib/types';
@@ -45,10 +44,8 @@ export default function HomeTrending() {
         {hotels.map((h, i) => (
           <Reveal key={h.hotelKey} delay={i * 0.08}>
             <Link href={`/compare?hotelKey=${h.hotelKey}`} className="block">
-              <motion.div
-                whileHover={{ y: -6 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="group relative aspect-[4/5] rounded-3xl overflow-hidden bg-slate-200"
+              <div
+                className="group relative aspect-[4/5] rounded-3xl overflow-hidden bg-slate-200 transition-transform duration-300 ease-out hover:-translate-y-1.5"
               >
                 <Image
                   src={h.image}
@@ -68,7 +65,7 @@ export default function HomeTrending() {
                     Compare prices →
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </Link>
           </Reveal>
         ))}

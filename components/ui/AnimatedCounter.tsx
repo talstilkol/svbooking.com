@@ -1,9 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion, useInView } from 'framer-motion';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
+/**
+ * Counts up from 0 to `value` once the element scrolls into view, with a cubic
+ * ease-out. CSS-only fade-in (no animation library) + requestAnimationFrame
+ * for the number tween.
+ */
 export default function AnimatedCounter({
   value,
   duration = 1.2,
@@ -16,8 +19,25 @@ export default function AnimatedCounter({
   suffix?: string;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true });
+  const [inView, setInView] = useState(false);
   const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (!('IntersectionObserver' in window)) {
+      setInView(true);
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setInView(true);
+        observer.disconnect();
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!inView) return;
@@ -34,10 +54,13 @@ export default function AnimatedCounter({
   }, [inView, value, duration]);
 
   return (
-    <motion.span ref={ref} initial={{ opacity: 0 }} animate={{ opacity: inView ? 1 : 0 }}>
+    <span
+      ref={ref}
+      style={{ opacity: inView ? 1 : 0, transition: 'opacity 0.4s ease' }}
+    >
       {prefix}
       {display.toLocaleString()}
       {suffix}
-    </motion.span>
+    </span>
   );
 }
