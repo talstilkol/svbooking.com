@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import type { CatalogHotel } from '@/lib/types';
 
 type Hotel = CatalogHotel;
@@ -45,7 +44,7 @@ export default function BookPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
       <Link href={`/compare?hotelKey=${id}`} className="text-blue-600 hover:underline text-sm mb-4 inline-block">← Back to compare</Link>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+      <div className="animate-fade-in">
         <h1 className="text-3xl font-bold mb-2">Plan trip: {hotel.name}</h1>
         <p className="text-zinc-600 mb-6">{hotel.city}, {hotel.country}</p>
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 border border-zinc-200 space-y-4">
@@ -70,7 +69,7 @@ export default function BookPage() {
             {saving ? 'Saving...' : 'Save trip'}
           </button>
         </form>
-      </motion.div>
+      </div>
     </div>
   );
 }

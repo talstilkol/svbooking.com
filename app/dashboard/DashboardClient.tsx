@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { Heart, Calendar, BarChart3, Search, ArrowRight } from 'lucide-react';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
 import Reveal from '@/components/ui/Reveal';
@@ -16,7 +15,7 @@ export default function DashboardClient({ userName }: { userName: string }) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
+      <div className="animate-fade-in mb-10">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
           Welcome back,{' '}
           <span className="bg-linear-to-br from-indigo-600 to-pink-600 bg-clip-text text-transparent">
@@ -24,7 +23,7 @@ export default function DashboardClient({ userName }: { userName: string }) {
           </span>
         </h1>
         <p className="mt-2 text-zinc-600">Your travel command center.</p>
-      </motion.div>
+      </div>
 
       <SuggestionsPanel />
 

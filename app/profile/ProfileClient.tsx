@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Mail, MapPin, Users, Calendar, DollarSign, Save, Heart, Plane } from 'lucide-react';
 import Reveal from '@/components/ui/Reveal';
 import { useToast } from '@/components/Toast';
@@ -241,19 +240,15 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {(prefs.favoriteDestinations || []).map((d) => (
-                    <motion.span
+                    <span
                       key={d}
-                      layout
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm"
+                      className="animate-fade-in inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm"
                     >
                       {d}
                       <button onClick={() => removeDestination(d)} className="ml-1 hover:text-indigo-900" aria-label={`Remove ${d}`}>
                         ×
                       </button>
-                    </motion.span>
+                    </span>
                   ))}
                   {(prefs.favoriteDestinations || []).length === 0 && (
                     <span className="text-sm text-zinc-500">None yet.</span>
@@ -261,16 +256,14 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                 </div>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
                 onClick={save}
                 disabled={saving}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-linear-to-r from-indigo-600 to-pink-600 text-white font-semibold shadow-lg disabled:opacity-60"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-linear-to-r from-indigo-600 to-pink-600 text-white font-semibold shadow-lg disabled:opacity-60 transition-transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Save className="w-4 h-4" />
                 {saving ? 'Saving…' : 'Save preferences'}
-              </motion.button>
+              </button>
             </div>
           )}
         </div>

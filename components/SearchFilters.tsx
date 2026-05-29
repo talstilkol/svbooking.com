@@ -1,6 +1,5 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, Star, DollarSign, Wifi, Car, Utensils, Dumbbell, Coffee } from 'lucide-react';
 
 export interface FilterOptions {
@@ -85,13 +84,9 @@ export default function SearchFilters({
       </button>
 
       {/* Filters Panel */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full left-0 right-0 mt-2 p-5 bg-white rounded-2xl border border-zinc-200 shadow-xl z-50"
+      {isOpen && (
+          <div
+            className="animate-fade-in absolute top-full left-0 right-0 mt-2 p-5 bg-white rounded-2xl border border-zinc-200 shadow-xl z-50"
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
@@ -221,9 +216,8 @@ export default function SearchFilters({
             >
               Apply Filters
             </button>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 }
