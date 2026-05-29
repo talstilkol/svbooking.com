@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import CurrencySelector from '@/components/CurrencySelector';
 import NotificationBell from '@/components/NotificationBell';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
+import AuthControls from '@/components/AuthControls';
 import { useLocale } from '@/components/LocaleProvider';
 
 const NAV_LINKS = [
@@ -71,11 +72,12 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* Locale + currency + notifications (desktop) */}
+        {/* Locale + currency + notifications + auth (desktop) */}
         <div className="hidden md:flex items-center gap-2">
           <LocaleSwitcher />
           <NotificationBell />
           <CurrencySelector />
+          <AuthControls />
         </div>
 
         {/* Mobile hamburger */}
@@ -102,6 +104,9 @@ export default function Navbar() {
           <div className="px-6 py-3 border-b border-slate-100 flex items-center justify-between gap-3">
             <CurrencySelector className="flex-1" />
             <LocaleSwitcher />
+          </div>
+          <div className="px-6 py-3 border-b border-slate-100">
+            <AuthControls />
           </div>
           {NAV_LINKS.map((link) => {
             const active =
