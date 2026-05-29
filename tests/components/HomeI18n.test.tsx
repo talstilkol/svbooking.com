@@ -15,6 +15,8 @@ import { LocaleProvider } from '@/components/LocaleProvider';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import TrustBadges from '@/components/TrustBadges';
 import Newsletter from '@/components/Newsletter';
+import WhyChooseUs from '@/components/WhyChooseUs';
+import FAQ from '@/components/FAQ';
 
 beforeEach(() => {
   for (const k of Object.keys(store)) delete store[k];
@@ -64,5 +66,40 @@ describe('Newsletter i18n', () => {
     await user.click(screen.getByRole('button', { name: 'HE' }));
     expect(screen.getByRole('button', { name: 'הרשמה' })).toBeInTheDocument(); // Subscribe
     expect(screen.getByText('שמירת העדפות התראות מבצעים מקומית')).toBeInTheDocument();
+  });
+});
+
+describe('WhyChooseUs i18n', () => {
+  it('switches the heading and reason titles to Hebrew', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <WhyChooseUs />
+      </LocaleProvider>
+    );
+    expect(screen.getByText('Why travelers choose SV Booking')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+    expect(screen.getByText('למה מטיילים בוחרים ב‑SV Booking')).toBeInTheDocument();
+    expect(screen.getByText('השוואת ספקים זמינים')).toBeInTheDocument(); // Compare available providers
+  });
+});
+
+describe('FAQ i18n', () => {
+  it('switches questions to Hebrew and interpolates catalog stats', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <FAQ />
+      </LocaleProvider>
+    );
+    expect(screen.getByText('How does SV Booking compare hotel prices?')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+    expect(screen.getByText('כיצד SV Booking משווה מחירי מלונות?')).toBeInTheDocument();
+
+    // Open the coverage question; Hebrew answer keeps interpolated numeric stats.
+    await user.click(screen.getByText('בכמה ערים ומלונות אתם מכסים?'));
+    expect(screen.getByText(/\d+ מלונות ב‑\d+ ערים ו‑\d+ מדינות/)).toBeInTheDocument();
   });
 });

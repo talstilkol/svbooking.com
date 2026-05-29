@@ -3,45 +3,40 @@
 import { useState } from 'react';
 import { serializeJsonLd } from '@/lib/utils/jsonLd';
 import { CATALOG_STATS } from '@/lib/catalog-stats';
+import { useLocale } from '@/components/LocaleProvider';
 
-const FAQS = [
-  {
-    q: 'How does SV Booking compare hotel prices?',
-    a: 'We aggregate rates returned by configured pricing providers. Cache-backed heatmap observations are labeled as price-source observations, not booking providers. Missing or unverified prices are not displayed as confirmed booking offers.',
-  },
-  {
-    q: 'Is SV Booking free to use?',
-    a: 'SV Booking is free to browse and compare. Providers control final checkout prices, taxes, fees, and terms. No sign-up is required for public search and comparison flows.',
-  },
-  {
-    q: 'What is the "Cheaper Dates" feature?',
-    a: 'The Cheaper Dates tool checks available provider-returned date options around a selected stay. It reports savings only when provider data is available for both the original and alternative dates.',
-  },
-  {
-    q: 'How many cities and hotels do you cover?',
-    a: `The current static catalog contains ${CATALOG_STATS.hotels} hotels across ${CATALOG_STATS.cities} cities and ${CATALOG_STATS.countries} countries. Additional discovered hotels are kept separate until they are validated.`,
-  },
-  {
-    q: 'What are AI Agents?',
-    a: 'AI Agents scan configured providers, monitor provider health, and surface available recommendations from catalog, price, and locally saved preference signals. Unverified provider-quality scores are not displayed.',
-  },
-  {
-    q: 'Do I book directly through SV Booking?',
-    a: 'No, SV Booking is a price comparison service. Once you select an available provider result, checkout happens on that provider\'s site under that provider\'s terms and support policies.',
-  },
-];
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
 
 export default function FAQ() {
+  const { t } = useLocale();
   const [open, setOpen] = useState<number | null>(null);
+
+  const FAQS = [
+    { q: t('faqQ1'), a: t('faqA1') },
+    { q: t('faqQ2'), a: t('faqA2') },
+    { q: t('faqQ3'), a: t('faqA3') },
+    {
+      q: t('faqQ4'),
+      a: interpolate(t('faqA4'), {
+        hotels: CATALOG_STATS.hotels,
+        cities: CATALOG_STATS.cities,
+        countries: CATALOG_STATS.countries,
+      }),
+    },
+    { q: t('faqQ5'), a: t('faqA5') },
+    { q: t('faqQ6'), a: t('faqA6') },
+  ];
 
   return (
     <section className="bg-white border-t border-slate-100">
       <div className="max-w-3xl mx-auto px-4 py-16">
         <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">
-          Frequently Asked Questions
+          {t('faqHeading')}
         </h2>
         <p className="text-center text-slate-500 mb-8">
-          Everything you need to know about SV Booking
+          {t('faqSubtext')}
         </p>
 
         <div className="space-y-3">
