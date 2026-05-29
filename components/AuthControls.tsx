@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface AuthState {
   authenticated: boolean;
@@ -14,6 +15,7 @@ interface AuthState {
  * signed-out state if the status check errors (e.g. Kinde not configured).
  */
 export default function AuthControls({ className = '' }: { className?: string }) {
+  const { t } = useLocale();
   const [state, setState] = useState<AuthState | null>(null);
 
   useEffect(() => {
@@ -45,12 +47,12 @@ export default function AuthControls({ className = '' }: { className?: string })
         href="/api/auth/login"
         className={`px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors ${className}`}
       >
-        Sign in
+        {t('signIn')}
       </a>
     );
   }
 
-  const label = state.user?.givenName || state.user?.email || 'Account';
+  const label = state.user?.givenName || state.user?.email || t('account');
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
@@ -71,7 +73,7 @@ export default function AuthControls({ className = '' }: { className?: string })
         href="/api/auth/logout"
         className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
       >
-        Sign out
+        {t('signOut')}
       </a>
     </div>
   );

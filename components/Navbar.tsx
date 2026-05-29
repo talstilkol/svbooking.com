@@ -10,13 +10,13 @@ import AuthControls from '@/components/AuthControls';
 import { useLocale } from '@/components/LocaleProvider';
 
 const NAV_LINKS = [
-  { href: '/search', label: 'Search' },
-  { href: '/compare', label: 'Compare' },
-  { href: '/deals', label: 'Deals' },
-  { href: '/explore', label: 'Explore' },
-  { href: '/trips', label: 'Trips' },
-  { href: '/favorites', label: 'Favorites' },
-  { href: '/dashboard', label: 'Dashboard' },
+  { href: '/search', key: 'navSearch' },
+  { href: '/compare', key: 'navCompare' },
+  { href: '/deals', key: 'navDeals' },
+  { href: '/explore', key: 'navExplore' },
+  { href: '/trips', key: 'navTrips' },
+  { href: '/favorites', key: 'navFavorites' },
+  { href: '/dashboard', key: 'navDashboard' },
 ];
 
 export default function Navbar() {
@@ -40,9 +40,9 @@ export default function Navbar() {
   }, [pathname]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200 shadow-sm" role="navigation" aria-label="Main navigation">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200 shadow-sm" role="navigation" aria-label={t('mainNavigation')}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg" aria-label="SV Booking home">
+        <Link href="/" className="flex items-center gap-2 font-bold text-xl text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg" aria-label={t('navHome')}>
           <span className="text-2xl" aria-hidden="true">&#9992;</span>
           SV Booking
         </Link>
@@ -66,7 +66,7 @@ export default function Navbar() {
                     : 'text-slate-600 hover:text-blue-700 hover:bg-blue-50'
                 }`}
               >
-                {link.label}
+                {t(link.key)}
               </Link>
             );
           })}
@@ -84,7 +84,7 @@ export default function Navbar() {
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="md:hidden p-2 text-slate-600 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+          aria-label={mobileOpen ? t('closeMenu') : t('openMenu')}
           aria-expanded={mobileOpen}
           aria-controls="mobile-nav"
         >
@@ -123,7 +123,7 @@ export default function Navbar() {
                   active ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-blue-50'
                 }`}
               >
-                {link.label}
+                {t(link.key)}
               </Link>
             );
           })}

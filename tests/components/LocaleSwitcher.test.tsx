@@ -102,3 +102,22 @@ describe('LocaleSwitcher', () => {
     expect(screen.getByTestId('t')).toHaveTextContent('חיפוש מלונות');
   });
 });
+
+describe('Navbar translations', () => {
+  it('localizes nav link labels to Hebrew after switching', async () => {
+    const user = userEvent.setup();
+    function NavProbe() {
+      const { t } = useLocale();
+      return <span data-testid="nav-search">{t('navSearch')}</span>;
+    }
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <NavProbe />
+      </LocaleProvider>
+    );
+    expect(screen.getByTestId('nav-search')).toHaveTextContent('Search');
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+    expect(screen.getByTestId('nav-search')).toHaveTextContent('חיפוש');
+  });
+});

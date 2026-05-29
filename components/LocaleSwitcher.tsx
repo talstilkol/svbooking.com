@@ -4,12 +4,12 @@ import { useLocale } from '@/components/LocaleProvider';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
 
 export default function LocaleSwitcher({ className = '' }: { className?: string }) {
-  const { locale, setLocale } = useLocale();
+  const { locale, setLocale, t } = useLocale();
 
   return (
     <div
       role="group"
-      aria-label="Language"
+      aria-label={t('language')}
       className={`inline-flex items-center rounded-lg border border-slate-200 overflow-hidden ${className}`}
     >
       {SUPPORTED_LOCALES.map((l) => {
