@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getTimeRemaining } from '@/lib/time-remaining';
 
 interface CountdownProps {
   targetDate: string; // ISO date string
@@ -8,28 +9,12 @@ interface CountdownProps {
   className?: string;
 }
 
-function getTimeRemaining(target: Date) {
-  const now = new Date();
-  const diff = target.getTime() - now.getTime();
-
-  if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
-
-  return {
-    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-    minutes: Math.floor((diff / (1000 * 60)) % 60),
-    seconds: Math.floor((diff / 1000) % 60),
-    expired: false,
-  };
-}
-
 export default function Countdown({ targetDate, label, className = '' }: CountdownProps) {
-  const [time, setTime] = useState(() => getTimeRemaining(new Date(targetDate)));
+  const [time, setTime] = useState(() => getTimeRemaining(targetDate));
 
   useEffect(() => {
-    const target = new Date(targetDate);
     const interval = setInterval(() => {
-      setTime(getTimeRemaining(target));
+      setTime(getTimeRemaining(targetDate));
     }, 1000);
     return () => clearInterval(interval);
   }, [targetDate]);

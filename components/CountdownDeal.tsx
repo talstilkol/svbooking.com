@@ -1,17 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { getTimeRemaining, getDaysUntil } from '@/lib/time-remaining';
 
 interface CountdownDealProps {
   checkIn: string;
   className?: string;
-}
-
-function getDaysUntil(dateStr: string): number {
-  const now = new Date();
-  const target = new Date(dateStr);
-  const diff = target.getTime() - now.getTime();
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
 export default function CountdownDeal({ checkIn, className = '' }: CountdownDealProps) {
@@ -23,19 +17,12 @@ export default function CountdownDeal({ checkIn, className = '' }: CountdownDeal
 
   useEffect(() => {
     function update() {
-      const now = new Date();
-      const target = new Date(checkIn);
-      const diff = target.getTime() - now.getTime();
-
-      if (diff <= 0) {
+      const remaining = getTimeRemaining(checkIn);
+      if (remaining.expired) {
         setTimeLeft(null);
         return;
       }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      setTimeLeft({ days, hours, minutes });
+      setTimeLeft({ days: remaining.days, hours: remaining.hours, minutes: remaining.minutes });
     }
 
     update();
