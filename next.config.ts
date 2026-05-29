@@ -31,6 +31,7 @@ const nextConfig: NextConfig = {
             "base-uri 'self'",
             "form-action 'self'",
             "frame-ancestors 'none'",
+            "upgrade-insecure-requests",
           ].join('; '),
         },
       ],
@@ -76,6 +77,9 @@ const nextConfig: NextConfig = {
     staleTimes: {
       dynamic: 30,   // Cache dynamic pages for 30s on client navigation
       static: 300,   // Cache static pages for 5 min on client navigation
+    },
+    sri: {
+      algorithm: 'sha256',
     },
   },
 };

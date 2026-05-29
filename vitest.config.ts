@@ -8,10 +8,7 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     include: ['tests/**/*.test.{ts,tsx,js}'],
-    // Component tests use @vitest-environment jsdom directive in-file
-    environmentMatchGlobs: [
-      ['tests/components/**', 'jsdom'],
-    ],
+    // Component tests declare @vitest-environment jsdom in-file
     setupFiles: ['tests/setup-component.ts'],
     coverage: {
       provider: 'v8',
