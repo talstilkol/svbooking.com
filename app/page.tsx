@@ -26,7 +26,14 @@ export const metadata: Metadata = {
     title: "SV Booking - Compare Hotel Prices Across Providers",
     description: `Compare hotel prices across ${CATALOG_STATS.hotels} hotels in ${CATALOG_STATS.cities} cities worldwide. Find the cheapest rates instantly.`,
   },
-  alternates: { canonical: '/' },
+  alternates: {
+    canonical: '/',
+    languages: {
+      'en-US': '/',
+      'he-IL': '/?locale=he',
+      'x-default': '/',
+    },
+  },
 };
 
 export default function Home() {

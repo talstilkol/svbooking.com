@@ -22,7 +22,9 @@ export default function PriceAlertsDashboard({ className = '' }: { className?: s
         setAlerts(normalizeStoredPriceAlerts(
           readLocalStorageJsonWithFallback<StoredPriceAlert[]>(LOCAL_STORAGE_KEYS.priceAlerts, [], [])
         ));
-      } catch {}
+      } catch (err) {
+        console.warn('PriceAlertsDashboard: failed to read saved alerts', err);
+      }
     });
     return () => {
       cancelled = true;
@@ -34,7 +36,9 @@ export default function PriceAlertsDashboard({ className = '' }: { className?: s
     setAlerts(updated);
     try {
       writeLocalStorageJson(LOCAL_STORAGE_KEYS.priceAlerts, updated);
-    } catch {}
+    } catch (err) {
+      console.warn('PriceAlertsDashboard: failed to persist alert removal', err);
+    }
   };
 
   if (alerts.length === 0) return null;

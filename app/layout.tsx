@@ -57,7 +57,14 @@ export const metadata: Metadata = {
     description: "Compare provider-returned hotel prices when rates are available",
     images: ["/api/og"],
   },
-  alternates: { canonical: '/' },
+  alternates: {
+    canonical: '/',
+    languages: {
+      'en-US': '/',
+      'he-IL': '/?locale=he',
+      'x-default': '/',
+    },
+  },
   robots: { index: true, follow: true },
   icons: {
     icon: [
