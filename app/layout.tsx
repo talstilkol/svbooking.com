@@ -9,7 +9,7 @@ import { ToastProvider } from "@/components/Toast";
 import RouteProgress from "@/components/RouteProgress";
 import { OrganizationJsonLd, SearchActionJsonLd } from "@/components/SchemaOrg";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import LocaleRuntime from "@/components/LocaleRuntime";
+import { LocaleProvider } from "@/components/LocaleProvider";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -106,7 +106,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-linear-to-b from-sky-50 via-white to-amber-50/30">
         <ToastProvider>
-        <LocaleRuntime />
+        <LocaleProvider>
         {/* Skip to main content — accessibility */}
         <a
           href="#main-content"
@@ -130,6 +130,7 @@ export default function RootLayout({
         <CookieConsent />
         <PerformanceMonitor />
         <ServiceWorkerRegistration />
+        </LocaleProvider>
         </ToastProvider>
         <Analytics />
         <SpeedInsights />

@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import CurrencySelector from '@/components/CurrencySelector';
 import NotificationBell from '@/components/NotificationBell';
+import LocaleSwitcher from '@/components/LocaleSwitcher';
+import { useLocale } from '@/components/LocaleProvider';
 
 const NAV_LINKS = [
   { href: '/search', label: 'Search' },
@@ -18,6 +20,7 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { t } = useLocale();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Close mobile menu on Escape
@@ -55,6 +58,7 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 aria-current={active ? 'page' : undefined}
+                title={link.href === '/search' ? t('searchHotels') : undefined}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   active
                     ? 'bg-blue-100 text-blue-700'
@@ -67,8 +71,9 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* Currency selector + notifications (desktop) */}
+        {/* Locale + currency + notifications (desktop) */}
         <div className="hidden md:flex items-center gap-2">
+          <LocaleSwitcher />
           <NotificationBell />
           <CurrencySelector />
         </div>
@@ -94,8 +99,9 @@ export default function Navbar() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div id="mobile-nav" className="md:hidden bg-white border-t border-slate-200 shadow-lg" aria-label="Mobile navigation">
-          <div className="px-6 py-3 border-b border-slate-100">
-            <CurrencySelector className="w-full" />
+          <div className="px-6 py-3 border-b border-slate-100 flex items-center justify-between gap-3">
+            <CurrencySelector className="flex-1" />
+            <LocaleSwitcher />
           </div>
           {NAV_LINKS.map((link) => {
             const active =
