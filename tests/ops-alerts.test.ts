@@ -121,6 +121,83 @@ describe('ops alerts', () => {
     ]));
   });
 
+  it('does not escalate provider-specific alerts until each provider has enough evidence', async () => {
+    vi.mocked(getProviderUptimeMetrics).mockResolvedValueOnce({
+      status: 'available',
+      eventCount: 6,
+      providerCount: 1,
+      successRatePct: 50,
+      providers: [{
+        providerId: ' Partner API ',
+        providerName: ' Partner\nAPI ',
+        total: 4,
+        successes: 0,
+        failures: 4,
+        successRatePct: 0,
+        p95LatencyMs: 12000,
+      }],
+    } as unknown as Awaited<ReturnType<typeof getProviderUptimeMetrics>>);
+    vi.mocked(getPriceAccuracyMetrics).mockResolvedValueOnce({
+      days: 7,
+      observations: 20,
+      mismatches: 0,
+      mismatchRate: 0,
+      byProvider: {},
+    });
+
+    const result = await buildOpsAlerts({ now: new Date('2026-05-14T12:00:00.000Z') });
+
+    expect(result.alerts).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'provider-partner-api-insufficient-data',
+        severity: 'info',
+        evidence: expect.objectContaining({
+          providerId: 'partner-api',
+          eventCount: 4,
+          requiredEvents: 5,
+        }),
+      }),
+    ]));
+    expect(result.alerts.map((item) => item.id)).not.toContain('provider-partner-api-critical-success-rate');
+    expect(result.alerts.map((item) => item.id)).not.toContain('provider-partner-api-critical-latency');
+    expect(JSON.stringify(result.alerts)).not.toContain('\n');
+  });
+
+  it('emits provider and price-accuracy warnings below critical thresholds', async () => {
+    vi.mocked(getProviderUptimeMetrics).mockResolvedValueOnce({
+      status: 'available',
+      eventCount: 5,
+      providerCount: 1,
+      successRatePct: 94,
+      providers: [{
+        providerId: 'xotelo',
+        providerName: 'Xotelo',
+        total: 5,
+        successes: 4,
+        failures: 1,
+        successRatePct: 94,
+        p95LatencyMs: 4000,
+      }],
+    } as unknown as Awaited<ReturnType<typeof getProviderUptimeMetrics>>);
+    vi.mocked(getPriceAccuracyMetrics).mockResolvedValueOnce({
+      days: 7,
+      observations: 20,
+      mismatches: 1,
+      mismatchRate: 0.05,
+      byProvider: {},
+    });
+
+    const result = await buildOpsAlerts({ now: new Date('2026-05-14T12:00:00.000Z') });
+
+    expect(result.alerts).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'provider-xotelo-warning-success-rate', severity: 'warning' }),
+      expect.objectContaining({ id: 'provider-xotelo-warning-latency', severity: 'warning' }),
+      expect.objectContaining({ id: 'price-accuracy-warning-drift', severity: 'warning' }),
+    ]));
+    expect(result.alerts.map((item) => item.id)).not.toContain('provider-xotelo-critical-success-rate');
+    expect(result.alerts.map((item) => item.id)).not.toContain('price-accuracy-critical-drift');
+  });
+
   it('protects ops alerts behind admin auth and no-store', async () => {
     const denied = await GET(new Request('http://localhost:3000/api/ops/alerts'));
     expect(denied!.status).toBe(401);

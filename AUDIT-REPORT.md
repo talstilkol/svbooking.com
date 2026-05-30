@@ -20,9 +20,9 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 162 test files, 798 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 90.8% lines, 86.4% statements, 90.11% functions, and 76.6% branches. |
-| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 90%, statements 86%, functions 90%, branches 76%. |
+| `npm test` | PASS | 162 test files, 800 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 91.06% lines, 86.63% statements, 90.14% functions, and 76.96% branches. |
+| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 91%, statements 86%, functions 90%, branches 76%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 727 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 61 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
@@ -121,6 +121,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Hardened Xotelo pricing and heatmap calls so invalid hotel keys, dates, currencies, and timeout budgets are rejected before provider requests, and retry waits only run when the timeout budget can cover them.
 - Hardened price-cache rate normalization so unusable provider rates, non-positive totals, invalid currencies, blocked provider labels, and non-HTTPS provider links are removed before cached or cached-returned data is surfaced.
 - Fixed the enrichment agent so Wikidata booking-slug results returned as a `Map` are actually persisted, and hardened Wikidata enrichment parsing to drop unsafe slugs, non-HTTPS URLs, malformed provider IDs, and out-of-range coordinates.
+- Hardened ops provider alerts so provider-specific success-rate and latency alerts require enough events for that provider, and sanitized provider-derived alert IDs and display names.
 - Removed remaining local hook-dependency suppressions in hotel detail and side-by-side compare flows, and replaced CLS `any` casts in the performance monitor with a typed layout-shift entry.
 - Localized the home search autocomplete labels and clear action through the existing dictionary.
 
@@ -131,7 +132,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Branch coverage below next target | Medium | `lib` branch coverage is 76.6%. | Add focused tests for cache/provider/auth/error branches, then raise the coverage ratchet toward 80%. |
+| Branch coverage below next target | Medium | `lib` branch coverage is 76.96%. | Add focused tests for cache/provider/auth/error branches, then raise the coverage ratchet toward 80%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |
