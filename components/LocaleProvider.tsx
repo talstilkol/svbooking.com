@@ -59,6 +59,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   // Resolve the locale once on mount from ?locale=, saved preference, or Accept-Language.
   useEffect(() => {
+    let cancelled = false;
     let saved: string | null = null;
     try {
       saved = readLocalStorageStringWithFallback(LOCAL_STORAGE_KEYS.locale, [], null);
@@ -70,16 +71,24 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       locale: requested || saved || undefined,
       acceptLanguage: typeof navigator !== 'undefined' ? navigator.language : undefined,
     });
-    setLocaleState(config.code);
-    setDict(getDictionary(config.code));
-    applyDom(config.code, config.dir as Dir);
-    if (requested) {
-      try {
-        writeLocalStorageJson(LOCAL_STORAGE_KEYS.locale, config.code);
-      } catch (err) {
-        console.warn('LocaleProvider: failed to persist locale', err);
+
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setLocaleState(config.code);
+      setDict(getDictionary(config.code));
+      applyDom(config.code, config.dir as Dir);
+      if (requested) {
+        try {
+          writeLocalStorageJson(LOCAL_STORAGE_KEYS.locale, config.code);
+        } catch (err) {
+          console.warn('LocaleProvider: failed to persist locale', err);
+        }
       }
-    }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const setLocale = useCallback((code: string) => {

@@ -74,7 +74,7 @@ describe('service worker cache bypass rules', () => {
 
   it('intercepts price compare GET requests for SW caching', async () => {
     const source = await readFile('public/sw.js', 'utf8');
-    const { fetchListener, fetchMock } = createServiceWorkerHarness(source);
+    const { fetchListener } = createServiceWorkerHarness(source);
     const respondWith = vi.fn();
     const waitUntil = vi.fn();
 

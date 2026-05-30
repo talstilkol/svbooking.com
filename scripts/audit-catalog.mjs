@@ -1,8 +1,8 @@
 import { HOTELS, listCities, listCountries } from '../lib/hotels-catalog.js';
 
-const MIN_HOTELS = 133;
-const MIN_CITIES = 46;
-const MIN_COUNTRIES = 32;
+const MIN_HOTELS = 500;
+const MIN_CITIES = 100;
+const MIN_COUNTRIES = 60;
 const HOTEL_KEY_PATTERN = /^g\d+-d\d+$/;
 const ALLOWED_IMAGE_HOSTS = new Set(['images.unsplash.com']);
 const BLOCKED_FIELD_VALUES = new Set([

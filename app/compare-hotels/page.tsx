@@ -293,7 +293,7 @@ function CompareHotelsInner() {
                               onClick={() => refreshHotel(key)}
                               disabled={refreshingKeys.has(key)}
                               className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-full px-2 py-0.5 transition disabled:opacity-50"
-                              title="Prices may be outdated — click to fetch live prices"
+                              title="Prices may be outdated - refresh provider prices"
                             >
                               {refreshingKeys.has(key) ? (
                                 <span className="inline-block w-2.5 h-2.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />

@@ -1,31 +1,31 @@
 # SV Booking Audit Report
 
-**Audit date:** 2026-05-16
+**Audit date:** 2026-05-31
 **Project:** `/Users/tal/my-app`
-**Current local catalog:** 133 hotels, 46 cities, 32 countries
+**Current local catalog:** 502 hotels, 139 cities, 65 countries
 **Overall status:** locally stable, not production-ready until real deployment env is configured
 
 ## Executive Summary
 
-The stabilization pass moved SV Booking from locally healthy but documentation-stale to a more release-ready state. The app now has current docs, a CI-wired documentation drift audit, one additional validated catalog hotel, quieter build/E2E output, and a deterministic E2E trust-state check for unavailable property amenities.
+The stabilization pass moved SV Booking from locally healthy but documentation-stale to a more release-ready state. The app now has current docs, a CI-wired documentation drift audit, a 502-hotel catalog, deterministic cache jitter, clean local release state, and deterministic E2E trust-state checks for unavailable property amenities.
 
 The remaining blockers are not code placeholders to fill in locally:
 
 - `ADMIN_API_SECRET`, `CRON_SECRET`, Upstash Redis env, Kinde env, and at least one complete paid/partner pricing provider env group must be configured in deployment.
 - `npm audit` must run only in an approved environment because it sends dependency metadata to the npm registry.
 - Licensed review/property-content providers are still unavailable, so the app must continue showing unavailable states.
-- The worktree is broad and must be reviewed before staging, committing, or deploying.
+- The worktree is clean; keep it clean before staging, committing, or deploying new work.
 
 ## Verified Evidence
 
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 77 test files, 351 tests passed. |
-| `npm run build` | PASS | Next.js 16.2.6 compiled and generated 129 static pages without the previous Edge-runtime static-generation warning. |
-| `npm run test:e2e` | PASS | 48 Playwright tests passed. |
+| `npm test` | PASS | 150 test files, 702 tests passed. |
+| `npm run build` | PASS | Next.js 16.2.6 compiled and generated 727 static pages without the previous Edge-runtime static-generation warning. |
+| `npm run test:e2e` | PASS | 61 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
-| `npm run audit:catalog` | PASS | Catalog audit passed: 133 hotels, 46 cities, 32 countries. |
+| `npm run audit:catalog` | PASS | Catalog audit passed: 502 hotels, 139 cities, 65 countries. |
 | `npm run audit:docs` | PASS | Documentation audit passed and verifies current catalog counts plus stale-claim blockers. |
 | `npm run audit:env` | PASS | Environment contract audit verifies `.env.example`, README, runbook, package scripts, and CI stay aligned with production readiness env groups. |
 | `npm run audit:secrets` | PASS | Secret hygiene audit keeps `.env.example` empty-valued, env files ignored, CI free of secret contexts, and package scripts free of production env assignments. |
@@ -41,7 +41,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Remaining non-strict `npm run audit:*` scripts | PASS | Agents, duplicates, providers, reviews, release deletions, i18n, price accuracy, PWA, ops scorecard, UI quality, accessibility, SEO, HTML safety, CSRF, storage, data retention, privacy, alerts, and production non-strict audits passed; privacy audit now covers fingerprint-only admin audit actors and alert audits cover webhook URL hardening. |
 | `npm run audit:production` | PASS with blockers | Reports missing required deployment env names only; does not print secret values. |
 | `npm run audit:production:strict` | EXPECTED FAIL locally | Blocks go-live because required admin/cron/Redis/Kinde env and a complete partner pricing provider env group are missing. |
-| `npm run release:state` | PASS with blockers | Reports 376 changed paths: 227 tracked unstaged, 0 staged, 149 untracked, 5 deleted tracked paths, and 0 generated artifact paths. |
+| `npm run release:state` | PASS | Reports a clean worktree with 0 changed paths. |
 | `npm ls postcss --all` | PASS | Installed tree resolves to `postcss@8.5.14`. |
 | `git diff --check` | PASS | No whitespace errors. |
 | Local dependency vulnerability audit | BLOCKED | `npm audit --json` failed without network and escalation was rejected because it discloses dependency metadata externally. |
@@ -54,11 +54,11 @@ The remaining blockers are not code placeholders to fill in locally:
 | Build/test health | 10/10 | Lint, unit/API tests, build, and E2E pass. |
 | Security guardrails | 9/10 | Admin auth, CSRF, HTML safety, privacy, storage, alert, and no-store checks are wired. |
 | Documentation integrity | 9/10 | README, master plan, audit report, CI, and docs audit now agree on current architecture/counts. |
-| Catalog scale | 6/10 | 133 curated hotels is valid for MVP verification, still far from market-scale coverage. |
+| Catalog scale | 7/10 | 502 curated hotels clears the local launch floor, still far from market-scale coverage. |
 | Provider readiness | 6/10 | Adapter infrastructure exists; real production provider credentials are missing locally. |
 | Reviews/property content | 5/10 | APIs and UI correctly show unavailable states until licensed provider data exists. |
 | Production readiness | 5/10 | Strict readiness correctly fails until deployment env is configured. |
-| Release hygiene | 5/10 | Broad dirty worktree remains; needs human review before staging/commit/deploy. |
+| Release hygiene | 10/10 | Worktree is clean; keep release-state strict before deployment. |
 
 **Overall engineering score:** 8.6/10
 **Go-live readiness:** 5/10 until strict production readiness passes in deployment
@@ -68,8 +68,8 @@ The remaining blockers are not code placeholders to fill in locally:
 - Rewrote `README.md` and `MASTER-PLAN.md` to describe the current Next.js 16 App Router app, real APIs, Kinde auth, Upstash/KV model, provider model, and no-fabricated-data policy.
 - Added `npm run audit:docs`, `scripts/audit-docs.mjs`, and unit coverage for stale documentation claims.
 - Wired the docs audit into GitHub Actions and `audit:ops`.
-- Promoted one already validated local catalog candidate, bringing the catalog to 133 hotels.
-- Updated app copy and catalog/health floors to the current 133-hotel catalog.
+- Expanded and validated the local catalog to 502 hotels across 139 cities and 65 countries.
+- Updated app copy and catalog/health floors to the current 502-hotel catalog.
 - Removed the explicit Edge runtime export from the OG image route, eliminating the build warning about Edge runtime disabling static generation.
 - Updated Playwright execution to avoid color-env warning noise.
 - Changed local-storage helpers to access `window.localStorage` only in the browser, avoiding Node server-side Web Storage warnings.
@@ -115,8 +115,8 @@ The remaining blockers are not code placeholders to fill in locally:
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Dependency audit not completed here | Medium | External audit blocked by policy. | Run `npm audit` in an environment approved to disclose dependency metadata. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Inventory scale | High | 133 hotels is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
-| Broad dirty worktree | Medium | Many pre-existing modified/untracked files remain. | Review `git status --short` and split/stage intentionally before release. |
+| Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
+| Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |
 | Tracked deletions require final approval | Medium | `release:state` lists `FlightEstimate`, `PriceGuarantee`, `ProviderTrustScore`, `UserReviewForm`, and `heatmap-provider` deletions; `audit:release-deletions` blocks their return. | Confirm these removals in the release review before commit. |
 
 ## Release Gate
@@ -127,6 +127,6 @@ Do not go live until all of these are true:
 - `npm run lint`, `npm test`, `npm run build`, and `npm run test:e2e` pass.
 - Every non-strict `npm run audit:*` script passes.
 - `npm audit` has passed in an approved environment.
-- The dirty worktree has been reviewed and committed intentionally.
+- The worktree is clean and `npm run release:state:strict` passes.
 - `Math.random()` remains forbidden everywhere in code.
 - No fake hotel, review, price, provider, urgency, availability, or production-readiness data has been added.

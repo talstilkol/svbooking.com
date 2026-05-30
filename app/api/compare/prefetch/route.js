@@ -17,6 +17,7 @@ import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 import { addDays, toIsoDate } from '@/lib/utils/date';
 
 const prefetchLimiter = rateLimit({ namespace: 'compare-prefetch', limit: 20, window: 60, failOpen: true });
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 
 const DEFAULT_NIGHTS = 2;
 
@@ -49,12 +50,12 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const hotelKey = searchParams.get('hotelKey');
     if (!hotelKey) {
-      return Response.json({ error: 'Missing hotelKey' }, { status: 400 });
+      return Response.json({ error: 'Missing hotelKey' }, { status: 400, headers: NO_STORE_HEADERS });
     }
 
     const hotel = findHotel(hotelKey);
     if (!hotel) {
-      return Response.json({ error: 'Hotel not found' }, { status: 404 });
+      return Response.json({ error: 'Hotel not found' }, { status: 404, headers: NO_STORE_HEADERS });
     }
 
     const requestedCurrency = searchParams.get('currency');
@@ -90,10 +91,10 @@ export async function GET(request) {
 
     return new Response(null, {
       status: 202,
-      headers: { 'Cache-Control': 'no-store' },
+      headers: NO_STORE_HEADERS,
     });
   } catch {
-    return new Response(null, { status: 202 });
+    return new Response(null, { status: 202, headers: NO_STORE_HEADERS });
   }
 }
 

@@ -9,12 +9,12 @@ The app is locally healthy but not production-ready until real deployment config
 | Determinism and no-fabrication guardrails | 10/10 | `Math.random()` and unapproved UUID randomness are blocked; unavailable data is shown instead of generated claims. |
 | Local build/test health | 10/10 | Lint, unit/API tests, build, and E2E are expected release gates. |
 | Security guardrails | 9/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, and no-store audits are wired. |
-| Catalog quality | 6/10 | 133 curated hotels across 46 cities and 32 countries; useful for validation, still far below market-scale coverage. |
+| Catalog quality | 7/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage. |
 | Provider coverage | 6/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
 | Reviews and property content | 5/10 | APIs return explicit unavailable states until licensed provider data is configured. |
 | Mobile retention | 6/10 | PWA/offline shell and local alerts exist; push delivery env is not configured. |
 | Production readiness | 5/10 | Strict readiness fails without admin, cron, Redis, Kinde, and partner-provider env. |
-| Release hygiene | 5/10 | The worktree contains broad uncommitted changes and needs review before staging or deployment. |
+| Release hygiene | 10/10 | The worktree is clean; keep generated/cache artifacts out of commits. |
 
 ## Stabilization Priorities
 
@@ -23,7 +23,7 @@ The app is locally healthy but not production-ready until real deployment config
    - Treat `npm run audit:production:strict` as the go-live blocker.
 
 2. **Release hygiene**
-   - Review all modified, deleted, and untracked files before staging.
+   - Review all modified, deleted, and untracked files before staging new work.
    - Split unrelated work into reviewable commits if the diff remains broad.
    - Keep generated/cache artifacts out of commits.
 
@@ -49,7 +49,7 @@ The app is locally healthy but not production-ready until real deployment config
 - `npm run test:e2e` passes.
 - Every `npm run audit:*` script passes except `audit:production:strict` in intentionally unconfigured local shells.
 - `npm run audit:production:strict` passes in the deployment environment before launch.
-- README and plan contain the current catalog count: 133 hotels, 46 cities, 32 countries.
+- README and plan contain the current catalog count: 502 hotels, 139 cities, 65 countries.
 - No documentation references removed listing/booking API routes, old database architecture, old 15-hotel coverage, or unsupported no-auth/no-rate-limit claims.
 
 ## Non-Negotiables

@@ -1,6 +1,6 @@
 /**
  * Centralized catalog statistics derived from the static hotel catalog.
- * Import these constants instead of hardcoding numbers like "133 hotels" or "46 cities".
+ * Import these constants instead of hardcoding catalog counts in UI or metadata.
  *
  * Safe for both server and client components — uses only the pure-data exports
  * from hotels-catalog.js (HOTELS array and listCities()), not the KV-backed

@@ -22,10 +22,10 @@ import { CATALOG_STATS } from "@/lib/catalog-stats";
 
 export const metadata: Metadata = {
   title: "SV Booking - Compare Hotel Prices Across Providers",
-  description: `Compare hotel prices from multiple providers across ${CATALOG_STATS.hotels} hotels in ${CATALOG_STATS.cities} cities. Find the cheapest rates, discover the best time to book, and save on your next trip.`,
+  description: `Compare provider-returned hotel prices across ${CATALOG_STATS.hotels} hotels in ${CATALOG_STATS.cities} cities. Review available rates, discover provider-backed timing signals, and save on your next trip.`,
   openGraph: {
     title: "SV Booking - Compare Hotel Prices Across Providers",
-    description: `Compare hotel prices across ${CATALOG_STATS.hotels} hotels in ${CATALOG_STATS.cities} cities worldwide. Find the cheapest rates instantly.`,
+    description: `Compare provider-returned hotel prices across ${CATALOG_STATS.hotels} hotels in ${CATALOG_STATS.cities} cities worldwide. Review available rates when configured sources respond.`,
   },
   alternates: {
     canonical: '/',

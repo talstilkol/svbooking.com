@@ -2,7 +2,7 @@
 
 SV Booking is a Next.js 16 App Router hotel meta-search app. It compares provider-returned hotel rates when configured providers respond, labels unavailable data explicitly, and avoids fabricated hotel, review, price, provider, urgency, or availability data.
 
-Current local catalog: **133 hotels**, **46 cities**, **32 countries**.
+Current local catalog: **502 hotels**, **139 cities**, **65 countries**.
 
 ## What The App Does
 
@@ -160,7 +160,7 @@ Run `npm run release:state:strict` after staging or committing intended changes;
 
 ## Release Notes For Maintainers
 
-- The current repository has broad uncommitted changes. Review `git status --short` and `git diff --stat` before staging.
+- The current repository should remain clean before release. Review `git status --short` and `git diff --stat` before staging new work.
 - `npm run release:state` summarizes staged, unstaged, deleted, untracked, and generated-artifact paths for release review.
 - `npm run audit:release-deletions` keeps removed no-fake-data legacy surfaces from returning.
 - `npm run audit:external-fetches` blocks direct external `fetch("https://...")` calls that bypass timeout handling.

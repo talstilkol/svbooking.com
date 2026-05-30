@@ -80,7 +80,7 @@ describe('price cache agent', () => {
   });
 
   it('always includes top popular hotels regardless of cohort rotation', () => {
-    // With high popularity data and a large enough limit, top hotels appear in every cohort
+    // With high popularity data and a large enough limit, popular catalog entries appear in every cohort
     const popularity = { 'g3-d1': 100, 'g2-d1': 50 };
     // limit=3 with 4 hotels: Math.floor(3*0.3)=0 → too small for always-warm
     // So we test with a limit of 4 which can hold 1 always-warm (floor(4*0.3)=1)

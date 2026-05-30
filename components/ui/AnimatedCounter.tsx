@@ -26,8 +26,8 @@ export default function AnimatedCounter({
     const el = ref.current;
     if (!el) return;
     if (!('IntersectionObserver' in window)) {
-      setInView(true);
-      return;
+      const timer = setTimeout(() => setInView(true), 0);
+      return () => clearTimeout(timer);
     }
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {

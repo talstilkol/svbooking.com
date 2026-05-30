@@ -1,6 +1,8 @@
 import { getCatalogStats } from '@/lib/hotels-catalog';
 import { rateLimit } from '@/lib/rate-limit';
 
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
+
 /**
  * GET /api/catalog/stats
  * Returns live catalog statistics including dynamically added hotels.
@@ -9,7 +11,7 @@ import { rateLimit } from '@/lib/rate-limit';
 export async function GET(request) {
   const rl = await rateLimit({ namespace: 'catalog-stats', limit: 30, window: 60, request, failOpen: true });
   if (rl?.limited) {
-    return Response.json({ error: 'Too many requests' }, { status: 429, headers: { 'Retry-After': '60' } });
+    return Response.json({ error: 'Too many requests' }, { status: 429, headers: { ...NO_STORE_HEADERS, 'Retry-After': '60' } });
   }
   const stats = getCatalogStats();
 

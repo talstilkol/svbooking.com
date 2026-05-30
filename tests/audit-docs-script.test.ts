@@ -109,10 +109,10 @@ const validPlan = [
 const validAuditReport = [
   '# Audit Report',
   'Current local catalog: 1 hotels, 1 cities, 1 countries.',
-  '77 test files, 351 tests passed.',
-  '48 Playwright tests passed.',
+  '150 test files, 702 tests passed.',
+  '61 Playwright tests passed.',
   'Go-live readiness remains blocked without real deployment env.',
-  'Broad dirty worktree must be reviewed before release.',
+  'Worktree is clean before release.',
   'audit:release-deletions passed.',
   `Never use ${forbiddenRandomApi}(). No fabricated availability data.`,
   'Run npm run audit:production:strict.',

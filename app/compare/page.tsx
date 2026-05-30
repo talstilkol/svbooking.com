@@ -153,7 +153,7 @@ function CompareInner() {
       }
     })();
     return () => controller.abort();
-  }, [urlHotelKey, urlCheckIn, urlCheckOut, compareHotelWithDates]);
+  }, [urlHotelKey, urlCheckIn, urlCheckOut, compareHotelWithDates, t]);
 
   const filteredHotels = selectedCity
     ? hotels.filter((h) => h.city === selectedCity)

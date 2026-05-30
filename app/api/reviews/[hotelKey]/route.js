@@ -1,4 +1,4 @@
-import { getReviewSummary } from '@/lib/reviews';
+import { getReviewSummary, getUnavailableReviewSummary } from '@/lib/reviews';
 import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 const reviewsLimiter = rateLimit({ namespace: 'reviews', limit: 40, window: 60, failOpen: true });
@@ -10,7 +10,7 @@ export async function GET(request, { params }) {
   if (!success) return rateLimitResponse(reset);
   try {
     const { hotelKey } = await params;
-    const summary = await getReviewSummary(hotelKey);
+    const summary = await getReviewSummary(hotelKey) || getUnavailableReviewSummary(hotelKey);
     if (!summary) {
       return Response.json({ error: 'Hotel not found' }, { status: 404, headers: NO_STORE_HEADERS });
     }

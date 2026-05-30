@@ -43,12 +43,13 @@ export default function AuthControls({ className = '' }: { className?: string })
 
   if (!state.authenticated) {
     return (
-      <a
+      <Link
         href="/api/auth/login"
+        prefetch={false}
         className={`px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors ${className}`}
       >
         {t('signIn')}
-      </a>
+      </Link>
     );
   }
 
@@ -69,12 +70,13 @@ export default function AuthControls({ className = '' }: { className?: string })
         </span>
         <span className="truncate hidden lg:inline">{label}</span>
       </Link>
-      <a
+      <Link
         href="/api/auth/logout"
+        prefetch={false}
         className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
       >
         {t('signOut')}
-      </a>
+      </Link>
     </div>
   );
 }

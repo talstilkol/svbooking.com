@@ -15,12 +15,46 @@ vi.mock('@/lib/provider-observability', () => ({
   recordProviderUptimeEvent: vi.fn(async () => {}),
 }));
 
+interface MockProvider {
+  id: string;
+  name: string;
+  priority: number;
+  monthlyLimit: number;
+  dailyLimit: number;
+  isConfigured: () => boolean;
+  fetchRates: ReturnType<typeof vi.fn>;
+}
+
+interface ProviderStatus {
+  p50LatencyMs?: number | null;
+  successRatePct?: number | null;
+  recentLatencies?: number[];
+}
+
+interface ProviderState {
+  recentLatencies: number[];
+}
+
+interface ProviderRegistryInstance {
+  register(provider: MockProvider): void;
+  getAvailable(): MockProvider[];
+  getStatus(): ProviderStatus[];
+}
+
+interface ProviderRegistryModule {
+  ProviderRegistry: new () => ProviderRegistryInstance;
+  medianLatency: (latencies?: number[] | null) => number | null;
+  recordSuccess: (providerId: string, latencyMs?: number) => void;
+  recordError: (providerId: string, error: Error, latencyMs?: number) => void;
+  getState: (providerId: string) => ProviderState;
+}
+
 function createMockProvider(
   id: string,
   name: string,
   priority: number,
   opts: { configured?: boolean; monthlyLimit?: number; dailyLimit?: number } = {},
-) {
+): MockProvider {
   return {
     id,
     name,
@@ -33,17 +67,17 @@ function createMockProvider(
 }
 
 describe('provider registry', () => {
-  let ProviderRegistry: any;
-  let medianLatency: any;
-  let recordSuccess: any;
-  let recordError: any;
-  let getState: any;
+  let ProviderRegistry: ProviderRegistryModule['ProviderRegistry'];
+  let medianLatency: ProviderRegistryModule['medianLatency'];
+  let recordSuccess: ProviderRegistryModule['recordSuccess'];
+  let recordError: ProviderRegistryModule['recordError'];
+  let getState: ProviderRegistryModule['getState'];
 
   beforeEach(async () => {
     vi.restoreAllMocks();
     vi.resetModules();
-    const mod = await import('@/lib/providers/registry');
-    ({ ProviderRegistry, medianLatency, recordSuccess, recordError, getState } = mod as any);
+    const mod = await import('@/lib/providers/registry') as unknown as ProviderRegistryModule;
+    ({ ProviderRegistry, medianLatency, recordSuccess, recordError, getState } = mod);
   });
 
   afterEach(() => {

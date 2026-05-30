@@ -149,7 +149,6 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
     const prefetchUrl = `/api/compare/prefetch?hotelKey=${hotel.hotelKey}${currency !== 'USD' ? `&currency=${currency}` : ''}`;
     fetch(prefetchUrl, { signal: controller.signal, priority: 'low' as RequestPriority }).catch(() => {});
     return () => controller.abort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hotel.hotelKey, currency]);
 
   const handleCompare = useCallback(async (e?: React.FormEvent) => {
@@ -502,7 +501,7 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
                 onClick={handleRefresh}
                 disabled={refreshing}
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-3 py-1.5 transition disabled:opacity-50"
-                title="Click to fetch live prices from providers"
+                title="Refresh provider prices"
               >
                 {refreshing ? (
                   <span className="inline-block w-3 h-3 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />

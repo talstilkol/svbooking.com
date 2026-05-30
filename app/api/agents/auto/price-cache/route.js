@@ -30,7 +30,7 @@ const MAX_CATALOG_DATED_HOTEL_LIMIT = 200;
 const MAX_HEATMAP_HOTEL_LIMIT = HOTELS.length;
 const MAX_ALERT_DATED_ITEMS = 100;
 const DATED_RATE_CHECK_IN_OFFSETS = [1, 3, 7, 14, 30];
-/** Extra offsets for popular hotels — fills gaps to give top hotels broader date coverage */
+/** Extra offsets for popular catalog entries to broaden date coverage */
 const POPULAR_EXTRA_OFFSETS = [5, 10, 21];
 const HEATMAP_CHECK_OUT_OFFSETS = DATED_RATE_CHECK_IN_OFFSETS.map((offset) => offset + DEFAULT_NIGHTS);
 

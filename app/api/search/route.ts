@@ -2,6 +2,7 @@ import { searchHotels, listCities, listCountries } from '@/lib/hotels-catalog';
 import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 const searchLimiter = rateLimit({ namespace: 'search', limit: 60, window: 60, failOpen: true });
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 
 interface SearchHotel {
   hotelKey: string;
@@ -70,7 +71,7 @@ export async function GET(request: Request) {
     console.error('GET /api/search error:', err);
     return Response.json(
       { error: 'Search unavailable', cities: [], countries: [], hotels: [] },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }

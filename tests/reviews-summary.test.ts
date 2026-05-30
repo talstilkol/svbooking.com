@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { getReviewSummary, getUnavailableReviewSummary, isReviewProviderConfigured } from '@/lib/reviews';
+import { getReviewSummary, isReviewProviderConfigured } from '@/lib/reviews';
 import { normalizeGooglePlaces } from '@/lib/reviews/google-places';
 import { HOTELS } from '@/lib/hotels-catalog';
 
