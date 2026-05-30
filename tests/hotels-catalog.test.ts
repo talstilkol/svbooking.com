@@ -5,8 +5,12 @@ import {
   listCountries,
   getHotelsByCity,
   getHotelsByCountry,
+  getHotelsByContinent,
+  getHotelsByCities,
   findHotel,
   searchHotels,
+  addDiscoveredHotel,
+  getCatalogStats,
 } from '@/lib/hotels-catalog';
 
 describe('hotels-catalog', () => {
@@ -77,6 +81,10 @@ describe('hotels-catalog', () => {
     it('returns all hotels when city is null', () => {
       expect(getHotelsByCity(null)).toBe(HOTELS);
     });
+
+    it('does not throw for non-string city input', () => {
+      expect(getHotelsByCity(42 as unknown as string)).toEqual([]);
+    });
   });
 
   describe('getHotelsByCountry', () => {
@@ -88,6 +96,40 @@ describe('hotels-catalog', () => {
 
     it('returns empty array for unknown country', () => {
       expect(getHotelsByCountry('Narnia')).toEqual([]);
+    });
+
+    it('does not throw for non-string country input', () => {
+      expect(getHotelsByCountry({} as unknown as string)).toEqual([]);
+    });
+  });
+
+  describe('getHotelsByContinent', () => {
+    it('returns hotels for a known continent', () => {
+      const hotels = getHotelsByContinent('europe');
+      expect(hotels.length).toBeGreaterThan(0);
+      expect(hotels.some((h) => h.city === 'Paris')).toBe(true);
+    });
+
+    it('normalizes continent casing and whitespace', () => {
+      expect(getHotelsByContinent(' Europe ')).toEqual(getHotelsByContinent('europe'));
+    });
+
+    it('returns empty array for invalid continent input', () => {
+      expect(getHotelsByContinent(null as unknown as string)).toEqual([]);
+      expect(getHotelsByContinent('Atlantis')).toEqual([]);
+    });
+  });
+
+  describe('getHotelsByCities', () => {
+    it('returns hotels from valid cities and skips malformed entries', () => {
+      const hotels = getHotelsByCities(['Paris', ' paris ', '', null as unknown as string, 'Atlantis']);
+      expect(hotels.length).toBeGreaterThan(0);
+      expect(hotels.every((h) => h.city === 'Paris')).toBe(true);
+    });
+
+    it('returns the full catalog when no city list is supplied', () => {
+      expect(getHotelsByCities([])).toBe(HOTELS);
+      expect(getHotelsByCities(null as unknown as string[])).toBe(HOTELS);
     });
   });
 
@@ -136,6 +178,66 @@ describe('hotels-catalog', () => {
       const results = searchHotels('Pars'); // typo for Paris
       // Should find Paris hotels via fuzzy match
       expect(results.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('addDiscoveredHotel', () => {
+    it('rejects malformed and duplicate catalog entries', () => {
+      expect(addDiscoveredHotel(null)).toBe(false);
+      expect(addDiscoveredHotel({
+        hotelKey: 'not-a-tripadvisor-key',
+        name: 'Le Meurice',
+        city: 'Paris',
+        country: 'France',
+      })).toBe(false);
+      expect(addDiscoveredHotel({
+        hotelKey: 'g187147-d188728',
+        name: 'Le Meurice',
+        city: 'Paris',
+        country: 'France',
+      })).toBe(false);
+      expect(addDiscoveredHotel({
+        hotelKey: 'g187147-d197601',
+        name: '   ',
+        city: 'Paris',
+        country: 'France',
+      })).toBe(false);
+    });
+
+    it('normalizes verified dynamic entries before indexing them', () => {
+      const before = getCatalogStats();
+      const added = addDiscoveredHotel({
+        hotelKey: 'g187147-d197601',
+        name: '  Hotel Lutetia  ',
+        city: ' Paris ',
+        country: ' France ',
+        stars: 9,
+        lat: 120,
+        lon: -240,
+        source: ' wikidata ',
+        sourceUrl: 'http://www.wikidata.org/',
+        externalIds: [] as unknown as object,
+        provenance: { source: 'wikidata' },
+      });
+
+      expect(added).toBe(true);
+      const hotel = findHotel('g187147-d197601');
+      expect(hotel).toMatchObject({
+        hotelKey: 'g187147-d197601',
+        name: 'Hotel Lutetia',
+        city: 'Paris',
+        country: 'France',
+        stars: 0,
+        lat: null,
+        lon: null,
+        source: 'wikidata',
+        sourceUrl: null,
+        externalIds: {},
+        provenance: { source: 'wikidata' },
+        discovered: true,
+      });
+      expect(getHotelsByCity('Paris')).toContain(hotel);
+      expect(getCatalogStats().discoveredHotels).toBe(before.discoveredHotels + 1);
     });
   });
 });

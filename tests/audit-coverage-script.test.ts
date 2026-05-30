@@ -31,10 +31,10 @@ function runCoverageAudit(summaryPath: string) {
 describe('coverage audit script', () => {
   it('passes when current coverage clears the ratchet floors', async () => {
     const summaryPath = await writeSummary({
-      lines: { pct: 88.93 },
-      statements: { pct: 84.45 },
-      functions: { pct: 88.61 },
-      branches: { pct: 72.5 },
+      lines: { pct: 89.91 },
+      statements: { pct: 85.52 },
+      functions: { pct: 89.53 },
+      branches: { pct: 74.57 },
     });
 
     const result = runCoverageAudit(summaryPath);
@@ -45,15 +45,15 @@ describe('coverage audit script', () => {
 
   it('fails when coverage regresses below a floor', async () => {
     const summaryPath = await writeSummary({
-      lines: { pct: 87.99 },
-      statements: { pct: 84.45 },
-      functions: { pct: 88.61 },
-      branches: { pct: 72.5 },
+      lines: { pct: 88.99 },
+      statements: { pct: 85.52 },
+      functions: { pct: 89.53 },
+      branches: { pct: 74.57 },
     });
 
     const result = runCoverageAudit(summaryPath);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain('lines coverage 87.99% is below the ratchet floor 88%');
+    expect(result.stderr).toContain('lines coverage 88.99% is below the ratchet floor 89%');
   });
 });

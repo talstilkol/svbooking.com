@@ -20,9 +20,9 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 160 test files, 771 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 88.93% lines, 84.45% statements, 88.61% functions, and 72.5% branches. |
-| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 88%, statements 84%, functions 88%, branches 72%. |
+| `npm test` | PASS | 160 test files, 780 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 89.91% lines, 85.52% statements, 89.53% functions, and 74.57% branches. |
+| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 89%, statements 85%, functions 89%, branches 74%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 727 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 61 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
@@ -115,6 +115,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Hardened discovery/enrichment sources against fabricated fallback labels, unsafe SPARQL values, unbounded DBpedia limits, missing Nominatim names, and zero-coordinate Overpass hotel results; added coverage for Overpass, Xotelo discovery, Wikidata enrichment, DBpedia, and Wikivoyage parser edge cases.
 - Hardened geolocation IP normalization before external provider lookup, added browser hook coverage for local storage/favorites/trips/recently viewed/history, and covered browser currency detection plus legacy currency migration.
 - Hardened holiday date-range validation and country-name normalization, preserved provider-unavailable semantics, sanitized hotel popularity counters before KV writes/reads, and added coverage for those edge cases.
+- Hardened dynamic hotel catalog ingestion so discovered entries require valid TripAdvisor-style keys, trimmed real text, bounded stars/coordinates, HTTPS source URLs, and safe object provenance before runtime or KV indexing.
 - Removed remaining local hook-dependency suppressions in hotel detail and side-by-side compare flows, and replaced CLS `any` casts in the performance monitor with a typed layout-shift entry.
 - Localized the home search autocomplete labels and clear action through the existing dictionary.
 
@@ -125,7 +126,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Branch coverage below next target | Medium | `lib` branch coverage is 72.5%. | Add focused tests for catalog, cache/provider/auth/error branches, then raise the coverage ratchet toward 80%. |
+| Branch coverage below next target | Medium | `lib` branch coverage is 74.57%. | Add focused tests for cache/provider/auth/error branches, then raise the coverage ratchet toward 80%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |
