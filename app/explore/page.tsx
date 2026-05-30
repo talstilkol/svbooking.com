@@ -5,6 +5,11 @@ import { CONTINENTS } from '@/lib/destinations';
 import DealCard from '@/components/DealCard';
 import WorldMap from '@/components/WorldMap';
 import DestinationIntel from '@/components/DestinationIntel';
+import { useLocale } from '@/components/LocaleProvider';
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
 
 interface Deal {
   hotel: { hotelKey: string; name: string; city: string; country: string; image: string };
@@ -36,6 +41,7 @@ function sortDeals(deals: Deal[], sortBy: SortOption): Deal[] {
 }
 
 export default function ExplorePage() {
+  const { t } = useLocale();
   const [selectedContinent, setSelectedContinent] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
@@ -104,8 +110,8 @@ export default function ExplorePage() {
     <div className="min-h-screen">
       <div className="bg-linear-to-r from-indigo-600 to-purple-600 text-white py-12 px-4">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl font-bold mb-2">Explore Destinations</h1>
-          <p className="text-lg opacity-90">Explore catalog hotels by region, country, or city</p>
+          <h1 className="text-4xl font-bold mb-2">{t('exploreTitle')}</h1>
+          <p className="text-lg opacity-90">{t('exploreSubtext')}</p>
         </div>
       </div>
 
@@ -113,17 +119,17 @@ export default function ExplorePage() {
         {/* Date Filter */}
         <div className="bg-white border border-zinc-200 rounded-lg p-4 mb-8">
           <div className="flex flex-wrap items-center gap-4">
-            <span className="text-sm font-medium text-zinc-700">Optional dates:</span>
+            <span className="text-sm font-medium text-zinc-700">{t('exploreOptionalDates')}</span>
             <input
               type="date"
-              aria-label="Check-in date"
+              aria-label={t('exploreCheckIn')}
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
               className="px-3 py-2 border border-zinc-300 rounded-lg text-sm bg-white text-zinc-900"
             />
             <input
               type="date"
-              aria-label="Check-out date"
+              aria-label={t('exploreCheckOut')}
               value={checkOut}
               onChange={(e) => setCheckOut(e.target.value)}
               className="px-3 py-2 border border-zinc-300 rounded-lg text-sm bg-white text-zinc-900"
@@ -133,7 +139,7 @@ export default function ExplorePage() {
                 onClick={() => { setCheckIn(''); setCheckOut(''); }}
                 className="text-sm text-red-500 hover:text-red-600"
               >
-                Clear dates
+                {t('exploreClearDates')}
               </button>
             )}
           </div>
@@ -142,15 +148,15 @@ export default function ExplorePage() {
         {/* World map */}
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-slate-700 mb-3">
-            📍 Click a city on the map
+            📍 {t('exploreClickCity')}
             {selectedCity && (
               <span className="ml-2 text-sm font-normal text-indigo-600">
-                Showing deals in {selectedCity}
+                {interpolate(t('exploreShowingDeals'), { city: selectedCity })}
                 <button
                   onClick={() => setSelectedCity(null)}
                   className="ml-2 text-red-500 hover:text-red-600 text-xs"
                 >
-                  ✕ Clear
+                  ✕ {t('exploreClear')}
                 </button>
               </span>
             )}
@@ -180,7 +186,7 @@ export default function ExplorePage() {
               <span className="text-3xl mb-2">{continent.emoji}</span>
               <span className="font-medium text-sm">{continent.name}</span>
               <span className="text-xs opacity-70 mt-1">
-                {continent.countries.length} {continent.countries.length === 1 ? 'country' : 'countries'}
+                {interpolate(t('exploreCountriesCount'), { count: continent.countries.length })}
               </span>
             </button>
           ))}
@@ -224,13 +230,13 @@ export default function ExplorePage() {
         {deals.length > 0 && !loading && (
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-zinc-500">
-              {deals.length} {deals.length === 1 ? 'deal' : 'deals'} found
+              {interpolate(t('exploreDealsFound'), { count: deals.length })}
               {strategy === 'cached-agent' && (
-                <span className="text-emerald-600 ml-1">(instant)</span>
+                <span className="text-emerald-600 ml-1">{t('exploreInstant')}</span>
               )}
             </p>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-zinc-500">Sort by:</span>
+              <span className="text-sm text-zinc-500">{t('exploreSortBy')}</span>
               {(['price', 'name', 'country'] as SortOption[]).map((opt) => (
                 <button
                   key={opt}
@@ -241,7 +247,7 @@ export default function ExplorePage() {
                       : 'bg-white text-zinc-600 border border-zinc-200 hover:border-indigo-300'
                   }`}
                 >
-                  {opt === 'price' ? '💰 Price' : opt === 'name' ? '🏨 Name' : '🌍 Country'}
+                  {opt === 'price' ? `💰 ${t('exploreSortPrice')}` : opt === 'name' ? `🏨 ${t('exploreSortName')}` : `🌍 ${t('exploreSortCountry')}`}
                 </button>
               ))}
             </div>
@@ -251,7 +257,7 @@ export default function ExplorePage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-zinc-500 mt-3">Finding available rate observations...</p>
+            <p className="text-zinc-500 mt-3">{t('exploreFinding')}</p>
           </div>
         ) : sortedDeals.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -262,11 +268,11 @@ export default function ExplorePage() {
         ) : (
           <div className="text-center py-12 text-zinc-500">
             <div className="text-4xl mb-3">🔍</div>
-            <p className="text-lg">No deals available right now</p>
+            <p className="text-lg">{t('exploreNoDeals')}</p>
             <p className="text-sm mt-2">
               {selectedContinent || selectedCountry || selectedCity
-                ? 'Try a different region or clear date filters.'
-                : 'Click a city on the map or a continent below to explore.'}
+                ? t('exploreTryDifferent')
+                : t('exploreClickToExplore')}
             </p>
           </div>
         )}
