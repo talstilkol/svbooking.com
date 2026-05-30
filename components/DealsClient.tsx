@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import DealCard from '@/components/DealCard';
 import { CONTINENTS } from '@/lib/destinations';
+import { useLocale } from '@/components/LocaleProvider';
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
 
 interface Deal {
   hotel: { hotelKey: string; name: string; city: string; country: string; image: string };
@@ -20,6 +25,7 @@ interface Deal {
 type SortOption = 'price-asc' | 'price-desc' | 'city' | 'country';
 
 export default function DealsClient() {
+  const { t } = useLocale();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [continent, setContinent] = useState<string | null>(null);
@@ -72,16 +78,16 @@ export default function DealsClient() {
       <div className="bg-linear-to-r from-amber-500 to-orange-500 text-white py-10 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3 mb-3">
-            <Link href="/" className="text-white/80 text-sm hover:text-white">&larr; Home</Link>
+            <Link href="/" className="text-white/80 text-sm hover:text-white">&larr; {t('dealsHome')}</Link>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Provider-Returned Hotel Deals</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">{t('dealsTitle')}</h1>
           <p className="text-lg opacity-90">
-            Verified provider data when available across {CONTINENTS.length} regions
+            {interpolate(t('dealsSubtext'), { regions: CONTINENTS.length })}
           </p>
           {lastScanned && (
             <p className="text-sm opacity-70 mt-2">
-              Last scanned: {lastScanned}
-              {strategy === 'cached-agent' && ' (instant from AI agent cache)'}
+              {t('dealsLastScanned')} {lastScanned}
+              {strategy === 'cached-agent' && t('dealsAgentCache')}
             </p>
           )}
         </div>
@@ -96,7 +102,7 @@ export default function DealsClient() {
               !continent ? 'bg-amber-500 text-white' : 'bg-white border border-slate-200 text-slate-700 hover:border-amber-300'
             }`}
           >
-            All Regions
+            {t('dealsAllRegions')}
           </button>
           {CONTINENTS.map((c) => (
             <button
@@ -114,18 +120,18 @@ export default function DealsClient() {
         {/* Sort + count */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <p className="text-sm text-slate-500">
-            {loading ? 'Scanning...' : `${sorted.length} deal${sorted.length !== 1 ? 's' : ''} found`}
+            {loading ? t('dealsScanningShort') : interpolate(t('dealsFound'), { count: sorted.length })}
           </p>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortOption)}
-            aria-label="Sort deals"
+            aria-label={t('dealsAriaSort')}
             className="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white text-slate-900"
           >
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="city">City A-Z</option>
-            <option value="country">Country A-Z</option>
+            <option value="price-asc">{t('dealsSortPriceAsc')}</option>
+            <option value="price-desc">{t('dealsSortPriceDesc')}</option>
+            <option value="city">{t('dealsSortCity')}</option>
+            <option value="country">{t('dealsSortCountry')}</option>
           </select>
         </div>
 
@@ -140,7 +146,7 @@ export default function DealsClient() {
         {loading ? (
           <div className="text-center py-16">
             <div className="inline-block w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-slate-500 mt-3">Scanning hotels for available rate observations...</p>
+            <p className="text-slate-500 mt-3">{t('dealsScanningLong')}</p>
           </div>
         ) : sorted.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -151,8 +157,8 @@ export default function DealsClient() {
         ) : (
           <div className="text-center py-16 text-slate-500">
             <div className="text-5xl mb-4">&#128270;</div>
-            <p className="text-lg">No deals available right now</p>
-            <p className="text-sm mt-2">Try a different region or check back later</p>
+            <p className="text-lg">{t('dealsNone')}</p>
+            <p className="text-sm mt-2">{t('dealsNoneDesc')}</p>
           </div>
         )}
 
@@ -163,7 +169,7 @@ export default function DealsClient() {
               onClick={() => setRefreshKey((k) => k + 1)}
               className="px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 font-medium transition"
             >
-              &#128260; Refresh Deals
+              &#128260; {t('dealsRefresh')}
             </button>
           </div>
         )}
