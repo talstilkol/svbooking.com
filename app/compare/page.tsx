@@ -15,10 +15,16 @@ import ProviderInfo from '@/components/ProviderInfo';
 import { CompareCardSkeleton, PageSkeleton } from '@/components/Skeleton';
 import GuestSelector from '@/components/GuestSelector';
 import ShareBar from '@/components/ShareBar';
+import { useLocale } from '@/components/LocaleProvider';
 import type { CatalogHotel, ProviderRate } from '@/lib/types';
 
 type Hotel = CatalogHotel;
 type Rate = ProviderRate;
+type TFn = (key: string) => string;
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
 
 interface Comparison {
   hotel: Hotel;
@@ -53,29 +59,30 @@ function todayStr() {
   return localDate(0);
 }
 
-function rateSourceLabel(rate: Rate) {
-  return `Source: ${rate.source || 'unavailable'}`;
+function rateSourceLabel(t: TFn, rate: Rate) {
+  return `${t('compareSourceLabel')} ${rate.source || 'unavailable'}`;
 }
 
-function rateFreshnessLabel(rate: Rate) {
-  return `Freshness: ${rate.freshness || 'unknown'}`;
+function rateFreshnessLabel(t: TFn, rate: Rate) {
+  return `${t('compareFreshnessLabel')} ${rate.freshness || 'unknown'}`;
 }
 
-function rateCompletenessLabel(rate: Rate) {
-  return rate.partial ? 'Partial provider response' : 'Complete provider response';
+function rateCompletenessLabel(t: TFn, rate: Rate) {
+  return rate.partial ? t('comparePartial') : t('compareComplete');
 }
 
-function rateTaxLabel(rate: Rate) {
-  if (rate.taxesIncluded === true) return 'Taxes included';
-  if (rate.taxesIncluded === false) return 'Taxes may be excluded';
-  return 'Tax status unavailable';
+function rateTaxLabel(t: TFn, rate: Rate) {
+  if (rate.taxesIncluded === true) return t('compareTaxIncluded');
+  if (rate.taxesIncluded === false) return t('compareTaxExcluded');
+  return t('compareTaxUnknown');
 }
 
-function rateAccuracyLabel(rate: Rate) {
-  return `Accuracy: ${rate.priceAccuracyState || 'unobserved'}`;
+function rateAccuracyLabel(t: TFn, rate: Rate) {
+  return `${t('compareAccuracyLabel')} ${rate.priceAccuracyState || 'unobserved'}`;
 }
 
 function CompareInner() {
+  const { t } = useLocale();
   const searchParams = useSearchParams();
   const urlHotelKey = searchParams.get('hotelKey') || '';
   const urlCheckIn = searchParams.get('checkIn') || '';
@@ -114,11 +121,11 @@ function CompareInner() {
         });
       }
     } catch {
-      setError('Price comparison is unavailable right now.');
+      setError(t('compareUnavailableNow'));
     } finally {
       setComparing(null);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -140,7 +147,7 @@ function CompareInner() {
           }
         }
       } catch (err) {
-        if (err instanceof Error && err.name !== 'AbortError') setError('Failed to load catalog');
+        if (err instanceof Error && err.name !== 'AbortError') setError(t('compareLoadFail'));
       } finally {
         setLoading(false);
       }
@@ -171,19 +178,19 @@ function CompareInner() {
       {/* Gradient header */}
       <div className="bg-linear-to-r from-blue-600 via-blue-700 to-cyan-600 text-white py-10 px-4 mb-8">
         <div className="max-w-6xl mx-auto">
-          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">← Home</Link>
+          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">← {t('compareHome')}</Link>
           <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            Hotel Price Comparison
+            {t('compareTitle')}
           </h1>
           <div className="flex flex-wrap items-center gap-4">
             <p className="text-white/80 flex-1">
-              Provider-returned prices when configured sources return rates
+              {t('compareSubtext')}
             </p>
             <Link
               href="/compare-hotels"
               className="px-4 py-2 bg-white/20 backdrop-blur text-white rounded-lg hover:bg-white/30 text-sm font-medium transition shrink-0"
             >
-              &#9878;&#65039; Side-by-side comparison
+              &#9878;&#65039; {t('compareSideBySide')}
             </Link>
           </div>
         </div>
@@ -196,7 +203,7 @@ function CompareInner() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label htmlFor="compare-city" className="block text-sm font-medium text-slate-700 mb-1">
-                City
+                {t('compareCity')}
               </label>
               <select
                 id="compare-city"
@@ -204,7 +211,7 @@ function CompareInner() {
                 onChange={(e) => handleCityChange(e.target.value)}
                 className="w-full border border-slate-300 rounded-lg px-3 py-2 bg-white text-slate-900"
               >
-                <option value="">All cities</option>
+                <option value="">{t('compareAllCities')}</option>
                 {cities.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
@@ -212,7 +219,7 @@ function CompareInner() {
             </div>
             <div>
               <label htmlFor="compare-checkin" className="block text-sm font-medium text-slate-700 mb-1">
-                Check-in
+                {t('compareCheckIn')}
               </label>
               <input
                 id="compare-checkin"
@@ -225,7 +232,7 @@ function CompareInner() {
             </div>
             <div>
               <label htmlFor="compare-checkout" className="block text-sm font-medium text-slate-700 mb-1">
-                Check-out
+                {t('compareCheckOut')}
               </label>
               <input
                 id="compare-checkout"
@@ -251,7 +258,7 @@ function CompareInner() {
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-            <strong>Error:</strong> {error}
+            <strong>{t('compareErrorPrefix')}</strong> {error}
           </div>
         )}
 
@@ -292,22 +299,22 @@ function CompareInner() {
                         <div className="flex justify-between items-start">
                           <div>
                             <div className="text-xs text-green-700 uppercase">
-                              Cheapest
+                              {t('compareCheapest')}
                             </div>
                             <div className="text-2xl font-bold text-green-700">
                               {result.cheapest?.currency} {result.cheapest?.total.toFixed(2)}
                             </div>
                             <div className="text-sm text-green-700">
-                              on {result.cheapest?.provider}
+                              {t('compareOn')} {result.cheapest?.provider}
                             </div>
                           </div>
                           {result.savingsPct > 0 && (
                             <div className="text-right">
                               <div className="inline-block px-2 py-1 bg-green-600 text-white text-xs font-bold rounded">
-                                SAVE {result.savingsPct}%
+                                {t('compareSave')} {result.savingsPct}%
                               </div>
                               <div className="text-xs text-green-700 mt-1">
-                                ${result.savingsAmount} less
+                                ${result.savingsAmount} {t('compareLess')}
                               </div>
                             </div>
                           )}
@@ -339,11 +346,11 @@ function CompareInner() {
                                 aria-label={`Rate metadata for ${rate.provider}`}
                               >
                                 {[
-                                  rateSourceLabel(rate),
-                                  rateFreshnessLabel(rate),
-                                  rateCompletenessLabel(rate),
-                                  rateTaxLabel(rate),
-                                  rateAccuracyLabel(rate),
+                                  rateSourceLabel(t, rate),
+                                  rateFreshnessLabel(t, rate),
+                                  rateCompletenessLabel(t, rate),
+                                  rateTaxLabel(t, rate),
+                                  rateAccuracyLabel(t, rate),
                                 ].map((label) => (
                                   <span
                                     key={label}
@@ -359,7 +366,7 @@ function CompareInner() {
                                 {rate.currency} {rate.total.toFixed(2)}
                               </span>
                               <span className="text-xs text-slate-500">
-                                {rate.deepLink ? 'Open provider ↗' : 'Provider search unavailable'}
+                                {rate.deepLink ? `${t('compareOpenProvider')} ↗` : t('compareProviderUnavailable')}
                               </span>
                             </span>
                             </>
@@ -411,9 +418,9 @@ function CompareInner() {
 
                     {result && result.rates.length === 0 && (
                       <div className="mb-3 p-3 bg-amber-50 rounded border border-amber-200 text-sm">
-                        <p className="text-amber-800 font-medium">No rates available</p>
+                        <p className="text-amber-800 font-medium">{t('compareNoRates')}</p>
                         <p className="text-amber-700 mt-1">
-                          This hotel has no provider-returned pricing data for the selected dates. Try adjusting dates or another catalog hotel.
+                          {t('compareNoRatesDesc')}
                         </p>
                       </div>
                     )}
@@ -423,7 +430,7 @@ function CompareInner() {
                       disabled={isComparing}
                       className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
                     >
-                      {isComparing ? 'Comparing...' : result ? 'Refresh prices' : 'Compare prices'}
+                      {isComparing ? t('compareComparing') : result ? t('compareRefresh') : t('compareCompare')}
                     </button>
 
                     {result && result.rates.length > 0 && (
@@ -461,17 +468,17 @@ function CompareInner() {
               disabled={page === 1}
               className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
             >
-              ← Prev
+              ← {t('prevLabel')}
             </button>
             <span className="text-sm text-slate-600 px-3">
-              Page {page} of {totalPages} ({filteredHotels.length} hotels)
+              {interpolate(t('comparePageOf'), { page, total: totalPages, count: filteredHotels.length })}
             </span>
             <button
               onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
               disabled={page === totalPages}
               className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50"
             >
-              Next →
+              {t('nextLabel')} →
             </button>
           </nav>
         )}
