@@ -124,6 +124,7 @@ describe('OpenTripMap helpers', () => {
       { xid: 'G1', name: 'Royal Observatory Greenwich', point: { lat: 51.4769, lon: 0 }, kinds: 'museums', rate: 1 },
       { xid: 'L1', name: 'Louvre Museum', point: { lat: 48.8606, lon: 2.3376 }, kinds: 'museums', rate: 3, wikidata: 'Q19675' },
       { xid: 'E1', name: '', point: { lat: 48.8584, lon: 2.2945 }, kinds: 'architecture', rate: 3 },
+      { xid: 'B1', name: 'Bad Coordinate POI', point: { lat: 91, lon: 181 }, kinds: 'historic', rate: 3 },
     ]));
     vi.stubGlobal('fetch', fetchMock);
     const { getAttractions, getTopAttractions } = await import('@/lib/opentripmap');
@@ -134,6 +135,37 @@ describe('OpenTripMap helpers', () => {
     expect(attractions[0]).toMatchObject({ name: 'Louvre Museum', rate: 3, type: 'Museum' });
     expect(attractions[1]).toMatchObject({ name: 'Royal Observatory Greenwich', lat: 51.4769, lon: 0, distanceM: 0 });
     expect(top.map((item) => item.name)).toEqual(['Louvre Museum']);
+    expect(attractions.map((item) => item.name)).not.toContain('Bad Coordinate POI');
+  });
+
+  it('bounds OpenTripMap request inputs before provider access', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse([]));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getAttractions, getTopAttractions } = await import('@/lib/opentripmap');
+
+    await expect(getAttractions({
+      lat: '91' as unknown as number,
+      lon: 0,
+      radius: 999999,
+      kinds: 'museums, bad kind, historic); DROP',
+      limit: 999,
+    })).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await getAttractions({
+      lat: 48.8566,
+      lon: 2.3522,
+      radius: 999999,
+      kinds: 'museums, bad kind, historic',
+      limit: 999,
+    });
+    const radiusUrl = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(radiusUrl.searchParams.get('radius')).toBe('25000');
+    expect(radiusUrl.searchParams.get('limit')).toBe('60');
+    expect(radiusUrl.searchParams.get('kinds')).toBe('museums,historic');
+
+    await getTopAttractions({ lat: 48.8566, lon: 2.3522, limit: -10 });
+    expect(new URL(String(fetchMock.mock.calls[1][0])).searchParams.get('limit')).toBe('40');
   });
 
   it('loads place details and degrades to null for unavailable details', async () => {
@@ -163,5 +195,35 @@ describe('OpenTripMap helpers', () => {
     });
     await expect(getPlaceDetails('')).resolves.toBeNull();
     await expect(getPlaceDetails('missing')).resolves.toBeNull();
+  });
+
+  it('sanitizes OpenTripMap detail IDs and URLs before returning details', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({
+      xid: 'L1',
+      name: ' Louvre  Museum ',
+      wikipedia_extracts: { text: ' Louvre details ' },
+      preview: { source: 'javascript:alert(1)' },
+      image: 'http://images.example/louvre.jpg',
+      wikipedia: 'http://en.wikipedia.org/wiki/Louvre',
+      rate: 99,
+      kinds: 'museums, bad kind, cultural',
+      address: { city: 'Paris' },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getPlaceDetails } = await import('@/lib/opentripmap');
+
+    await expect(getPlaceDetails('../bad')).resolves.toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await expect(getPlaceDetails('L1')).resolves.toMatchObject({
+      xid: 'L1',
+      name: 'Louvre Museum',
+      description: 'Louvre details',
+      imageUrl: null,
+      wikipediaUrl: null,
+      rate: 3,
+      kinds: 'museums,cultural',
+    });
+    expect(String(fetchMock.mock.calls[0][0])).toBe('https://api.opentripmap.com/0.1/en/places/xid/L1');
   });
 });
