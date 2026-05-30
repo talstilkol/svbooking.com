@@ -1,4 +1,5 @@
 import {
+  HolidayDateRangeError,
   HolidayProviderUnavailableError,
   getPublicHolidays,
   getHolidaysInRange,
@@ -46,7 +47,17 @@ export async function GET(request) {
 
     // Check if holidays overlap with travel dates
     if (checkIn && checkOut) {
-      const overlapping = await getHolidaysInRange(countryCode, checkIn, checkOut);
+      let overlapping;
+      try {
+        overlapping = await getHolidaysInRange(countryCode, checkIn, checkOut);
+      } catch (error) {
+        if (!(error instanceof HolidayDateRangeError)) throw error;
+        return Response.json(
+          { error: error.message },
+          { status: 400, headers: { 'Cache-Control': 'no-store' } }
+        );
+      }
+
       return Response.json({
         countryCode,
         checkIn,

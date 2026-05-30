@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GET as getHolidays } from '@/app/api/holidays/route';
-import { getPublicHolidays } from '@/lib/holidays';
+import { countryToCode, getHolidaysInRange, getPublicHolidays, getUpcomingHolidays } from '@/lib/holidays';
 
 describe('holiday provider normalization', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it('normalizes public holidays from the upstream provider', async () => {
@@ -43,6 +44,51 @@ describe('holiday provider normalization', () => {
     await expect(getPublicHolidays('US', 2027)).rejects.toThrow('invalid JSON');
   });
 
+  it('normalizes country names without requiring exact casing', () => {
+    expect(countryToCode(' france ')).toBe('FR');
+    expect(countryToCode('UNITED KINGDOM')).toBe('GB');
+    expect(countryToCode('unknown')).toBeNull();
+  });
+
+  it('loads holidays across year boundaries and validates date ranges before upstream lookup', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify([
+        { date: '2026-12-25', name: 'Christmas Day', localName: 'Christmas Day', countryCode: 'US', fixed: true, global: true, types: ['Public'] },
+      ]), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([
+        { date: '2027-01-01', name: 'New Year', localName: 'New Year', countryCode: 'US', fixed: true, global: true, types: ['Public'] },
+      ]), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getHolidaysInRange('US', '2026-12-24', '2027-01-02')).resolves.toEqual([
+      expect.objectContaining({ date: '2026-12-25' }),
+      expect.objectContaining({ date: '2027-01-01' }),
+    ]);
+    await expect(getHolidaysInRange('US', '2026-02-30', '2026-03-02')).rejects.toThrow('checkIn must be a valid date');
+    await expect(getHolidaysInRange('US', '2026-03-02', '2026-03-02')).rejects.toThrow('checkIn must be before checkOut');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('computes upcoming holiday distance from the current clock and includes next year near year end', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-01T00:00:00Z'));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify([
+        { date: '2026-11-15', name: 'Republic Day', localName: 'Republic Day', countryCode: 'US', fixed: true, global: true, types: ['Public'] },
+      ]), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([
+        { date: '2027-01-01', name: 'New Year', localName: 'New Year', countryCode: 'US', fixed: true, global: true, types: ['Public'] },
+      ]), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getUpcomingHolidays('US')).resolves.toEqual([
+      expect.objectContaining({ date: '2026-11-15', daysAway: 14 }),
+      expect.objectContaining({ date: '2027-01-01', daysAway: 61 }),
+    ]);
+  });
+
   it('returns an explicit unavailable state for optional holiday intelligence provider gaps', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 200 })));
 
@@ -60,5 +106,16 @@ describe('holiday provider normalization', () => {
       source: 'Nager.Date',
       sourceStatus: 'unavailable',
     });
+  });
+
+  it('returns a no-store 400 for invalid holiday date ranges instead of a server error', async () => {
+    const response = await getHolidays(new Request(
+      'http://localhost:3000/api/holidays?country=france&checkIn=2027-02-30&checkOut=2027-03-02'
+    ));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(body.error).toBe('checkIn must be a valid date');
   });
 });
