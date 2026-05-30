@@ -20,9 +20,9 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 151 test files, 704 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 55.75% lines, 52.56% statements, 56.76% functions, and 49.27% branches. |
-| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current conservative floors: lines 55%, statements 52%, functions 56%, branches 49%. |
+| `npm test` | PASS | 155 test files, 724 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 60.68% lines, 57.48% statements, 61.69% functions, and 53.42% branches. |
+| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current conservative floors: lines 60%, statements 57%, functions 61%, branches 53%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 727 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 61 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
@@ -110,6 +110,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Added `npm run audit:cron-cache` and marked cron-protected agent responses as `no-store`.
 - Repaired the broken `npm run test:coverage` command by adding the matching `@vitest/coverage-v8` dev dependency.
 - Added `npm run audit:coverage`, a CI-wired coverage ratchet, and regression tests for the coverage audit script.
+- Fixed valid zero-coordinate handling in geo-distance and nearest-city helpers, then added coverage for geo, destinations, country metadata, exchange rates, auth session helpers, and dashboard suggestions.
 - Removed remaining local hook-dependency suppressions in hotel detail and side-by-side compare flows, and replaced CLS `any` casts in the performance monitor with a typed layout-shift entry.
 - Localized the home search autocomplete labels and clear action through the existing dictionary.
 
@@ -120,7 +121,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Low branch coverage | Medium | `lib` branch coverage is 49.27%. | Add focused tests for cache/provider/auth/error branches, then enforce a ratcheting threshold. |
+| Low branch coverage | Medium | `lib` branch coverage is 53.42%. | Add focused tests for cache/provider/auth/error branches, then raise the coverage ratchet toward 70% and 80%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |
