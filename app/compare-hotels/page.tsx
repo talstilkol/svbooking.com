@@ -6,10 +6,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import RatingBadge from '@/components/RatingBadge';
 import { PageSkeleton } from '@/components/Skeleton';
+import { useLocale } from '@/components/LocaleProvider';
 import type { CatalogHotel, ProviderRate } from '@/lib/types';
 
 type Hotel = CatalogHotel;
 type Rate = ProviderRate;
+type TFn = (key: string) => string;
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
 
 interface ComparisonResult {
   hotel: Hotel;
@@ -27,29 +33,30 @@ function localDate(offsetDays: number) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function rateSourceLabel(rate: Rate) {
-  return `Source: ${rate.source || 'unavailable'}`;
+function rateSourceLabel(t: TFn, rate: Rate) {
+  return `${t('compareSourceLabel')} ${rate.source || 'unavailable'}`;
 }
 
-function rateFreshnessLabel(rate: Rate) {
-  return `Freshness: ${rate.freshness || 'unknown'}`;
+function rateFreshnessLabel(t: TFn, rate: Rate) {
+  return `${t('compareFreshnessLabel')} ${rate.freshness || 'unknown'}`;
 }
 
-function rateCompletenessLabel(rate: Rate) {
-  return rate.partial ? 'Partial provider response' : 'Complete provider response';
+function rateCompletenessLabel(t: TFn, rate: Rate) {
+  return rate.partial ? t('comparePartial') : t('compareComplete');
 }
 
-function rateTaxLabel(rate: Rate) {
-  if (rate.taxesIncluded === true) return 'Taxes included';
-  if (rate.taxesIncluded === false) return 'Taxes may be excluded';
-  return 'Tax status unavailable';
+function rateTaxLabel(t: TFn, rate: Rate) {
+  if (rate.taxesIncluded === true) return t('compareTaxIncluded');
+  if (rate.taxesIncluded === false) return t('compareTaxExcluded');
+  return t('compareTaxUnknown');
 }
 
-function rateAccuracyLabel(rate: Rate) {
-  return `Accuracy: ${rate.priceAccuracyState || 'unobserved'}`;
+function rateAccuracyLabel(t: TFn, rate: Rate) {
+  return `${t('compareAccuracyLabel')} ${rate.priceAccuracyState || 'unobserved'}`;
 }
 
 function CompareHotelsInner() {
+  const { t } = useLocale();
   const searchParams = useSearchParams();
   const initialKeys = (searchParams.get('hotels') || searchParams.get('keys'))?.split(',').filter(Boolean) || [];
 
@@ -166,9 +173,9 @@ function CompareHotelsInner() {
       {/* Gradient header */}
       <div className="bg-linear-to-r from-cyan-600 via-teal-600 to-emerald-600 text-white py-10 px-4 mb-8">
         <div className="max-w-7xl mx-auto">
-          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">&larr; Home</Link>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Compare Hotels Side by Side</h1>
-          <p className="text-white/70">Select up to 4 hotels and compare provider-returned prices when available</p>
+          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">&larr; {t('compareHome')}</Link>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">{t('chTitle')}</h1>
+          <p className="text-white/70">{t('chSubtext')}</p>
         </div>
       </div>
 
@@ -177,7 +184,7 @@ function CompareHotelsInner() {
         {/* Hotel Selection */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
           <h2 className="font-semibold text-slate-800 mb-4">
-            Select hotels to compare ({selectedKeys.length}/4)
+            {t('chSelectToCompare')} ({selectedKeys.length}/4)
           </h2>
           <div className="flex flex-wrap gap-3 mb-4">
             {selectedHotels.map((hotel) => (
@@ -190,7 +197,7 @@ function CompareHotelsInner() {
                 <button
                   onClick={() => removeHotel(hotel.hotelKey)}
                   className="text-red-400 hover:text-red-600 ml-1"
-                  aria-label={`Remove ${hotel.name}`}
+                  aria-label={`${t('chRemove')} ${hotel.name}`}
                 >
                   &times;
                 </button>
@@ -205,7 +212,7 @@ function CompareHotelsInner() {
               className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white text-slate-900 max-w-md"
               disabled={catalogLoading}
             >
-              <option value="">{catalogLoading ? 'Loading hotels...' : '+ Add a hotel...'}</option>
+              <option value="">{catalogLoading ? t('chLoadingHotels') : t('chAddHotel')}</option>
               {allHotels
                 .filter((h) => !selectedKeys.includes(h.hotelKey))
                 .map((h) => (
@@ -220,7 +227,7 @@ function CompareHotelsInner() {
         {/* Date Selection + Compare Button */}
         <div className="bg-white rounded-xl border border-slate-200 p-6 mb-8 flex flex-wrap gap-4 items-end">
           <div className="min-w-[160px]">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Check-in</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('compareCheckIn')}</label>
             <input
               type="date"
               value={checkIn}
@@ -230,7 +237,7 @@ function CompareHotelsInner() {
             />
           </div>
           <div className="min-w-[160px]">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Check-out</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t('compareCheckOut')}</label>
             <input
               type="date"
               value={checkOut}
@@ -244,7 +251,7 @@ function CompareHotelsInner() {
             disabled={loading || selectedKeys.length < 2}
             className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-semibold transition"
           >
-            {loading ? 'Comparing...' : `Compare ${selectedKeys.length} hotels`}
+            {loading ? t('compareComparing') : interpolate(t('chCompareN'), { count: selectedKeys.length })}
           </button>
         </div>
 
@@ -252,7 +259,7 @@ function CompareHotelsInner() {
         {loading && (
           <div className="text-center py-16">
             <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-slate-500 mt-3">Fetching provider-returned prices when available...</p>
+            <p className="text-slate-500 mt-3">{t('chFetching')}</p>
           </div>
         )}
 
@@ -291,7 +298,7 @@ function CompareHotelsInner() {
                               {refreshingKeys.has(key) ? (
                                 <span className="inline-block w-2.5 h-2.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
                               ) : '↻'}{' '}
-                              {refreshingKeys.has(key) ? 'Refreshing...' : 'Refresh prices'}
+                              {refreshingKeys.has(key) ? t('chRefreshing') : t('compareRefresh')}
                             </button>
                           )}
                         </th>
@@ -303,7 +310,7 @@ function CompareHotelsInner() {
                   {/* Cheapest row */}
                   <tr className="bg-green-50 border-b border-green-100">
                     <td className="p-4 font-semibold text-green-800 text-sm">
-                      &#11088; Lowest returned price
+                      &#11088; {t('chLowestPrice')}
                     </td>
                     {selectedKeys.map((key) => {
                       const r = results[key];
@@ -314,13 +321,13 @@ function CompareHotelsInner() {
                             {r.cheapest.currency} {r.cheapest.total.toFixed(0)}
                           </div>
                           <div className="text-xs text-green-600">
-                            {r.cheapest.currency} {(r.cheapest.total / nights).toFixed(0)}/night
+                            {r.cheapest.currency} {(r.cheapest.total / nights).toFixed(0)}{t('chPerNight')}
                           </div>
                           <div className="text-xs text-green-600 font-medium mt-0.5">
-                            on {r.cheapest.provider}
+                            {t('compareOn')} {r.cheapest.provider}
                           </div>
                           <div className="mt-2 flex flex-wrap justify-center gap-1">
-                            {[rateSourceLabel(r.cheapest), rateFreshnessLabel(r.cheapest)].map((label) => (
+                            {[rateSourceLabel(t, r.cheapest), rateFreshnessLabel(t, r.cheapest)].map((label) => (
                               <span key={label} className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
                                 {label}
                               </span>
@@ -342,7 +349,7 @@ function CompareHotelsInner() {
                         if (!rate) {
                           return (
                             <td key={key} className="p-4 text-center text-slate-500 text-sm">
-                              No provider-returned rate
+                              {t('chNoRate')}
                             </td>
                           );
                         }
@@ -352,19 +359,19 @@ function CompareHotelsInner() {
                               {rate.currency} {rate.total.toFixed(0)}
                             </div>
                             <div className="text-xs text-slate-500">
-                              {rate.currency} {(rate.total / nights).toFixed(0)}/night
+                              {rate.currency} {(rate.total / nights).toFixed(0)}{t('chPerNight')}
                             </div>
                             <div
                               className="mt-2 flex flex-wrap justify-center gap-1"
                               aria-label={`Rate metadata for ${provider} at ${r?.hotel.name || key}`}
                             >
                               {[
-                                rateSourceLabel(rate),
-                                rateFreshnessLabel(rate),
-                                rateCompletenessLabel(rate),
-                                rateTaxLabel(rate),
-                                rateAccuracyLabel(rate),
-                                rate.deepLink ? 'Provider link returned' : 'Provider search unavailable',
+                                rateSourceLabel(t, rate),
+                                rateFreshnessLabel(t, rate),
+                                rateCompletenessLabel(t, rate),
+                                rateTaxLabel(t, rate),
+                                rateAccuracyLabel(t, rate),
+                                rate.deepLink ? t('chProviderLinkReturned') : t('compareProviderUnavailable'),
                               ].map((label) => (
                                 <span
                                   key={label}
@@ -382,12 +389,12 @@ function CompareHotelsInner() {
 
                   {/* Provider count row */}
                   <tr className="bg-slate-50">
-                    <td className="p-4 text-sm font-medium text-slate-600">Providers</td>
+                    <td className="p-4 text-sm font-medium text-slate-600">{t('chProviders')}</td>
                     {selectedKeys.map((key) => {
                       const r = results[key];
                       return (
                         <td key={key} className="p-4 text-center text-sm text-slate-600">
-                          {r?.providerCount || 0} found
+                          {r?.providerCount || 0} {t('chFound')}
                         </td>
                       );
                     })}
@@ -407,7 +414,7 @@ function CompareHotelsInner() {
                     href={`/hotel/${key}`}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
                   >
-                    View {r.hotel.name} &rarr;
+                    {t('chView')} {r.hotel.name} &rarr;
                   </Link>
                 );
               })}
@@ -419,14 +426,14 @@ function CompareHotelsInner() {
         {!loading && selectedKeys.length < 2 && (
           <div className="text-center py-16 text-slate-500">
             <div className="text-5xl mb-4">&#9878;&#65039;</div>
-            <p className="text-lg">Select at least 2 hotels above to compare them side by side</p>
+            <p className="text-lg">{t('chSelectPrompt')}</p>
           </div>
         )}
 
         {!loading && selectedKeys.length >= 2 && Object.keys(results).length === 0 && (
           <div className="text-center py-16 text-slate-500">
             <div className="text-5xl mb-4">&#128200;</div>
-            <p className="text-lg">Click &quot;Compare&quot; to fetch provider-returned prices for all selected hotels</p>
+            <p className="text-lg">{t('chClickCompare')}</p>
           </div>
         )}
       </div>
