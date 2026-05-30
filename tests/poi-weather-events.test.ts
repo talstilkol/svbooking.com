@@ -302,6 +302,101 @@ describe('Ticketmaster helpers', () => {
     ]);
   });
 
+  it('rejects invalid Ticketmaster coordinates before calling the provider', async () => {
+    vi.stubEnv('TICKETMASTER_API_KEY', 'tm_realistic_key_for_tests');
+    const fetchMock = vi.fn(async () => jsonResponse({ _embedded: { events: [] } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getEvents } = await import('@/lib/ticketmaster');
+
+    await expect(getEvents({ lat: 91, lon: 2.3522 })).resolves.toEqual([]);
+    await expect(getEvents({ lat: 48.8566, lon: -181 })).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('normalizes Ticketmaster request bounds and ignores invalid dates', async () => {
+    vi.stubEnv('TICKETMASTER_API_KEY', 'tm_realistic_key_for_tests');
+    const fetchMock = vi.fn(async () => jsonResponse({
+      _embedded: {
+        events: [
+          {
+            name: 'Paris Opera Gala',
+            dates: { start: { localDate: '2026-07-14' } },
+          },
+        ],
+      },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getEvents } = await import('@/lib/ticketmaster');
+
+    const events = await getEvents({
+      lat: '48.8566' as unknown as number,
+      lon: '2.3522' as unknown as number,
+      radius: 500,
+      limit: -4,
+      startDate: '2026-99-01',
+      endDate: 'not-a-date',
+    });
+    const url = new URL(String(fetchMock.mock.calls[0][0]));
+
+    expect(url.searchParams.get('radius')).toBe('250');
+    expect(url.searchParams.get('size')).toBe('1');
+    expect(url.searchParams.has('startDateTime')).toBe(false);
+    expect(url.searchParams.has('endDateTime')).toBe(false);
+    expect(events).toHaveLength(1);
+  });
+
+  it('drops incomplete Ticketmaster events and strips unsafe ticket URLs', async () => {
+    vi.stubEnv('TICKETMASTER_API_KEY', 'tm_realistic_key_for_tests');
+    const fetchMock = vi.fn(async () => jsonResponse({
+      _embedded: {
+        events: [
+          {
+            name: '   ',
+            url: 'https://www.ticketmaster.fr/blank-name',
+            dates: { start: { localDate: '2026-07-14' } },
+          },
+          {
+            name: 'Paris Opera Gala',
+            url: 'http://www.ticketmaster.fr/paris-opera-gala',
+            dates: { start: { localDate: 'not-a-date' } },
+            classifications: [{ segment: { name: 'Arts & Theatre' }, genre: { name: 'Opera' } }],
+            priceRanges: [{ min: 0, max: 0, currency: 'EUR' }],
+          },
+          {
+            name: 'Roland Garros Exhibition',
+            url: 'https://www.ticketmaster.fr/roland-garros',
+            dates: { start: { localDate: '2026-07-15' } },
+            classifications: [{ segment: { name: 'Sports' }, genre: { name: 'Tennis' } }],
+            priceRanges: [{ min: 40, max: 90, currency: 'EUR' }],
+            _embedded: { venues: [{ name: 'Court Philippe-Chatrier' }] },
+          },
+        ],
+      },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getEvents } = await import('@/lib/ticketmaster');
+
+    const events = await getEvents({ lat: 48.8566, lon: 2.3522, limit: 10 });
+
+    expect(events).toEqual([
+      expect.objectContaining({
+        name: 'Paris Opera Gala',
+        month: '',
+        icon: '🎭',
+        description: 'From EUR 0',
+        priceRange: 'From EUR 0',
+        ticketUrl: '',
+      }),
+      expect.objectContaining({
+        name: 'Roland Garros Exhibition',
+        month: 'Jul 15',
+        icon: '🎾',
+        description: 'Court Philippe-Chatrier · EUR 40–90',
+        ticketUrl: 'https://www.ticketmaster.fr/roland-garros',
+      }),
+    ]);
+  });
+
   it('degrades to empty events when the upstream response is unavailable', async () => {
     vi.stubEnv('TICKETMASTER_API_KEY', 'tm_realistic_key_for_tests');
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, false, 503)));
