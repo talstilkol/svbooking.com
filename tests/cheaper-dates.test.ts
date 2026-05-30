@@ -102,4 +102,42 @@ describe('cheaper date price intelligence', () => {
     expect(result.originalPrice).toBeNull();
     expect(result.cheapestOverall).toBeNull();
   });
+
+  it('fails closed for invalid direct cheaper-date calls before provider access', async () => {
+    const result = await findCheaperDates('g187147-d188732', '2026-02-30', '2026-06-03');
+
+    expect(result).toMatchObject({
+      hasRealData: false,
+      method: 'unavailable',
+      originalPrice: null,
+      cheapestOverall: null,
+      availabilityReason: 'Invalid date input for cheaper-date lookup',
+    });
+    expect(result.alternatives).toEqual({ near: [], week: [], month: [] });
+    expect(getCachedRates).not.toHaveBeenCalled();
+    expect(getCachedHeatmap).not.toHaveBeenCalled();
+  });
+
+  it('fails closed for reversed direct cheaper-date calls before provider access', async () => {
+    const result = await findCheaperDates('g187147-d188732', '2026-06-03', '2026-06-01');
+
+    expect(result).toMatchObject({
+      hasRealData: false,
+      method: 'unavailable',
+      originalDates: { checkIn: '2026-06-03', checkOut: '2026-06-01', nights: -2 },
+      availabilityReason: 'checkIn must be before checkOut for cheaper-date lookup',
+    });
+    expect(getCachedRates).not.toHaveBeenCalled();
+    expect(getCachedHeatmap).not.toHaveBeenCalled();
+  });
+
+  it('skips heatmap calendar provider access when direct input dates are invalid', async () => {
+    await expect(getHeatmapCalendar({
+      hotelKey: 'g187147-d188732',
+      checkOut: '2026-02-30',
+      today: 'not-a-date',
+    })).resolves.toEqual([]);
+
+    expect(getCachedHeatmap).not.toHaveBeenCalled();
+  });
 });
