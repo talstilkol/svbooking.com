@@ -119,7 +119,7 @@ requireIncludes(masterPlan, 'MASTER-PLAN.md', [
 ]);
 
 requireIncludes(auditReport, 'AUDIT-REPORT.md', [
-  '155 test files, 724 tests passed',
+  '157 test files, 744 tests passed',
   '61 Playwright tests passed',
   'Go-live readiness',
   'Worktree is clean',
