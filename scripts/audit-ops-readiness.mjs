@@ -43,6 +43,7 @@ for (const scriptName of [
   'audit:security-responses',
   'audit:api-errors',
   'audit:cron-cache',
+  'audit:coverage',
   'audit:ops',
   'audit:production',
   'audit:production:strict',
@@ -67,6 +68,7 @@ for (const scriptName of [
   'audit:alerts',
   'lint',
   'test',
+  'test:coverage',
   'build',
   'test:e2e',
 ]) {
@@ -138,6 +140,7 @@ await requireFile('scripts/audit-affiliate-security.mjs');
 await requireFile('scripts/audit-security-responses.mjs');
 await requireFile('scripts/audit-api-error-cache.mjs');
 await requireFile('scripts/audit-cron-cache.mjs');
+await requireFile('scripts/audit-coverage.mjs');
 await requireFile('scripts/audit-providers.mjs');
 await requireFile('scripts/audit-reviews.mjs');
 await requireFile('scripts/audit-release-deletions.mjs');
@@ -171,6 +174,7 @@ requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm run audit:security-responses',
   'npm run audit:api-errors',
   'npm run audit:cron-cache',
+  'npm run audit:coverage',
   'npm run audit:ops',
   'npm run audit:agents',
   'npm run audit:duplicates',

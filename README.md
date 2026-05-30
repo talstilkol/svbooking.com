@@ -124,6 +124,7 @@ Verification commands:
 npm run lint
 npm test
 npm run test:coverage
+npm run audit:coverage
 npm run build
 npm run test:e2e
 npm run audit:guardrails
@@ -143,7 +144,7 @@ npm run audit:production
 npm run release:state
 ```
 
-Run every `npm run audit:*` script before release. `npm audit --omit=dev` contacts the npm registry and sends dependency metadata; run it only in an environment where that disclosure is approved.
+Run every `npm run audit:*` script before release. `npm audit --audit-level=moderate` contacts the npm registry and sends dependency metadata; run it only in an environment where that disclosure is approved.
 Run `npm run release:state:strict` after staging or committing intended changes; it fails while the worktree still has uncommitted or untracked paths.
 
 ## Data Rules

@@ -106,6 +106,7 @@ requireIncludes(readme, 'README.md', [
   'npm run audit:security-responses',
   'npm run audit:api-errors',
   'npm run audit:cron-cache',
+  'npm run audit:coverage',
   'npm audit',
   'dependency metadata',
   'npm run release:state',
@@ -118,7 +119,7 @@ requireIncludes(masterPlan, 'MASTER-PLAN.md', [
 ]);
 
 requireIncludes(auditReport, 'AUDIT-REPORT.md', [
-  '150 test files, 702 tests passed',
+  '151 test files, 704 tests passed',
   '61 Playwright tests passed',
   'Go-live readiness',
   'Worktree is clean',
@@ -134,6 +135,8 @@ requireIncludes(packageRaw, 'package.json', [
   '"audit:security-responses"',
   '"audit:api-errors"',
   '"audit:cron-cache"',
+  '"audit:coverage"',
+  '"test:coverage"',
   '"release:state"',
   '"release:state:strict"',
   '"audit:release-deletions"',
@@ -160,6 +163,7 @@ requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm run audit:security-responses',
   'npm run audit:api-errors',
   'npm run audit:cron-cache',
+  'npm run audit:coverage',
   'npm run audit:release-deletions',
   'npm run release:state:strict',
 ]);

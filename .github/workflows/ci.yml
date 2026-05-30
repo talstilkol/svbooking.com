@@ -134,6 +134,9 @@ jobs:
       - name: Unit and API tests
         run: npm test
 
+      - name: Coverage ratchet audit
+        run: npm run audit:coverage
+
       - name: Build
         run: npm run build
 

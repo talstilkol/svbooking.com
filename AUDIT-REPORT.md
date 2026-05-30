@@ -20,8 +20,9 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 150 test files, 702 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command now runs with `@vitest/coverage-v8`; current `lib` coverage is 55.75% lines, 52.56% statements, 56.76% functions, and 49.27% branches. |
+| `npm test` | PASS | 151 test files, 704 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 55.75% lines, 52.56% statements, 56.76% functions, and 49.27% branches. |
+| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current conservative floors: lines 55%, statements 52%, functions 56%, branches 49%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 727 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 61 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
@@ -44,7 +45,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | `npm run release:state` | PASS | Reports a clean worktree with 0 changed paths. |
 | `npm ls postcss --all` | PASS | Installed tree resolves to `postcss@8.5.14`. |
 | `git diff --check` | PASS | No whitespace errors. |
-| `npm audit --omit=dev` | PASS | Approved network audit reported 0 production dependency vulnerabilities. |
+| `npm audit --audit-level=moderate` | PASS | Approved network audit reported 0 dependency vulnerabilities. |
 
 ## Current Scores
 
@@ -54,7 +55,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Build/test health | 10/10 | Lint, unit/API tests, build, and E2E pass. |
 | Security guardrails | 9/10 | Admin auth, CSRF, HTML safety, privacy, storage, alert, and no-store checks are wired. |
 | Documentation integrity | 9/10 | README, master plan, audit report, CI, and docs audit now agree on current architecture/counts. |
-| Coverage depth | 6/10 | Coverage tooling runs, but branch coverage is still below a defensible production ratchet. |
+| Coverage depth | 6/10 | Coverage tooling runs and has a regression floor, but branch coverage is still below a defensible production target. |
 | Catalog scale | 7/10 | 502 curated hotels clears the local launch floor, still far from market-scale coverage. |
 | Provider readiness | 6/10 | Adapter infrastructure exists; real production provider credentials are missing locally. |
 | Reviews/property content | 5/10 | APIs and UI correctly show unavailable states until licensed provider data exists. |
@@ -108,6 +109,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Added `npm run audit:api-errors` and marked direct API error responses as `no-store`.
 - Added `npm run audit:cron-cache` and marked cron-protected agent responses as `no-store`.
 - Repaired the broken `npm run test:coverage` command by adding the matching `@vitest/coverage-v8` dev dependency.
+- Added `npm run audit:coverage`, a CI-wired coverage ratchet, and regression tests for the coverage audit script.
 - Removed remaining local hook-dependency suppressions in hotel detail and side-by-side compare flows, and replaced CLS `any` casts in the performance monitor with a typed layout-shift entry.
 - Localized the home search autocomplete labels and clear action through the existing dictionary.
 
@@ -129,8 +131,9 @@ Do not go live until all of these are true:
 
 - `npm run audit:production:strict` passes in deployment.
 - `npm run lint`, `npm test`, `npm run test:coverage`, `npm run build`, and `npm run test:e2e` pass.
+- `npm run audit:coverage` passes.
 - Every non-strict `npm run audit:*` script passes.
-- `npm audit --omit=dev` has passed in an approved environment.
+- `npm audit --audit-level=moderate` has passed in an approved environment.
 - The worktree is clean and `npm run release:state:strict` passes.
 - `Math.random()` remains forbidden everywhere in code.
 - No fake hotel, review, price, provider, urgency, availability, or production-readiness data has been added.
