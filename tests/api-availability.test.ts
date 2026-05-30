@@ -86,6 +86,33 @@ describe('GET /api/agents/availability', () => {
     ]);
   });
 
+  it('does not expose unsafe provider-returned deep links', async () => {
+    vi.mocked(getCachedRates).mockResolvedValueOnce({
+      rates: [{
+        provider: 'Booking.com',
+        total: 250,
+        source: 'booking-provider',
+        deepLink: 'javascript:alert(1)',
+      }],
+      currency: 'USD',
+      source: 'provider-registry',
+      freshness: 'live',
+    });
+
+    const response = await GET(request('hotelKey=g187147-d188728&checkIn=2027-06-01&checkOut=2027-06-03'));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.sourcePolicy).toBe('provider-returned-deep-links-only');
+    expect(body.bookingLinks).toEqual([]);
+    expect(body.results[0]).toMatchObject({
+      status: 'unavailable',
+      available: false,
+      deepLink: null,
+    });
+    expect(JSON.stringify(body)).not.toContain('javascript:');
+  });
+
   it('rejects unknown hotels instead of building fallback provider searches', async () => {
     const response = await GET(request('hotelKey=missing&checkIn=2027-06-01&checkOut=2027-06-03'));
     const body = await response.json();

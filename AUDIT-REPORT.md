@@ -20,8 +20,8 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 162 test files, 800 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 91.06% lines, 86.63% statements, 90.14% functions, and 76.96% branches. |
+| `npm test` | PASS | 162 test files, 802 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 91.06% lines, 86.65% statements, 90.17% functions, and 76.96% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 91%, statements 86%, functions 90%, branches 76%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 727 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 61 Playwright tests passed. |
@@ -122,6 +122,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Hardened price-cache rate normalization so unusable provider rates, non-positive totals, invalid currencies, blocked provider labels, and non-HTTPS provider links are removed before cached or cached-returned data is surfaced.
 - Fixed the enrichment agent so Wikidata booking-slug results returned as a `Map` are actually persisted, and hardened Wikidata enrichment parsing to drop unsafe slugs, non-HTTPS URLs, malformed provider IDs, and out-of-range coordinates.
 - Hardened ops provider alerts so provider-specific success-rate and latency alerts require enough events for that provider, and sanitized provider-derived alert IDs and display names.
+- Hardened reusable provider-rate observations so public availability and recommendation surfaces only reuse HTTPS provider deep links and normalized three-letter currencies.
 - Removed remaining local hook-dependency suppressions in hotel detail and side-by-side compare flows, and replaced CLS `any` casts in the performance monitor with a typed layout-shift entry.
 - Localized the home search autocomplete labels and clear action through the existing dictionary.
 

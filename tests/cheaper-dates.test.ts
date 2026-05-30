@@ -30,6 +30,36 @@ describe('cheaper date price intelligence', () => {
     ]);
   });
 
+  it('sanitizes provider currencies and deep links before reuse by public APIs', () => {
+    const rates = getVerifiedRateObservations({
+      rates: [
+        { provider: 'Booking.com', total: 120, currency: 'eur', deepLink: 'https://www.booking.com/hotel/fr/le-meurice.html' },
+        { provider: 'Expedia', total: 130, currency: 'US', deepLink: 'javascript:alert(1)' },
+        { provider: 'Agoda', total: 140, currency: 'gbp', deepLink: 'http://www.agoda.com/rooms' },
+      ],
+      currency: 'usd',
+      source: 'provider-registry',
+    });
+
+    expect(rates).toEqual([
+      expect.objectContaining({
+        provider: 'Booking.com',
+        currency: 'EUR',
+        deepLink: 'https://www.booking.com/hotel/fr/le-meurice.html',
+      }),
+      expect.objectContaining({
+        provider: 'Expedia',
+        currency: 'USD',
+        deepLink: null,
+      }),
+      expect.objectContaining({
+        provider: 'Agoda',
+        currency: 'GBP',
+        deepLink: null,
+      }),
+    ]);
+  });
+
   it('returns heatmap calendar entries as source observations, not booking offers', async () => {
     vi.mocked(getCachedHeatmap).mockResolvedValueOnce({
       data: [
