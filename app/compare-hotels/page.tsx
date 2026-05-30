@@ -90,14 +90,14 @@ function CompareHotelsInner() {
       }).catch(() => {});
     }
     return () => controller.abort();
-  }, [checkIn, checkOut]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedKeys, checkIn, checkOut]);
 
   const addHotel = (key: string) => {
     if (key && !selectedKeys.includes(key) && selectedKeys.length < 4) {
       setSelectedKeys((prev) => [...prev, key]);
       // Speculative pre-fetch: warm cache for this hotel immediately.
       // By the time user selects all hotels and clicks Compare, data is cached.
-      fetch(`/api/compare/prefetch?hotelKey=${key}`, { priority: 'low' as RequestPriority }).catch(() => {});
+      fetch(`/api/compare/prefetch?hotelKey=${encodeURIComponent(key)}`, { priority: 'low' as RequestPriority }).catch(() => {});
     }
   };
 

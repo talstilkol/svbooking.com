@@ -10,6 +10,11 @@ interface PerfMetrics {
   fcp: number | null;
 }
 
+interface LayoutShiftEntry extends PerformanceEntry {
+  value: number;
+  hadRecentInput: boolean;
+}
+
 export default function PerformanceMonitor({ className = '' }: { className?: string }) {
   const [metrics, setMetrics] = useState<PerfMetrics>({
     lcp: null,
@@ -54,10 +59,9 @@ export default function PerformanceMonitor({ className = '' }: { className?: str
       let clsValue = 0;
       const clsObs = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if (!(entry as any).hadRecentInput) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            clsValue += (entry as any).value || 0;
+          const shift = entry as LayoutShiftEntry;
+          if (!shift.hadRecentInput) {
+            clsValue += shift.value || 0;
           }
         }
         setMetrics((m) => ({ ...m, cls: clsValue }));

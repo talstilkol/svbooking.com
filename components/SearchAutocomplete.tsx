@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useDebounce } from '@/lib/useDebounce';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface HotelResult {
   hotelKey: string;
@@ -20,6 +21,7 @@ interface SearchResults {
 
 export default function SearchAutocomplete() {
   const router = useRouter();
+  const { t } = useLocale();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResults>({ cities: [], hotels: [] });
   const [open, setOpen] = useState(false);
@@ -126,11 +128,11 @@ export default function SearchAutocomplete() {
           ref={inputRef}
           type="text"
           role="combobox"
-          aria-label="Search for a hotel or city"
+          aria-label={t('searchAutocompleteAria')}
           aria-autocomplete="list"
           aria-expanded={open}
           aria-controls={listboxId}
-          placeholder="Search hotel or city..."
+          placeholder={t('searchPlaceholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => { if (results.cities.length || results.hotels.length) setOpen(true); }}
@@ -141,7 +143,7 @@ export default function SearchAutocomplete() {
           <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin shrink-0" />
         )}
         {query && !loading && (
-          <button onClick={() => { setQuery(''); setOpen(false); }} aria-label="Clear search"
+          <button onClick={() => { setQuery(''); setOpen(false); }} aria-label={t('clearSearch')}
             className="text-slate-500 hover:text-slate-600 shrink-0">
             ✕
           </button>
@@ -158,7 +160,7 @@ export default function SearchAutocomplete() {
           {results.cities.length > 0 && (
             <div>
               <div className="px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50">
-                Cities
+                {t('searchAutoCities')}
               </div>
               {results.cities.map((city, i) => (
                 <button
@@ -173,7 +175,7 @@ export default function SearchAutocomplete() {
                   <span className="text-xl">📍</span>
                   <div>
                     <div className="font-medium text-slate-900">{city}</div>
-                    <div className="text-xs text-slate-500">Browse all hotels</div>
+                    <div className="text-xs text-slate-500">{t('browseAllHotels')}</div>
                   </div>
                 </button>
               ))}
@@ -183,7 +185,7 @@ export default function SearchAutocomplete() {
           {results.hotels.length > 0 && (
             <div>
               <div className="px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50">
-                Hotels
+                {t('searchAutoHotels')}
               </div>
               {results.hotels.map((hotel, i) => {
                 const idx = results.cities.length + i;

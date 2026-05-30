@@ -9,8 +9,7 @@
  * Values update automatically when hotels are added to lib/hotels-catalog.js.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { HOTELS, listCities } = require('./hotels-catalog');
+import { HOTELS, listCities } from './hotels-catalog';
 
 const cities: string[] = listCities();
 const countries = [...new Set((HOTELS as { country: string }[]).map((h) => h.country))];

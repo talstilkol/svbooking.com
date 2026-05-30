@@ -8,6 +8,7 @@ The app is locally healthy but not production-ready until real deployment config
 | --- | ---: | --- |
 | Determinism and no-fabrication guardrails | 10/10 | `Math.random()` and unapproved UUID randomness are blocked; unavailable data is shown instead of generated claims. |
 | Local build/test health | 10/10 | Lint, unit/API tests, build, and E2E are expected release gates. |
+| Coverage depth | 6/10 | `npm run test:coverage` now runs, but current `lib` coverage is about 56% lines and 49% branches; raise this before adding a hard threshold. |
 | Security guardrails | 9/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, and no-store audits are wired. |
 | Catalog quality | 7/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage. |
 | Provider coverage | 6/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
@@ -27,16 +28,22 @@ The app is locally healthy but not production-ready until real deployment config
    - Split unrelated work into reviewable commits if the diff remains broad.
    - Keep generated/cache artifacts out of commits.
 
-3. **Docs and drift prevention**
+3. **Coverage ratchet**
+   - Raise `lib` line coverage from 56% to 70%, then 80%, before enforcing a hard CI threshold.
+   - Prioritize provider registry, cache, admin auth, cron auth, URL validation, alert delivery, and retention edge cases.
+   - Keep coverage reports out of commits unless a reviewed artifact is explicitly requested.
+
+4. **Docs and drift prevention**
    - Keep `README.md`, `.env.example`, `PRODUCTION-RUNBOOK.md`, and this plan aligned with actual routes and scripts.
    - Run `npm run audit:docs` in CI so removed routes and stale architecture claims do not return.
 
-4. **Market readiness**
+5. **Market readiness**
    - Promote only validated catalog candidates with real hotel keys and source provenance.
+   - Replace reused stock-like catalog images with hotel- or city-specific licensed media as provenance becomes available.
    - Add licensed reviews and property-content provider integrations before displaying ratings or review copy.
    - Keep all unknown data as unavailable/not configured.
 
-5. **Operations**
+6. **Operations**
    - Run agent cron routes only with `CRON_SECRET`.
    - Monitor `/api/health`, `/api/ops/scorecard`, `/api/ops/alerts`, provider uptime, price-accuracy metrics, and alert delivery history.
    - Keep dependency auditing in an approved environment because `npm audit` sends dependency metadata to the npm registry.
@@ -45,10 +52,12 @@ The app is locally healthy but not production-ready until real deployment config
 
 - `npm run lint` passes.
 - `npm test` passes.
+- `npm run test:coverage` runs successfully, with coverage trend reviewed before release.
 - `npm run build` passes.
 - `npm run test:e2e` passes.
 - Every `npm run audit:*` script passes except `audit:production:strict` in intentionally unconfigured local shells.
 - `npm run audit:production:strict` passes in the deployment environment before launch.
+- `npm audit --omit=dev` reports no production dependency vulnerabilities in an approved network environment.
 - README and plan contain the current catalog count: 502 hotels, 139 cities, 65 countries.
 - No documentation references removed listing/booking API routes, old database architecture, old 15-hotel coverage, or unsupported no-auth/no-rate-limit claims.
 

@@ -240,7 +240,7 @@ export default function TripMap({ className = '' }: { className?: string }) {
 
       <div className="p-4">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto bg-blue-50 rounded-xl">
-          {/* Simple world outline placeholder */}
+          {/* Coordinate backdrop */}
           <rect x="0" y="0" width={W} height={H} fill="#EFF6FF" rx="8" />
 
           {/* Grid lines */}

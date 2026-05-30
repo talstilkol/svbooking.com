@@ -137,8 +137,7 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
       country: hotel.country,
       image: hotel.image,
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hotel.hotelKey]);
+  }, [addRecentlyViewed, hotel.hotelKey, hotel.name, hotel.city, hotel.country, hotel.image]);
 
   // Speculative pre-fetch: warm cache for common date ranges on mount.
   // Uses lightweight /api/compare/prefetch (returns 202 immediately).
@@ -250,8 +249,7 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
       autoCompared.current = true;
       handleCompare();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlCheckIn, urlCheckOut]);
+  }, [urlCheckIn, urlCheckOut, handleCompare]);
 
   // Use comparison hotel if available (might have extra data), otherwise server-provided hotel
   const displayHotel = data?.hotel || hotel;
