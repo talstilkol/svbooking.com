@@ -48,7 +48,7 @@ vi.stubGlobal('fetch', vi.fn(async (url: string) => {
   return new Response('Not Found', { status: 404 });
 }));
 
-import { getRates } from '@/lib/xotelo';
+import { getHeatmap, getRates } from '@/lib/xotelo';
 
 describe('xotelo retry', () => {
   beforeEach(() => {
@@ -67,6 +67,22 @@ describe('xotelo retry', () => {
 
     expect(result.rates).toHaveLength(1);
     expect(fetchCalls).toHaveLength(1);
+  });
+
+  it('normalizes request parameters before calling Xotelo', async () => {
+    fetchBehavior = 'succeed';
+    const result = await getRates({
+      hotelKey: ' g1-d1 ',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+      currency: 'eur',
+      timeoutMs: 10000,
+    });
+    const url = new URL(fetchCalls[0].url);
+
+    expect(result.rates).toHaveLength(1);
+    expect(url.searchParams.get('hotel_key')).toBe('g1-d1');
+    expect(url.searchParams.get('currency')).toBe('EUR');
   });
 
   it('retries once on 500 and succeeds', async () => {
@@ -97,6 +113,15 @@ describe('xotelo retry', () => {
     expect(fetchCalls).toHaveLength(2);
   });
 
+  it('does not retry when the timeout budget cannot cover a retry', async () => {
+    fetchBehavior = 'always-fail';
+    await expect(
+      getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 1000 })
+    ).rejects.toThrow('Xotelo HTTP 500');
+
+    expect(fetchCalls).toHaveLength(1);
+  });
+
   it('extracts partial rates even when error flag is set', async () => {
     fetchBehavior = 'error-with-rates';
     const result = await getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 10000 });
@@ -111,5 +136,39 @@ describe('xotelo retry', () => {
     await expect(
       getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 10000 })
     ).rejects.toThrow('Xotelo: rates unavailable');
+  });
+
+  it('rejects invalid request parameters before calling Xotelo', async () => {
+    fetchBehavior = 'succeed';
+
+    await expect(getRates()).rejects.toThrow('Xotelo hotelKey must be a valid TripAdvisor-style key');
+    await expect(
+      getRates({ hotelKey: 'missing', checkIn: '2026-06-01', checkOut: '2026-06-03' })
+    ).rejects.toThrow('Xotelo hotelKey must be a valid TripAdvisor-style key');
+    await expect(
+      getRates({ hotelKey: 'g1-d1', checkIn: '2026-02-30', checkOut: '2026-06-03' })
+    ).rejects.toThrow('Xotelo checkIn must be a valid YYYY-MM-DD date');
+    await expect(
+      getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-03', checkOut: '2026-06-03' })
+    ).rejects.toThrow('Xotelo checkIn must be before checkOut');
+    await expect(
+      getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', currency: 'US' })
+    ).rejects.toThrow('Xotelo currency must be a valid ISO 4217 code');
+    await expect(
+      getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 0 })
+    ).rejects.toThrow('Xotelo timeoutMs must be a positive number');
+
+    expect(fetchCalls).toHaveLength(0);
+  });
+
+  it('validates heatmap input before calling Xotelo', async () => {
+    fetchBehavior = 'succeed';
+
+    await expect(getHeatmap({ hotelKey: 'missing', checkOut: '2026-06-03' }))
+      .rejects.toThrow('Xotelo hotelKey must be a valid TripAdvisor-style key');
+    await expect(getHeatmap({ hotelKey: 'g1-d1', checkOut: '2026-02-30' }))
+      .rejects.toThrow('Xotelo checkOut must be a valid YYYY-MM-DD date');
+
+    expect(fetchCalls).toHaveLength(0);
   });
 });

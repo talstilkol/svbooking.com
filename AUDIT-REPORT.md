@@ -20,8 +20,8 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 161 test files, 789 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 90.39% lines, 86.03% statements, 89.76% functions, and 75.6% branches. |
+| `npm test` | PASS | 161 test files, 793 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 90.63% lines, 86.24% statements, 89.98% functions, and 75.82% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 90%, statements 86%, functions 89%, branches 75%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 727 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 61 Playwright tests passed. |
@@ -118,6 +118,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Hardened dynamic hotel catalog ingestion so discovered entries require valid TripAdvisor-style keys, trimmed real text, bounded stars/coordinates, HTTPS source URLs, and safe object provenance before runtime or KV indexing.
 - Hardened Ticketmaster event ingestion so invalid coordinates never reach the provider, request radius and size are bounded, invalid date filters are omitted, incomplete events are dropped, and unsafe ticket URLs are not surfaced.
 - Hardened the public events API route so malformed coordinates, out-of-range coordinates, invalid dates, and reversed date ranges are rejected before cache lookup, rate limiting, or provider access.
+- Hardened Xotelo pricing and heatmap calls so invalid hotel keys, dates, currencies, and timeout budgets are rejected before provider requests, and retry waits only run when the timeout budget can cover them.
 - Removed remaining local hook-dependency suppressions in hotel detail and side-by-side compare flows, and replaced CLS `any` casts in the performance monitor with a typed layout-shift entry.
 - Localized the home search autocomplete labels and clear action through the existing dictionary.
 
@@ -128,7 +129,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Branch coverage below next target | Medium | `lib` branch coverage is 75.6%. | Add focused tests for cache/provider/auth/error branches, then raise the coverage ratchet toward 80%. |
+| Branch coverage below next target | Medium | `lib` branch coverage is 75.82%. | Add focused tests for cache/provider/auth/error branches, then raise the coverage ratchet toward 80%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |
