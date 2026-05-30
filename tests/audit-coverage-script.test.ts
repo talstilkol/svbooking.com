@@ -31,10 +31,10 @@ function runCoverageAudit(summaryPath: string) {
 describe('coverage audit script', () => {
   it('passes when current coverage clears the ratchet floors', async () => {
     const summaryPath = await writeSummary({
-      lines: { pct: 90.39 },
-      statements: { pct: 86.03 },
-      functions: { pct: 89.76 },
-      branches: { pct: 75.6 },
+      lines: { pct: 90.67 },
+      statements: { pct: 86.33 },
+      functions: { pct: 90.04 },
+      branches: { pct: 76.07 },
     });
 
     const result = runCoverageAudit(summaryPath);
@@ -46,9 +46,9 @@ describe('coverage audit script', () => {
   it('fails when coverage regresses below a floor', async () => {
     const summaryPath = await writeSummary({
       lines: { pct: 89.99 },
-      statements: { pct: 86.03 },
-      functions: { pct: 89.76 },
-      branches: { pct: 75.6 },
+      statements: { pct: 86.33 },
+      functions: { pct: 90.04 },
+      branches: { pct: 76.07 },
     });
 
     const result = runCoverageAudit(summaryPath);

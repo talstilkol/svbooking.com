@@ -69,6 +69,65 @@ describe('price cache', () => {
     expect(result.rates[0].priceAccuracyState).toBe('unobserved');
   });
 
+  it('drops unusable provider rates before caching them', async () => {
+    vi.mocked(getHotelRates).mockResolvedValueOnce({
+      rates: [
+        { provider: 'Booking.com', total: 0, source: 'xotelo' },
+        { provider: 'unknown', total: 120, source: 'xotelo' },
+        { name: 'Verified Provider', rate: 140, tax: 20, currency: 'eur', url: 'http://provider.invalid/rate' },
+      ],
+      currency: 'eur',
+      provider: 'Xotelo',
+      source: 'xotelo',
+    });
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      hotelName: 'Verified Hotel',
+      city: 'Paris',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(result.rates).toEqual([
+      expect.objectContaining({
+        provider: 'Verified Provider',
+        source: 'xotelo',
+        total: 160,
+        currency: 'EUR',
+        url: null,
+        deepLink: null,
+      }),
+    ]);
+  });
+
+  it('sanitizes cached provider links and currencies before returning them', async () => {
+    await kv.setWithTTL('price:g1-d1:2026-06-01:2026-06-03:USD', {
+      cachedAt: new Date().toISOString(),
+      result: {
+        rates: [
+          { provider: 'Cached Provider', total: 180, currency: 'usd', deepLink: 'https://provider.example/rate' },
+          { provider: 'Cached Provider', total: 181, currency: 'US', deepLink: 'javascript:alert(1)' },
+        ],
+        currency: 'usd',
+        provider: 'Cached Provider',
+        source: 'cached-provider',
+      },
+    }, 7200);
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(result.currency).toBe('USD');
+    expect(result.rates[0].currency).toBe('USD');
+    expect(result.rates[0].deepLink).toBe('https://provider.example/rate');
+    expect(result.rates[1].currency).toBe('USD');
+    expect(result.rates[1].deepLink).toBeNull();
+  });
+
   it('returns stale cached rates immediately with partial metadata', async () => {
     await kv.setWithTTL('price:g1-d1:2026-06-01:2026-06-03:USD', {
       cachedAt: '2026-01-01T00:00:00.000Z',

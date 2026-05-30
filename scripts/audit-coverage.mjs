@@ -7,8 +7,8 @@ const summaryPath = process.argv[2] || process.env.COVERAGE_SUMMARY_PATH || path
 const minimums = {
   lines: 90,
   statements: 86,
-  functions: 89,
-  branches: 75,
+  functions: 90,
+  branches: 76,
 };
 
 const failures = [];
