@@ -60,7 +60,8 @@ async function runEnrichment() {
     try {
       const enrichment = await enrichFromWikidata(taIds.slice(0, 50)); // Process first 50
       if (enrichment) {
-        for (const [taId, data] of Object.entries(enrichment)) {
+        const enrichmentEntries = enrichment instanceof Map ? enrichment.entries() : Object.entries(enrichment);
+        for (const [taId, data] of enrichmentEntries) {
           if (data.bookingSlug) {
             const cacheKey = `enrichment:booking:d${taId}`;
             await kv.setWithTTL(cacheKey, {

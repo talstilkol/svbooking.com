@@ -118,7 +118,59 @@ describe('Wikidata enrichment hardening', () => {
       lat: 48.865,
     });
     expect(buildBookingUrl('fr/hotel paris?ref=x', '2026-06-01', '2026-06-03'))
-      .toBe('https://www.booking.com/hotel/fr/hotel%20paris%3Fref%3Dx.html?checkin=2026-06-01&checkout=2026-06-03&no_rooms=1&group_adults=2');
+      .toBeNull();
+    expect(buildBookingUrl('fr/hotel-paris', '2026-06-01', '2026-06-03'))
+      .toBe('https://www.booking.com/hotel/fr/hotel-paris.html?checkin=2026-06-01&checkout=2026-06-03&no_rooms=1&group_adults=2');
+    expect(buildBookingUrl('fr/hotel-paris', '2026-06-03', '2026-06-01'))
+      .toBe('https://www.booking.com/hotel/fr/hotel-paris.html');
+    expect(buildBookingUrl('fr/hotel-paris', '2026-02-31', '2026-03-02'))
+      .toBe('https://www.booking.com/hotel/fr/hotel-paris.html');
+  });
+
+  it('drops unsafe Wikidata enrichment fields before returning them', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({
+      results: {
+        bindings: [
+          {
+            taId: { value: '188728' },
+            bookingId: { value: 'javascript:alert(1)' },
+            expediaId: { value: ' 12345 ' },
+            website: { value: 'http://www.dorchestercollection.com/paris/le-meurice/' },
+            image: { value: 'javascript:alert(1)' },
+            hotelLabel: { value: ' Le  Meurice ' },
+            coord: { value: 'Point(181 91)' },
+          },
+          {
+            taId: { value: '188729' },
+            bookingId: { value: 'fr/ritz-paris' },
+            website: { value: 'https://www.ritzparis.com/' },
+            image: { value: 'https://upload.wikimedia.org/ritz-paris.jpg' },
+            coord: { value: 'Point(2.3286 48.868)' },
+          },
+          {
+            taId: { value: 'bad-id' },
+            bookingId: { value: 'fr/not-returned' },
+          },
+        ],
+      },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { enrichFromWikidata } = await import('@/lib/wikidata-enrich');
+
+    const enriched = await enrichFromWikidata(['188728', '188729']);
+
+    expect(enriched.get('188728')).toEqual({
+      expediaId: '12345',
+      wikidataName: 'Le Meurice',
+    });
+    expect(enriched.get('188729')).toMatchObject({
+      bookingSlug: 'fr/ritz-paris',
+      officialWebsite: 'https://www.ritzparis.com/',
+      image: 'https://upload.wikimedia.org/ritz-paris.jpg',
+      lon: 2.3286,
+      lat: 48.868,
+    });
+    expect(enriched.has('bad-id')).toBe(false);
   });
 
   it('normalizes Wikidata IDs before resolving TripAdvisor IDs', async () => {
@@ -147,6 +199,43 @@ describe('Wikidata enrichment hardening', () => {
       tripAdvisorId: '188728',
       cityTripAdvisorId: '187147',
       cityName: 'Paris',
+    });
+  });
+
+  it('drops malformed Wikidata resolve rows returned by the provider', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({
+      results: {
+        bindings: [
+          {
+            item: { value: 'http://www.wikidata.org/entity/Q19675' },
+            taId: { value: 'bad-ta' },
+            adminAreaTAId: { value: '187147' },
+            adminAreaLabel: { value: 'Paris' },
+          },
+          {
+            item: { value: 'http://www.wikidata.org/entity/P31' },
+            taId: { value: '188728' },
+          },
+          {
+            item: { value: 'http://www.wikidata.org/entity/Q19676' },
+            taId: { value: '188729' },
+            adminAreaTAId: { value: 'bad-city' },
+            adminAreaLabel: { value: ' Paris  France ' },
+          },
+        ],
+      },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { resolveWikidataToTripAdvisor } = await import('@/lib/wikidata-enrich');
+
+    const resolved = await resolveWikidataToTripAdvisor(['Q19675', 'Q19676']);
+
+    expect(resolved.has('Q19675')).toBe(false);
+    expect(resolved.has('P31')).toBe(false);
+    expect(resolved.get('Q19676')).toEqual({
+      tripAdvisorId: '188729',
+      cityTripAdvisorId: null,
+      cityName: 'Paris France',
     });
   });
 });
