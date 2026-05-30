@@ -7,6 +7,11 @@ import RatingBadge from '@/components/RatingBadge';
 import PriceAlertsDashboard from '@/components/PriceAlertsDashboard';
 import EmptyState from '@/components/EmptyState';
 import { useState } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
 
 interface QuickPrice {
   cheapest: { provider: string; total: number; currency: string } | null;
@@ -20,6 +25,7 @@ function localDate(offsetDays: number) {
 }
 
 export default function FavoritesPage() {
+  const { t } = useLocale();
   const { favorites, removeFavorite, hydrated } = useFavorites();
   const [prices, setPrices] = useState<Record<string, QuickPrice>>({});
   const [loadingPrices, setLoadingPrices] = useState<string | null>(null);
@@ -52,7 +58,7 @@ export default function FavoritesPage() {
   };
 
   if (!hydrated) {
-    return <div className="min-h-screen p-8 text-center text-slate-500">Loading...</div>;
+    return <div className="min-h-screen p-8 text-center text-slate-500">{t('favLoading')}</div>;
   }
 
   const compareUrl = favorites.length >= 2
@@ -64,10 +70,10 @@ export default function FavoritesPage() {
       {/* Gradient header */}
       <div className="bg-linear-to-r from-rose-500 via-pink-500 to-fuchsia-500 text-white py-10 px-4 mb-8">
         <div className="max-w-6xl mx-auto">
-          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">← Home</Link>
-          <h1 className="text-3xl md:text-4xl font-bold mb-1">My Favorites</h1>
+          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">← {t('compareHome')}</Link>
+          <h1 className="text-3xl md:text-4xl font-bold mb-1">{t('favTitle')}</h1>
           <p className="text-white/70">
-            {favorites.length} hotel{favorites.length !== 1 ? 's' : ''} saved locally on your device
+            {interpolate(t('favSubtext'), { count: favorites.length })}
           </p>
         </div>
       </div>
@@ -82,13 +88,13 @@ export default function FavoritesPage() {
                 onClick={checkAllPrices}
                 className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium transition"
               >
-                &#128176; Check all prices
+                &#128176; {t('favCheckAll')}
               </button>
               <Link
                 href={compareUrl}
                 className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 text-sm font-medium transition"
               >
-                &#9878;&#65039; Compare side by side
+                &#9878;&#65039; {t('favCompareSide')}
               </Link>
             </div>
           )}
@@ -99,9 +105,9 @@ export default function FavoritesPage() {
         {favorites.length === 0 ? (
           <EmptyState
             icon="♡"
-            title="No favorites yet"
-            description="Browse hotels and tap the heart icon to save them here"
-            action={{ label: 'Browse Hotels', href: '/search' }}
+            title={t('favEmptyTitle')}
+            description={t('favEmptyDesc')}
+            action={{ label: t('footerBrowseHotels'), href: '/search' }}
             className="bg-white rounded-2xl border border-slate-200"
           />
         ) : (
@@ -126,7 +132,7 @@ export default function FavoritesPage() {
                       <button
                         onClick={(e) => { e.preventDefault(); removeFavorite(fav.hotelKey); }}
                         className="w-9 h-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center hover:bg-red-50 transition shadow-sm"
-                        aria-label={`Remove ${fav.name} from favorites`}
+                        aria-label={interpolate(t('favRemoveAria'), { name: fav.name })}
                       >
                         <span className="text-red-500 text-lg">&#9829;</span>
                       </button>
@@ -142,7 +148,7 @@ export default function FavoritesPage() {
                     <div className="flex items-center gap-2 mt-2">
                       <RatingBadge size="sm" />
                       <span className="text-xs text-slate-500">
-                        Added {new Date(fav.addedAt).toLocaleDateString()}
+                        {t('favAdded')} {new Date(fav.addedAt).toLocaleDateString()}
                       </span>
                     </div>
 
@@ -151,13 +157,13 @@ export default function FavoritesPage() {
                       <div className="mt-3 p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
                         <div className="flex justify-between items-center">
                           <div>
-                            <div className="text-xs text-emerald-600">From {price.cheapest.provider}</div>
+                            <div className="text-xs text-emerald-600">{t('favFrom')} {price.cheapest.provider}</div>
                             <div className="text-lg font-bold text-emerald-700">
                               {price.cheapest.currency} {price.cheapest.total.toFixed(0)}
                             </div>
                           </div>
                           <div className="text-xs text-emerald-600">
-                            {price.providerCount} providers
+                            {price.providerCount} {t('favProviders')}
                           </div>
                         </div>
                       </div>
@@ -167,7 +173,7 @@ export default function FavoritesPage() {
                         disabled={isChecking}
                         className="mt-3 w-full px-3 py-2 text-sm font-medium border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 hover:border-blue-300 transition disabled:opacity-50"
                       >
-                        {isChecking ? 'Checking...' : '&#128176; Quick price check'}
+                        {isChecking ? t('favChecking') : `💰 ${t('favQuickCheck')}`}
                       </button>
                     )}
 
@@ -176,13 +182,13 @@ export default function FavoritesPage() {
                         href={`/hotel/${fav.hotelKey}`}
                         className="flex-1 text-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition"
                       >
-                        View Details
+                        {t('favViewDetails')}
                       </Link>
                       <Link
                         href={`/trips?hotelKey=${fav.hotelKey}`}
                         className="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 text-sm font-medium transition"
                       >
-                        Plan Trip
+                        {t('favPlanTrip')}
                       </Link>
                     </div>
                   </div>
