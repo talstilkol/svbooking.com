@@ -107,11 +107,16 @@ async function discoverHotels() {
     if (seen.has(key)) continue;
     seen.add(key);
 
+    const name = b.hotelLabel?.value?.trim();
+    const city = b.adminAreaLabel?.value?.trim();
+    const country = b.countryLabel?.value?.trim();
+    if (!name || !city || !country) continue;
+
     hotels.push({
       hotelKey: key,
-      name: b.hotelLabel?.value || 'Unknown',
-      city: cleanCityName(b.adminAreaLabel?.value || 'Unknown'),
-      country: b.countryLabel?.value || 'Unknown',
+      name,
+      city: cleanCityName(city),
+      country,
       bookingId: b.bookingId?.value || null,
       stars: b.stars?.value ? Number(b.stars.value) : null,
     });

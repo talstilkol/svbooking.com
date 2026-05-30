@@ -126,11 +126,14 @@ async function discoverForCountry(country) {
     if (seen.has(key)) continue;
     seen.add(key);
 
-    const name = b.hotelLabel?.value || 'Unknown';
+    const name = b.hotelLabel?.value?.trim();
+    const cityLabel = b.adminAreaLabel?.value?.trim();
+    if (!name || !cityLabel) continue;
+
     // Skip Wikidata Q-IDs that didn't resolve to labels
     if (name.startsWith('Q') && /^Q\d+$/.test(name)) continue;
 
-    const city = cleanCityName(b.adminAreaLabel?.value || 'Unknown');
+    const city = cleanCityName(cityLabel);
 
     hotels.push({ hotelKey: key, name, city, country });
   }

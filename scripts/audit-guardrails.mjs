@@ -92,6 +92,25 @@ const forbiddenSnippets = [
     value: ['Deterministically', 'selects', 'amenities'].join(' '),
   },
   {
+    label: 'unsupported generated hotel-name fallback',
+    pattern: /['"`]Unknown Hotel['"`]/i,
+  },
+  {
+    label: 'unsupported generated safety-medical fallback',
+    pattern: /['"`]None required['"`]/i,
+    roots: ['app', 'components', 'lib'],
+  },
+  {
+    label: 'unsupported generated event fallback',
+    pattern: /['"`]Annual event in/i,
+    roots: ['app', 'components', 'lib'],
+  },
+  {
+    label: 'unsupported generated dining fallback',
+    pattern: /['"`]Local dining spot['"`]/i,
+    roots: ['app', 'components', 'lib'],
+  },
+  {
     label: 'unsupported generated hotel badges',
     value: ['Guest', 'Favorite'].join(' '),
   },

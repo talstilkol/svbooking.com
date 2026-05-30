@@ -100,15 +100,19 @@ async function discoverGlobalHotels(regionFilter = null) {
         if (seen.has(key)) continue;
         seen.add(key);
 
-        const name = b.hotelLabel?.value || 'Unknown Hotel';
+        const name = b.hotelLabel?.value?.trim();
+        const city = b.adminAreaLabel?.value?.trim();
+        const country = b.countryLabel?.value?.trim();
+        if (!name || !city || !country) continue;
+
         // Skip Wikidata placeholder labels (Q-numbers)
         if (name.startsWith('Q') && /^Q\d+$/.test(name)) continue;
 
         allHotels.push({
           hotelKey: key,
           name,
-          city: cleanCityName(b.adminAreaLabel?.value || 'Unknown'),
-          country: b.countryLabel?.value || 'Unknown',
+          city: cleanCityName(city),
+          country,
           stars: b.stars?.value ? Number(b.stars.value) : null,
           region: region.name,
         });
