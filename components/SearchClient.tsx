@@ -12,6 +12,11 @@ import { CardGridSkeleton } from '@/components/Skeleton';
 import SearchFilters, { type FilterOptions } from '@/components/SearchFilters';
 import EmptyState from '@/components/EmptyState';
 import { useDebounce } from '@/lib/useDebounce';
+import { useLocale } from '@/components/LocaleProvider';
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
 
 type SortOption = 'name-asc' | 'name-desc' | 'city-asc';
 type ViewMode = 'grid' | 'map';
@@ -26,6 +31,7 @@ interface SearchClientProps {
 }
 
 function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
+  const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const cityParam = searchParams.get('city') || initialCity;
@@ -110,9 +116,9 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
       {/* Gradient header */}
       <div className="bg-linear-to-r from-slate-700 via-slate-800 to-slate-900 text-white py-10 px-4 mb-6">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold mb-1">Find a Hotel</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-1">{t('searchTitle')}</h1>
           <p className="text-white/70">
-            {hotels.length} hotels across {cities.length} cities — compare provider-returned prices when available
+            {interpolate(t('searchSubtext'), { hotels: hotels.length, cities: cities.length })}
           </p>
         </div>
       </div>
@@ -128,8 +134,8 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
             <input
               list="cities-list"
               type="text"
-              aria-label="Search hotels or cities"
-              placeholder="Hotel name, city, or country..."
+              aria-label={t('searchAriaSearch')}
+              placeholder={t('searchPlaceholder')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2 border border-zinc-300 rounded-lg bg-white text-zinc-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -142,12 +148,12 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
           <select
             value={activeSort}
             onChange={(e) => setFilters((current) => ({ ...current, sort: e.target.value as SortOption }))}
-            aria-label="Sort hotels"
+            aria-label={t('searchAriaSort')}
             className="px-3 py-2 border border-zinc-300 rounded-lg bg-white text-zinc-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
           >
-            <option value="name-asc">Sort: A &rarr; Z</option>
-            <option value="name-desc">Sort: Z &rarr; A</option>
-            <option value="city-asc">Sort: City</option>
+            <option value="name-asc">{t('sortAZ')}</option>
+            <option value="name-desc">{t('sortZA')}</option>
+            <option value="city-asc">{t('sortCityOpt')}</option>
           </select>
 
           <div className="flex items-center border border-zinc-300 rounded-lg overflow-hidden">
@@ -157,7 +163,7 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
               className={`px-3 py-2 text-sm font-medium transition ${
                 viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'
               }`}
-              aria-label="Grid view"
+              aria-label={t('gridView')}
             >
               &#9638;
             </button>
@@ -167,19 +173,19 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
               className={`px-3 py-2 text-sm font-medium transition ${
                 viewMode === 'map' ? 'bg-blue-600 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'
               }`}
-              aria-label="Map view"
+              aria-label={t('mapViewLabel')}
             >
               &#128506;
             </button>
           </div>
 
           <button type="submit" className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
-            Search
+            {t('searchSubmit')}
           </button>
           {(query || activeCountry) && (
             <button type="button" onClick={() => { setQuery(''); setActiveCountry(''); }}
               className="px-4 py-2 bg-zinc-100 text-zinc-600 rounded-lg hover:bg-zinc-200 text-sm">
-              Clear
+              {t('clearBtn')}
             </button>
           )}
         </form>
@@ -209,9 +215,9 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
           activeCountry={activeCountry}
           onCountryChange={setActiveCountry}
           sortOptions={[
-            { label: 'A → Z', value: 'name-asc' },
-            { label: 'Z → A', value: 'name-desc' },
-            { label: 'By City', value: 'city-asc' },
+            { label: t('filterSortAZ'), value: 'name-asc' },
+            { label: t('filterSortZA'), value: 'name-desc' },
+            { label: t('filterSortByCity'), value: 'city-asc' },
           ]}
           activeSort={activeSort}
           onSortChange={(s) => setFilters((current) => ({ ...current, sort: s as SortOption }))}
@@ -227,7 +233,7 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
               !activeCountry ? 'bg-blue-600 text-white' : 'bg-white text-zinc-600 border border-zinc-200 hover:border-blue-300'
             }`}
           >
-            All countries
+            {t('allCountries')}
           </button>
           {countries.map((c) => (
             <button
@@ -245,9 +251,9 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
         {filtered.length === 0 ? (
           <EmptyState
             icon="&#128269;"
-            title={`No hotels found for "${query}"`}
-            description={`Try searching for: ${cities.slice(0, 5).join(', ')}`}
-            action={{ label: 'Browse all hotels', href: '/search' }}
+            title={interpolate(t('noHotelsTitle'), { query })}
+            description={interpolate(t('trySearchingDesc'), { cities: cities.slice(0, 5).join(', ') })}
+            action={{ label: t('browseAllHotels'), href: '/search' }}
           />
         ) : viewMode === 'map' ? (
           <MapView
@@ -258,12 +264,12 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
         ) : (
           <>
             <p className="text-sm text-zinc-500 mb-4" aria-live="polite" aria-atomic="true">
-              Showing{' '}
+              {t('showing')}{' '}
               <strong>
                 {(page - 1) * PAGE_SIZE + 1}&ndash;{Math.min(page * PAGE_SIZE, filtered.length)}
               </strong>{' '}
-              of <strong>{filtered.length}</strong> hotels
-              {activeCountry && ` in ${activeCountry}`}
+              {t('ofResults')} <strong>{filtered.length}</strong> {t('hotelsLabel')}
+              {activeCountry && ` ${t('inLabel')} ${activeCountry}`}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginated.map((hotel) => (
@@ -273,14 +279,14 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <nav aria-label="Search results pagination" className="flex justify-center items-center gap-1.5 mt-10">
+              <nav aria-label={t('paginationAria')} className="flex justify-center items-center gap-1.5 mt-10">
                 <button
                   onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   disabled={page === 1}
-                  aria-label="Previous page"
+                  aria-label={t('prevPageAria')}
                   className="px-4 py-2 bg-white border border-zinc-300 rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-zinc-50 transition"
                 >
-                  &larr; Prev
+                  &larr; {t('prevLabel')}
                 </button>
                 {(() => {
                   const pages: (number | 'ellipsis')[] = [];
@@ -318,10 +324,10 @@ function SearchInner({ hotels, cities, initialCity = '' }: SearchClientProps) {
                 <button
                   onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                   disabled={page === totalPages}
-                  aria-label="Next page"
+                  aria-label={t('nextPageAria')}
                   className="px-4 py-2 bg-white border border-zinc-300 rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-zinc-50 transition"
                 >
-                  Next &rarr;
+                  {t('nextLabel')} &rarr;
                 </button>
               </nav>
             )}
