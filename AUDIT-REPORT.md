@@ -20,7 +20,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 160 test files, 783 tests passed. |
+| `npm test` | PASS | 161 test files, 789 tests passed. |
 | `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 90.39% lines, 86.03% statements, 89.76% functions, and 75.6% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 90%, statements 86%, functions 89%, branches 75%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 727 static pages without the previous Edge-runtime static-generation warning. |
@@ -117,6 +117,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Hardened holiday date-range validation and country-name normalization, preserved provider-unavailable semantics, sanitized hotel popularity counters before KV writes/reads, and added coverage for those edge cases.
 - Hardened dynamic hotel catalog ingestion so discovered entries require valid TripAdvisor-style keys, trimmed real text, bounded stars/coordinates, HTTPS source URLs, and safe object provenance before runtime or KV indexing.
 - Hardened Ticketmaster event ingestion so invalid coordinates never reach the provider, request radius and size are bounded, invalid date filters are omitted, incomplete events are dropped, and unsafe ticket URLs are not surfaced.
+- Hardened the public events API route so malformed coordinates, out-of-range coordinates, invalid dates, and reversed date ranges are rejected before cache lookup, rate limiting, or provider access.
 - Removed remaining local hook-dependency suppressions in hotel detail and side-by-side compare flows, and replaced CLS `any` casts in the performance monitor with a typed layout-shift entry.
 - Localized the home search autocomplete labels and clear action through the existing dictionary.
 
