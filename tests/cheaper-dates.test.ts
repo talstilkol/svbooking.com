@@ -74,6 +74,7 @@ describe('cheaper date price intelligence', () => {
     const rates = getVerifiedRateObservations({
       rates: [
         { provider: 'Booking.com', rate: 100, tax: -20, currency: 'US', source: 'provider-registry' },
+        { provider: 'Tripadvisor', rate: 105, total: 110, tax: 'not-a-number', currency: 'gbp', source: 'provider-registry' },
         { provider: 'Expedia', total: 120, source: 'unknown' },
         { provider: 'Agoda', total: 130, priceSource: 'heatmap', source: 'provider-registry' },
         { provider: '', total: 140, source: 'provider-registry' },
@@ -90,6 +91,13 @@ describe('cheaper date price intelligence', () => {
         total: 100,
         currency: 'USD',
         source: 'provider-registry',
+      }),
+      expect.objectContaining({
+        provider: 'Tripadvisor',
+        rate: 105,
+        tax: 0,
+        total: 110,
+        currency: 'GBP',
       }),
     ]);
     expect(getVerifiedRateObservations(null)).toEqual([]);

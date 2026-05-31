@@ -60,6 +60,20 @@ describe('agent readiness metadata', () => {
     ]);
   });
 
+  it('treats unknown agent names as ready with no durability requirement', () => {
+    const readiness = getAgentReadiness('unknown-agent', { durableKv: true });
+
+    expect(readiness).toEqual({
+      status: 'ready',
+      ready: true,
+      missingConfig: [],
+      missingOptionalConfig: [],
+      durability: 'not-required',
+      nonDurable: false,
+      blockedReason: null,
+    });
+  });
+
   it('builds readiness for every registered agent and fails closed when KV configuration cannot be checked', async () => {
     vi.spyOn(kv, 'isConfigured').mockRejectedValueOnce(new Error('KV unavailable'));
 
@@ -72,6 +86,17 @@ describe('agent readiness metadata', () => {
       nonDurable: true,
     });
     expect(readiness[AGENT_NAMES.XOTELO_DISCOVERY].status).toBe('blocked');
+  });
+
+  it('marks durable agent readiness as persistent when KV configuration is available', async () => {
+    vi.spyOn(kv, 'isConfigured').mockResolvedValueOnce(true);
+
+    const readiness = await getAllAgentReadiness();
+
+    expect(readiness[AGENT_NAMES.PRICE_CACHE]).toMatchObject({
+      durability: 'persistent',
+      nonDurable: false,
+    });
   });
 
   it('records successful agent status and bounded run history', async () => {
@@ -96,6 +121,21 @@ describe('agent readiness metadata', () => {
     expect(history).toEqual([
       expect.objectContaining({ status: 'completed', elapsedMs: 0 }),
     ]);
+  });
+
+  it('truncates agent run history to the ten most recent entries', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-31T13:00:00.000Z'));
+
+    for (let index = 0; index < 11; index += 1) {
+      await runAgent(AGENT_NAMES.HEALTH_MONITOR, async () => ({ index }));
+    }
+
+    const history = await getAgentHistory(AGENT_NAMES.HEALTH_MONITOR);
+
+    expect(history).toHaveLength(10);
+    expect(history[0]).toMatchObject({ status: 'completed' });
+    expect(await getAgentHistory('never-run-agent')).toEqual([]);
   });
 
   it('stores sanitized agent errors without swallowing the original failure', async () => {

@@ -22,6 +22,10 @@ describe('withConcurrency', () => {
     expect(results[2]).toEqual({ status: 'fulfilled', value: 6 });
   });
 
+  it('returns immediately for empty batches', async () => {
+    await expect(withConcurrency([], 5, async () => 'unused', 20)).resolves.toEqual([]);
+  });
+
   it('accepts a delay function for adaptive throttling', async () => {
     const delays: number[] = [];
     const items = [
@@ -42,6 +46,23 @@ describe('withConcurrency', () => {
     // First item cached → 0ms delay, second not cached → 50ms delay
     expect(delays[0]).toBe(0);
     expect(delays[1]).toBe(50);
+  });
+
+  it('passes rejected item results to adaptive delay functions', async () => {
+    const delays: number[] = [];
+
+    const results = await withConcurrency([1, 2], 1, async (item) => {
+      if (item === 1) throw new Error('first failed');
+      return item;
+    }, (result) => {
+      const delay = result.status === 'rejected' ? 1 : 0;
+      delays.push(delay);
+      return delay;
+    });
+
+    expect(results[0].status).toBe('rejected');
+    expect(results[1]).toEqual({ status: 'fulfilled', value: 2 });
+    expect(delays).toEqual([1]);
   });
 
   it('respects concurrency limit', async () => {

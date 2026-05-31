@@ -240,6 +240,34 @@ describe('catalog candidate queue', () => {
     expect(queued.candidate.missingProvenance).toBe(false);
   });
 
+  it('normalizes nested external IDs without requiring duplicate top-level fields', async () => {
+    const queued = await upsertCandidate({
+      hotelKey: 'g1-d35',
+      name: 'Nested External Id Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'manual-admin',
+      lat: 48.8566,
+      lon: 2.3522,
+      externalIds: {
+        wikidataId: 'Q35',
+        osmId: 'node/35',
+        providerHotelId: 'provider-35',
+      },
+    });
+
+    expect(queued.candidate.externalIds).toEqual({
+      wikidataId: 'Q35',
+      osmId: 'node/35',
+      providerHotelId: 'provider-35',
+    });
+    expect(queued.candidate.provenance).toMatchObject({
+      wikidataId: 'Q35',
+      osmId: 'node/35',
+    });
+    expect(queued.candidate.missingProvenance).toBe(false);
+  });
+
   it('keeps the first safe source URL when another provenance URL is unsafe', async () => {
     const queued = await upsertCandidate({
       hotelKey: 'g1-d34',
@@ -474,6 +502,68 @@ describe('catalog candidate queue', () => {
     expect(candidates.map((candidate) => candidate.id)).toEqual([
       newer.candidate.id,
       older.candidate.id,
+    ]);
+  });
+
+  it('merges sparse stored candidates without losing provenance or stable sorting', async () => {
+    const mod = await import('@/lib/kv') as Record<string, unknown>;
+    const kvStore = mod.__store as Map<string, unknown>;
+    const queued = await upsertCandidate({
+      hotelKey: 'g1-d93',
+      name: 'Sparse Stored Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'wikidata',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q93',
+      lat: 48.8566,
+      lon: 2.3522,
+    });
+
+    kvStore.set(`catalog:candidate:${queued.candidate.id}`, {
+      ...queued.candidate,
+      createdAt: '',
+      updatedAt: '',
+      provenance: null,
+    });
+
+    const merged = await upsertCandidate({
+      hotelKey: 'g1-d93',
+      name: 'Sparse Stored Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'osm',
+      sourceUrl: 'https://www.openstreetmap.org/node/93',
+      lat: 48.8567,
+      lon: 2.3523,
+    });
+
+    const companion = await upsertCandidate({
+      hotelKey: 'g1-d94',
+      name: 'Companion Sparse Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'manual-admin',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q94',
+      lat: 48.8566,
+      lon: 2.3522,
+    });
+    kvStore.set(`catalog:candidate:${companion.candidate.id}`, {
+      ...companion.candidate,
+      updatedAt: '',
+    });
+    await kv.setWithTTL('catalog:candidates:index', [
+      companion.candidate.id,
+      merged.candidate.id,
+    ], 3600);
+
+    const listed = await listCandidates({ status: 'pending' });
+
+    expect(merged.existing).toBe(true);
+    expect(merged.candidate.createdAt).toBeTruthy();
+    expect(merged.candidate.provenance.sources).toEqual(['wikidata', 'osm']);
+    expect(listed.map((candidate) => candidate.id)).toEqual([
+      merged.candidate.id,
+      companion.candidate.id,
     ]);
   });
 

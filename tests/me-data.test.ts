@@ -27,6 +27,8 @@ import {
   PRICE_ALERT_EVENTS_KEY,
   PRICE_ALERT_USER_INDEX_KEY,
   USER_DATA_DELETE_CONFIRMATION,
+  deleteUserData,
+  getUserDataSnapshot,
   priceAlertUserFingerprint,
   userDataKey,
 } from '@/lib/user-data';
@@ -63,6 +65,20 @@ describe('/api/me/data', () => {
     expect(body.counts).toMatchObject({ favorites: 1, trips: 1, priceAlerts: 1, prefs: 1 });
     expect(body.subjectFingerprint).toMatch(/^h_[0-9a-z]+$/);
     expect(JSON.stringify(body)).not.toContain('user-1');
+  });
+
+  it('rejects unknown data keys and counts malformed stored values as empty', async () => {
+    expect(() => userDataKey('', 'favorites')).toThrow('Unknown user data key');
+    expect(() => userDataKey('user-1', 'unknown' as never)).toThrow('Unknown user data key');
+
+    store.set(userDataKey('user-1', 'favorites'), 'not-an-array');
+    const snapshot = await getUserDataSnapshot('user-1');
+
+    expect(snapshot.datasets.favorites).toBe('not-an-array');
+    expect(snapshot.counts.favorites).toBe(0);
+    expect(snapshot.counts.trips).toBe(0);
+    expect(snapshot.counts.priceAlerts).toBe(0);
+    expect(snapshot.counts.prefs).toBe(0);
   });
 
   it('rate-limits repeated account data exports before reading user datasets again', async () => {
@@ -163,5 +179,21 @@ describe('/api/me/data', () => {
     expect(store.get(PRICE_ALERT_USER_INDEX_KEY)).toEqual(['user-2']);
     expect(store.get(PRICE_ALERT_EVENTS_KEY)).toEqual([{ id: 'event-2', userFingerprint: priceAlertUserFingerprint('user-2') }]);
     expect(JSON.stringify(body)).not.toContain('user-1');
+  });
+
+  it('treats malformed operational cleanup ledgers as no-op during deletion', async () => {
+    store.set(PRICE_ALERT_USER_INDEX_KEY, { users: ['user-1'] });
+    store.set(PRICE_ALERT_EVENTS_KEY, { events: [] });
+
+    const result = await deleteUserData('user-1');
+
+    expect(result.deleted).toBe(true);
+    expect(result.operationalCleanup).toMatchObject({
+      removedPriceAlertIndexEntries: 0,
+      removedPriceAlertEvents: 0,
+      rawUserIdInOperationalEvents: false,
+    });
+    expect(store.get(PRICE_ALERT_USER_INDEX_KEY)).toEqual({ users: ['user-1'] });
+    expect(store.get(PRICE_ALERT_EVENTS_KEY)).toEqual({ events: [] });
   });
 });

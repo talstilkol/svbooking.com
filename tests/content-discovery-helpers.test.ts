@@ -82,7 +82,8 @@ describe('Wikipedia content helpers', () => {
       .fn()
       .mockResolvedValueOnce(jsonResponse({ type: 'not_found' }))
       .mockResolvedValueOnce(jsonResponse({ title: 'Paris', extract: 'Paris summary.' }))
-      .mockRejectedValueOnce(new Error('upstream unavailable'));
+      .mockRejectedValueOnce(new Error('upstream unavailable'))
+      .mockResolvedValueOnce(jsonResponse({ type: 'no-extract' }));
     vi.stubGlobal('fetch', fetchMock);
     const { batchSummaries, getSummary } = await import('@/lib/wikipedia');
 
@@ -91,6 +92,7 @@ describe('Wikipedia content helpers', () => {
 
     expect(summaries.size).toBe(1);
     expect(summaries.get('Paris')).toMatchObject({ title: 'Paris', extract: 'Paris summary.' });
+    await expect(batchSummaries(['No Extract'])).resolves.toEqual(new Map());
   });
 
   it('strips HTML snippets from search results and reports invalid/HTTP failures', async () => {
@@ -122,7 +124,9 @@ describe('Wikipedia content helpers', () => {
         originalimage: { source: 'https://user:pass@upload.wikimedia.org/unsafe.jpg' },
         content_urls: { desktop: { page: 'https://localhost/wiki/Unsafe_Article' } },
       }))
-      .mockResolvedValueOnce(jsonResponse({ query: { search: [] } }));
+      .mockResolvedValueOnce(jsonResponse({ query: { search: [] } }))
+      .mockResolvedValueOnce(jsonResponse({ query: { search: [{ title: 'No Snippet', wordcount: 5 }] } }))
+      .mockResolvedValueOnce(jsonResponse({}));
     vi.stubGlobal('fetch', fetchMock);
     const { getSummary, search } = await import('@/lib/wikipedia');
 
@@ -133,6 +137,11 @@ describe('Wikipedia content helpers', () => {
     });
     await expect(search('Paris', 999)).resolves.toEqual([]);
     expect(new URL(String(fetchMock.mock.calls[1][0])).searchParams.get('srlimit')).toBe('20');
+    await expect(search('No Snippet', 0)).resolves.toEqual([
+      { title: 'No Snippet', snippet: '', wordcount: 5 },
+    ]);
+    expect(new URL(String(fetchMock.mock.calls[2][0])).searchParams.get('srlimit')).toBe('5');
+    await expect(search('Sparse Result', 1)).resolves.toEqual([]);
   });
 });
 

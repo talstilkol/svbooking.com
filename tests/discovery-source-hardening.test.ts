@@ -403,6 +403,36 @@ describe('Wikidata enrichment hardening', () => {
     expect(enriched.has('bad-id')).toBe(false);
   });
 
+  it('drops sparse Wikidata enrichment rows without inventing fallback metadata', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({
+        results: {
+          bindings: [
+            { taId: { value: '188730' } },
+            { taId: { value: '188731' }, coord: { value: 'Point(200 95)' } },
+            { taId: { value: '188732' }, bookingId: { value: 'fr//broken' }, website: { value: 'http://unsafe.example.invalid' } },
+          ],
+        },
+      }))
+      .mockResolvedValueOnce(jsonResponse({}));
+    vi.stubGlobal('fetch', fetchMock);
+    const { enrichFromWikidata, buildBookingUrl } = await import('@/lib/wikidata-enrich');
+
+    await expect(enrichFromWikidata(['188730', '188731', '188732'])).resolves.toEqual(new Map());
+    await expect(enrichFromWikidata(['188733'])).resolves.toEqual(new Map());
+    expect(buildBookingUrl('fr/le-meurice', '2026-99-01', '2026-03-02')).toBe('https://www.booking.com/hotel/fr/le-meurice.html');
+    expect(buildBookingUrl('fr/le-meurice', '2026-02-30', '2026-03-02')).toBe('https://www.booking.com/hotel/fr/le-meurice.html');
+    expect(buildBookingUrl('fr/le-meurice', null as unknown as string, '2026-03-02')).toBe('https://www.booking.com/hotel/fr/le-meurice.html');
+  });
+
+  it('returns no Wikidata resolve rows when successful responses omit bindings', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({})));
+    const { resolveWikidataToTripAdvisor } = await import('@/lib/wikidata-enrich');
+
+    await expect(resolveWikidataToTripAdvisor(['Q3145596'])).resolves.toEqual(new Map());
+  });
+
   it('normalizes Wikidata IDs before resolving TripAdvisor IDs', async () => {
     const fetchMock = vi.fn(async () => jsonResponse({
       results: {

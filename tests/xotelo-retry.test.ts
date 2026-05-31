@@ -9,6 +9,7 @@ let fetchBehavior:
   | 'always-fail'
   | 'timeout-then-succeed'
   | 'fetch-failed-then-succeed'
+  | 'fetch-failed-short-budget'
   | 'error-with-rates'
   | 'error-no-rates'
   | 'no-result'
@@ -43,6 +44,10 @@ vi.stubGlobal('fetch', vi.fn(async (url: string) => {
       throw new Error('fetch failed');
     }
     return new Response(JSON.stringify({ result: { rates: [{ name: 'Booking.com', rate: 100, tax: 20 }], currency: 'USD' } }), { status: 200 });
+  }
+
+  if (fetchBehavior === 'fetch-failed-short-budget') {
+    throw new Error('fetch failed');
   }
 
   if (fetchBehavior === 'always-fail') {
@@ -109,6 +114,20 @@ describe('xotelo retry', () => {
     expect(url.searchParams.get('currency')).toBe('EUR');
   });
 
+  it('uses deterministic defaults for empty optional request settings', async () => {
+    fetchBehavior = 'succeed';
+    const result = await getRates({
+      hotelKey: 'g1-d1',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+      currency: '',
+    });
+    const url = new URL(fetchCalls[0].url);
+
+    expect(result.rates).toHaveLength(1);
+    expect(url.searchParams.get('currency')).toBe('USD');
+  });
+
   it('retries once on 500 and succeeds', async () => {
     fetchBehavior = 'fail-then-succeed';
     const result = await getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 10000 });
@@ -150,6 +169,15 @@ describe('xotelo retry', () => {
     await expect(
       getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 1000 })
     ).rejects.toThrow('Xotelo HTTP 500');
+
+    expect(fetchCalls).toHaveLength(1);
+  });
+
+  it('does not retry transient network failures when the timeout budget is too small', async () => {
+    fetchBehavior = 'fetch-failed-short-budget';
+    await expect(
+      getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 1000 })
+    ).rejects.toThrow('fetch failed');
 
     expect(fetchCalls).toHaveLength(1);
   });

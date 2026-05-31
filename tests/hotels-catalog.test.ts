@@ -222,6 +222,18 @@ describe('hotels-catalog', () => {
         city: 'Paris',
         country: 'France',
       })).toBe(false);
+      expect(addDiscoveredHotel({
+        hotelKey: 'g187147-d197602',
+        name: 'demo',
+        city: 'Paris',
+        country: 'France',
+      })).toBe(false);
+      expect(addDiscoveredHotel({
+        hotelKey: 'g187147-d197603',
+        name: 'Real Hotel Name',
+        city: 'unknown',
+        country: 'France',
+      })).toBe(false);
     });
 
     it('normalizes verified dynamic entries before indexing them', () => {
@@ -373,6 +385,12 @@ describe('hotels-catalog', () => {
           country: 'Spain',
         }),
       ]);
+      await expect(addAndPersistHotel({
+        hotelKey: 'g187497-d900002',
+        name: 'Sourced Madrid Hotel',
+        city: 'Madrid',
+        country: 'Spain',
+      })).resolves.toBe(false);
     });
   });
 });

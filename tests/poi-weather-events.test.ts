@@ -125,6 +125,18 @@ describe('Overpass POI helpers', () => {
     ]);
   });
 
+  it('returns empty POI lists for empty or nameless Overpass payloads', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ elements: [] }))
+      .mockResolvedValueOnce(jsonResponse({ elements: [{ id: 1 }] }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { discoverAttractions, discoverRestaurants } = await import('@/lib/overpass-pois');
+
+    await expect(discoverAttractions({ lat: 0, lon: 0 })).resolves.toEqual([]);
+    await expect(discoverRestaurants({ lat: 0, lon: 0 })).resolves.toEqual([]);
+  });
+
   it('surfaces Overpass rate limits, HTTP errors, and request timeouts for discovery calls', async () => {
     vi.stubGlobal('fetch', vi
       .fn()
@@ -190,6 +202,23 @@ describe('Overpass POI helpers', () => {
 
     await expect(getHotelAmenities({ lat: 48.8566, lon: 2.3522, hotelName: 'A' })).resolves.toBeNull();
     await expect(getHotelAmenities({ lat: 48.8566, lon: 2.3522, hotelName: 'City Hotel' })).resolves.toBeNull();
+  });
+
+  it('handles empty hotel amenity matches and free internet without a duplicate WiFi tag', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ elements: [] }))
+      .mockResolvedValueOnce(jsonResponse({
+        elements: [{ tags: { internet_access: 'yes', 'internet_access:fee': 'no' } }],
+      }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getHotelAmenities } = await import('@/lib/overpass-pois');
+
+    await expect(getHotelAmenities({ lat: 48.8566, lon: 2.3522, hotelName: 'City Hotel' })).resolves.toBeNull();
+    await expect(getHotelAmenities({ lat: 48.8566, lon: 2.3522, hotelName: 'River Hotel' })).resolves.toEqual({
+      amenities: [{ icon: '📶', label: 'Free WiFi' }],
+      stars: null,
+    });
   });
 
   it('returns null when hotel amenity inputs are unusable or Overpass fails', async () => {
@@ -272,6 +301,57 @@ describe('weather helpers', () => {
 
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, false, 500)));
     await expect(getForecast({ lat: 0, lon: 0 })).rejects.toThrow('HTTP 500');
+  });
+
+  it('uses explicit unknown weather labels and null historical averages when source arrays are empty', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({
+        timezone: 'UTC',
+        daily: {
+          time: ['2026-06-01'],
+          weathercode: [777],
+          temperature_2m_min: [null],
+          temperature_2m_max: [null],
+          precipitation_probability_max: [null],
+        },
+      }))
+      .mockResolvedValueOnce(jsonResponse({
+        daily: {
+          time: ['2016-01-01'],
+          temperature_2m_min: [null],
+          temperature_2m_max: [null],
+          precipitation_sum: [null],
+        },
+      }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getForecast, getMonthlyAverages } = await import('@/lib/weather');
+
+    await expect(getForecast({ lat: 0, lon: 0, units: 'kelvin' })).resolves.toMatchObject({
+      units: 'celsius',
+      daily: [{ weather: 'Unknown', icon: '❓', code: 777 }],
+    });
+    await expect(getMonthlyAverages({ lat: 0, lon: 0, month: 1 })).resolves.toEqual({
+      avgTempMin: null,
+      avgTempMax: null,
+      avgRainDays: null,
+      month: 1,
+      years: '2016-2025',
+    });
+  });
+
+  it('surfaces weather timeouts with the configured timeout budget', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', vi.fn((_input: string, init?: RequestInit) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+    })));
+    const { getForecast } = await import('@/lib/weather');
+
+    const request = getForecast({ lat: 0, lon: 0, timeoutMs: 30 });
+    const assertion = expect(request).rejects.toThrow('Weather request timed out after 30ms');
+
+    await vi.advanceTimersByTimeAsync(30);
+    await assertion;
   });
 });
 
@@ -623,6 +703,53 @@ describe('Ticketmaster helpers', () => {
     expect(events.map((event) => [event.name, event.icon])).toEqual(
       genres.map((entry) => [entry[0], entry[3]])
     );
+  });
+
+  it('uses bounded Ticketmaster fallbacks for malformed radius values and sparse event prices', async () => {
+    vi.stubEnv('TICKETMASTER_API_KEY', 'tm_realistic_key_for_tests');
+    const fetchMock = vi.fn(async () => jsonResponse({
+      _embedded: {
+        events: [
+          {
+            name: 'American Football Night',
+            dates: { start: { localDate: '2026-07-20' } },
+            classifications: [{ segment: { name: 'Sports' }, genre: { name: 'Football' } }],
+            priceRanges: [{ min: 12, max: 22 }],
+          },
+          {
+            name: 'Baseball Friendly',
+            dates: { start: { localDate: '2026-07-21' } },
+            classifications: [{ segment: { name: 'Sports' }, genre: { name: 'Baseball' } }],
+            priceRanges: [{ min: 'bad', max: 40, currency: 'EUR' }],
+          },
+        ],
+      },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getEvents } = await import('@/lib/ticketmaster');
+
+    const events = await getEvents({
+      lat: 48.8566,
+      lon: 2.3522,
+      radius: 'bad-radius' as unknown as number,
+      limit: 'bad-limit' as unknown as number,
+    });
+    const url = new URL(String(fetchMock.mock.calls[0][0]));
+
+    expect(url.searchParams.get('radius')).toBe('25');
+    expect(url.searchParams.get('size')).toBe('10');
+    expect(events).toEqual([
+      expect.objectContaining({ name: 'American Football Night', icon: '⚽', priceRange: 'USD 12–22' }),
+      expect.objectContaining({ name: 'Baseball Friendly', icon: '⚾', priceRange: '' }),
+    ]);
+  });
+
+  it('returns empty Ticketmaster events for sparse successful payloads', async () => {
+    vi.stubEnv('TICKETMASTER_API_KEY', 'tm_realistic_key_for_tests');
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ _embedded: {} })));
+    const { getEvents } = await import('@/lib/ticketmaster');
+
+    await expect(getEvents({ lat: 48.8566, lon: 2.3522 })).resolves.toEqual([]);
   });
 
   it('degrades to empty events when the upstream response is unavailable', async () => {

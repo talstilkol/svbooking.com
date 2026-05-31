@@ -78,4 +78,41 @@ describe('price alert delivery', () => {
     expect(JSON.stringify(body)).not.toContain('user_1');
     expect((request! as Record<string, unknown> & { headers: Record<string, string> }).headers.Authorization).toBe('Bearer secret-value');
   });
+
+  it('marks non-2xx webhook responses as failed without leaking unsubscribe defaults', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: false, status: 503 })) as unknown as typeof fetch;
+    const result = await deliverPriceAlertEvent({
+      ...event,
+      unsubscribeToken: '',
+      unsubscribePath: '',
+    }, {
+      env: {
+        PRICE_ALERT_WEBHOOK_URL: 'https://alerts.example.com/hooks/sv-booking',
+        PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
+      } as unknown as NodeJS.ProcessEnv,
+      fetchImpl,
+    });
+
+    expect(result).toEqual({ configured: true, status: 'failed', httpStatus: 503 });
+    const [, request] = (fetchImpl as ReturnType<typeof vi.fn>).mock.calls[0] as [string, Record<string, unknown>];
+    const body = JSON.parse(request!.body as string);
+    expect(body.unsubscribeToken).toBeNull();
+    expect(body.unsubscribePath).toBeNull();
+    expect(JSON.stringify(body)).not.toContain('user_1');
+  });
+
+  it('reports failed delivery when the webhook request throws', async () => {
+    const fetchImpl = vi.fn(async () => {
+      throw new Error('webhook unavailable');
+    }) as unknown as typeof fetch;
+    const result = await deliverPriceAlertEvent(event, {
+      env: {
+        PRICE_ALERT_WEBHOOK_URL: 'https://alerts.example.com/hooks/sv-booking',
+        PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
+      } as unknown as NodeJS.ProcessEnv,
+      fetchImpl,
+    });
+
+    expect(result).toEqual({ configured: true, status: 'failed' });
+  });
 });

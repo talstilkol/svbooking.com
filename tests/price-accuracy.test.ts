@@ -146,6 +146,13 @@ describe('price accuracy ledger', () => {
       observedTotal: 'bad-observed',
       currency: 'EUR',
     });
+    const anonymousMismatch = await recordPriceMismatch({
+      hotelKey: '',
+      provider: '',
+      quotedTotal: 0,
+      observedTotal: 0,
+      currency: 'EUR',
+    });
 
     expect(observation).toMatchObject({
       hotelKey: 'unknown',
@@ -159,6 +166,12 @@ describe('price accuracy ledger', () => {
       provider: 'Expedia',
       quotedTotal: null,
       observedTotal: null,
+    });
+    expect(anonymousMismatch).toMatchObject({
+      hotelKey: 'unknown',
+      provider: 'unknown',
+      quotedTotal: 0,
+      observedTotal: 0,
     });
     expect((store.get('price:observations:2026-05-31') as unknown[])).toHaveLength(1000);
     expect((store.get('price:mismatches:2026-05-31') as unknown[])).toHaveLength(500);

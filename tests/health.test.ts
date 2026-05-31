@@ -108,6 +108,41 @@ describe('health APIs', () => {
     expect(body.warnings).toContain('Kinde auth environment is not configured');
   });
 
+  it('accepts cron auth and KV REST env as production readiness inputs without exposing values', async () => {
+    vi.stubEnv('CRON_SECRET', 'svbooking-cron-secret-health-0001');
+    vi.stubEnv('KV_REST_API_URL', 'https://redis.svbooking.com');
+    vi.stubEnv('KV_REST_API_TOKEN', 'svbooking-kv-token-health-0001');
+
+    const response = await getHealth();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.checks.security.adminAuthConfigured).toBe(true);
+    expect(body.checks.cache).toMatchObject({
+      durable: true,
+      mode: 'persistent',
+    });
+    expect(body.warnings).not.toContain('Admin bearer auth secret is not configured');
+    expect(body.warnings).not.toContain('Persistent KV cache is not configured');
+    expect(JSON.stringify(body)).not.toContain('svbooking-cron-secret-health-0001');
+    expect(JSON.stringify(body)).not.toContain('svbooking-kv-token-health-0001');
+  });
+
+  it('reports healthy status with non-launch warnings when local auth and providers are available', async () => {
+    vi.stubEnv('ADMIN_API_SECRET', 'admin-secret-health');
+
+    const response = await getHealth();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.ready).toBe(true);
+    expect(body.status).toBe('degraded');
+    expect(body.warnings).toEqual(expect.arrayContaining([
+      'Kinde auth environment is not configured',
+      'Persistent KV cache is not configured',
+    ]));
+  });
+
   it('reports alert delivery configured without leaking webhook secrets', async () => {
     vi.stubEnv('ADMIN_API_SECRET', 'admin-secret-health');
     vi.stubEnv('PRICE_ALERT_WEBHOOK_URL', 'https://alerts.example.com/hook');
