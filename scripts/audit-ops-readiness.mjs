@@ -93,6 +93,7 @@ await requireFile('lib/admin-auth.js');
 await requireFile('lib/admin-audit.js');
 await requireFile('lib/health-readiness.js');
 await requireFile('lib/env-config.mjs');
+await requireFile('lib/launch-services.mjs');
 await requireFile('lib/production-readiness.mjs');
 await requireFile('lib/ops-scorecard.js');
 await requireFile('lib/competitor-parity.js');
@@ -295,17 +296,21 @@ requireIncludes(healthRoute, 'app/api/health/route.js', [
 const healthReadiness = await readProjectFile('lib/health-readiness.js');
 requireIncludes(healthReadiness, 'lib/health-readiness.js', [
   'adminAuthConfigured',
+  'adminSecretConfigured',
+  'cronSecretConfigured',
   'productionReady',
   'providers',
   'catalog',
   'cache',
+  'catalogMediaQuality',
   'agents',
   'alerts',
   'opsAlerts',
-  'isPriceAlertDeliveryConfigured',
-  'isPriceAlertUnsubscribeConfigured',
-  'isOpsAlertDeliveryConfigured',
   'reviews',
+  'launchServices',
+  'summarizeLaunchServices',
+  'areLaunchServicesReady',
+  'buildLaunchServiceBlockers',
   'i18n',
   'pwa',
   'retention',
@@ -313,6 +318,7 @@ requireIncludes(healthReadiness, 'lib/health-readiness.js', [
   'launchReadiness',
   'freeOnlyLaunchReady',
   'globalParityReady',
+  'Catalog media quality is not launch-ready',
 ]);
 
 const opsScorecard = await readProjectFile('lib/ops-scorecard.js');
@@ -320,6 +326,8 @@ requireIncludes(opsScorecard, 'lib/ops-scorecard.js', [
   'buildOpsScorecard',
   'buildCompetitorParity',
   'buildCatalogMediaQuality',
+  'buildLaunchServiceBlockers',
+  'areLaunchServicesReady',
   'productTruth',
   'freeOnlyLaunchReady',
   'production-readiness',
@@ -722,24 +730,40 @@ requireIncludes(envConfig, 'lib/env-config.mjs', [
   'GOOGLE_PLACES_API_KEY',
 ]);
 
-const productionReadiness = await readProjectFile('lib/production-readiness.mjs');
-requireIncludes(productionReadiness, 'lib/production-readiness.mjs', [
-  'PRODUCTION_READINESS_STRICT',
-  'launchServices',
-  'Licensed review/property provider is not configured',
-  'Price alert webhook delivery is not configured',
-  'Ops alert webhook delivery is not configured',
-  'Web push keys are not configured',
-  'Invalid required env',
-  'Invalid Kinde env',
+const launchServices = await readProjectFile('lib/launch-services.mjs');
+requireIncludes(launchServices, 'lib/launch-services.mjs', [
+  'summarizeLaunchServices',
+  'areLaunchServicesReady',
+  'buildLaunchServiceBlockers',
+  'isSupportedReviewProvider',
+  'hasValidWebhookConfig',
+  'validWebhookUrl',
+  'REVIEWS_PROVIDER_NAME',
+  'REVIEWS_PROVIDER_LICENSED',
+  'GOOGLE_PLACES_API_KEY',
+  'PRICE_ALERT_WEBHOOK_URL',
+  'PRICE_ALERT_WEBHOOK_SECRET',
   'PRICE_ALERT_UNSUBSCRIBE_SECRET',
   'OPS_ALERT_WEBHOOK_URL',
   'OPS_ALERT_WEBHOOK_SECRET',
   'NEXT_PUBLIC_PUSH_PUBLIC_KEY',
   'PUSH_PRIVATE_KEY',
-  'REVIEWS_PROVIDER_NAME',
-  'REVIEWS_PROVIDER_LICENSED',
-  'GOOGLE_PLACES_API_KEY',
+  'Licensed review/property provider is not configured',
+  'Price alert webhook delivery is not configured',
+  'Price alert unsubscribe secret is not configured',
+  'Ops alert webhook delivery is not configured',
+  'Web push keys are not configured',
+]);
+
+const productionReadiness = await readProjectFile('lib/production-readiness.mjs');
+requireIncludes(productionReadiness, 'lib/production-readiness.mjs', [
+  'PRODUCTION_READINESS_STRICT',
+  'launchServices',
+  'summarizeLaunchServices',
+  'areLaunchServicesReady',
+  'buildLaunchServiceBlockers',
+  'Invalid required env',
+  'Invalid Kinde env',
   'buildCatalogMediaQuality',
   'Catalog media quality is not launch-ready',
   'Catalog media:',

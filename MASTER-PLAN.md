@@ -14,7 +14,7 @@ The app is locally healthy but not production-ready until real deployment config
 | Provider coverage | 5/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
 | Reviews and property content | 4/10 | APIs return explicit unavailable states until licensed provider data is configured; rich review/property content is not live. |
 | Mobile retention | 5/10 | PWA/offline shell, local alerts, and audited RUM/Web Vitals wiring exist; push delivery env and provider are not configured. |
-| Production readiness | 4/10 | Strict readiness fails without admin, cron, Redis, Kinde, and partner-provider env. |
+| Production readiness | 4/10 | Strict readiness fails without admin, cron, Redis, Kinde, partner-provider env, approved catalog media, licensed reviews, alert delivery, unsubscribe, ops delivery, and push keys. |
 | Release hygiene | 10/10 | The worktree is clean; keep generated/cache artifacts out of commits. |
 
 ## Accountability Audit
@@ -41,6 +41,7 @@ This section is the source of truth for what is complete versus only locally sca
 | Push/mobile notification delivery | NOT DONE | `NEXT_PUBLIC_PUSH_PUBLIC_KEY` and `PUSH_PRIVATE_KEY` are not configured with an approved provider. |
 | Release hygiene | DONE | `npm run release:state:strict` passes after committed changes; worktree is clean at audit time. |
 | Production env gate | NOT DONE | `npm run audit:production:strict` correctly fails locally on missing real env, unresolved catalog media quality, licensed review provider, alert delivery, ops delivery, and push keys. |
+| Health/scorecard launch-readiness alignment | DONE | Runtime health and ops scorecard now use the same launch-service contract as strict readiness and keep `freeOnlyLaunchReady` false until catalog media, reviews, alert delivery, unsubscribe, ops delivery, and push keys are ready. |
 | Docs drift prevention | DONE | `npm run audit:docs` passes and CI includes the docs audit. |
 | README, `.env.example`, runbook, plan alignment | PARTIAL | Audits pass for key snippets and env names, but not every operational runbook instruction has a live deployment proof. |
 | Public API unsafe URL prevention | DONE | `npm run audit:public-api-urls` passes and the Playwright JSON scanner is wired in CI. |
@@ -88,6 +89,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Accountability | Push/mobile notification delivery | NOT DONE | Push public/private keys and provider are not configured. |
 | Accountability | Release hygiene | DONE | `release:state:strict` passed after committed changes. |
 | Accountability | Production env gate | NOT DONE | `audit:production:strict` fails until real env exists. |
+| Accountability | Health/scorecard launch-readiness alignment | DONE | `freeOnlyLaunchReady` now requires the strict launch service set instead of only core auth/cache/provider env. |
 | Accountability | Docs drift prevention | DONE | `audit:docs` passes. |
 | Accountability | README, `.env.example`, runbook, plan alignment | PARTIAL | Static docs align; live deployment runbook evidence is missing. |
 | Accountability | Public API unsafe URL prevention | DONE | Public URL audit passes. |
@@ -103,6 +105,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Accountability | Faked work | DONE | No completion was intentionally marked from simulation; inflated scoring was corrected downward. |
 | Stabilization Priority | Configure real admin, cron, Redis, Kinde, and partner-provider env | NOT DONE | Requires real secrets and provider contracts outside the repo. |
 | Stabilization Priority | Treat `audit:production:strict` as go-live blocker | DONE | Documented and enforced by the strict audit script. |
+| Stabilization Priority | Align health and scorecard launch readiness with strict launch services | DONE | Health and scorecard no longer mark local launch ready without approved catalog media, licensed reviews, alert delivery, unsubscribe, ops delivery, and push keys. |
 | Stabilization Priority | Review modified/deleted/untracked files before staging | DONE | Release-state strict was clean before commits. |
 | Stabilization Priority | Split unrelated work into reviewable commits | DONE | Last work was split into two focused commits. |
 | Stabilization Priority | Keep generated/cache artifacts out of commits | DONE | Release-state strict reported no generated artifacts. |

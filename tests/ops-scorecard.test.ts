@@ -3,6 +3,31 @@ import { buildOpsScorecard } from '@/lib/ops-scorecard';
 import { buildCatalogMediaQuality } from '@/lib/catalog-media-quality';
 import { GET as getOpsScorecard } from '@/app/api/ops/scorecard/route';
 
+const healthyCatalogMediaQuality = {
+  status: 'healthy',
+  score: 1,
+  current: {
+    hotels: 2,
+    uniqueImages: 2,
+    reusedImages: 0,
+    imagesWithoutSizing: 0,
+    missingImageSourceMetadata: 0,
+    unapprovedImageSources: 0,
+    maxReuseCities: 2,
+  },
+  target: {
+    missingImages: 0,
+    invalidImages: 0,
+    nonHttpsImages: 0,
+    reusedImages: 0,
+    imagesWithoutSizing: 0,
+    maxReuseCitiesPerImage: 2,
+    licensedImageSourceMetadata: true,
+  },
+  blockers: [],
+  nextActions: [],
+};
+
 describe('ops scorecard', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -45,7 +70,7 @@ describe('ops scorecard', () => {
     expect(JSON.stringify(scorecard)).not.toContain('svbooking-webhook-secret-scorecard-0001');
   });
 
-  it('separates free-only launch readiness from global parity claims', () => {
+  it('keeps free-only launch blocked until strict launch services and catalog media are ready', () => {
     const scorecard = buildOpsScorecard({
       env: {
         ADMIN_API_SECRET: 'admin-secret-value',
@@ -62,8 +87,16 @@ describe('ops scorecard', () => {
       now: new Date('2026-05-14T12:00:00.000Z'),
     });
 
-    expect(scorecard.productTruth.freeOnlyLaunchReady).toBe(true);
+    expect(scorecard.productTruth.freeOnlyLaunchReady).toBe(false);
     expect(scorecard.productTruth.globalParityReady).toBe(false);
+    expect(scorecard.blockers).toEqual(expect.arrayContaining([
+      { domain: 'production-readiness', blocker: 'Catalog media quality is not launch-ready' },
+      { domain: 'production-readiness', blocker: 'Licensed review/property provider is not configured' },
+      { domain: 'production-readiness', blocker: 'Price alert webhook delivery is not configured' },
+      { domain: 'production-readiness', blocker: 'Price alert unsubscribe secret is not configured' },
+      { domain: 'production-readiness', blocker: 'Ops alert webhook delivery is not configured' },
+      { domain: 'production-readiness', blocker: 'Web push keys are not configured' },
+    ]));
     expect(JSON.stringify(scorecard)).not.toContain('svbooking-kinde-client-secret-0001');
     expect(JSON.stringify(scorecard)).not.toContain('svbooking-serpapi-key-scorecard-0001');
     expect(JSON.stringify(scorecard)).not.toContain('svbooking-redis-token-scorecard-0001');
@@ -125,12 +158,14 @@ describe('ops scorecard', () => {
         GOOGLE_PLACES_API_KEY: 'svbooking-google-places-scorecard-0001',
         PRICE_ALERT_WEBHOOK_URL: 'https://alerts.svbooking.com/hook',
         PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-price-alert-scorecard-0001',
+        PRICE_ALERT_UNSUBSCRIBE_SECRET: 'svbooking-unsubscribe-scorecard-0001',
         NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'svbooking-public-push-scorecard-0001',
         PUSH_PRIVATE_KEY: 'svbooking-private-push-scorecard-0001',
         OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.com/hook',
         OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-scorecard-0001',
       } as unknown as NodeJS.ProcessEnv,
       now: new Date('2026-05-14T12:00:00.000Z'),
+      catalogMediaQuality: healthyCatalogMediaQuality,
     });
 
     const byId = new Map(scorecard.domains.map((domain) => [domain.id, domain]));

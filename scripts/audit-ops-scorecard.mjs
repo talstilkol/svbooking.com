@@ -25,6 +25,7 @@ function requireIncludes(source, relativePath, snippets) {
 await requireFile('lib/ops-scorecard.js');
 await requireFile('lib/competitor-parity.js');
 await requireFile('lib/catalog-media-quality.js');
+await requireFile('lib/launch-services.mjs');
 await requireFile('app/api/ops/scorecard/route.js');
 
 const scorecard = await readProjectFile('lib/ops-scorecard.js');
@@ -32,6 +33,8 @@ requireIncludes(scorecard, 'lib/ops-scorecard.js', [
   'buildOpsScorecard',
   'buildCompetitorParity',
   'buildCatalogMediaQuality',
+  'buildLaunchServiceBlockers',
+  'areLaunchServicesReady',
   'productTruth',
   'freeOnlyLaunchReady',
   'production-readiness',
@@ -44,6 +47,14 @@ requireIncludes(scorecard, 'lib/ops-scorecard.js', [
   'competitor-parity',
   'competitorParity',
   'blockers',
+]);
+
+const launchServices = await readProjectFile('lib/launch-services.mjs');
+requireIncludes(launchServices, 'lib/launch-services.mjs', [
+  'summarizeLaunchServices',
+  'areLaunchServicesReady',
+  'buildLaunchServiceBlockers',
+  'Price alert unsubscribe secret is not configured',
 ]);
 
 const catalogMediaQuality = await readProjectFile('lib/catalog-media-quality.js');

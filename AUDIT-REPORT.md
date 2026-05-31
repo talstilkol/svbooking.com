@@ -86,12 +86,13 @@ The remaining blockers are not code placeholders to fill in locally:
 - Split release-state reporting into tracked, staged, unstaged, deleted, untracked, and generated-artifact counts so commit review can be sequenced.
 - Added `npm run audit:release-deletions` to keep removed static flight estimates, guarantee copy, provider trust scores, local review form, and heatmap-estimate fallback from returning.
 - Wired `npm run release:state:strict` into CI so clean checkouts fail if verification creates untracked or unstaged release artifacts.
-- Aligned health readiness and ops scorecard with strict production readiness: Kinde env and a complete partner pricing provider env group are now explicit blockers.
+- Aligned health readiness and ops scorecard with strict production readiness: admin and cron secrets, Kinde, durable cache, partner pricing, approved catalog media, licensed reviews, alert delivery, unsubscribe, ops delivery, and push keys are now explicit launch blockers.
 - Aligned strict production readiness with catalog media quality so unresolved reused/unapproved catalog images block go-live instead of remaining only a warning.
 - Aligned strict production readiness with licensed review/provider env, price-alert delivery, ops-alert delivery, unsubscribe, and push-key requirements so launch services cannot silently remain unavailable.
 - Aligned runtime readiness checks for reviews, alert webhooks, unsubscribe tokens, and push keys with strict env validation so placeholder hosts, short secrets, unsupported review providers, and missing Google Places keys cannot produce configured states.
 - Extracted strict env validation into `lib/env-config.mjs` so runtime health, alerts, reviews, and PWA readiness can share the same validation contract without importing the full production-readiness/media gate.
-- Extracted production readiness env grouping into `lib/production-readiness.mjs` so the CLI audit, health snapshot, and ops scorecard share one contract.
+- Extracted launch service readiness into `lib/launch-services.mjs` so strict readiness, runtime health, review provider configuration, and the ops scorecard share one contract for reviews, alerts, unsubscribe, ops alerts, and push keys.
+- Kept production readiness env/media gating in `lib/production-readiness.mjs` while health and scorecard consume the shared env and launch-service contracts without importing the full strict audit gate.
 - Added `npm run audit:env` so readiness env names cannot drift across `.env.example`, README, runbook, package scripts, and CI.
 - Added `npm run audit:secrets` to block committed env values and accidental production env assignments in scripts or CI.
 - Added `npm run audit:runtime` to prevent Edge Runtime static-generation regressions and Playwright env warning regressions.

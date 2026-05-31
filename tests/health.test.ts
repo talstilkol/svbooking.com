@@ -1,7 +1,33 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GET as getHealth } from '@/app/api/health/route';
 import { GET as getAgentHealth } from '@/app/api/agents/health-check/route';
+import { buildHealthSnapshot } from '@/lib/health-readiness';
 import { getHeatmap, getRates } from '@/lib/xotelo';
+
+const healthyCatalogMediaQuality = {
+  status: 'healthy',
+  score: 1,
+  current: {
+    hotels: 2,
+    uniqueImages: 2,
+    reusedImages: 0,
+    imagesWithoutSizing: 0,
+    missingImageSourceMetadata: 0,
+    unapprovedImageSources: 0,
+    maxReuseCities: 2,
+  },
+  target: {
+    missingImages: 0,
+    invalidImages: 0,
+    nonHttpsImages: 0,
+    reusedImages: 0,
+    imagesWithoutSizing: 0,
+    maxReuseCitiesPerImage: 2,
+    licensedImageSourceMetadata: true,
+  },
+  blockers: [],
+  nextActions: [],
+};
 
 vi.mock('@/lib/xotelo', () => ({
   getRates: vi.fn(async () => ({ rates: [] })),
@@ -67,29 +93,49 @@ describe('health APIs', () => {
     expect(JSON.stringify(body)).not.toContain('admin-secret-health');
   });
 
-  it('marks free-only launch ready only when durable cache, auth, and partner provider env are configured', async () => {
-    vi.stubEnv('ADMIN_API_SECRET', 'svbooking-admin-secret-health-0001');
-    vi.stubEnv('UPSTASH_REDIS_REST_URL', 'https://redis.svbooking.com');
-    vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', 'svbooking-redis-token-health-0001');
-    vi.stubEnv('KINDE_CLIENT_ID', 'svbooking-kinde-client-id-0001');
-    vi.stubEnv('KINDE_CLIENT_SECRET', 'svbooking-kinde-client-secret-0001');
-    vi.stubEnv('KINDE_ISSUER_URL', 'https://auth.svbooking.com');
-    vi.stubEnv('KINDE_SITE_URL', 'https://svbooking.com');
-    vi.stubEnv('KINDE_POST_LOGOUT_REDIRECT_URL', 'https://svbooking.com');
-    vi.stubEnv('KINDE_POST_LOGIN_REDIRECT_URL', 'https://svbooking.com/dashboard');
-    vi.stubEnv('SERPAPI_KEY', 'svbooking-serpapi-key-health-0001');
+  it('marks free-only launch ready only when strict launch services and catalog media are configured', async () => {
+    const snapshot = buildHealthSnapshot({
+      now: new Date('2026-05-31T12:00:00.000Z'),
+      catalogMediaQuality: healthyCatalogMediaQuality,
+      env: {
+        ADMIN_API_SECRET: 'svbooking-admin-secret-health-0001',
+        CRON_SECRET: 'svbooking-cron-secret-health-0001',
+        UPSTASH_REDIS_REST_URL: 'https://redis.svbooking.com',
+        UPSTASH_REDIS_REST_TOKEN: 'svbooking-redis-token-health-0001',
+        KINDE_CLIENT_ID: 'svbooking-kinde-client-id-0001',
+        KINDE_CLIENT_SECRET: 'svbooking-kinde-client-secret-0001',
+        KINDE_ISSUER_URL: 'https://auth.svbooking.com',
+        KINDE_SITE_URL: 'https://svbooking.com',
+        KINDE_POST_LOGOUT_REDIRECT_URL: 'https://svbooking.com',
+        KINDE_POST_LOGIN_REDIRECT_URL: 'https://svbooking.com/dashboard',
+        SERPAPI_KEY: 'svbooking-serpapi-key-health-0001',
+        REVIEWS_PROVIDER_NAME: 'google-places',
+        REVIEWS_PROVIDER_LICENSED: 'true',
+        GOOGLE_PLACES_API_KEY: 'svbooking-google-places-health-0001',
+        PRICE_ALERT_WEBHOOK_URL: 'https://alerts.svbooking.com/hook',
+        PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-alert-secret-health-0001',
+        PRICE_ALERT_UNSUBSCRIBE_SECRET: 'svbooking-unsubscribe-health-0001',
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.com/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-secret-health-0001',
+        NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'svbooking-public-push-health-0001',
+        PUSH_PRIVATE_KEY: 'svbooking-private-push-health-0001',
+      } as unknown as NodeJS.ProcessEnv,
+    });
 
-    const response = await getHealth();
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body.launchReadiness.freeOnlyLaunchReady).toBe(true);
-    expect(body.launchReadiness.globalParityReady).toBe(false);
-    expect(body.checks.security.kindeConfigured).toBe(true);
-    expect(body.checks.providers.partnerConfigured).toBe(true);
-    expect(JSON.stringify(body)).not.toContain('svbooking-redis-token-health-0001');
-    expect(JSON.stringify(body)).not.toContain('svbooking-kinde-client-secret-0001');
-    expect(JSON.stringify(body)).not.toContain('svbooking-serpapi-key-health-0001');
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.launchReadiness.freeOnlyLaunchReady).toBe(true);
+    expect(snapshot.launchReadiness.globalParityReady).toBe(false);
+    expect(snapshot.checks.security.adminSecretConfigured).toBe(true);
+    expect(snapshot.checks.security.cronSecretConfigured).toBe(true);
+    expect(snapshot.checks.security.kindeConfigured).toBe(true);
+    expect(snapshot.checks.providers.partnerConfigured).toBe(true);
+    expect(snapshot.checks.catalogMediaQuality.status).toBe('healthy');
+    expect(snapshot.checks.launchServices.priceAlerts.unsubscribeConfigured).toBe(true);
+    expect(JSON.stringify(snapshot)).not.toContain('svbooking-redis-token-health-0001');
+    expect(JSON.stringify(snapshot)).not.toContain('svbooking-kinde-client-secret-0001');
+    expect(JSON.stringify(snapshot)).not.toContain('svbooking-serpapi-key-health-0001');
+    expect(JSON.stringify(snapshot)).not.toContain('svbooking-google-places-health-0001');
+    expect(JSON.stringify(snapshot)).not.toContain('svbooking-private-push-health-0001');
   });
 
   it('keeps launch readiness blocked when Kinde auth is missing', async () => {

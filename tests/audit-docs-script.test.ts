@@ -124,7 +124,7 @@ const validPlan = [
   '# Plan',
   'Current catalog: 1 hotels, 1 cities, 1 countries.',
   'Release hygiene remains required.',
-  'Strict readiness fails without admin, cron, Redis, Kinde, and partner-provider env.',
+  'Strict readiness fails without admin, cron, Redis, Kinde, partner-provider env, approved catalog media, licensed reviews, alert delivery, unsubscribe, ops delivery, and push keys.',
   '## Checked Backlog Re-Audit',
   '## Unfinished Launch Task Queue',
   'FAKED | None identified',

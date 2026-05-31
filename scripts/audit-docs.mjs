@@ -122,7 +122,7 @@ requireIncludes(readme, 'README.md', [
 
 requireIncludes(masterPlan, 'MASTER-PLAN.md', [
   'Release hygiene',
-  'Strict readiness fails without admin, cron, Redis, Kinde, and partner-provider env',
+  'Strict readiness fails without admin, cron, Redis, Kinde, partner-provider env, approved catalog media, licensed reviews, alert delivery, unsubscribe, ops delivery, and push keys',
   'Never use invented secrets',
   'Checked Backlog Re-Audit',
   'Unfinished Launch Task Queue',
