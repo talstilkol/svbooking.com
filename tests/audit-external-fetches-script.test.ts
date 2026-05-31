@@ -83,6 +83,14 @@ const validFiles = {
     "import { normalizeHttpsUrl } from './utils/public-url-safety';",
     '',
   ].join('\n'),
+  'lib/catalog-candidates.js': [
+    "import { normalizeHttpsUrl } from './utils/public-url-safety';",
+    '',
+  ].join('\n'),
+  'lib/hotels-catalog.js': [
+    "import { normalizeHttpsUrl } from './utils/public-url-safety';",
+    '',
+  ].join('\n'),
   'lib/utils/public-url-safety.js': [
     'function isPrivateHostname() {}',
     'export function normalizeHttpsUrl(value) {',
@@ -105,6 +113,19 @@ const validFiles = {
   ].join('\n'),
   'tests/discovery-source-hardening.test.ts': [
     "it('drops unsafe travel guide media URLs', () => { expect('Unsafe Coordinate Hotel').toBeTruthy(); });",
+    '',
+  ].join('\n'),
+  'tests/catalog-candidates.test.ts': [
+    "it('does not treat unsafe source URLs as usable provenance', () => {});",
+    "it('keeps external IDs as provenance while stripping unsafe source URLs', () => {});",
+    '',
+  ].join('\n'),
+  'tests/catalog-candidates-api.test.ts': [
+    "it('strips unsafe catalog candidate source URLs before storage', () => {});",
+    '',
+  ].join('\n'),
+  'tests/hotels-catalog.test.ts': [
+    "it('normalizes source URLs', () => { expect('https://127.0.0.1/internal').toBeTruthy(); });",
     '',
   ].join('\n'),
   'tests/public-url-safety.test.ts': [

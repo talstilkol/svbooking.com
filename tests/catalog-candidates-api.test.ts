@@ -117,6 +117,28 @@ describe('/api/catalog/candidates', () => {
     expect(staleBody.candidate.status).toBe('stale');
   });
 
+  it('strips unsafe catalog candidate source URLs before storage', async () => {
+    const ingested = await POST(request('/api/catalog/candidates', 'admin-candidate-secret', {
+      action: 'ingest',
+      hotelKey: 'unsafe-source-hotel',
+      name: 'Unsafe Source Hotel',
+      city: 'Paris',
+      country: 'France',
+      source: 'manual-admin',
+      sourceUrl: 'https://0x7f000001/internal',
+      provenance: { url: 'https://[fd00::1]/internal' },
+      lat: 48.8566,
+      lon: 2.3522,
+    }));
+    const body = await ingested!.json();
+
+    expect(ingested!.status).toBe(200);
+    expect(body.candidate.sourceUrl).toBeNull();
+    expect(body.candidate.provenance.sourceUrl).toBeNull();
+    expect(body.candidate.provenance.url).toBeNull();
+    expect(body.candidate.missingProvenance).toBe(true);
+  });
+
   it('marks existing catalog candidates as duplicate', async () => {
     await POST(request('/api/catalog/candidates', 'admin-candidate-secret', {
       hotelKey: 'existing-hotel',

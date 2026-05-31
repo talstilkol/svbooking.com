@@ -112,6 +112,67 @@ describe('catalog candidate queue', () => {
     expect(addAndPersistHotel).not.toHaveBeenCalled();
   });
 
+  it('does not treat unsafe source URLs as usable provenance', async () => {
+    const queued = await upsertCandidate({
+      hotelKey: 'g1-d32',
+      name: 'Unsafe Source Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'manual-admin',
+      sourceUrl: 'https://127.0.0.1/internal',
+      provenance: { sourceUrl: 'https://[::ffff:127.0.0.1]/internal' },
+      lat: 48.8566,
+      lon: 2.3522,
+    });
+
+    expect(queued.candidate.sourceUrl).toBeNull();
+    expect(queued.candidate.provenance.sourceUrl).toBeNull();
+    expect(queued.candidate.provenance.url).toBeNull();
+    expect(queued.candidate.missingProvenance).toBe(true);
+
+    const approved = await approveCandidate(queued.candidate.id, { actor: 'admin-api-secret' });
+
+    expect(approved.approved).toBe(false);
+    expect(approved.error).toContain('provenance');
+    expect(addAndPersistHotel).not.toHaveBeenCalled();
+  });
+
+  it('keeps external IDs as provenance while stripping unsafe source URLs', async () => {
+    const queued = await upsertCandidate({
+      hotelKey: 'g1-d33',
+      name: 'External Id Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'manual-admin',
+      sourceUrl: 'https://100.64.0.1/internal',
+      lat: 48.8566,
+      lon: 2.3522,
+      externalIds: { wikidataId: 'Q33' },
+    });
+
+    expect(queued.candidate.sourceUrl).toBeNull();
+    expect(queued.candidate.provenance.sourceUrl).toBeNull();
+    expect(queued.candidate.missingProvenance).toBe(false);
+  });
+
+  it('keeps the first safe source URL when another provenance URL is unsafe', async () => {
+    const queued = await upsertCandidate({
+      hotelKey: 'g1-d34',
+      name: 'Mixed Provenance Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'manual-admin',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q34',
+      provenance: { url: 'https://127.1/internal' },
+      lat: 48.8566,
+      lon: 2.3522,
+    });
+
+    expect(queued.candidate.sourceUrl).toBe('https://www.wikidata.org/wiki/Q34');
+    expect(queued.candidate.provenance.sourceUrl).toBe('https://www.wikidata.org/wiki/Q34');
+    expect(queued.candidate.missingProvenance).toBe(false);
+  });
+
   it('approves and rejects candidates through explicit review states', async () => {
     const queued = await upsertCandidate({
       hotelKey: 'g1-d4',

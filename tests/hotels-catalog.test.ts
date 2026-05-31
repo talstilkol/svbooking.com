@@ -215,7 +215,7 @@ describe('hotels-catalog', () => {
         lat: 120,
         lon: -240,
         source: ' wikidata ',
-        sourceUrl: 'http://www.wikidata.org/',
+        sourceUrl: 'https://127.0.0.1/internal',
         externalIds: [] as unknown as object,
         provenance: { source: 'wikidata' },
       });

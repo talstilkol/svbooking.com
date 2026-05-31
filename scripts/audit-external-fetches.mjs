@@ -92,10 +92,15 @@ const [
   wikivoyageClient,
   dbpediaClient,
   opentripmapClient,
+  catalogCandidates,
+  hotelsCatalog,
   publicUrlSafety,
   wikidataTest,
   contentDiscoveryTest,
   discoverySourceHardeningTest,
+  catalogCandidatesTest,
+  catalogCandidatesApiTest,
+  hotelsCatalogTest,
   publicUrlSafetyTest,
   packageRaw,
   ci,
@@ -110,10 +115,15 @@ const [
   readProjectFile('lib/wikivoyage.js'),
   readProjectFile('lib/dbpedia.js'),
   readProjectFile('lib/opentripmap.js'),
+  readProjectFile('lib/catalog-candidates.js'),
+  readProjectFile('lib/hotels-catalog.js'),
   readProjectFile('lib/utils/public-url-safety.js'),
   readProjectFile('tests/wikidata-client.test.ts'),
   readProjectFile('tests/content-discovery-helpers.test.ts'),
   readProjectFile('tests/discovery-source-hardening.test.ts'),
+  readProjectFile('tests/catalog-candidates.test.ts'),
+  readProjectFile('tests/catalog-candidates-api.test.ts'),
+  readProjectFile('tests/hotels-catalog.test.ts'),
   readProjectFile('tests/public-url-safety.test.ts'),
   readProjectFile('package.json'),
   readProjectFile('.github/workflows/ci.yml'),
@@ -172,11 +182,19 @@ for (const [relativePath, source] of [
   ['lib/wikivoyage.js', wikivoyageClient],
   ['lib/dbpedia.js', dbpediaClient],
   ['lib/opentripmap.js', opentripmapClient],
+  ['lib/catalog-candidates.js', catalogCandidates],
+  ['lib/hotels-catalog.js', hotelsCatalog],
 ]) {
-  requireIncludes(source, relativePath, [
-    'fetchWithTimeout',
-    'normalizeHttpsUrl',
-  ]);
+  requireIncludes(source, relativePath, ['normalizeHttpsUrl']);
+}
+
+for (const [relativePath, source] of [
+  ['lib/wikipedia.js', wikipediaClient],
+  ['lib/wikivoyage.js', wikivoyageClient],
+  ['lib/dbpedia.js', dbpediaClient],
+  ['lib/opentripmap.js', opentripmapClient],
+]) {
+  requireIncludes(source, relativePath, ['fetchWithTimeout']);
 }
 
 requireIncludes(contentDiscoveryTest, 'tests/content-discovery-helpers.test.ts', [
@@ -187,6 +205,19 @@ requireIncludes(contentDiscoveryTest, 'tests/content-discovery-helpers.test.ts',
 requireIncludes(discoverySourceHardeningTest, 'tests/discovery-source-hardening.test.ts', [
   'drops unsafe travel guide media URLs',
   'Unsafe Coordinate Hotel',
+]);
+
+requireIncludes(catalogCandidatesTest, 'tests/catalog-candidates.test.ts', [
+  'does not treat unsafe source URLs as usable provenance',
+  'keeps external IDs as provenance while stripping unsafe source URLs',
+]);
+
+requireIncludes(catalogCandidatesApiTest, 'tests/catalog-candidates-api.test.ts', [
+  'strips unsafe catalog candidate source URLs before storage',
+]);
+
+requireIncludes(hotelsCatalogTest, 'tests/hotels-catalog.test.ts', [
+  'https://127.0.0.1/internal',
 ]);
 
 requireIncludes(publicUrlSafetyTest, 'tests/public-url-safety.test.ts', [
