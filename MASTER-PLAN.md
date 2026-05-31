@@ -8,7 +8,7 @@ The app is locally healthy but not production-ready until real deployment config
 | --- | ---: | --- |
 | Determinism and no-fabrication guardrails | 9/10 | `Math.random()` and unapproved UUID randomness are blocked by scans/audits; this is still not a formal proof that every future data path has complete provenance. |
 | Local build/test health | 10/10 | Lint, unit/API tests, build, and E2E are expected release gates. |
-| Coverage depth | 8/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 95.15% lines and 84.07% branches. |
+| Coverage depth | 8/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 95.55% lines and 85.03% branches. |
 | Security guardrails | 8/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, public API URL safety, and no-store audits are wired; production enforcement still depends on real env and deployment verification. |
 | Catalog quality | 6/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage and has reused catalog imagery warnings. |
 | Provider coverage | 5/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
@@ -24,10 +24,10 @@ This section is the source of truth for what is complete versus only locally sca
 | Plan item | Status | Honest verification |
 | --- | --- | --- |
 | Determinism: no `Math.random()` | DONE | `rg "Math\.random\|crypto\.randomUUID" app components lib scripts tests -S` returns no matches. |
-| No-fabrication guardrails | PARTIAL | `npm run audit:guardrails` passes and unavailable states exist, but there is no exhaustive provenance proof for every future provider/content path. |
+| No-fabrication guardrails | PARTIAL | `npm run audit:guardrails` and `npm run audit:provenance` pass, but there is no exhaustive licensed-source proof for every legacy catalog item/image and future provider/content path. |
 | Local lint/unit/build/E2E health | DONE | `npm run lint`, `npm test`, `npm run build`, and `npm run test:e2e` passed locally. |
-| Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 95.15% lines, 91.86% statements, 94.49% functions, 84.07% branches. |
-| Coverage to world-class depth | PARTIAL | Branch coverage is above 83%, not near exhaustive; remaining weak areas include Overpass discovery, agent utilities, i18n edge cases, ops alerts, and provider registry edges. |
+| Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 95.55% lines, 92.61% statements, 94.64% functions, 85.03% branches. |
+| Coverage to world-class depth | PARTIAL | Branch coverage is above 85%, not near exhaustive; remaining weak areas include Overpass discovery, OpenTripMap, Xotelo, Wikidata, alert delivery, and provider registry edges. |
 | Security audits wired | DONE | CSRF, HTML safety, storage, privacy, alert, public URL, affiliate, no-store, API error, and cron-cache audits pass locally. |
 | Production security enforcement | PARTIAL | Code gates exist, but real admin, cron, Kinde, Redis, provider, alert, and push env are not configured locally. |
 | Catalog local floor | DONE | Catalog count is 502 hotels, 139 cities, 65 countries. |
@@ -43,7 +43,7 @@ This section is the source of truth for what is complete versus only locally sca
 | Docs drift prevention | DONE | `npm run audit:docs` passes and CI includes the docs audit. |
 | README, `.env.example`, runbook, plan alignment | PARTIAL | Audits pass for key snippets and env names, but not every operational runbook instruction has a live deployment proof. |
 | Public API unsafe URL prevention | DONE | `npm run audit:public-api-urls` passes and the Playwright JSON scanner is wired in CI. |
-| Validated catalog candidate promotion | PARTIAL | Candidate and admin approval paths exist; production-scale ingestion with real reviewed approvals is not complete. |
+| Validated catalog candidate promotion | PARTIAL | Candidate and admin approval paths exist and provenance wiring is audited; production-scale ingestion with real reviewed approvals is not complete. |
 | Licensed media replacement | NOT DONE | `audit:catalog` still warns about reused Unsplash images across cities. |
 | Agent cron auth | DONE | Cron-protected routes and `CRON_SECRET` gate are wired and audited. |
 | Production cron execution | NOT DONE | Cron routes are not verified in a real deployment with real `CRON_SECRET` and persistent KV. |
@@ -62,7 +62,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | --- | --- | --- | --- |
 | Current State | Determinism and no-fabrication guardrails | PARTIAL | Forbidden randomness scans pass, but end-to-end provenance is not exhaustive. |
 | Current State | Local build/test health | DONE | Lint, unit/API, build, and E2E passed locally. |
-| Current State | Coverage depth | PARTIAL | Ratchet passes at 84.07% branch coverage; not yet 85%+ or exhaustive. |
+| Current State | Coverage depth | PARTIAL | Ratchet passes at 85.03% branch coverage; not yet 88%+ or exhaustive. |
 | Current State | Security guardrails | PARTIAL | Local audits pass; production enforcement still requires real deployment env. |
 | Current State | Catalog quality | PARTIAL | 502 hotels/139 cities/65 countries pass the floor; imagery reuse and market scale remain open. |
 | Current State | Provider coverage | PARTIAL | Adapter layer exists; real partner credentials are not configured. |
@@ -71,10 +71,10 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Current State | Production readiness | NOT DONE | Strict production readiness fails locally due missing real env. |
 | Current State | Release hygiene | DONE | Worktree was clean after the last release-state strict gate. |
 | Accountability | Determinism: no `Math.random()` | DONE | Scan returned no `Math.random()` or unapproved UUID usage. |
-| Accountability | No-fabrication guardrails | PARTIAL | Claims audits pass, but future provider/content paths still need stronger provenance controls. |
+| Accountability | No-fabrication guardrails | PARTIAL | Claims and provenance-wiring audits pass, but static legacy catalog/image provenance and future provider/content paths still need stronger licensed-source controls. |
 | Accountability | Local lint/unit/build/E2E health | DONE | Verified by local gates. |
 | Accountability | Coverage ratchet current floor | DONE | `npm run audit:coverage` passed at the current floor. |
-| Accountability | Coverage to world-class depth | PARTIAL | Branch coverage is still not near exhaustive. |
+| Accountability | Coverage to world-class depth | PARTIAL | Branch coverage is above 85%, still not near exhaustive. |
 | Accountability | Security audits wired | DONE | Local security audit scripts pass. |
 | Accountability | Production security enforcement | PARTIAL | Code gates exist; real deployment secrets and providers are absent. |
 | Accountability | Catalog local floor | DONE | Catalog count is above the local floor. |
@@ -90,7 +90,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Accountability | Docs drift prevention | DONE | `audit:docs` passes. |
 | Accountability | README, `.env.example`, runbook, plan alignment | PARTIAL | Static docs align; live deployment runbook evidence is missing. |
 | Accountability | Public API unsafe URL prevention | DONE | Public URL audit passes. |
-| Accountability | Validated catalog candidate promotion | PARTIAL | Candidate flow exists; production-scale reviewed promotion is incomplete. |
+| Accountability | Validated catalog candidate promotion | PARTIAL | Candidate flow and provenance guard audit exist; production-scale reviewed promotion is incomplete. |
 | Accountability | Licensed media replacement | NOT DONE | Reused Unsplash imagery warnings remain. |
 | Accountability | Agent cron auth | DONE | Cron auth gate is wired and audited. |
 | Accountability | Production cron execution | NOT DONE | Not verified in deployment with real `CRON_SECRET` and persistent KV. |
@@ -105,8 +105,8 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Review modified/deleted/untracked files before staging | DONE | Release-state strict was clean before commits. |
 | Stabilization Priority | Split unrelated work into reviewable commits | DONE | Last work was split into two focused commits. |
 | Stabilization Priority | Keep generated/cache artifacts out of commits | DONE | Release-state strict reported no generated artifacts. |
-| Stabilization Priority | Raise branch coverage from 84.07% toward 85% | NOT DONE | Current floor remains 84.07%. |
-| Stabilization Priority | Prioritize remaining branch coverage hot spots | PARTIAL | Some agent/i18n/ops/admin coverage was added; Overpass/provider/candidate branches remain. |
+| Stabilization Priority | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 85.03% and the floor is 85%. |
+| Stabilization Priority | Prioritize remaining branch coverage hot spots | PARTIAL | Browser storage, currency, catalog candidate, agent/i18n/ops/admin coverage was added; Overpass/provider/network branches remain. |
 | Stabilization Priority | Keep coverage reports out of commits | DONE | Coverage artifacts were not staged. |
 | Stabilization Priority | Keep README, env example, runbook, and plan aligned | PARTIAL | Local docs audit passes; deployment runbook evidence is missing. |
 | Stabilization Priority | Run docs audit in CI | DONE | `audit:docs` is wired in CI. |
@@ -119,9 +119,9 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints exist; external monitoring and webhook delivery are not configured. |
 | Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
 | Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
-| Acceptance Criteria | `npm test` passes | DONE | 165 files / 876 tests passed. |
+| Acceptance Criteria | `npm test` passes | DONE | 165 files / 887 tests passed. |
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
-| Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 95.15% lines and 84.07% branches. |
+| Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 95.55% lines and 85.03% branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 727 static pages. |
 | Acceptance Criteria | `npm run test:e2e` passes | DONE | 72 Playwright tests passed. |
 | Acceptance Criteria | Every non-strict `npm run audit:*` passes | DONE | All non-strict audit scripts passed locally. |
@@ -136,11 +136,11 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Backlog P0 | Configure approved pricing partner and verify provider-returned rates | NOT DONE | Requires partner credentials. |
 | Backlog P0 | Configure licensed review/property provider | NOT DONE | Requires licensed provider access. |
 | Backlog P1 | Raise branch coverage from 83.26% toward 84% | DONE | The only `[x]` task is truly complete. |
-| Backlog P1 | Raise branch coverage from 84.07% toward 85% | NOT DONE | Current branch coverage is 84.07%. |
-| Backlog P1 | Add focused tests for remaining weak branches | PARTIAL | Some new tests exist; listed weak areas remain. |
+| Backlog P1 | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 85.03%. |
+| Backlog P1 | Add focused tests for remaining weak branches | PARTIAL | New browser storage, localStorage fallback, currency, and catalog-candidate tests exist; listed network/provider weak areas remain. |
 | Backlog P1 | Replace reused catalog images | NOT DONE | Image reuse warnings remain. |
-| Backlog P1 | Add stronger provenance audit | NOT DONE | Current audits do not prove every static catalog item/image/partner link has source provenance. |
-| Backlog P1 | Add deployment smoke checks | NOT DONE | Local tests exist; deployment smoke checks are not implemented/proven. |
+| Backlog P1 | Add stronger provenance audit | PARTIAL | `audit:provenance` now checks candidate promotion provenance and provider-link sanitization; it does not yet prove every legacy static catalog item/image has licensed source metadata. |
+| Backlog P1 | Add deployment smoke checks | PARTIAL | `smoke:deployment` now exists for public, admin, cron-guard, and unavailable-state checks; it has not been run against a configured deployment. |
 | Backlog P2 | Expand catalog through admin candidate workflow only | PARTIAL | Workflow exists; scale expansion is not complete. |
 | Backlog P2 | Add duplicate/provenance review dashboards | PARTIAL | Duplicate flags exist; full dashboard workflow is incomplete. |
 | Backlog P2 | Add provider coverage telemetry by city/country/date | NOT DONE | Not implemented as a coverage matrix. |
@@ -168,7 +168,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
    - Keep generated/cache artifacts out of commits.
 
 3. **Coverage ratchet**
-   - Raise `lib` branch coverage from 84.07% toward 85%, then raise the ratchet floors again in `scripts/audit-coverage.mjs`.
+   - Raise `lib` branch coverage from 85.03% toward 88%, then raise the ratchet floors again in `scripts/audit-coverage.mjs`.
    - Prioritize hotels-catalog, provider registry, cache, alert delivery, retention edge cases, and remaining API error branches.
    - Keep coverage reports out of commits unless a reviewed artifact is explicitly requested.
 
@@ -212,15 +212,19 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 - [ ] Configure persistent KV and verify `/api/health` reports persistent cache, not memory.
 - [ ] Configure one approved pricing partner and verify provider-returned rates from production without fabricated fallbacks.
 - [ ] Configure licensed review/property-content provider access before showing review copy, ratings, or rich property descriptions.
+- [ ] Run `SITE_URL=https://your-deployment.example npm run smoke:deployment` after strict production readiness passes.
 
 ### P1: Quality And Trust
 
 - [x] Raise `lib` branch coverage from 83.26% toward 84%, then keep ratcheting upward.
-- [ ] Raise `lib` branch coverage from 84.07% toward 85%, then keep ratcheting upward.
+- [x] Raise `lib` branch coverage from 84.07% toward 85%, then keep ratcheting upward.
+- [ ] Raise `lib` branch coverage from 85.03% toward 88%, then keep ratcheting upward.
 - [ ] Add focused tests for Overpass discovery, agent utilities, i18n edge cases, ops alert thresholds, and provider registry merge/circuit-breaker branches.
 - [ ] Replace reused catalog images with licensed hotel- or city-specific media.
-- [ ] Add a stronger provenance audit for catalog items, images, partner links, and provider-returned rates.
-- [ ] Add deployment smoke checks for public APIs, protected admin APIs, cron APIs, and unavailable-state behavior.
+- [x] Add a stronger provenance wiring audit for catalog candidate promotion, source URLs, provider links, and provider-returned rates.
+- [ ] Extend provenance audit to require licensed/source metadata for every legacy static catalog item and catalog image.
+- [x] Add deployment smoke checks for public APIs, protected admin APIs, cron guards, and unavailable-state behavior.
+- [ ] Run deployment smoke checks in a configured production deployment and capture passing evidence.
 
 ### P2: Market Scale
 

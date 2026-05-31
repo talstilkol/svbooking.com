@@ -46,6 +46,8 @@ Run these before production deployment:
 npm run audit:production
 npm run audit:production:strict
 npm run audit:guardrails
+npm run audit:provenance
+npm run audit:deployment-smoke
 npm run audit:catalog
 npm run audit:docs
 npm run audit:env
@@ -87,6 +89,7 @@ npm run release:state:strict
 `audit:production:strict` is the go-live blocker and must pass in the deployment environment.
 `release:state:strict` is the release hygiene blocker and must pass only after intended changes are staged/committed and generated artifacts are excluded.
 The public API URL safety E2E audit must stay enabled; it scans public JSON API responses for non-HTTPS, credentialed, localhost, private-network, `javascript:`, and `data:` URLs.
+After deployment, run `SITE_URL=https://your-deployment.example npm run smoke:deployment`. Add `ADMIN_API_SECRET` to that command for authenticated admin smoke checks. Add `CRON_SECRET` and `SMOKE_RUN_CRON=1` only when you intentionally want the cron orchestrator smoke to execute against the deployment.
 
 ## Cron Verification
 

@@ -5,6 +5,8 @@ import {
   formatPrice,
   convertPrice,
   detectCurrency,
+  getCurrencyCode,
+  setCurrencyCode,
 } from '@/lib/currency';
 
 describe('currency', () => {
@@ -76,6 +78,13 @@ describe('currency', () => {
       const result = formatPrice(100, 'JPY');
       expect(result).toContain('¥');
     });
+
+    it('uses the server-safe default currency when no code is supplied', () => {
+      const result = formatPrice(100);
+
+      expect(result).toContain('$');
+      expect(result).toContain('100');
+    });
   });
 
   describe('detectCurrency', () => {
@@ -83,6 +92,11 @@ describe('currency', () => {
       // In Node.js test environment, window is undefined
       const result = detectCurrency();
       expect(result).toBe('USD');
+    });
+
+    it('keeps currency reads and writes server-safe without window access', () => {
+      expect(getCurrencyCode()).toBe('USD');
+      expect(() => setCurrencyCode('EUR')).not.toThrow();
     });
   });
 });

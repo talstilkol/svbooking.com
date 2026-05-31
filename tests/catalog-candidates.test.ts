@@ -27,9 +27,12 @@ vi.mock('@/lib/hotels-catalog', () => ({
 import { addAndPersistHotel } from '@/lib/hotels-catalog';
 import {
   approveCandidate,
+  getCandidate,
   getCandidateId,
   listCandidates,
+  markCandidateStale,
   rejectCandidate,
+  upsertCandidates,
   upsertCandidate,
 } from '@/lib/catalog-candidates';
 
@@ -220,5 +223,64 @@ describe('catalog candidate queue', () => {
     expect(rejected.rejected).toBe(true);
     expect(rejected.candidate.status).toBe('rejected');
     expect(rejected.candidate.rejectionReason).toBe('duplicate');
+  });
+
+  it('skips incomplete batch candidates and returns null for missing IDs', async () => {
+    expect(await getCandidate('')).toBeNull();
+    expect(await listCandidates()).toEqual([]);
+
+    const result = await upsertCandidates([
+      { city: 'Paris', country: 'France' },
+      {
+        hotelKey: 'g1-d8',
+        name: 'Batch Candidate',
+        city: 'Paris',
+        country: 'France',
+        sourceUrl: 'https://www.wikidata.org/wiki/Q8',
+        lat: 48.8566,
+        lon: 2.3522,
+      },
+    ]);
+
+    expect(result).toMatchObject({ saved: 1, skipped: 1 });
+    expect(result.ids).toHaveLength(1);
+    expect(await getCandidate(result.ids[0])).toEqual(expect.objectContaining({
+      hotelKey: 'g1-d8',
+      status: 'pending',
+    }));
+  });
+
+  it('marks candidates stale and reports missing review targets without promotion', async () => {
+    expect(await rejectCandidate('missing-id')).toEqual({
+      rejected: false,
+      error: 'Candidate not found',
+    });
+    expect(await markCandidateStale('missing-id')).toEqual({
+      stale: false,
+      error: 'Candidate not found',
+    });
+
+    const queued = await upsertCandidate({
+      hotelKey: 'g1-d9',
+      name: 'Stale Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'manual-admin',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q9',
+      lat: 48.8566,
+      lon: 2.3522,
+    });
+
+    const stale = await markCandidateStale(queued.candidate.id, {
+      actor: 'admin-api-secret',
+      reason: 'outdated source',
+    });
+
+    expect(stale.stale).toBe(true);
+    expect(stale.candidate).toMatchObject({
+      status: 'stale',
+      reviewedBy: 'admin-api-secret',
+      rejectionReason: 'outdated source',
+    });
   });
 });

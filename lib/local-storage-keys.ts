@@ -86,6 +86,13 @@ function parseStorageValue(raw: string): unknown {
   }
 }
 
+function parseStoredString(raw: string | null | undefined): string | null {
+  if (typeof raw !== 'string' || raw.length === 0) return null;
+  const parsed = parseStorageValue(raw);
+  if (typeof parsed === 'string') return parsed.length > 0 ? parsed : null;
+  return raw;
+}
+
 function getBrowserLocalStorage(): Storage | null {
   try {
     if (typeof window === 'undefined') return null;
@@ -160,7 +167,8 @@ export function readLocalStorageStringWithFallback(
 
   try {
     const raw = storage?.getItem(key);
-    if (typeof raw === 'string' && raw.length > 0) return raw;
+    const rawValue = parseStoredString(raw);
+    if (rawValue) return rawValue;
   } catch {}
 
   for (const fallbackKey of fallbackKeys) {
@@ -173,9 +181,10 @@ export function readLocalStorageStringWithFallback(
 
     try {
       const raw = storage?.getItem(fallbackKey);
-      if (typeof raw === 'string' && raw.length > 0) {
-        writeLocalStorageJson(key, raw);
-        return raw;
+      const parsedRaw = parseStoredString(raw);
+      if (parsedRaw) {
+        writeLocalStorageJson(key, parsedRaw);
+        return parsedRaw;
       }
     } catch {}
   }

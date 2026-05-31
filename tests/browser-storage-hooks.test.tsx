@@ -87,6 +87,31 @@ describe('useLocalStorage hook', () => {
     expect(view.container.textContent).toBe('8:true');
     expect(localStorage.getItem('canonical-counter')).toBe(JSON.stringify({ count: 8 }));
   });
+
+  it('hydrates from the initial value without fallback keys and ignores cancelled hydration', async () => {
+    let activeApi!: ReturnType<typeof useLocalStorage<{ count: number }>>;
+    function ActiveHarness() {
+      activeApi = useLocalStorage('fresh-counter', { count: 2 });
+      return <output>{`${activeApi[0].count}:${activeApi[2]}`}</output>;
+    }
+
+    const active = render(<ActiveHarness />);
+    await flushHydration();
+
+    expect(active.container.textContent).toBe('2:true');
+    expect(localStorage.getItem('fresh-counter')).toBeNull();
+
+    function CancelledHarness() {
+      useLocalStorage('cancelled-counter', { count: 9 });
+      return <output>mounted</output>;
+    }
+
+    const cancelled = render(<CancelledHarness />);
+    cancelled.unmount();
+    await flushHydration();
+
+    expect(localStorage.getItem('cancelled-counter')).toBeNull();
+  });
 });
 
 describe('useHistory hook', () => {
@@ -150,6 +175,30 @@ describe('useHistory hook', () => {
     expect(localStorage.getItem(LEGACY_LOCAL_STORAGE_KEYS.hotelHistory)).toBeNull();
     expect(localStorage.getItem(LOCAL_STORAGE_KEYS.searchHistory)).toBeNull();
     expect(localStorage.getItem(LEGACY_LOCAL_STORAGE_KEYS.searchHistory)).toBeNull();
+  });
+
+  it('does not hydrate history after unmounting before the queued microtask runs', async () => {
+    localStorage.setItem(LOCAL_STORAGE_KEYS.hotelHistory, JSON.stringify([
+      {
+        hotelKey: 'g187147-d188728',
+        name: 'Le Meurice',
+        city: 'Paris',
+        country: 'France',
+        image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80',
+        timestamp: Date.parse('2026-05-31T12:00:00Z'),
+      },
+    ]));
+
+    function Harness() {
+      useHistory();
+      return <output>mounted</output>;
+    }
+
+    const view = render(<Harness />);
+    view.unmount();
+    await flushHydration();
+
+    expect(localStorage.getItem(LOCAL_STORAGE_KEYS.hotelHistory)).toContain('Le Meurice');
   });
 });
 
@@ -241,6 +290,33 @@ describe('saved hotel hooks', () => {
     expect(String(vi.mocked(fetch).mock.calls.at(-1)?.[0])).toBe(`/api/me/trips?id=${trip.id}`);
   });
 
+  it('uses an empty notes seed for deterministic trip IDs when notes are omitted', async () => {
+    let api!: ReturnType<typeof useTrips>;
+    function Harness() {
+      api = useTrips();
+      return <output>{`${api.trips.length}:${api.hydrated}`}</output>;
+    }
+
+    render(<Harness />);
+    await flushHydration();
+
+    let trip!: ReturnType<typeof api.addTrip>;
+    act(() => {
+      trip = api.addTrip({
+        hotelKey: 'g186338-d193089',
+        hotelName: 'The Savoy',
+        city: 'London',
+        country: 'United Kingdom',
+        image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80',
+        checkIn: '2026-07-10',
+        checkOut: '2026-07-12',
+        guests: 2,
+      });
+    });
+
+    expect(trip.id).toBe(hashId('trip', 'g186338-d193089', '2026-07-10', '2026-07-12', 2, ''));
+  });
+
   it('keeps recently viewed hotels bounded and moves repeated views to the front', async () => {
     let api!: ReturnType<typeof useRecentlyViewed>;
     function Harness() {
@@ -285,6 +361,9 @@ describe('browser currency helpers', () => {
     expect(detectCurrency()).toBe('EUR');
 
     vi.stubGlobal('navigator', { language: 'zz-ZZ' });
+    expect(detectCurrency()).toBe('USD');
+
+    vi.stubGlobal('navigator', { language: '' });
     expect(detectCurrency()).toBe('USD');
   });
 

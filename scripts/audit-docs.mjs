@@ -103,6 +103,8 @@ requireIncludes(readme, 'README.md', [
   'npm run audit:runtime',
   'npm run audit:external-fetches',
   'npm run audit:public-api-urls',
+  'npm run audit:provenance',
+  'npm run audit:deployment-smoke',
   'npm run audit:affiliate-security',
   'npm run audit:security-responses',
   'npm run audit:api-errors',
@@ -111,6 +113,7 @@ requireIncludes(readme, 'README.md', [
   'npm audit',
   'dependency metadata',
   'npm run release:state',
+  'npm run smoke:deployment',
 ]);
 
 requireIncludes(masterPlan, 'MASTER-PLAN.md', [
@@ -120,7 +123,7 @@ requireIncludes(masterPlan, 'MASTER-PLAN.md', [
 ]);
 
 requireIncludes(auditReport, 'AUDIT-REPORT.md', [
-  '165 test files, 876 tests passed',
+  '165 test files, 887 tests passed',
   '72 Playwright tests passed',
   'Go-live readiness',
   'Worktree is clean',
@@ -133,6 +136,9 @@ requireIncludes(packageRaw, 'package.json', [
   '"audit:runtime"',
   '"audit:external-fetches"',
   '"audit:public-api-urls"',
+  '"audit:provenance"',
+  '"audit:deployment-smoke"',
+  '"smoke:deployment"',
   '"audit:affiliate-security"',
   '"audit:security-responses"',
   '"audit:api-errors"',
@@ -162,6 +168,8 @@ requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm run audit:runtime',
   'npm run audit:external-fetches',
   'npm run audit:public-api-urls',
+  'npm run audit:provenance',
+  'npm run audit:deployment-smoke',
   'npm run audit:affiliate-security',
   'npm run audit:security-responses',
   'npm run audit:api-errors',

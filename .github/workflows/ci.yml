@@ -38,6 +38,12 @@ jobs:
       - name: Guardrails
         run: npm run audit:guardrails
 
+      - name: Provenance audit
+        run: npm run audit:provenance
+
+      - name: Deployment smoke audit
+        run: npm run audit:deployment-smoke
+
       - name: Catalog audit
         run: npm run audit:catalog
 

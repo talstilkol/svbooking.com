@@ -108,6 +108,7 @@ describe('local storage key helpers', () => {
 
   it('normalizes dynamic storage keys and recognizes exportable prefixes', () => {
     expect(getTravelChecklistStorageKey('Hotel & Spa')).toBe('svbooking:travel-checklist:Hotel%20%26%20Spa');
+    expect(getTravelChecklistStorageKey('   ')).toBe('svbooking:travel-checklist:default');
     expect(getTravelChecklistStorageKey()).toBe('svbooking:travel-checklist:default');
     expect(getLegacyTravelChecklistStorageKey()).toBe('travel-checklist-default');
     expect(getHotelViewsStorageKey('')).toBe('svbooking:hotel-views:unknown');
@@ -124,5 +125,89 @@ describe('local storage key helpers', () => {
       { hotelKey: 'fallback' },
     ]);
     expect(readLocalStorageStringWithFallback(LOCAL_STORAGE_KEYS.currency, [], null)).toBeNull();
+  });
+
+  it('reads canonical raw strings and skips empty string fallbacks before using raw legacy values', () => {
+    localStorage.setItem(LOCAL_STORAGE_KEYS.currency, 'EUR');
+    expect(readLocalStorageStringWithFallback(LOCAL_STORAGE_KEYS.currency, [], null)).toBe('EUR');
+
+    localStorage.clear();
+    localStorage.setItem('empty-json-string', JSON.stringify(''));
+    localStorage.setItem('raw-legacy-currency', 'GBP');
+
+    expect(readLocalStorageStringWithFallback(
+      LOCAL_STORAGE_KEYS.currency,
+      ['empty-json-string', 'raw-legacy-currency'],
+      'USD'
+    )).toBe('GBP');
+    expect(JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.currency) || 'null')).toBe('GBP');
+  });
+
+  it('prefers canonical JSON values and migrates JSON string fallbacks', () => {
+    localStorage.setItem(LOCAL_STORAGE_KEYS.favorites, JSON.stringify([{ hotelKey: 'canonical' }]));
+    expect(readLocalStorageJsonWithFallback(LOCAL_STORAGE_KEYS.favorites, [LEGACY_LOCAL_STORAGE_KEYS.favorites], [])).toEqual([
+      { hotelKey: 'canonical' },
+    ]);
+
+    localStorage.clear();
+    localStorage.setItem(LEGACY_LOCAL_STORAGE_KEYS.currency, JSON.stringify('CHF'));
+
+    expect(readLocalStorageStringWithFallback(
+      LOCAL_STORAGE_KEYS.currency,
+      [LEGACY_LOCAL_STORAGE_KEYS.currency],
+      'USD'
+    )).toBe('CHF');
+    expect(JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.currency) || 'null')).toBe('CHF');
+  });
+
+  it('returns safe fallbacks when localStorage is unavailable or inaccessible', () => {
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: undefined,
+    });
+
+    expect(readLocalStorageJson(LOCAL_STORAGE_KEYS.favorites, [{ hotelKey: 'fallback' }])).toEqual([
+      { hotelKey: 'fallback' },
+    ]);
+    expect(readLocalStorageExportData()).toEqual({});
+    expect(() => writeLocalStorageJson(LOCAL_STORAGE_KEYS.favorites, [])).not.toThrow();
+    expect(() => removeLocalStorageKeys([LOCAL_STORAGE_KEYS.favorites])).not.toThrow();
+
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: Object.defineProperty({}, 'localStorage', {
+        get() {
+          throw new Error('storage denied');
+        },
+      }),
+    });
+
+    expect(readLocalStorageJson(LOCAL_STORAGE_KEYS.trips, [])).toEqual([]);
+
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: { localStorage: null },
+    });
+
+    expect(readLocalStorageExportData()).toEqual({});
+  });
+
+  it('exports parseable dynamic keys and ignores undefined import values', () => {
+    const viewsKey = getHotelViewsStorageKey('g187147-d188728');
+    localStorage.setItem(viewsKey, 'not-json');
+    localStorage.setItem(getLegacyHotelViewsStorageKey('g187147-d188728'), JSON.stringify({ views: 3 }));
+
+    const exported = readLocalStorageExportData();
+
+    expect(exported[viewsKey]).toBe('not-json');
+    expect(exported[getLegacyHotelViewsStorageKey('g187147-d188728')]).toBeUndefined();
+
+    writeLocalStorageExportData({
+      [LOCAL_STORAGE_KEYS.locale]: 'he',
+      [LOCAL_STORAGE_KEYS.notifications]: undefined,
+    });
+
+    expect(JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.locale) || 'null')).toBe('he');
+    expect(localStorage.getItem(LOCAL_STORAGE_KEYS.notifications)).toBeNull();
   });
 });

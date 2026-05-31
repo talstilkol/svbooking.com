@@ -33,6 +33,9 @@ const scripts = packageJson.scripts || {};
 
 for (const scriptName of [
   'audit:guardrails',
+  'audit:provenance',
+  'audit:deployment-smoke',
+  'smoke:deployment',
   'audit:catalog',
   'audit:docs',
   'audit:env',
@@ -143,6 +146,9 @@ await requireFile('scripts/audit-security-responses.mjs');
 await requireFile('scripts/audit-api-error-cache.mjs');
 await requireFile('scripts/audit-cron-cache.mjs');
 await requireFile('scripts/audit-coverage.mjs');
+await requireFile('scripts/audit-provenance.mjs');
+await requireFile('scripts/audit-deployment-smoke.mjs');
+await requireFile('scripts/deployment-smoke.mjs');
 await requireFile('scripts/audit-providers.mjs');
 await requireFile('scripts/audit-reviews.mjs');
 await requireFile('scripts/audit-release-deletions.mjs');
@@ -166,6 +172,8 @@ requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm audit --audit-level=moderate',
   'npm ls postcss --all',
   'npm run audit:guardrails',
+  'npm run audit:provenance',
+  'npm run audit:deployment-smoke',
   'npm run audit:catalog',
   'npm run audit:docs',
   'npm run audit:env',
