@@ -17,6 +17,8 @@ describe('kv (in-memory mode)', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllEnvs();
+    vi.doUnmock('@upstash/redis');
   });
 
   describe('get/set', () => {
@@ -103,6 +105,16 @@ describe('kv (in-memory mode)', () => {
       expect(matched).toContain('test:glob.1');
       expect(matched).not.toContain('test:glob-a');
     });
+
+    it('omits expired entries during scans even when they were not read first', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-06-01T00:00:00.000Z'));
+
+      await kv.setWithTTL('test:ttl-scan-expired', 'value', 1);
+      vi.setSystemTime(new Date('2026-06-01T00:00:01.001Z'));
+
+      await expect(kv.keys('test:ttl-scan-*')).resolves.toEqual([]);
+    });
   });
 
   describe('memory cap', () => {
@@ -127,6 +139,67 @@ describe('kv (in-memory mode)', () => {
   describe('isConfigured', () => {
     it('returns false when no Redis env vars are set', async () => {
       expect(await kv.isConfigured()).toBe(false);
+    });
+
+    it('uses the Redis adapter when durable KV env vars are configured', async () => {
+      const redisStore = new Map<string, unknown>();
+      const calls = {
+        config: null as null | { url: string; token: string },
+        ttl: null as null | { ex: number },
+        deleted: '',
+        mgetKeys: [] as string[],
+        keysPattern: '',
+      };
+
+      vi.stubEnv('KV_REST_API_URL', 'https://redis.svbooking.invalid');
+      vi.stubEnv('KV_REST_API_TOKEN', 'redis-token');
+      vi.doMock('@upstash/redis', () => ({
+        Redis: class {
+          constructor(config: { url: string; token: string }) {
+            calls.config = config;
+          }
+
+          async get(key: string) {
+            return redisStore.get(key) || null;
+          }
+
+          async set(key: string, value: unknown, opts?: { ex: number }) {
+            calls.ttl = opts || null;
+            redisStore.set(key, value);
+          }
+
+          async del(key: string) {
+            calls.deleted = key;
+            redisStore.delete(key);
+          }
+
+          async mget(...keys: string[]) {
+            calls.mgetKeys = keys;
+            return keys.map((key) => redisStore.get(key) || null);
+          }
+
+          async keys(pattern: string) {
+            calls.keysPattern = pattern;
+            return Array.from(redisStore.keys()).filter((key) => key.startsWith(pattern.replace('*', '')));
+          }
+        },
+      }));
+      vi.resetModules();
+      const { kv: redisKv } = await import('@/lib/kv');
+
+      await redisKv.set('redis:key1', 'a');
+      await redisKv.setWithTTL('redis:key2', 'b', 60);
+      await expect(redisKv.get('redis:key1')).resolves.toBe('a');
+      await expect(redisKv.mget('redis:key1', 'redis:key2', 'redis:missing')).resolves.toEqual(['a', 'b', null]);
+      await expect(redisKv.keys('redis:*')).resolves.toEqual(['redis:key1', 'redis:key2']);
+      await redisKv.del('redis:key1');
+
+      expect(await redisKv.isConfigured()).toBe(true);
+      expect(calls.config).toEqual({ url: 'https://redis.svbooking.invalid', token: 'redis-token' });
+      expect(calls.ttl).toEqual({ ex: 60 });
+      expect(calls.mgetKeys).toEqual(['redis:key1', 'redis:key2', 'redis:missing']);
+      expect(calls.keysPattern).toBe('redis:*');
+      expect(calls.deleted).toBe('redis:key1');
     });
   });
 });

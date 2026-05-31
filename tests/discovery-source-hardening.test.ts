@@ -474,6 +474,8 @@ describe('Wikidata enrichment hardening', () => {
     vi.stubGlobal('fetch', fetchMock);
     const { enrichFromWikidata, resolveWikidataToTripAdvisor, buildBookingUrl } = await import('@/lib/wikidata-enrich');
 
+    await expect(enrichFromWikidata(null as unknown as string[])).resolves.toEqual(new Map());
+    await expect(resolveWikidataToTripAdvisor(null as unknown as string[])).resolves.toEqual(new Map());
     await expect(enrichFromWikidata(['abc', 'P31', 'bad-id'])).resolves.toEqual(new Map());
     await expect(resolveWikidataToTripAdvisor(['P31', 'not-a-qid', 'Qbad'])).resolves.toEqual(new Map());
     expect(buildBookingUrl('', '2026-06-01', '2026-06-03')).toBeNull();
@@ -632,6 +634,58 @@ describe('Wikidata discovery and DBpedia SPARQL hardening', () => {
       },
     ]);
   });
+
+  it('fails closed for missing DBpedia city input and sparse provider payloads', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({
+        results: {
+          bindings: [
+            {
+              hotel: { value: 'https://dbpedia.example.invalid/resource/Sparse_Hotel' },
+              name: { value: 'Sparse Hotel' },
+            },
+          ],
+        },
+      }))
+      .mockResolvedValueOnce(jsonResponse({
+        results: {
+          bindings: [
+            {
+              name: { value: 'Mapped Hotel' },
+              lat: { value: '0' },
+              lon: { value: '0' },
+            },
+          ],
+        },
+      }))
+      .mockResolvedValueOnce(jsonResponse({}, false, 500));
+    vi.stubGlobal('fetch', fetchMock);
+    const { discoverHotelsDBpedia, getAllHotelsWithWikidata } = await import('@/lib/dbpedia');
+
+    await expect(discoverHotelsDBpedia({ city: '' })).rejects.toThrow('City name is required');
+    await expect(discoverHotelsDBpedia({ city: 'Sparse City', limit: 'bad' as unknown as number })).resolves.toEqual([
+      {
+        name: 'Sparse Hotel',
+        description: null,
+        lat: null,
+        lon: null,
+        wikipediaUrl: 'https://dbpedia.example.invalid/resource/Sparse_Hotel',
+        wikidataId: null,
+        source: 'dbpedia',
+      },
+    ]);
+    await expect(getAllHotelsWithWikidata(1)).resolves.toEqual([
+      {
+        name: 'Mapped Hotel',
+        lat: 0,
+        lon: 0,
+        wikidataId: null,
+        city: null,
+      },
+    ]);
+    await expect(getAllHotelsWithWikidata(1)).rejects.toThrow('DBpedia SPARQL 500');
+  });
 });
 
 describe('Wikivoyage parser hardening', () => {
@@ -665,6 +719,22 @@ describe('Wikivoyage parser hardening', () => {
       extract: 'Paris travel guide.',
       thumbnail: null,
       url: null,
+    });
+  });
+
+  it('keeps sourced Wikivoyage summaries even when optional extract/media fields are absent', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({
+      title: 'Sparse City',
+      content_urls: { desktop: { page: 'https://en.wikivoyage.org/wiki/Sparse_City' } },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getTravelGuide } = await import('@/lib/wikivoyage');
+
+    await expect(getTravelGuide('Sparse City')).resolves.toEqual({
+      title: 'Sparse City',
+      extract: null,
+      thumbnail: null,
+      url: 'https://en.wikivoyage.org/wiki/Sparse_City',
     });
   });
 
@@ -799,5 +869,96 @@ describe('Wikivoyage parser hardening', () => {
         type: 'restaurant',
       }),
     ]);
+  });
+
+  it('bounds Wikivoyage safety parsing and does not infer health guidance from weak text', async () => {
+    const fetchMock = vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.includes('prop=sections')) {
+        return jsonResponse({
+          parse: {
+            sections: [
+              { index: '1', line: 'Stay safe', level: '2' },
+              { index: '2', line: 'Stay healthy', level: '2' },
+            ],
+          },
+        });
+      }
+      if (url.includes('section=1')) {
+        return jsonResponse({
+          parse: {
+            text: {
+              '*': [
+                '<p>First sourced safety sentence has useful local context.',
+                'Edit this page sentence should be ignored.',
+                'Second sourced safety sentence has useful local context.',
+                'Third sourced safety sentence has useful local context.',
+                'Fourth sourced safety sentence has useful local context.',
+                'Fifth sourced safety sentence has useful local context.',
+                'Sixth sourced safety sentence has useful local context.',
+                'Avoid Al after dark.',
+                'Avoid Extremely Long Neighborhood Name Beyond Thirty Characters after dark.</p>',
+              ].join(' '),
+            },
+          },
+        });
+      }
+      return jsonResponse({
+        parse: {
+          text: {
+            '*': '<p>Vaccination guidance depends on medical history and tap water quality varies by building</p>',
+          },
+        },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { getSafetyInfo } = await import('@/lib/wikivoyage');
+
+    const safety = await getSafetyInfo('Bounded City');
+
+    expect(safety?.tips).toHaveLength(5);
+    expect(safety?.tips?.join(' ')).not.toContain('Edit this page');
+    expect(safety?.areas).toEqual([]);
+    expect(safety?.vaccinations).toBeNull();
+    expect(safety?.waterSafety).toBeNull();
+  });
+
+  it('handles weak Wikivoyage event and dining sections without fallback descriptions', async () => {
+    const fetchMock = vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.includes('prop=sections')) {
+        return jsonResponse({
+          parse: {
+            sections: [
+              { index: '1', line: 'Do', level: '2' },
+              { index: '2', line: 'Eat', level: '2' },
+              { index: '3', level: '2' },
+            ],
+          },
+        });
+      }
+      if (url.includes('section=1')) {
+        return jsonResponse({
+          parse: {
+            text: {
+              '*': '<p><b>AB</b></p><p><b>Visit</b></p><p><b>Local Gathering</b> takes place in October with a neighborhood walk.</p><p><b>Local Gathering</b> duplicate mention.</p>',
+            },
+          },
+        });
+      }
+      return jsonResponse({ parse: {} });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { getDiningInfo, getEventInfo } = await import('@/lib/wikivoyage');
+
+    await expect(getEventInfo('Weak Sections City')).resolves.toEqual([
+      expect.objectContaining({
+        name: 'Local Gathering',
+        month: 'Oct',
+        icon: '📅',
+        description: expect.stringContaining('takes place in October'),
+      }),
+    ]);
+    await expect(getDiningInfo('Weak Sections City')).resolves.toBeNull();
   });
 });

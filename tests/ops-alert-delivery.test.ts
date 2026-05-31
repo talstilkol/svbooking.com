@@ -117,4 +117,50 @@ describe('ops alert delivery', () => {
     expect(missing).toEqual({ configured: false, status: 'not-configured' });
     expect(invalid).toEqual({ configured: false, status: 'invalid-config' });
   });
+
+  it('reports webhook failures without leaking deeply nested alert values', async () => {
+    const calls: Array<{ init: RequestInit }> = [];
+    const failed = await deliverOpsAlertReport({
+      service: 'sv-booking',
+      checkedAt: '2026-05-14T12:00:00.000Z',
+      status: 'warning',
+      summary: [{ nested: { a: { b: { c: { d: { e: { f: 'too deep' } } } } } } }],
+      alerts: [{
+        id: 'provider-warning',
+        severity: 'warning',
+        domain: 'providers',
+        message: 'Provider probe failed.',
+        evidence: {
+          items: [null, undefined, { apiToken: 'must-not-leak' }],
+        },
+      }],
+      evidence: null,
+    }, {
+      env: {
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'ops-secret-value',
+      } as unknown as NodeJS.ProcessEnv,
+      fetchImpl: async (_url, init) => {
+        calls.push({ init: init || {} });
+        return new Response('{}', { status: 503 });
+      },
+    });
+
+    expect(failed).toEqual({ configured: true, status: 'failed', httpStatus: 503 });
+    const payload = JSON.parse(String(calls[0].init.body));
+    expect(JSON.stringify(payload)).not.toContain('must-not-leak');
+    expect(JSON.stringify(payload)).toContain('[redacted]');
+    expect(JSON.stringify(payload)).toContain('[redacted-depth]');
+
+    const thrown = await deliverOpsAlertReport(report, {
+      env: {
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'ops-secret-value',
+      } as unknown as NodeJS.ProcessEnv,
+      fetchImpl: async () => {
+        throw new Error('webhook unavailable');
+      },
+    });
+    expect(thrown).toEqual({ configured: true, status: 'failed' });
+  });
 });

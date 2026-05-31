@@ -95,6 +95,37 @@ describe('cheaper date price intelligence', () => {
     expect(getVerifiedRateObservations(null)).toEqual([]);
   });
 
+  it('keeps provider-returned totals when tax/source metadata is unavailable', () => {
+    expect(getVerifiedRateObservations({
+      rates: [
+        { name: 'Direct Provider', total: 101, currency: 'cad' },
+      ],
+      currency: 'eur',
+    })).toEqual([
+      expect.objectContaining({
+        provider: 'Direct Provider',
+        rate: 101,
+        tax: 0,
+        total: 101,
+        source: null,
+        currency: 'CAD',
+      }),
+    ]);
+
+    expect(getVerifiedRateObservations({
+      rates: [
+        { provider: 'Provider From Result', rate: 90 },
+      ],
+      provider: 'Registry Provider',
+    })).toEqual([
+      expect.objectContaining({
+        provider: 'Provider From Result',
+        source: 'Registry Provider',
+        total: 90,
+      }),
+    ]);
+  });
+
   it('returns heatmap calendar entries as source observations, not booking offers', async () => {
     vi.mocked(getCachedHeatmap).mockResolvedValueOnce({
       data: [
@@ -121,6 +152,23 @@ describe('cheaper date price intelligence', () => {
         bookingProvider: false,
       },
     ]);
+  });
+
+  it('returns an empty heatmap calendar when provider payloads are empty or unstructured', async () => {
+    vi.mocked(getCachedHeatmap)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({});
+
+    await expect(getHeatmapCalendar({
+      hotelKey: 'g187147-d188732',
+      checkOut: '2026-06-03',
+      today: '2026-06-01',
+    })).resolves.toEqual([]);
+    await expect(getHeatmapCalendar({
+      hotelKey: 'g187147-d188732',
+      checkOut: '2026-06-03',
+      today: '2026-06-01',
+    })).resolves.toEqual([]);
   });
 
   it('builds cheaper-date alternatives from verified heatmap observations', async () => {
@@ -221,6 +269,60 @@ describe('cheaper date price intelligence', () => {
       savings: 60,
       savingsPct: 20,
     }));
+  });
+
+  it('uses provider fallback without inventing savings when the original rate is unavailable', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-01T00:00:00Z'));
+    vi.mocked(getCachedHeatmap).mockResolvedValue({ data: [] });
+    vi.mocked(getCachedRates).mockImplementation(async ({ checkIn }) => {
+      if (checkIn === '2026-06-07') {
+        return {
+          rates: [{ provider: 'Expedia', total: 250, currency: 'USD', source: 'provider-registry' }],
+          source: 'provider-registry',
+        };
+      }
+      return { rates: [], source: 'provider-registry' };
+    });
+
+    const result = await findCheaperDates('g187147-d188732', '2026-06-10', '2026-06-12');
+
+    expect(result).toMatchObject({
+      originalPrice: null,
+      method: 'provider-rates-fallback',
+      hasRealData: true,
+    });
+    expect(result.cheapestOverall).toEqual(expect.objectContaining({
+      checkIn: '2026-06-07',
+      price: 250,
+      savings: 0,
+      savingsPct: 0,
+      bookingProvider: true,
+    }));
+  });
+
+  it('stops provider fallback batches when the total time budget expires mid-loop', async () => {
+    let nowMs = 1;
+    let rateCallCount = 0;
+    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => nowMs);
+    vi.mocked(getCachedHeatmap).mockResolvedValue({ data: [] });
+    vi.mocked(getCachedRates).mockImplementation(async () => {
+      rateCallCount += 1;
+      if (rateCallCount > 1) {
+        nowMs = 45_002;
+      }
+      return { rates: [], source: 'provider-registry' };
+    });
+
+    try {
+      const result = await findCheaperDates('g187147-d188732', '2026-06-10', '2026-06-12');
+
+      expect(result.timedOut).toBe(true);
+      expect(result.method).toBe('provider-rates-fallback');
+      expect(result.hasRealData).toBe(false);
+    } finally {
+      nowSpy.mockRestore();
+    }
   });
 
   it('reports timeout when the heatmap budget is already exhausted', async () => {

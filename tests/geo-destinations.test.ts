@@ -65,6 +65,16 @@ describe('geo request helpers', () => {
     expect(getClientIp(requestWithHeaders({}))).toBeNull();
   });
 
+  it('rejects malformed IP header edge cases and accepts full IPv6 groups', () => {
+    expect(getClientIp(requestWithHeaders({
+      'cf-connecting-ip': '999.1.1.1',
+      'x-forwarded-for': '2001:db8:::1',
+      'x-real-ip': '2001:db8:zzzz::1',
+    }))).toBeNull();
+    expect(getClientIp(requestWithHeaders({ 'x-forwarded-for': '2001:db8:12345::1' }))).toBeNull();
+    expect(getClientIp(requestWithHeaders({ 'x-forwarded-for': '2001:DB8:0:0:0:0:0:1' }))).toBe('2001:db8:0:0:0:0:0:1');
+  });
+
   it('finds the nearest city and keeps valid zero coordinates', () => {
     const nearest = findNearestCity(51.5, 0.1, [
       { city: 'Greenwich', lat: 51.4769, lon: 0 },
@@ -104,6 +114,25 @@ describe('geo provider detection', () => {
       source: 'ip-api',
     });
     expect(String(fetchMock.mock.calls[0][0])).toContain('/203.0.113.10?fields=');
+  });
+
+  it('derives primary provider currency from country code when no currency is returned', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({
+      status: 'success',
+      country: 'Unknown Country',
+      countryCode: 'ZZ',
+      city: 'Unknown City',
+      lat: 0,
+      lon: 0,
+      timezone: 'UTC',
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(detectLocation('198.51.100.10')).resolves.toMatchObject({
+      countryCode: 'ZZ',
+      currency: 'USD',
+      source: 'ip-api',
+    });
   });
 
   it('falls back to ipapi and derives currency only from verified country code', async () => {

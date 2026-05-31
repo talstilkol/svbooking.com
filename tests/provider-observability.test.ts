@@ -209,6 +209,52 @@ describe('provider observability', () => {
     expect(metrics.recentEvents).toHaveLength(1);
   });
 
+  it('uses provider IDs when sparse legacy events lack names or operations', async () => {
+    store.set(PROVIDER_UPTIME_EVENTS_KEY, [
+      { providerId: 'legacy-provider', ok: true, latencyMs: 41, checkedAt: '2026-05-14T10:00:00.000Z' },
+    ]);
+
+    const metrics = await getProviderUptimeMetrics();
+
+    expect(metrics.providers).toEqual([
+      expect.objectContaining({
+        providerId: 'legacy-provider',
+        providerName: 'legacy-provider',
+        lastStatus: 'ok',
+        lastOperation: null,
+      }),
+    ]);
+
+    const event = await recordProviderUptimeEvent({
+      ok: true,
+      latencyMs: 9.8,
+    } as Parameters<typeof recordProviderUptimeEvent>[0]);
+
+    expect(event).toMatchObject({
+      providerId: 'unknown',
+      providerName: 'unknown',
+      latencyMs: 10,
+      source: 'unknown',
+    });
+  });
+
+  it('keeps malformed legacy provider names from becoming public labels', async () => {
+    store.set(PROVIDER_UPTIME_EVENTS_KEY, [
+      { providerId: 'legacy-provider', providerName: '', ok: false, latencyMs: null },
+    ]);
+
+    const metrics = await getProviderUptimeMetrics();
+
+    expect(metrics.providers[0]).toMatchObject({
+      providerId: 'legacy-provider',
+      providerName: 'legacy-provider',
+      avgLatencyMs: null,
+      p95LatencyMs: null,
+      lastCheckedAt: null,
+      lastStatus: 'failed',
+    });
+  });
+
   it('protects provider uptime metrics behind admin auth and no-store', async () => {
     const denied = await getProviderUptime(new Request('http://localhost:3000/api/agents/providers/uptime'));
     expect(denied!.status).toBe(401);

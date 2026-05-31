@@ -372,6 +372,42 @@ describe('Nominatim hotel search helpers', () => {
     });
   });
 
+  it('uses Nominatim lookup fallbacks without fabricating missing names or reverse data', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse([{
+        class: 'tourism',
+        type: 'hotel',
+        name: 'Town Hotel',
+        lat: '51.5',
+        lon: '-0.1',
+        extratags: {},
+        address: { town: 'Small Town', country: 'United Kingdom' },
+        display_name: 'Town Hotel, Small Town, United Kingdom',
+      }]))
+      .mockResolvedValueOnce(jsonResponse(null))
+      .mockResolvedValueOnce(jsonResponse([{
+        class: 'tourism',
+        type: 'hotel',
+        lat: '51.5',
+        lon: '-0.1',
+        extratags: {},
+        address: { village: 'Source Village', country: 'United Kingdom' },
+      }]));
+    vi.stubGlobal('fetch', fetchMock);
+    const { lookupHotel, reverseGeocode, searchHotels } = await import('@/lib/nominatim');
+
+    await expect(lookupHotel({ name: 'Town Hotel' })).resolves.toMatchObject({
+      name: 'Town Hotel',
+      city: 'Small Town',
+      rooms: null,
+      website: null,
+    });
+    expect(new URL(String(fetchMock.mock.calls[0][0])).searchParams.get('q')).toBe('Town Hotel');
+    await expect(reverseGeocode({ lat: 51.5, lon: -0.1 })).resolves.toBeNull();
+    await expect(searchHotels({ city: 'Source Village' })).resolves.toEqual([]);
+  });
+
   it('surfaces Nominatim rate limits, HTTP failures, and request timeouts explicitly', async () => {
     vi.stubGlobal('fetch', vi
       .fn()

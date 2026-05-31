@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   HOTELS,
   listCities,
@@ -10,6 +10,8 @@ import {
   findHotel,
   searchHotels,
   addDiscoveredHotel,
+  addAndPersistHotel,
+  getFullCatalog,
   getCatalogStats,
 } from '@/lib/hotels-catalog';
 
@@ -165,6 +167,7 @@ describe('hotels-catalog', () => {
 
     it('returns empty for empty query', () => {
       expect(searchHotels('')).toEqual([]);
+      expect(searchHotels('   ')).toEqual([]);
       expect(searchHotels(null as unknown as string)).toEqual([]);
     });
 
@@ -295,6 +298,81 @@ describe('hotels-catalog', () => {
         countries: before.countries + 1,
         continents: before.continents,
       });
+    });
+
+    it('loads verified discovered hotels from KV once and returns the merged runtime catalog', async () => {
+      const { kv } = await import('@/lib/kv');
+      await kv.setWithTTL('catalog:discovered', [{
+        hotelKey: 'g188590-d900001',
+        name: 'Sourced Berlin Hotel',
+        city: 'Berlin',
+        country: 'Germany',
+        stars: 4,
+        lat: 52.52,
+        lon: 13.405,
+        source: 'wikidata',
+        sourceUrl: 'https://www.wikidata.org/wiki/Q900001',
+        externalIds: { wikidataId: 'Q900001' },
+        provenance: {
+          source: 'wikidata',
+          sourceUrl: 'https://www.wikidata.org/wiki/Q900001',
+        },
+      }], 3600);
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+      const first = await getFullCatalog();
+      const second = await getFullCatalog();
+
+      expect(first).toBe(HOTELS);
+      expect(second).toBe(HOTELS);
+      expect(findHotel('g188590-d900001')).toMatchObject({
+        name: 'Sourced Berlin Hotel',
+        city: 'Berlin',
+        country: 'Germany',
+        discovered: true,
+      });
+      expect(getHotelsByContinent('europe')).toContain(findHotel('g188590-d900001'));
+      expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('Loaded 1 discovered hotels from KV'));
+      infoSpy.mockRestore();
+    });
+
+    it('persists verified discovered hotels and rejects invalid durable catalog writes', async () => {
+      const { kv } = await import('@/lib/kv');
+      await kv.setWithTTL('catalog:discovered', { not: 'an array' }, 3600);
+
+      await expect(addAndPersistHotel({
+        hotelKey: 'not-a-key',
+        name: 'Invalid Durable Hotel',
+        city: 'Paris',
+        country: 'France',
+      })).resolves.toBe(false);
+
+      await expect(addAndPersistHotel({
+        hotelKey: 'g187497-d900002',
+        name: 'Sourced Madrid Hotel',
+        city: 'Madrid',
+        country: 'Spain',
+        stars: 4,
+        lat: 40.4168,
+        lon: -3.7038,
+        source: 'wikidata',
+        sourceUrl: 'https://www.wikidata.org/wiki/Q900002',
+        externalIds: { wikidataId: 'Q900002' },
+        provenance: {
+          source: 'wikidata',
+          sourceUrl: 'https://www.wikidata.org/wiki/Q900002',
+        },
+      })).resolves.toBe(true);
+
+      const stored = await kv.get('catalog:discovered');
+      expect(stored).toEqual([
+        expect.objectContaining({
+          hotelKey: 'g187497-d900002',
+          name: 'Sourced Madrid Hotel',
+          city: 'Madrid',
+          country: 'Spain',
+        }),
+      ]);
     });
   });
 });

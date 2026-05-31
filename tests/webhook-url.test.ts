@@ -25,6 +25,7 @@ describe('webhook URL validation', () => {
   it('rejects local and private HTTPS destinations', () => {
     for (const destination of [
       'https://localhost/hook',
+      'https://localhost./hook',
       'https://worker.localhost/hook',
       'https://0x7f000001/hook',
       'https://2130706433/hook',
@@ -44,11 +45,28 @@ describe('webhook URL validation', () => {
       'https://[fc00::1]/hook',
       'https://[fd00::1]/hook',
       'https://[fe80::1]/hook',
+      'https://[fe90::1]/hook',
+      'https://[fea0::1]/hook',
+      'https://[feb0::1]/hook',
     ]) {
       expect(validWebhookUrl(destination, {
         env: { NODE_ENV: 'production' },
       })).toBeNull();
     }
+  });
+
+  it('allows local HTTP hosts with a trailing dot only outside production', () => {
+    expect(validWebhookUrl('http://localhost.:8787/hook', {
+      env: { NODE_ENV: 'development' },
+    })).toBe('http://localhost.:8787/hook');
+    expect(validWebhookUrl('http://service.localhost.:8787/hook', {
+      env: { NODE_ENV: 'development' },
+    })).toBe('http://service.localhost.:8787/hook');
+  });
+
+  it('rejects malformed numeric webhook hosts without treating them as local overrides', () => {
+    expect(validWebhookUrl('not a url')).toBeNull();
+    expect(validWebhookUrl('https://999.0.0.1/hook')).toBeNull();
   });
 
   it('rejects non-localhost HTTP destinations', () => {

@@ -25,6 +25,7 @@ vi.mock('@/lib/hotels-catalog', () => ({
 }));
 
 import { addAndPersistHotel, findHotel } from '@/lib/hotels-catalog';
+import { kv } from '@/lib/kv';
 import {
   approveCandidate,
   getCandidate,
@@ -68,6 +69,48 @@ describe('catalog candidate queue', () => {
     expect(candidates[0].provenance.sources).toContain('second-source');
     expect(candidates[0].missingProvenance).toBe(false);
     expect(candidates[0].missingLocation).toBe(false);
+  });
+
+  it('normalizes fallback fingerprints, explicit status, direct external IDs, and brand provenance', async () => {
+    expect(getCandidateId({ name: 'Hotel Sans Country', city: 'Paris' }))
+      .toBe(getCandidateId({ name: '  hotel sans country  ', city: 'paris', country: '' }));
+
+    const queued = await upsertCandidate({
+      hotelKey: 'g1-d21',
+      name: '  Candidate With Metadata  ',
+      city: 'Paris',
+      country: 'France',
+      stars: '4',
+      source: '',
+      url: 'https://www.wikidata.org/wiki/Q21',
+      wikidataId: 'Q21',
+      osmId: 'relation/21',
+      providerHotelId: 'provider-21',
+      brand: 'Source Brand',
+      lat: '48.8566',
+      lon: '2.3522',
+      status: 'approved',
+    });
+
+    expect(queued.candidate).toMatchObject({
+      name: 'Candidate With Metadata',
+      stars: 4,
+      source: 'unknown',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q21',
+      status: 'approved',
+      validationStatus: 'candidate',
+      externalIds: {
+        wikidataId: 'Q21',
+        osmId: 'relation/21',
+        providerHotelId: 'provider-21',
+      },
+      provenance: expect.objectContaining({
+        source: 'unknown',
+        sourceUrl: 'https://www.wikidata.org/wiki/Q21',
+        url: 'https://www.wikidata.org/wiki/Q21',
+        brand: 'Source Brand',
+      }),
+    });
   });
 
   it('uses discovered city fallback, validates unknown statuses, and marks existing catalog duplicates', async () => {
@@ -316,6 +359,9 @@ describe('catalog candidate queue', () => {
     expect(await getCandidate('')).toBeNull();
     expect(await listCandidates()).toEqual([]);
 
+    await expect(upsertCandidates(undefined as unknown as Parameters<typeof upsertCandidates>[0]))
+      .resolves.toEqual({ saved: 0, skipped: 0, ids: [] });
+
     const result = await upsertCandidates([
       { city: 'Paris', country: 'France' },
       {
@@ -391,7 +437,52 @@ describe('catalog candidate queue', () => {
     expect(all.map((candidate) => candidate.status)).toEqual(['pending', 'rejected', 'stale']);
   });
 
+  it('deduplicates repeated index entries and sorts equal-status candidates by updated timestamp', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-31T09:00:00.000Z'));
+    const older = await upsertCandidate({
+      hotelKey: 'g1-d91',
+      name: 'Older Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'manual-admin',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q91',
+      lat: 48.8566,
+      lon: 2.3522,
+    });
+    vi.setSystemTime(new Date('2026-05-31T10:00:00.000Z'));
+    const newer = await upsertCandidate({
+      hotelKey: 'g1-d92',
+      name: 'Newer Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'manual-admin',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q92',
+      lat: 48.8566,
+      lon: 2.3522,
+    });
+    vi.useRealTimers();
+
+    await kv.setWithTTL('catalog:candidates:index', [
+      older.candidate.id,
+      older.candidate.id,
+      newer.candidate.id,
+    ], 3600);
+
+    const candidates = await listCandidates({ status: 'pending' });
+
+    expect(candidates.map((candidate) => candidate.id)).toEqual([
+      newer.candidate.id,
+      older.candidate.id,
+    ]);
+  });
+
   it('marks candidates stale and reports missing review targets without promotion', async () => {
+    expect(await approveCandidate('missing-id')).toEqual({
+      approved: false,
+      error: 'Candidate not found',
+      candidate: null,
+    });
     expect(await rejectCandidate('missing-id')).toEqual({
       rejected: false,
       error: 'Candidate not found',

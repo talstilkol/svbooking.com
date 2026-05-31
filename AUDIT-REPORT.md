@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-The stabilization pass moved SV Booking from locally healthy but documentation-stale to a more release-ready state. The app now has current docs, a CI-wired documentation drift audit, a 502-hotel catalog, deterministic cache jitter, clean local release state, deterministic E2E trust-state checks for unavailable property amenities, and a working coverage command.
+The stabilization pass moved SV Booking from locally healthy but documentation-stale to a more release-ready state. The app now has current docs, a CI-wired documentation drift audit, a 502-hotel catalog, deterministic cache jitter, clean local release state, deterministic E2E trust-state checks for unavailable property amenities, and a coverage ratchet above 94% branch coverage.
 
 The remaining blockers are not code placeholders to fill in locally:
 
@@ -20,9 +20,9 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 166 test files, 968 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 97.78% lines, 95.98% statements, 96.56% functions, and 92.04% branches. |
-| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 97.7%, statements 95.9%, functions 96.5%, branches 92%. |
+| `npm test` | PASS | 166 test files, 990 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 98.97% lines, 97.66% statements, 96.97% functions, and 94.17% branches. |
+| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 98.9%, statements 97.6%, functions 96.9%, branches 94.1%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 72 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
@@ -56,7 +56,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Build/test health | 10/10 | Lint, unit/API tests, build, and E2E pass. |
 | Security guardrails | 8/10 | Admin auth, CSRF, HTML safety, privacy, storage, alert, and no-store checks are wired; production enforcement still needs real env and deployment verification. |
 | Documentation integrity | 9/10 | README, master plan, audit report, CI, and docs audit now agree on current architecture/counts. |
-| Coverage depth | 9/10 | Coverage tooling runs and has a regression floor; branch coverage is 92.04%; the next local quality target is 94%+. |
+| Coverage depth | 9/10 | Coverage tooling runs and has a regression floor; branch coverage is 94.17%; the next local quality target is 96%+. |
 | Catalog scale | 6/10 | 502 curated hotels clears the local launch floor, but it is not market-scale and reused imagery warnings remain. |
 | Provider readiness | 5/10 | Adapter infrastructure exists; real production provider credentials are missing locally. |
 | Reviews/property content | 4/10 | APIs and UI correctly show unavailable states until licensed provider data exists; rich content is not live. |
@@ -141,6 +141,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Raised branch coverage above 88% with Overpass failure paths, provider registry diagnostics, i18n locale edges, ops alert thresholds, price-cache stale/fuzzy paths, provider accuracy ledgers, Ticketmaster/OpenTripMap branches, and URL/geo safety cases.
 - Raised branch coverage above 90% with Wikidata chunking/failure paths, Google Places review normalization, catalog default-image indexing, provider uptime retention, candidate status locking, price-cache write/fallback failures, cheaper-date rates payloads, and production-like ops scorecard branches.
 - Raised branch coverage above 92% with deterministic price-cache fallback/timestamp coverage, Xotelo malformed-payload paths, OpenTripMap safe fallback fields, rate-limit IP edge cases, and admin audit default/limit handling.
+- Raised branch coverage above 94% with dynamic catalog KV ingestion, cheaper-date fallback/timeout behavior, catalog candidate normalization and deduplication, DBpedia/Wikivoyage sparse payload handling, KV Redis adapter coverage, webhook failure sanitization, geolocation IPv6 hardening, webhook URL edge cases, and provider uptime legacy-event coverage.
 - Added provenance and deployment-smoke audits plus a `SITE_URL`-driven deployment smoke script for post-deploy verification without fake data.
 - Added provider coverage telemetry by observation date, provider, city, and country from verified `price:observations:*` records only; empty ledgers report `insufficient-data`.
 
@@ -151,7 +152,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Branch coverage next target | Medium | `lib` branch coverage is 92.04%. | Continue focused tests for remaining hotels-catalog, price-cache, catalog-candidates, cheaper-dates, Wikivoyage, KV, and provider delivery branches, then raise the next branch ratchet toward 94%. |
+| Branch coverage next target | Medium | `lib` branch coverage is 94.17%. | Continue focused tests for remaining hotels-catalog, Overpass POI, Wikidata, health readiness, ops scorecard, Ticketmaster, alert, provider observability, weather, and Wikipedia branches, then raise the next branch ratchet toward 96%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |
