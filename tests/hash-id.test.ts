@@ -17,4 +17,8 @@ describe('hashId', () => {
   it('uses a stable URL-safe shape', () => {
     expect(hashId('toast', 'success', 'Saved', 1)).toMatch(/^h_[0-9a-z]+$/);
   });
+
+  it('normalizes nullish parts deterministically', () => {
+    expect(hashId('nullable', null, undefined, '')).toBe(hashId('nullable', '', '', ''));
+  });
 });

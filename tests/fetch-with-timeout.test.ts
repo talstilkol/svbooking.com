@@ -42,6 +42,39 @@ describe('fetchWithTimeout', () => {
     await assertion;
   });
 
+  it('rejects invalid timeout and unavailable fetch implementations', async () => {
+    await expect(fetchWithTimeout('https://example.com/status', {
+      timeoutMs: 0,
+      fetchImpl: vi.fn() as unknown as typeof fetch,
+    })).rejects.toThrow('timeoutMs must be a positive number');
+
+    await expect(fetchWithTimeout('https://example.com/status', {
+      timeoutMs: 1000,
+      fetchImpl: null,
+    } as Parameters<typeof fetchWithTimeout>[1])).rejects.toThrow('fetch implementation is unavailable');
+  });
+
+  it('propagates caller aborts and non-timeout fetch errors', async () => {
+    const callerController = new AbortController();
+    const fetchImpl = vi.fn((_input: unknown, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new Error('caller aborted')));
+      callerController.abort();
+    }));
+
+    await expect(fetchWithTimeout('https://example.com/abort', {
+      timeoutMs: 1000,
+      signal: callerController.signal,
+      fetchImpl: fetchImpl as typeof fetch,
+    })).rejects.toThrow('caller aborted');
+
+    await expect(fetchWithTimeout('https://example.com/error', {
+      timeoutMs: 1000,
+      fetchImpl: vi.fn(async () => {
+        throw new Error('network unavailable');
+      }) as typeof fetch,
+    })).rejects.toThrow('network unavailable');
+  });
+
   it('parses JSON only after successful HTTP responses', async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ status: 'OK' }), { status: 200 }));
 
@@ -51,5 +84,12 @@ describe('fetchWithTimeout', () => {
     });
 
     expect(body).toEqual({ status: 'OK' });
+  });
+
+  it('rejects non-successful JSON responses with the HTTP status', async () => {
+    await expect(fetchJsonWithTimeout('https://example.com/json', {
+      timeoutMs: 1000,
+      fetchImpl: vi.fn(async () => new Response('missing', { status: 503 })) as typeof fetch,
+    })).rejects.toThrow('External request failed with HTTP 503');
   });
 });

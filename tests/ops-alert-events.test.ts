@@ -22,7 +22,11 @@ vi.mock('@/lib/ops-alert-delivery', () => ({
 }));
 
 import { GET } from '@/app/api/ops/alerts/events/route';
-import { appendOpsAlertDeliveryEvent, OPS_ALERT_EVENTS_KEY } from '@/lib/ops-alert-events';
+import {
+  appendOpsAlertDeliveryEvent,
+  getOpsAlertDeliveryEvents,
+  OPS_ALERT_EVENTS_KEY,
+} from '@/lib/ops-alert-events';
 
 describe('ops alert delivery events', () => {
   beforeEach(() => {
@@ -117,5 +121,46 @@ describe('ops alert delivery events', () => {
       }],
     });
     expect(JSON.stringify(body)).not.toContain('raw-token');
+  });
+
+  it('normalizes malformed stored events and clamps requested history limits', async () => {
+    const empty = await appendOpsAlertDeliveryEvent(undefined);
+
+    expect(empty).toEqual({
+      id: null,
+      at: null,
+      reportStatus: 'unknown',
+      alertCount: 0,
+      actionableAlertCount: 0,
+      critical: 0,
+      warning: 0,
+      deliveryConfigured: false,
+      deliveryStatus: 'unknown',
+      deliveryHttpStatus: null,
+    });
+
+    mocks.store.set(OPS_ALERT_EVENTS_KEY, [
+      { id: 'ops-event-3', alertCount: 'bad', deliveryHttpStatus: 'bad' },
+      { id: 'ops-event-4', alertCount: 4, deliveryHttpStatus: 204 },
+      { id: 'ops-event-5', alertCount: 5, deliveryHttpStatus: 202 },
+    ]);
+
+    expect(await getOpsAlertDeliveryEvents({ limit: -10 })).toHaveLength(1);
+    expect(await getOpsAlertDeliveryEvents({ limit: 'not-a-number' })).toHaveLength(3);
+    expect(await getOpsAlertDeliveryEvents({ limit: 999 })).toHaveLength(3);
+
+    const [malformed] = await getOpsAlertDeliveryEvents({ limit: 1 });
+    expect(malformed).toEqual({
+      id: 'ops-event-3',
+      at: null,
+      reportStatus: 'unknown',
+      alertCount: 0,
+      actionableAlertCount: 0,
+      critical: 0,
+      warning: 0,
+      deliveryConfigured: false,
+      deliveryStatus: 'unknown',
+      deliveryHttpStatus: null,
+    });
   });
 });

@@ -8,7 +8,7 @@ The app is locally healthy but not production-ready until real deployment config
 | --- | ---: | --- |
 | Determinism and no-fabrication guardrails | 10/10 | `Math.random()` and unapproved UUID randomness are blocked; unavailable data is shown instead of generated claims. |
 | Local build/test health | 10/10 | Lint, unit/API tests, build, and E2E are expected release gates. |
-| Coverage depth | 8/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 92.24% lines and 78.46% branches. |
+| Coverage depth | 8/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 92.37% lines and 79.11% branches. |
 | Security guardrails | 9/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, public API URL safety, and no-store audits are wired. |
 | Catalog quality | 7/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage. |
 | Provider coverage | 6/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
@@ -29,7 +29,7 @@ The app is locally healthy but not production-ready until real deployment config
    - Keep generated/cache artifacts out of commits.
 
 3. **Coverage ratchet**
-   - Raise `lib` branch coverage from 78.46% toward 80%, then raise the ratchet floors again in `scripts/audit-coverage.mjs`.
+   - Raise `lib` branch coverage from 79.11% to at least 80%, then raise the ratchet floors again in `scripts/audit-coverage.mjs`.
    - Prioritize hotels-catalog, provider registry, cache, alert delivery, retention edge cases, and remaining API error branches.
    - Keep coverage reports out of commits unless a reviewed artifact is explicitly requested.
 

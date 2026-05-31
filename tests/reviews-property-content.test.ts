@@ -40,10 +40,17 @@ describe('reviews and property content APIs', () => {
   });
 
   it('returns 404 for unknown hotels', async () => {
-    const response = await getReviews(new Request('http://localhost:3000/api/reviews/missing'), {
+    const reviewsResponse = await getReviews(new Request('http://localhost:3000/api/reviews/missing'), {
       params: Promise.resolve({ hotelKey: 'missing' }),
     });
+    const propertyContentResponse = await getPropertyContent(
+      new Request('http://localhost:3000/api/property-content/missing'),
+      {
+        params: Promise.resolve({ hotelKey: 'missing' }),
+      }
+    );
 
-    expect(response.status).toBe(404);
+    expect(reviewsResponse.status).toBe(404);
+    expect(propertyContentResponse.status).toBe(404);
   });
 });
