@@ -85,6 +85,33 @@ describe('rate-limit', () => {
       expect(result.success).toBe(false);
       expect(result.remaining).toBe(0);
     });
+
+    it('fails open by default when KV is unavailable', async () => {
+      vi.mocked(kv.get).mockRejectedValueOnce(new Error('KV unavailable'));
+
+      const limiter = rateLimit({ namespace: 'default-open', limit: 2, window: 10 });
+      const result = await limiter.check('5.5.5.5');
+
+      expect(result.success).toBe(true);
+      expect(result.remaining).toBe(2);
+    });
+
+    it('resets expired windows and falls back to the local identifier for empty input', async () => {
+      const now = Date.now();
+      const limiter = rateLimit({ namespace: 'expired-window', limit: 2, window: 60 });
+      await kv.setWithTTL('rl:expired-window:127.0.0.1', { count: 2, resetAt: now - 1000 }, 60);
+
+      const result = await limiter.check('');
+
+      expect(result.success).toBe(true);
+      expect(result.remaining).toBe(1);
+      expect(result.reset).toBeGreaterThan(now);
+      expect(kv.setWithTTL).toHaveBeenLastCalledWith(
+        'rl:expired-window:127.0.0.1',
+        expect.objectContaining({ count: 1 }),
+        65
+      );
+    });
   });
 
   describe('getClientIp', () => {
@@ -140,6 +167,41 @@ describe('rate-limit', () => {
         }),
       } as Request;
       expect(getClientIp(req)).toBe('127.0.0.1');
+    });
+
+    it('normalizes IPv4-mapped IPv6 and rejects malformed IP variants', () => {
+      const mappedIpv4Req = {
+        headers: new Headers({
+          'x-forwarded-for': '::ffff:198.51.100.24',
+        }),
+      } as Request;
+      const fullIpv6Req = {
+        headers: new Headers({
+          'x-forwarded-for': '2001:0DB8:0000:0000:0000:FF00:0042:8329',
+        }),
+      } as Request;
+      const malformedReq = {
+        headers: new Headers({
+          'x-forwarded-for': '[2001:db8::1',
+          'x-real-ip': '2001::db8::1',
+        }),
+      } as Request;
+      const oversizedGroupReq = {
+        headers: new Headers({
+          'x-forwarded-for': '2001:db8:00000::1',
+        }),
+      } as Request;
+      const badIpv4TokenReq = {
+        headers: new Headers({
+          'x-forwarded-for': '198.51.100.bad',
+        }),
+      } as Request;
+
+      expect(getClientIp(mappedIpv4Req)).toBe('198.51.100.24');
+      expect(getClientIp(fullIpv6Req)).toBe('2001:0db8:0000:0000:0000:ff00:0042:8329');
+      expect(getClientIp(malformedReq)).toBe('127.0.0.1');
+      expect(getClientIp(oversizedGroupReq)).toBe('127.0.0.1');
+      expect(getClientIp(badIpv4TokenReq)).toBe('127.0.0.1');
     });
 
     it('falls back to 127.0.0.1', () => {

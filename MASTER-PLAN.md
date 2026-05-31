@@ -8,7 +8,7 @@ The app is locally healthy but not production-ready until real deployment config
 | --- | ---: | --- |
 | Determinism and no-fabrication guardrails | 9/10 | `Math.random()` and unapproved UUID randomness are blocked by scans/audits; this is still not a formal proof that every future data path has complete provenance. |
 | Local build/test health | 10/10 | Lint, unit/API tests, build, and E2E are expected release gates. |
-| Coverage depth | 9/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 97.59% lines and 90.04% branches. |
+| Coverage depth | 9/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 97.78% lines and 92.04% branches. |
 | Security guardrails | 8/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, public API URL safety, and no-store audits are wired; production enforcement still depends on real env and deployment verification. |
 | Catalog quality | 6/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage and has reused catalog imagery warnings. |
 | Provider coverage | 5/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
@@ -26,8 +26,8 @@ This section is the source of truth for what is complete versus only locally sca
 | Determinism: no `Math.random()` | DONE | `rg "Math\.random\|crypto\.randomUUID" app components lib scripts tests -S` returns no matches. |
 | No-fabrication guardrails | PARTIAL | `npm run audit:guardrails` and `npm run audit:provenance` pass, but there is no exhaustive licensed-source proof for every legacy catalog item/image and future provider/content path. |
 | Local lint/unit/build/E2E health | DONE | `npm run lint`, `npm test`, `npm run build`, and `npm run test:e2e` passed locally. |
-| Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 97.59% lines, 95.51% statements, 96.42% functions, 90.04% branches. |
-| Coverage to world-class depth | PARTIAL | Branch coverage is above 90%, not near exhaustive; remaining weak areas include hotels-catalog, price-cache, catalog-candidates, Wikivoyage, Xotelo discovery, admin audit, OpenTripMap, rate-limit, and provider delivery edges. |
+| Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 97.78% lines, 95.98% statements, 96.56% functions, 92.04% branches. |
+| Coverage to world-class depth | PARTIAL | Branch coverage is above 92%, not near exhaustive; remaining weak areas include hotels-catalog, price-cache, catalog-candidates, cheaper-dates, Wikivoyage, KV, and provider delivery edges. |
 | Security audits wired | DONE | CSRF, HTML safety, storage, privacy, alert, public URL, affiliate, no-store, API error, and cron-cache audits pass locally. |
 | Production security enforcement | PARTIAL | Code gates exist, but real admin, cron, Kinde, Redis, provider, alert, and push env are not configured locally. |
 | Catalog local floor | DONE | Catalog count is 502 hotels, 139 cities, 65 countries. |
@@ -62,7 +62,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | --- | --- | --- | --- |
 | Current State | Determinism and no-fabrication guardrails | PARTIAL | Forbidden randomness scans pass, but end-to-end provenance is not exhaustive. |
 | Current State | Local build/test health | DONE | Lint, unit/API, build, and E2E passed locally. |
-| Current State | Coverage depth | PARTIAL | Ratchet passes at 90.04% branch coverage; next gap is 92%+ and exhaustive branch coverage in catalog, cache, enrichment, ops, and provider delivery. |
+| Current State | Coverage depth | PARTIAL | Ratchet passes at 92.04% branch coverage; next gap is 94%+ and exhaustive branch coverage in catalog, cache, enrichment, ops, and provider delivery. |
 | Current State | Security guardrails | PARTIAL | Local audits pass; production enforcement still requires real deployment env. |
 | Current State | Catalog quality | PARTIAL | 502 hotels/139 cities/65 countries pass the floor; imagery reuse and market scale remain open. |
 | Current State | Provider coverage | PARTIAL | Adapter layer exists; real partner credentials are not configured. |
@@ -74,7 +74,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Accountability | No-fabrication guardrails | PARTIAL | Claims and provenance-wiring audits pass, but static legacy catalog/image provenance and future provider/content paths still need stronger licensed-source controls. |
 | Accountability | Local lint/unit/build/E2E health | DONE | Verified by local gates. |
 | Accountability | Coverage ratchet current floor | DONE | `npm run audit:coverage` passed at the current floor. |
-| Accountability | Coverage to world-class depth | PARTIAL | Branch coverage is above 90%, still not near exhaustive. |
+| Accountability | Coverage to world-class depth | PARTIAL | Branch coverage is above 92%, still not near exhaustive. |
 | Accountability | Security audits wired | DONE | Local security audit scripts pass. |
 | Accountability | Production security enforcement | PARTIAL | Code gates exist; real deployment secrets and providers are absent. |
 | Accountability | Catalog local floor | DONE | Catalog count is above the local floor. |
@@ -105,8 +105,8 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Review modified/deleted/untracked files before staging | DONE | Release-state strict was clean before commits. |
 | Stabilization Priority | Split unrelated work into reviewable commits | DONE | Last work was split into two focused commits. |
 | Stabilization Priority | Keep generated/cache artifacts out of commits | DONE | Release-state strict reported no generated artifacts. |
-| Stabilization Priority | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 90.04% and the floor is 90%. |
-| Stabilization Priority | Prioritize remaining branch coverage hot spots | PARTIAL | Overpass, provider registry, i18n, ops alert, price-cache, provider accuracy, public URL, geolocation, discovery, Wikidata, Google Places reviews, catalog candidate locking, provider uptime, and ops scorecard branches were expanded; remaining hot spots are catalog, cache/date, Wikivoyage, Xotelo discovery, admin audit, OpenTripMap, rate-limit, and provider delivery branches. |
+| Stabilization Priority | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 92.04% and the floor is 92%. |
+| Stabilization Priority | Prioritize remaining branch coverage hot spots | PARTIAL | Overpass, provider registry, i18n, ops alert, price-cache, provider accuracy, public URL, geolocation, discovery, Wikidata, Google Places reviews, catalog candidate locking, provider uptime, OpenTripMap, Xotelo, rate-limit, admin audit, and ops scorecard branches were expanded; remaining hot spots are catalog, cache/date, Wikivoyage, KV, catalog candidates, cheaper-dates, and provider delivery branches. |
 | Stabilization Priority | Keep coverage reports out of commits | DONE | Coverage artifacts were not staged. |
 | Stabilization Priority | Keep README, env example, runbook, and plan aligned | PARTIAL | Local docs audit passes; deployment runbook evidence is missing. |
 | Stabilization Priority | Run docs audit in CI | DONE | `audit:docs` is wired in CI. |
@@ -119,9 +119,9 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints exist; external monitoring and webhook delivery are not configured. |
 | Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
 | Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
-| Acceptance Criteria | `npm test` passes | DONE | 166 files / 947 tests passed. |
+| Acceptance Criteria | `npm test` passes | DONE | 166 files / 968 tests passed. |
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
-| Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 97.59% lines and 90.04% branches. |
+| Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 97.78% lines and 92.04% branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 728 static pages. |
 | Acceptance Criteria | `npm run test:e2e` passes | DONE | 72 Playwright tests passed. |
 | Acceptance Criteria | Every non-strict `npm run audit:*` passes | DONE | All non-strict audit scripts passed locally. |
@@ -136,11 +136,11 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Backlog P0 | Configure approved pricing partner and verify provider-returned rates | NOT DONE | Requires partner credentials. |
 | Backlog P0 | Configure licensed review/property provider | NOT DONE | Requires licensed provider access. |
 | Backlog P1 | Raise branch coverage from 83.26% toward 84% | DONE | Coverage ratchet has moved past this milestone. |
-| Backlog P1 | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 90.04%. |
-| Backlog P1 | Raise branch coverage from 85.08% toward 88% | DONE | Current branch coverage is 90.04% and the floor is 90%. |
-| Backlog P1 | Raise branch coverage from 88.14% toward 90% | DONE | Current branch coverage is 90.04% and the floor is 90%. |
-| Backlog P1 | Raise branch coverage from 90.04% toward 92% | NOT DONE | This is the next local quality target after the current ratchet. |
-| Backlog P1 | Add focused tests for remaining weak branches | PARTIAL | Focused network, provider, cache, i18n, ops, URL-safety, geolocation, discovery, Wikidata, Google Places reviews, catalog candidate locking, provider uptime, and ops scorecard tests were added; catalog, cache/date, Wikivoyage, Xotelo discovery, admin audit, OpenTripMap, rate-limit, and provider delivery branches remain. |
+| Backlog P1 | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 92.04%. |
+| Backlog P1 | Raise branch coverage from 85.08% toward 88% | DONE | Current branch coverage is 92.04% and the floor is 92%. |
+| Backlog P1 | Raise branch coverage from 88.14% toward 90% | DONE | Current branch coverage is 92.04% and the floor is 92%. |
+| Backlog P1 | Raise branch coverage from 90.04% toward 92% | DONE | Current branch coverage is 92.04%; the ratchet floor is now 92%. |
+| Backlog P1 | Add focused tests for remaining weak branches | PARTIAL | Focused network, provider, cache, i18n, ops, URL-safety, geolocation, discovery, Wikidata, Google Places reviews, catalog candidate locking, provider uptime, OpenTripMap, Xotelo, rate-limit, admin audit, and ops scorecard tests were added; catalog, cache/date, Wikivoyage, KV, catalog-candidates, cheaper-dates, and provider delivery branches remain. |
 | Backlog P1 | Replace reused catalog images | NOT DONE | Image reuse warnings remain. |
 | Backlog P1 | Add stronger provenance audit | PARTIAL | `audit:provenance` now checks candidate promotion provenance and provider-link sanitization; it does not yet prove every legacy static catalog item/image has licensed source metadata. |
 | Backlog P1 | Add deployment smoke checks | PARTIAL | `smoke:deployment` now exists for public, admin, cron-guard, and unavailable-state checks; it has not been run against a configured deployment. |
@@ -171,8 +171,8 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
    - Keep generated/cache artifacts out of commits.
 
 3. **Coverage ratchet**
-   - Raise `lib` branch coverage from 90.04% toward 92%, then raise the ratchet floors again in `scripts/audit-coverage.mjs`.
-   - Prioritize hotels-catalog, price-cache, catalog-candidates, Wikivoyage, Xotelo discovery, admin audit, OpenTripMap, rate-limit, alert delivery, retention edge cases, and remaining API error branches.
+   - Raise `lib` branch coverage from 92.04% toward 94%, then raise the ratchet floors again in `scripts/audit-coverage.mjs`.
+   - Prioritize hotels-catalog, price-cache, catalog-candidates, cheaper-dates, Wikivoyage, KV, provider delivery, alert delivery, retention edge cases, and remaining API error branches.
    - Keep coverage reports out of commits unless a reviewed artifact is explicitly requested.
 
 4. **Docs and drift prevention**
@@ -223,7 +223,8 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 - [x] Raise `lib` branch coverage from 84.07% toward 85%, then keep ratcheting upward.
 - [x] Raise `lib` branch coverage from 85.08% toward 88%, then keep ratcheting upward.
 - [x] Raise `lib` branch coverage from 88.14% toward 90%, focusing on catalog, cache/date edge cases, Wikidata enrichment, ops scorecard, and provider delivery branches.
-- [ ] Raise `lib` branch coverage from 90.04% toward 92%, focusing on hotels-catalog, price-cache, catalog-candidates, Wikivoyage, Xotelo discovery, admin audit, OpenTripMap, rate-limit, and provider delivery branches.
+- [x] Raise `lib` branch coverage from 90.04% toward 92%, focusing on hotels-catalog, price-cache, catalog-candidates, Wikivoyage, Xotelo discovery, admin audit, OpenTripMap, rate-limit, and provider delivery branches.
+- [ ] Raise `lib` branch coverage from 92.04% toward 94%, focusing on hotels-catalog, price-cache, catalog-candidates, cheaper-dates, Wikivoyage, KV, and provider delivery branches.
 - [x] Add focused tests for Overpass discovery, agent utilities, i18n edge cases, ops alert thresholds, and provider registry merge/circuit-breaker branches.
 - [ ] Replace reused catalog images with licensed hotel- or city-specific media.
 - [x] Add a stronger provenance wiring audit for catalog candidate promotion, source URLs, provider links, and provider-returned rates.

@@ -166,6 +166,11 @@ describe('OpenTripMap helpers', () => {
     const { getAttractions, getTopAttractions } = await import('@/lib/opentripmap');
 
     await expect(getAttractions({
+      lat: Number.NaN,
+      lon: 0,
+      limit: 1,
+    })).resolves.toEqual([]);
+    await expect(getAttractions({
       lat: '91' as unknown as number,
       lon: 0,
       radius: 999999,
@@ -267,5 +272,54 @@ describe('OpenTripMap helpers', () => {
     ]);
     await expect(getAttractions({ lat: 0, lon: 0 })).resolves.toEqual([]);
     await expect(getPlaceDetails('L1')).resolves.toBeNull();
+  });
+
+  it('uses OpenTripMap fallback fields only when they are provider returned and safe', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse([
+        { name: 123, point: { lat: 0, lon: 0 }, rate: 'not-a-rate', wikidata: 'not-qid', osm: 456 },
+      ]))
+      .mockResolvedValueOnce(jsonResponse({
+        name: 123,
+        info: { descr: ' Provider returned fallback details ' },
+        image: 'https://upload.wikimedia.org/fallback.jpg',
+        rate: 'not-a-rate',
+      }))
+      .mockResolvedValueOnce(jsonResponse({}, false, 503));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getAttractions, getPlaceDetails } = await import('@/lib/opentripmap');
+
+    const attractions = await getAttractions({
+      lat: 0,
+      lon: 0,
+      kinds: 'bad kind!',
+      limit: 1,
+    });
+    const radiusUrl = new URL(String(fetchMock.mock.calls[0][0]));
+
+    expect(radiusUrl.searchParams.get('kinds')).toBe('interesting_places,museums,historic,natural,architecture,cultural,religion,amusements');
+    expect(attractions).toEqual([
+      expect.objectContaining({
+        xid: null,
+        name: '123',
+        type: 'Attraction',
+        icon: '📍',
+        rate: 0,
+        wikidataId: null,
+        osmId: '456',
+      }),
+    ]);
+
+    await expect(getPlaceDetails('OTM_1')).resolves.toMatchObject({
+      xid: 'OTM_1',
+      name: '123',
+      description: 'Provider returned fallback details',
+      imageUrl: 'https://upload.wikimedia.org/fallback.jpg',
+      wikipediaUrl: null,
+      rate: 0,
+      address: null,
+    });
+    await expect(getPlaceDetails('OTM_2')).resolves.toBeNull();
   });
 });

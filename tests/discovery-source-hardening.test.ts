@@ -249,6 +249,70 @@ describe('Xotelo discovery hardening', () => {
       },
     ]);
   });
+
+  it('parses direct-array Xotelo payloads and list fallbacks without fabricating missing fields', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse([
+        { id: 'g187147-d999001', name: 'Direct Search Hotel', country: 'France' },
+      ]))
+      .mockResolvedValueOnce(jsonResponse({}, false, 503))
+      .mockResolvedValueOnce(jsonResponse([
+        { id: 'g187147-d999002', hotel_name: 'Direct List Hotel' },
+      ]));
+    vi.stubGlobal('fetch', fetchMock);
+    const { listXoteloHotels, searchXoteloHotels } = await import('@/lib/xotelo-discovery');
+
+    await expect(searchXoteloHotels('Paris')).resolves.toEqual([
+      {
+        hotelKey: 'g187147-d999001',
+        name: 'Direct Search Hotel',
+        city: null,
+        country: 'France',
+        stars: null,
+        source: 'xotelo-search',
+      },
+    ]);
+    await expect(listXoteloHotels('Paris')).resolves.toEqual([]);
+    await expect(listXoteloHotels('Paris')).resolves.toEqual([
+      {
+        hotelKey: 'g187147-d999002',
+        name: 'Direct List Hotel',
+        city: 'Paris',
+        country: null,
+        stars: null,
+        source: 'xotelo-list',
+      },
+    ]);
+  });
+
+  it('fails closed for Xotelo search error payloads and list non-array payloads', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ error: 'unauthorized' }))
+      .mockResolvedValueOnce(jsonResponse({ result: { hotel_key: 'g187147-d999004', name: 'Not an array' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { listXoteloHotels, searchXoteloHotels } = await import('@/lib/xotelo-discovery');
+
+    await expect(searchXoteloHotels('Paris')).resolves.toEqual([]);
+    await expect(listXoteloHotels('Paris')).resolves.toEqual([]);
+  });
+
+  it('keeps Xotelo discovery city fallback while exercising the polite delay path', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({
+      result: [{ hotel_key: 'g187497-d999003', name: 'Madrid Source Hotel' }],
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { discoverFromXotelo } = await import('@/lib/xotelo-discovery');
+
+    await expect(discoverFromXotelo(['Madrid'], 1)).resolves.toEqual([
+      expect.objectContaining({
+        hotelKey: 'g187497-d999003',
+        name: 'Madrid Source Hotel',
+        city: 'Madrid',
+      }),
+    ]);
+  });
 });
 
 describe('Wikidata enrichment hardening', () => {

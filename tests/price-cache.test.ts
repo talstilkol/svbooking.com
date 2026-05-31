@@ -177,6 +177,98 @@ describe('price cache', () => {
     ]);
   });
 
+  it('uses provider source fallback and base-rate totals without inventing tax data', async () => {
+    vi.mocked(getHotelRates).mockResolvedValueOnce({
+      rates: [{ rate: 88, currency: 'cad' }],
+      currency: 'not-a-currency',
+      provider: 'unknown',
+      source: 'Provider Source',
+    });
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      hotelName: 'Verified Hotel',
+      city: 'Paris',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(result.provider).toBe('Provider Source');
+    expect(result.source).toBe('Provider Source');
+    expect(result.currency).toBe('USD');
+    expect(result.rates).toEqual([
+      expect.objectContaining({
+        provider: 'Provider Source',
+        source: 'Provider Source',
+        total: 88,
+        currency: 'CAD',
+        taxesIncluded: null,
+      }),
+    ]);
+  });
+
+  it('normalizes empty provider results without seeding latest-rate cache entries', async () => {
+    vi.mocked(getHotelRates).mockResolvedValueOnce({
+      rates: null,
+      currency: 'invalid',
+    });
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      hotelName: 'Verified Hotel',
+      city: 'Paris',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(result).toMatchObject({
+      rates: [],
+      currency: 'USD',
+      provider: 'none',
+      source: 'none',
+      fromCache: false,
+      freshness: 'live',
+    });
+    expect(kv.setWithTTL).toHaveBeenCalledTimes(1);
+    expect(kv.setWithTTL).toHaveBeenCalledWith(
+      'price:g1-d1:2026-06-01:2026-06-03:USD',
+      expect.objectContaining({ result: expect.objectContaining({ rates: [] }) }),
+      expect.any(Number)
+    );
+  });
+
+  it('uses the rate provider as source when all source fields are blocked', async () => {
+    vi.mocked(getHotelRates).mockResolvedValueOnce({
+      rates: [{
+        provider: 'Room Provider',
+        rate: 70,
+        source: 'unknown',
+        cancellationPolicy: '   ',
+        roomName: '   ',
+      }],
+      provider: 'unknown',
+      source: 'unknown',
+    });
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      hotelName: 'Verified Hotel',
+      city: 'Paris',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(result.rates).toEqual([
+      expect.objectContaining({
+        provider: 'Room Provider',
+        source: 'Room Provider',
+        currency: 'USD',
+        cancellationPolicy: null,
+        roomName: null,
+      }),
+    ]);
+  });
+
   it('sanitizes cached provider links and currencies before returning them', async () => {
     await kv.setWithTTL('price:g1-d1:2026-06-01:2026-06-03:USD', {
       cachedAt: new Date().toISOString(),
@@ -225,6 +317,52 @@ describe('price cache', () => {
       total: 140,
       cancellationPolicy: 'Free cancellation',
     });
+  });
+
+  it('normalizes legacy cached rates that only provide cachedAt metadata', async () => {
+    const cachedAt = new Date().toISOString();
+    await kv.setWithTTL('price:g1-d1:2026-06-01:2026-06-03:USD', {
+      cachedAt,
+      rates: [{ name: 'CachedAt Provider', rate: 101 }],
+      currency: 'USD',
+      provider: 'CachedAt Provider',
+      source: 'cached',
+    }, 7200);
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(result.fromCache).toBe(true);
+    expect(result.freshness).toBe('fresh');
+    expect(result.lastCheckedAt).toBe(cachedAt);
+  });
+
+  it('treats cached rates with invalid timestamps as stale and revalidates them', async () => {
+    await kv.setWithTTL('price:g1-d1:2026-06-01:2026-06-03:USD', {
+      cachedAt: 'not-a-date',
+      result: {
+        rates: [{ name: 'Timestamp Provider', rate: 100 }],
+        currency: 'USD',
+        provider: 'Timestamp Provider',
+        source: 'cached',
+      },
+    }, 7200);
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      hotelName: 'Verified Hotel',
+      city: 'Paris',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(result.fromCache).toBe(true);
+    expect(result.freshness).toBe('stale');
+    expect(result.partial).toBe(true);
+    expect(getHotelRates).toHaveBeenCalledWith(expect.objectContaining({ hotelKey: 'g1-d1' }));
   });
 
   it('falls through to live rates when exact cache reads fail and fuzzy dates are invalid', async () => {
@@ -349,6 +487,30 @@ describe('price cache', () => {
     }));
   });
 
+  it('uses fuzzy cache timestamps when nearby rates do not carry provider timestamps', async () => {
+    await kv.setWithTTL('latest-rates:g1-d1:USD', {
+      result: {
+        rates: [{ name: 'Estimated Provider', rate: 110, tax: 10 }],
+        currency: 'USD',
+        provider: 'Xotelo',
+        source: 'xotelo',
+      },
+      cachedAt: '2026-05-20T00:00:00.000Z',
+      forDates: { checkIn: '2026-06-03', checkOut: '2026-06-05' },
+    }, 7200);
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      hotelName: 'Test Hotel',
+      city: 'Paris',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(result.freshness).toBe('estimated');
+    expect(result.lastCheckedAt).toBe('2026-05-20T00:00:00.000Z');
+  });
+
   it('does not use fuzzy cache for dates too far apart', async () => {
     await kv.setWithTTL('latest-rates:g1-d1:USD', {
       result: {
@@ -454,6 +616,26 @@ describe('price cache', () => {
     expect(getHotelRates).toHaveBeenCalledTimes(1);
   });
 
+  it('batch uses fuzzy cachedAt timestamps when provider timestamps are absent', async () => {
+    await kv.setWithTTL('latest-rates:g1-d1:USD', {
+      result: {
+        rates: [{ name: 'Nearby Provider', rate: 95, tax: 5 }],
+        currency: 'USD',
+        provider: 'Xotelo',
+        source: 'xotelo',
+      },
+      cachedAt: '2026-05-20T00:00:00.000Z',
+      forDates: { checkIn: '2026-06-03', checkOut: '2026-06-05' },
+    }, 7200);
+
+    const [result] = await getCachedRatesBatch([
+      { hotelKey: 'g1-d1', hotelName: 'Hotel A', city: 'Paris', checkIn: '2026-06-01', checkOut: '2026-06-03' },
+    ]);
+
+    expect(result.freshness).toBe('estimated');
+    expect(result.lastCheckedAt).toBe('2026-05-20T00:00:00.000Z');
+  });
+
   it('batch ignores fuzzy entries with invalid dates and performs a live fetch', async () => {
     await kv.setWithTTL('latest-rates:g1-d1:USD', {
       result: {
@@ -472,6 +654,28 @@ describe('price cache', () => {
 
     expect(result.freshness).toBe('live');
     expect(result.fromCache).toBe(false);
+    expect(getHotelRates).toHaveBeenCalledTimes(1);
+  });
+
+  it('batch ignores fuzzy entries outside the allowed date window', async () => {
+    await kv.setWithTTL('latest-rates:g1-d1:USD', {
+      result: {
+        rates: [{ name: 'Far Batch Provider', rate: 95, tax: 5 }],
+        currency: 'USD',
+        provider: 'Xotelo',
+        source: 'xotelo',
+      },
+      cachedAt: '2026-05-20T00:00:00.000Z',
+      forDates: { checkIn: '2026-08-01', checkOut: '2026-08-03' },
+    }, 7200);
+
+    const [result] = await getCachedRatesBatch([
+      { hotelKey: 'g1-d1', hotelName: 'Hotel A', city: 'Paris', checkIn: '2026-06-01', checkOut: '2026-06-03' },
+    ]);
+
+    expect(result.freshness).toBe('live');
+    expect(result.fromCache).toBe(false);
+    expect(result.estimatedFromDates).toBeUndefined();
     expect(getHotelRates).toHaveBeenCalledTimes(1);
   });
 
@@ -622,6 +826,27 @@ describe('price cache', () => {
     });
   });
 
+  it('adds default heatmap metadata for legacy cached heatmaps', async () => {
+    await kv.setWithTTL('heatmap:g1-d1:2026-06-03', {
+      rates: [{ rate: 99, date: '2026-06-01' }],
+    }, 7200);
+
+    const result = await getCachedHeatmap({
+      hotelKey: 'g1-d1',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedHeatmap>[0]);
+
+    expect(getHeatmap).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      fromCache: true,
+      provider: 'xotelo',
+      source: 'xotelo',
+      priceSource: 'heatmap',
+      freshness: 'fresh',
+      partial: false,
+    });
+  });
+
   it('returns fallback data when live fetch fails and fuzzy cache exists', async () => {
     // Make live fetch fail
     vi.mocked(getHotelRates).mockRejectedValueOnce(new Error('all providers failed'));
@@ -653,6 +878,31 @@ describe('price cache', () => {
     expect(result.partial).toBe(true);
     expect(result.rates[0].name).toBe('Fallback Provider');
     expect(result.estimatedFromDates).toEqual({ checkIn: '2026-07-15', checkOut: '2026-07-17' });
+  });
+
+  it('returns stale-if-error fallback data without estimated dates when none were sourced', async () => {
+    vi.mocked(getHotelRates).mockRejectedValueOnce(new Error('all providers failed'));
+    await kv.setWithTTL('latest-rates:g1-d1:USD', {
+      result: {
+        rates: [{ name: 'Fallback Provider', rate: 130, tax: 10 }],
+        currency: 'USD',
+        provider: 'Xotelo',
+        source: 'xotelo',
+      },
+      cachedAt: '2026-05-20T00:00:00.000Z',
+    }, 7200);
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      hotelName: 'Test Hotel',
+      city: 'Paris',
+      checkIn: '2026-09-01',
+      checkOut: '2026-09-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(result.freshness).toBe('fallback');
+    expect(result.fromCache).toBe(true);
+    expect(result.estimatedFromDates).toBeUndefined();
   });
 
   it('throws when live fetch fails and no fallback data exists', async () => {
@@ -724,6 +974,19 @@ describe('price cache', () => {
     await new Promise((r) => setTimeout(r, 10));
 
     await expect(kv.get('latest-rates:g1-d1:USD')).resolves.toBeNull();
+  });
+
+  it('seeds fuzzy heatmap rates from the lowest returned price and falls back to checkout dates', async () => {
+    vi.mocked(getHeatmap).mockResolvedValueOnce({
+      rates: [{ rate: 120 }, { rate: 90 }],
+    });
+
+    await getCachedHeatmap({ hotelKey: 'g1-d1', checkOut: '2026-06-03' } as Parameters<typeof getCachedHeatmap>[0]);
+    await new Promise((r) => setTimeout(r, 10));
+
+    const seeded = await kv.get('latest-rates:g1-d1:USD');
+    expect(seeded.result.rates[0].rate).toBe(90);
+    expect(seeded.forDates).toEqual({ checkIn: '2026-06-03', checkOut: '2026-06-03' });
   });
 
   it('skips heatmap fuzzy seeding when no hotel key is present', async () => {

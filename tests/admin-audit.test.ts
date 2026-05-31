@@ -70,6 +70,24 @@ describe('admin audit log', () => {
     expect(sanitized.deep).toEqual({ a: { b: { c: { d: '[max-depth]' } } } });
   });
 
+  it('truncates long audit text, normalizes blank keys, and stringifies unsupported primitives', () => {
+    const longValue = 'x'.repeat(220);
+    const longKey = 'k'.repeat(100);
+    const sanitized = sanitizeAuditDetails({
+      '': 'blank key value',
+      [longKey]: 'long key value',
+      longValue,
+      control: ' keep\u0000this\nreadable ',
+      bigintValue: BigInt(7),
+    }) as Record<string, unknown>;
+
+    expect(sanitized.unknown).toBe('blank key value');
+    expect(sanitized[`${longKey.slice(0, 80)}...`]).toBe('long key value');
+    expect(sanitized.longValue).toBe(`${longValue.slice(0, 200)}...`);
+    expect(sanitized.control).toBe('keep this readable');
+    expect(sanitized.bigintValue).toBe('7');
+  });
+
   it('records deterministic, redacted admin events without raw client identifiers', async () => {
     const request = new Request('http://localhost:3000/api/agents/providers', {
       method: 'POST',
@@ -169,6 +187,36 @@ describe('admin audit log', () => {
     expect(events.map((event: { id: string }) => event.id)).toEqual([second?.id, first?.id]);
   });
 
+  it('records events with default actor, status, details, and nullable resource metadata', async () => {
+    const event = await recordAdminAuditEvent({
+      request: new Request('http://localhost:3000/api/agents/providers', {
+        method: 'GET',
+      }),
+      action: 'admin.audit.read',
+    });
+
+    expect(event).toMatchObject({
+      actor: 'admin-identity',
+      action: 'admin.audit.read',
+      resource: null,
+      status: 'success',
+      details: {},
+      method: 'GET',
+      path: '/api/agents/providers',
+    });
+    expect(event?.actorFingerprint).toMatch(/^h_[0-9a-z]+$/);
+    expect(event?.clientFingerprint).toMatch(/^h_[0-9a-z]+$/);
+
+    const blankActorEvent = await recordAdminAuditEvent({
+      request: new Request('http://localhost:3000/api/agents/providers', {
+        method: 'GET',
+      }),
+      actor: '',
+      action: 'admin.audit.blank-actor',
+    });
+    expect(blankActorEvent?.actor).toBe('admin-identity');
+  });
+
   it('returns null instead of breaking admin mutations when audit persistence fails', async () => {
     vi.spyOn(kv, 'get').mockRejectedValueOnce(new Error('KV unavailable'));
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -200,6 +248,11 @@ describe('admin audit log', () => {
       { id: 'present-1', action: 'first' },
       { id: 'present-2', action: 'second' },
     ]);
+  });
+
+  it('returns an empty audit list when the index is absent', async () => {
+    await expect(getAdminAuditEvents()).resolves.toEqual([]);
+    await expect(getAdminAuditEvents(Number.NaN)).resolves.toEqual([]);
   });
 
   it('protects the audit read endpoint and returns redacted events', async () => {
