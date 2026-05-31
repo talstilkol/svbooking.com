@@ -201,5 +201,20 @@ describe('kv (in-memory mode)', () => {
       expect(calls.keysPattern).toBe('redis:*');
       expect(calls.deleted).toBe('redis:key1');
     });
+
+    it('falls back to in-memory storage when the Redis adapter cannot be imported', async () => {
+      vi.stubEnv('UPSTASH_REDIS_REST_URL', 'https://redis.svbooking.invalid');
+      vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', 'redis-token');
+      vi.doMock('@upstash/redis', () => {
+        throw new Error('redis module unavailable');
+      });
+      vi.resetModules();
+      const { kv: fallbackKv } = await import('@/lib/kv');
+
+      await expect(fallbackKv.isConfigured()).resolves.toBe(false);
+      await fallbackKv.set('redis:import-fallback', 'memory-value');
+      await expect(fallbackKv.get('redis:import-fallback')).resolves.toBe('memory-value');
+      await fallbackKv.del('redis:import-fallback');
+    });
   });
 });

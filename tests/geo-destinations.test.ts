@@ -30,6 +30,7 @@ function jsonResponse(body: unknown, ok = true, status = 200) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe('geo distance helpers', () => {
@@ -209,6 +210,23 @@ describe('geo provider detection', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(String(fetchMock.mock.calls[0][0])).toContain('http://ip-api.com/json/198.51.100.11');
     expect(String(fetchMock.mock.calls[1][0])).toBe('https://ipapi.co/198.51.100.11/json/');
+  });
+
+  it('aborts slow geolocation providers before returning null', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => (
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+      })
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const pending = detectLocation('198.51.100.12');
+    await vi.advanceTimersByTimeAsync(5000);
+    await vi.advanceTimersByTimeAsync(5000);
+
+    await expect(pending).resolves.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
 

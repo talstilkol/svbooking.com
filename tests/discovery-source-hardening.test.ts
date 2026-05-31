@@ -324,6 +324,26 @@ describe('Xotelo discovery hardening', () => {
       }),
     ]);
   });
+
+  it('aborts slow Xotelo discovery search and list requests', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => (
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+      })
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+    const { listXoteloHotels, searchXoteloHotels } = await import('@/lib/xotelo-discovery');
+
+    const pendingSearch = searchXoteloHotels('Paris', 25);
+    await vi.advanceTimersByTimeAsync(25);
+    await expect(pendingSearch).resolves.toEqual([]);
+
+    const pendingList = listXoteloHotels('Paris', 25);
+    await vi.advanceTimersByTimeAsync(25);
+    await expect(pendingList).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('Wikidata enrichment hardening', () => {
@@ -468,6 +488,24 @@ describe('Wikidata enrichment hardening', () => {
     const { resolveWikidataToTripAdvisor } = await import('@/lib/wikidata-enrich');
 
     await expect(resolveWikidataToTripAdvisor(['Q3145596'])).resolves.toEqual(new Map());
+  });
+
+  it('aborts slow Wikidata enrichment requests without returning unsourced metadata', async () => {
+    vi.useFakeTimers();
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('fetch', vi.fn((_url: string, init?: RequestInit) => (
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+      })
+    )));
+    const { enrichFromWikidata } = await import('@/lib/wikidata-enrich');
+
+    const pending = enrichFromWikidata(['188728']);
+    await vi.advanceTimersByTimeAsync(25000);
+
+    await expect(pending).resolves.toEqual(new Map());
+    expect(consoleSpy).toHaveBeenCalledWith('Wikidata enrichment unavailable');
+    consoleSpy.mockRestore();
   });
 
   it('normalizes Wikidata IDs before resolving TripAdvisor IDs', async () => {
@@ -847,6 +885,41 @@ describe('Wikivoyage parser hardening', () => {
     }));
 
     await expect(getSafetyInfo('Paris')).resolves.toBeNull();
+  });
+
+  it('degrades cleanly when Wikivoyage provider payload fields fail during normalization', async () => {
+    const throwingSummary = { type: 'standard' };
+    Object.defineProperty(throwingSummary, 'title', {
+      get() {
+        throw new Error('summary title unavailable');
+      },
+    });
+    const throwingSections = {};
+    Object.defineProperty(throwingSections, 'parse', {
+      get() {
+        throw new Error('section list unavailable');
+      },
+    });
+    const throwingContent = {};
+    Object.defineProperty(throwingContent, 'parse', {
+      get() {
+        throw new Error('section content unavailable');
+      },
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(throwingSummary))
+      .mockResolvedValueOnce(jsonResponse(throwingSections))
+      .mockResolvedValueOnce(jsonResponse({
+        parse: { sections: [{ index: '1', line: 'Stay safe', level: '2' }] },
+      }))
+      .mockResolvedValueOnce(jsonResponse(throwingContent));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getSafetyInfo, getTravelGuide } = await import('@/lib/wikivoyage');
+
+    await expect(getTravelGuide('Throw City')).resolves.toBeNull();
+    await expect(getSafetyInfo('Throw Sections')).resolves.toBeNull();
+    await expect(getSafetyInfo('Throw Content')).resolves.toBeNull();
   });
 
   it('handles Wikivoyage sections with empty HTML without fallback copy', async () => {

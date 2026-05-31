@@ -349,4 +349,18 @@ describe('OpenTripMap helpers', () => {
     });
     await expect(getPlaceDetails('OTM_2')).resolves.toBeNull();
   });
+
+  it('returns null when OpenTripMap details fail during provider payload normalization', async () => {
+    const throwingDetails = { xid: 'OTM_THROW' };
+    Object.defineProperty(throwingDetails, 'name', {
+      get() {
+        throw new Error('provider detail field unavailable');
+      },
+    });
+    const fetchMock = vi.fn(async () => jsonResponse(throwingDetails));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getPlaceDetails } = await import('@/lib/opentripmap');
+
+    await expect(getPlaceDetails('OTM_THROW')).resolves.toBeNull();
+  });
 });

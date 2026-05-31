@@ -14,9 +14,10 @@ let fetchBehavior:
   | 'error-with-rates'
   | 'error-no-rates'
   | 'no-result'
+  | 'hang-until-abort'
   | 'heatmap-success' = 'succeed';
 
-vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
   fetchAttempt++;
   fetchCalls.push({ url, attempt: fetchAttempt });
 
@@ -75,6 +76,12 @@ vi.stubGlobal('fetch', vi.fn(async (url: string) => {
     return new Response(JSON.stringify({}), { status: 200 });
   }
 
+  if (fetchBehavior === 'hang-until-abort') {
+    return await new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+    });
+  }
+
   if (fetchBehavior === 'heatmap-success') {
     return new Response(JSON.stringify({ result: { rates: [{ date: '2026-06-01', rate: 120 }] } }), { status: 200 });
   }
@@ -92,6 +99,7 @@ describe('xotelo retry', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -184,6 +192,24 @@ describe('xotelo retry', () => {
       getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 1000 })
     ).rejects.toThrow('fetch failed');
 
+    expect(fetchCalls).toHaveLength(1);
+  });
+
+  it('aborts provider calls when the request budget expires', async () => {
+    vi.useFakeTimers();
+    fetchBehavior = 'hang-until-abort';
+
+    const pending = getRates({
+      hotelKey: 'g1-d1',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+      timeoutMs: 1000,
+    }).catch((error: Error) => error);
+    await vi.advanceTimersByTimeAsync(600);
+
+    await expect(pending).resolves.toMatchObject({
+      message: 'Xotelo request timed out after 600ms',
+    });
     expect(fetchCalls).toHaveLength(1);
   });
 

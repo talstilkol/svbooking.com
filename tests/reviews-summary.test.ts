@@ -106,6 +106,27 @@ describe('fetchGooglePlacesReviews', () => {
       { apiKey: 'key', fetchImpl: fetchImpl as unknown as typeof fetch }
     )).rejects.toThrow('HTTP 429');
   });
+
+  it('aborts slow Google Places requests', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchImpl = vi.fn((_url: string, init?: RequestInit) => (
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+        })
+      ));
+
+      const pending = fetchGooglePlacesReviews(
+        { name: 'Le Meurice', city: 'Paris', country: 'France' },
+        { apiKey: 'key', fetchImpl: fetchImpl as unknown as typeof fetch, timeoutMs: 25 }
+      ).catch((error: Error) => error);
+      await vi.advanceTimersByTimeAsync(25);
+
+      await expect(pending).resolves.toMatchObject({ name: 'AbortError' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe('getReviewSummary', () => {

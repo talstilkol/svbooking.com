@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-The stabilization pass moved SV Booking from locally healthy but documentation-stale to a more release-ready state. The app now has current docs, a CI-wired documentation drift audit, a 502-hotel catalog, deterministic cache jitter, clean local release state, deterministic E2E trust-state checks for unavailable property amenities, and a coverage ratchet above 99% branch coverage.
+The stabilization pass moved SV Booking from locally healthy but documentation-stale to a more release-ready state. The app now has current docs, a CI-wired documentation drift audit, a 502-hotel catalog, deterministic cache jitter, clean local release state, deterministic E2E trust-state checks for unavailable property amenities, and a 100% `lib` coverage ratchet across lines, statements, functions, and branches.
 
 The remaining blockers are not code placeholders to fill in locally:
 
@@ -20,9 +20,9 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 177 test files, 1081 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 99.75% lines, 99.62% statements, 99.21% functions, and 100% branches. |
-| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 99.7%, statements 99.6%, functions 99.2%, branches 100%. |
+| `npm test` | PASS | 177 test files, 1090 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 100% lines, 100% statements, 100% functions, and 100% branches. |
+| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 100%, statements 100%, functions 100%, branches 100%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 72 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
@@ -59,14 +59,14 @@ The remaining blockers are not code placeholders to fill in locally:
 | Build/test health | 10/10 | Lint, unit/API tests, build, and E2E pass. |
 | Security guardrails | 8/10 | Admin auth, CSRF, HTML safety, privacy, storage, alert, and no-store checks are wired; production enforcement still needs real env and deployment verification. |
 | Documentation integrity | 9/10 | README, master plan, audit report, CI, and docs audit now agree on current architecture/counts. |
-| Coverage depth | 9/10 | Coverage tooling runs and has a regression floor; branch coverage is above 99%; the next local quality target is exhaustive remaining edge coverage. |
+| Coverage depth | 10/10 | Coverage tooling runs and now enforces 100% `lib` coverage across lines, statements, functions, and branches. |
 | Catalog scale | 6/10 | 502 curated hotels clears the local launch floor, but it is not market-scale and reused imagery warnings remain. |
 | Provider readiness | 5/10 | Adapter infrastructure exists; real production provider credentials are missing locally. |
 | Reviews/property content | 4/10 | APIs and UI correctly show unavailable states until licensed provider data exists; rich content is not live. |
 | Production readiness | 4/10 | Strict readiness correctly fails until deployment env is configured. |
 | Release hygiene | 10/10 | Worktree is clean; keep release-state strict before deployment. |
 
-**Overall engineering score:** 8.2/10
+**Overall engineering score:** 8.5/10
 **Go-live readiness:** 4/10 until strict production readiness passes in deployment
 
 ## Changes Completed In This Stabilization Pass
@@ -138,6 +138,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Added sourced competitor parity tracking for Booking.com, Google Travel, KAYAK/HotelsCombined, Expedia, trivago, Fattal, and Isrotel across inventory, freshness, mobile, reviews, alerts, booking handoff, and Israel coverage.
 - Surfaced reused catalog media as a measurable ops scorecard blocker instead of leaving it only as a catalog audit warning.
 - Raised provider observability, catalog media, URL-safety, reviews, i18n, REST Countries, DBpedia, candidate-review, webhook URL, Wikivoyage, Ticketmaster, cheaper-date, Xotelo, auth helper, cron-auth helper, price-cache, hotel-popularity, catalog fuzzy-search, ops-alert sorting, continent indexing, and webhook URL edge coverage, then moved the branch coverage ratchet floor to 100%.
+- Raised remaining `lib` line, statement, and function coverage to 100% with focused timeout, provider-normalization, Redis fallback, Xotelo discovery, Wikidata, OpenTripMap, Ticketmaster, geolocation, and Google Places abort-path tests; the coverage ratchet now blocks regression below 100% in every tracked `lib` dimension.
 - Added a CI-wired RUM audit for Vercel Analytics, Speed Insights, and local Core Web Vitals instrumentation while keeping production RUM proof as a launch blocker.
 - Moved cheaper-date provider links, Ticketmaster event links, and Wikidata enrichment website/image links onto the shared public URL helper so internal/private URLs cannot leak through public API responses.
 - Added a Playwright public API URL safety runtime audit for JSON responses and a CI-wired `npm run audit:public-api-urls` guard so unsafe absolute URLs cannot quietly return through public endpoints.
@@ -167,7 +168,6 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Line/function coverage next target | Low | `lib` branch coverage is 100%; line coverage is 99.75% and function coverage is 99.21%. | Continue focused tests for remaining uncovered lines/functions without weakening production behavior. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | External observability proof | Medium | Authenticated dashboard now shows local ops scorecard and alerts, and RUM wiring is audited; external monitoring, production RUM evidence, and webhook evidence are still absent. | Configure production monitoring, RUM, and alert delivery after real env is available. |
 | Commercial/legal signoff | Medium | Legal readiness wiring is audited locally, but it is not legal approval. | Capture partner terms, affiliate/legal review, and licensed content display signoff before launch claims depend on provider programs or licensed content. |

@@ -840,4 +840,20 @@ describe('Ticketmaster helpers', () => {
     }));
     await expect(getEvents({ lat: 48.8566, lon: 2.3522 })).resolves.toEqual([]);
   });
+
+  it('returns empty Ticketmaster events when provider payload mapping fails', async () => {
+    vi.stubEnv('TICKETMASTER_API_KEY', 'tm_realistic_key_for_tests');
+    const throwingEvent = {};
+    Object.defineProperty(throwingEvent, 'name', {
+      get() {
+        throw new Error('event name unavailable');
+      },
+    });
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+      _embedded: { events: [throwingEvent] },
+    })));
+    const { getEvents } = await import('@/lib/ticketmaster');
+
+    await expect(getEvents({ lat: 48.8566, lon: 2.3522 })).resolves.toEqual([]);
+  });
 });

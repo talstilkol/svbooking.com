@@ -8,7 +8,7 @@ The app is locally healthy but not production-ready until real deployment config
 | --- | ---: | --- |
 | Determinism and no-fabrication guardrails | 9/10 | `Math.random()` and unapproved UUID randomness are blocked by scans/audits; this is still not a formal proof that every future data path has complete provenance. |
 | Local build/test health | 10/10 | Lint, unit/API tests, build, and E2E are expected release gates. |
-| Coverage depth | 9/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 99.75% lines and 100% branches. |
+| Coverage depth | 10/10 | `npm run audit:coverage` now enforces 100% `lib` coverage across lines, statements, functions, and branches. |
 | Security guardrails | 8/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, public API URL safety, and no-store audits are wired; production enforcement still depends on real env and deployment verification. |
 | Catalog quality | 6/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage; reused catalog imagery is now tracked as an ops scorecard blocker. |
 | Provider coverage | 5/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
@@ -26,8 +26,8 @@ This section is the source of truth for what is complete versus only locally sca
 | Determinism: no `Math.random()` | DONE | `rg "Math\.random\|crypto\.randomUUID" app components lib scripts tests -S` returns no matches. |
 | No-fabrication guardrails | PARTIAL | `npm run audit:guardrails` and `npm run audit:provenance` pass, but there is no exhaustive licensed-source proof for every legacy catalog item/image and future provider/content path. |
 | Local lint/unit/build/E2E health | DONE | `npm run lint`, `npm test`, `npm run build`, and `npm run test:e2e` passed locally. |
-| Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 99.75% lines, 99.62% statements, 99.21% functions, 100% branches; floors are now lines 99.7%, statements 99.6%, functions 99.2%, branches 100%. |
-| Coverage to world-class depth | PARTIAL | Branch coverage is 100%; line/function coverage is above 99% but still below 100%, so the next local target is remaining uncovered lines/functions. |
+| Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 100% lines, 100% statements, 100% functions, 100% branches; floors are now 100% for every tracked `lib` dimension. |
+| Coverage to world-class depth | DONE | `lib` coverage is 100% across lines, statements, functions, and branches; future work should preserve the ratchet and add app/runtime coverage where needed. |
 | Security audits wired | DONE | CSRF, HTML safety, storage, privacy, alert, public URL, affiliate, no-store, API error, and cron-cache audits pass locally. |
 | Production security enforcement | PARTIAL | Code gates exist, but real admin, cron, Kinde, Redis, provider, alert, and push env are not configured locally. |
 | Catalog local floor | DONE | Catalog count is 502 hotels, 139 cities, 65 countries. |
@@ -62,7 +62,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | --- | --- | --- | --- |
 | Current State | Determinism and no-fabrication guardrails | PARTIAL | Forbidden randomness scans pass, but end-to-end provenance is not exhaustive. |
 | Current State | Local build/test health | DONE | Lint, unit/API, build, and E2E passed locally. |
-| Current State | Coverage depth | PARTIAL | Ratchet passes above 99% branch coverage; next gap is exhaustive branch coverage in catalog, provider observability, cache, URL safety, auth, network, and API error paths. |
+| Current State | Coverage depth | DONE | Ratchet passes at 100% `lib` coverage across lines, statements, functions, and branches. |
 | Current State | Security guardrails | PARTIAL | Local audits pass; production enforcement still requires real deployment env. |
 | Current State | Catalog quality | PARTIAL | 502 hotels/139 cities/65 countries pass the floor; imagery reuse and market scale remain open. |
 | Current State | Provider coverage | PARTIAL | Adapter layer exists; real partner credentials are not configured. |
@@ -74,7 +74,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Accountability | No-fabrication guardrails | PARTIAL | Claims and provenance-wiring audits pass, but static legacy catalog/image provenance and future provider/content paths still need stronger licensed-source controls. |
 | Accountability | Local lint/unit/build/E2E health | DONE | Verified by local gates. |
 | Accountability | Coverage ratchet current floor | DONE | `npm run audit:coverage` passed at the current floor. |
-| Accountability | Coverage to world-class depth | PARTIAL | Branch coverage is above 99%, still not exhaustive. |
+| Accountability | Coverage to world-class depth | DONE | `lib` coverage is exhaustive under the current coverage scope. |
 | Accountability | Security audits wired | DONE | Local security audit scripts pass. |
 | Accountability | Production security enforcement | PARTIAL | Code gates exist; real deployment secrets and providers are absent. |
 | Accountability | Catalog local floor | DONE | Catalog count is above the local floor. |
@@ -119,9 +119,9 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints and RUM wiring audit exist; external monitoring and webhook delivery are not configured. |
 | Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
 | Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
-| Acceptance Criteria | `npm test` passes | DONE | 177 files / 1081 tests passed. |
+| Acceptance Criteria | `npm test` passes | DONE | 177 files / 1090 tests passed. |
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
-| Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 99.75% lines and 100% branches. |
+| Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 100% lines, statements, functions, and branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 728 static pages. |
 | Acceptance Criteria | `npm run test:e2e` passes | DONE | 72 Playwright tests passed. |
 | Acceptance Criteria | Every non-strict `npm run audit:*` passes | DONE | All non-strict audit scripts passed locally. |
@@ -148,7 +148,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Backlog P1 | Raise `lib` branch coverage toward 99.8% | DONE | Coverage reached 100% branches and the ratchet floor was raised above this target. |
 | Backlog P1 | Raise `lib` branch coverage toward 99.9% | DONE | Coverage reached 100% branches and the ratchet floor was raised above this target. |
 | Backlog P1 | Raise `lib` branch coverage to 100% | DONE | Coverage reached 100% branches and the ratchet floor was raised to 100%. |
-| Backlog P1 | Raise `lib` line/function coverage closer to 100% | PARTIAL | Current line coverage is 99.75% and function coverage is 99.21%. |
+| Backlog P1 | Raise `lib` line/function coverage closer to 100% | DONE | Current line, statement, function, and branch coverage is 100%. |
 | Backlog P1 | Replace reused catalog images | PARTIAL | Image reuse warnings remain; ops scorecard now tracks the blocker so it cannot be hidden before launch. |
 | Backlog P1 | Add stronger provenance audit | PARTIAL | `audit:provenance` now checks candidate promotion provenance and provider-link sanitization; it does not yet prove every legacy static catalog item/image has licensed source metadata. |
 | Backlog P1 | Add deployment smoke checks | PARTIAL | `smoke:deployment` now exists for public, admin, cron-guard, and unavailable-state checks; it has not been run against a configured deployment. |
@@ -182,7 +182,7 @@ This is the brutal re-check of every item currently marked `[x]`. DONE here mean
 | Raise `lib` branch coverage from 94.17% toward 96%, focusing on hotels-catalog, Overpass POI, Wikidata enrichment, health readiness, ops scorecard, Ticketmaster, alert delivery, weather, and Wikipedia branches. | DONE | Real; coverage passed far above this milestone. |
 | Raise `lib` branch coverage from 96.16% toward 97%, focusing on hotels-catalog, ops alerts, provider observability, Nominatim, public URL safety, health readiness, and remaining API error branches. | DONE | Real; coverage passed far above this milestone. |
 | Raise `lib` branch coverage from 97% toward 98%, focusing on hotels-catalog, provider observability, price-cache, catalog-candidates, agent utilities, webhook URL, storage, and remaining API error branches. | DONE | Real; coverage passed far above this milestone. |
-| Raise `lib` branch coverage from 98% toward 99%, focusing on hotels-catalog, provider observability, price-cache, catalog-candidates, storage, and remaining API/network error branches. | DONE | Real; coverage passed above 99%, but not full 100%. |
+| Raise `lib` branch coverage from 98% toward 99%, focusing on hotels-catalog, provider observability, price-cache, catalog-candidates, storage, and remaining API/network error branches. | DONE | Real; later ratcheting completed `lib` branch coverage to 100%. |
 | Raise `lib` branch coverage beyond 99.1%, focusing on provider observability and catalog media edge branches. | DONE | Real and verified at 100% branches. |
 | Raise `lib` branch coverage toward 99.3%, focusing on remaining private/inaccessible hotels-catalog, price-cache, URL-safety, auth, and API/network error branches. | DONE | Real and verified at 100% branches. |
 | Raise `lib` branch coverage toward 99.5%, focusing on remaining private/inaccessible hotels-catalog, webhook URL, auth, hotel-popularity, URL-safety, and API/network error branches. | DONE | Real and verified at 100% branches. |
@@ -190,7 +190,8 @@ This is the brutal re-check of every item currently marked `[x]`. DONE here mean
 | Raise `lib` branch coverage toward 99.7%, focusing on remaining private/inaccessible hotels-catalog, auth, hotel-popularity, agent-utils, Xotelo, ops-alerts, webhook URL, price-cache, and cheaper-dates branches. | DONE | Real and verified at 100% branches. |
 | Raise `lib` branch coverage toward 99.8%, focusing on remaining private/inaccessible hotels-catalog, hotel-popularity, ops-alerts, webhook URL, and price-cache branches. | DONE | Real and verified at 100% branches. |
 | Raise `lib` branch coverage toward 99.9%, focusing on remaining private/inaccessible hotels-catalog, hotel-popularity, ops-alerts, webhook URL, and price-cache branches. | DONE | Real and verified at 100% branches. |
-| Raise `lib` branch coverage to 100%, focusing on the remaining private/inaccessible hotels-catalog, ops-alerts, and webhook URL branches. | DONE | Real and verified at 100% branches; next honest local target is line/function coverage. |
+| Raise `lib` branch coverage to 100%, focusing on the remaining private/inaccessible hotels-catalog, ops-alerts, and webhook URL branches. | DONE | Real and verified at 100% branches. |
+| Raise `lib` line/function coverage closer to 100%, focusing on remaining uncovered functions/lines without fake tests. | DONE | Real and verified at 100% lines, statements, functions, and branches. |
 | Add focused tests for Overpass discovery, agent utilities, i18n edge cases, ops alert thresholds, and provider registry merge/circuit-breaker branches. | DONE | Real; matching tests exist across discovery, provider registry, i18n, ops alerts, and merge/circuit-breaker paths. |
 | Surface reused catalog image risk in ops scorecard and release documentation. | DONE | Real; `lib/catalog-media-quality.js`, ops scorecard, docs, and tests expose the blocker. |
 | Add a stronger provenance wiring audit for catalog candidate promotion, source URLs, provider links, and provider-returned rates. | DONE | Real for wiring and safe URLs; not 100/100 because licensed image/source metadata for every legacy item is still open. |
@@ -216,7 +217,6 @@ These are the remaining tasks required to complete the full plan. Items blocked 
 | Configure one approved pricing partner and verify provider-returned rates from production without fabricated fallbacks. | NOT DONE | Requires partner credentials and production smoke evidence. |
 | Configure licensed review/property-content provider access before showing review copy, ratings, or rich property descriptions. | NOT DONE | Requires licensed provider contract and integration. |
 | Run `SITE_URL=https://your-deployment.example npm run smoke:deployment` after strict production readiness passes. | NOT DONE | Requires configured deployment URL. |
-| Raise `lib` line/function coverage closer to 100%, focusing on remaining uncovered functions/lines without fake tests. | PARTIAL | Next local engineering task after the current 100% branch coverage result. |
 | Replace reused catalog images with licensed hotel- or city-specific media. | NOT DONE | Requires approved media sources and license metadata; no replacement images should be invented. |
 | Extend provenance audit to require licensed/source metadata for every legacy static catalog item and catalog image. | PARTIAL | Safe source/provenance wiring exists; complete licensed metadata enforcement is still missing. |
 | Run deployment smoke checks in a configured production deployment and capture passing evidence. | NOT DONE | Requires deployment env and `SITE_URL`. |
@@ -242,8 +242,8 @@ These are the remaining tasks required to complete the full plan. Items blocked 
    - Keep generated/cache artifacts out of commits.
 
 3. **Coverage ratchet**
-   - Keep the `lib` branch coverage floor at 100%, then raise line/statement/function floors as remaining uncovered code is tested or simplified.
-   - Prioritize remaining uncovered lines/functions without adding fake tests or weakening production guards.
+   - Keep the `lib` line, statement, function, and branch coverage floors at 100%.
+   - Add app/runtime coverage where new production behavior is added, without fake tests or weakening production guards.
    - Keep coverage reports out of commits unless a reviewed artifact is explicitly requested.
 
 4. **Docs and drift prevention**
@@ -308,7 +308,7 @@ These are the remaining tasks required to complete the full plan. Items blocked 
 - [x] Raise `lib` branch coverage toward 99.8%, focusing on remaining private/inaccessible hotels-catalog, hotel-popularity, ops-alerts, webhook URL, and price-cache branches.
 - [x] Raise `lib` branch coverage toward 99.9%, focusing on remaining private/inaccessible hotels-catalog, hotel-popularity, ops-alerts, webhook URL, and price-cache branches.
 - [x] Raise `lib` branch coverage to 100%, focusing on the remaining private/inaccessible hotels-catalog, ops-alerts, and webhook URL branches.
-- [ ] Raise `lib` line/function coverage closer to 100%, focusing on remaining uncovered functions/lines without fake tests.
+- [x] Raise `lib` line/function coverage closer to 100%, focusing on remaining uncovered functions/lines without fake tests.
 - [x] Add focused tests for Overpass discovery, agent utilities, i18n edge cases, ops alert thresholds, and provider registry merge/circuit-breaker branches.
 - [x] Surface reused catalog image risk in ops scorecard and release documentation.
 - [ ] Replace reused catalog images with licensed hotel- or city-specific media.
@@ -345,7 +345,7 @@ These are the remaining tasks required to complete the full plan. Items blocked 
 | 0. Production truth | Configure real admin/cron secrets, Upstash, Kinde, one partner pricing provider, licensed review/property provider, and alert delivery provider. | `npm run audit:production:strict` passes in deployment without placeholder values. |
 | 1. Deployment proof | Deploy, run public API smoke checks, protected admin checks, cron checks, unavailable-state checks, cache durability checks, and provider-returned rate checks. | Health reports persistent cache, partner provider configured, and no fabricated fallback data. |
 | 2. Trust and provenance | Add source/provenance coverage for catalog entries, catalog images, provider links, price observations, review snippets, and property content. | A provenance audit fails any new item that cannot be traced to an allowed source or licensed provider. |
-| 3. Quality ratchet | Raise branch coverage beyond 99% toward exhaustive coverage, focusing on catalog, provider observability, cache, URL-safety, auth, storage, and network failure paths. | Coverage floors are increased after each verified pass and CI blocks regression. |
+| 3. Quality ratchet | Preserve the 100% `lib` coverage ratchet and add app/runtime coverage for new behavior, focusing on catalog, provider observability, cache, URL-safety, auth, storage, and network failure paths. | Coverage floors stay at 100% for tracked `lib` code and CI blocks regression. |
 | 4. Content scale | Expand inventory only through candidate ingestion, duplicate detection, source review, admin approval, and licensed media replacement. | Catalog grows without fake items, duplicate identities, unsafe URLs, or reused unlicensed media. |
 | 5. Product parity | Add provider coverage matrix, price freshness, alert delivery, mobile push, RUM, Core Web Vitals, competitor parity dashboard, and legal/commercial signoff. | Product can be compared against Booking, Google Travel, KAYAK/HotelsCombined, Expedia, trivago, Fattal, and Isrotel with sourced metrics instead of manual claims. |
 | 6. Number-one loop | Run weekly competitor audits, source-quality audits, conversion/drop-off analysis, support-risk review, and pricing accuracy drift review. | The roadmap is driven by measured gaps in inventory, freshness, trust, speed, mobile retention, and booking handoff quality. |
