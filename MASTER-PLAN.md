@@ -54,6 +54,108 @@ This section is the source of truth for what is complete versus only locally sca
 | Unknown data shown explicitly | PARTIAL | Covered for many surfaces and audited, but requires continued enforcement as new integrations are added. |
 | Faked work | DONE | No item is intentionally marked as completed by simulation only; local-only items are marked DONE only when verified by commands, and env/provider/launch items remain PARTIAL or NOT DONE. |
 
+## Full Item-By-Item Audit
+
+Legend: DONE means real, working, and locally verified. FAKED means simulated, echoed, or pretended. PARTIAL means started but incomplete. NOT DONE means not touched or not proved.
+
+| Source | Item | Status | Evidence or gap |
+| --- | --- | --- | --- |
+| Current State | Determinism and no-fabrication guardrails | PARTIAL | Forbidden randomness scans pass, but end-to-end provenance is not exhaustive. |
+| Current State | Local build/test health | DONE | Lint, unit/API, build, and E2E passed locally. |
+| Current State | Coverage depth | PARTIAL | Ratchet passes at 84.07% branch coverage; not yet 85%+ or exhaustive. |
+| Current State | Security guardrails | PARTIAL | Local audits pass; production enforcement still requires real deployment env. |
+| Current State | Catalog quality | PARTIAL | 502 hotels/139 cities/65 countries pass the floor; imagery reuse and market scale remain open. |
+| Current State | Provider coverage | PARTIAL | Adapter layer exists; real partner credentials are not configured. |
+| Current State | Reviews and property content | PARTIAL | Unavailable state is correct; licensed rich review/property data is not live. |
+| Current State | Mobile retention | PARTIAL | PWA shell exists; push delivery is not configured. |
+| Current State | Production readiness | NOT DONE | Strict production readiness fails locally due missing real env. |
+| Current State | Release hygiene | DONE | Worktree was clean after the last release-state strict gate. |
+| Accountability | Determinism: no `Math.random()` | DONE | Scan returned no `Math.random()` or unapproved UUID usage. |
+| Accountability | No-fabrication guardrails | PARTIAL | Claims audits pass, but future provider/content paths still need stronger provenance controls. |
+| Accountability | Local lint/unit/build/E2E health | DONE | Verified by local gates. |
+| Accountability | Coverage ratchet current floor | DONE | `npm run audit:coverage` passed at the current floor. |
+| Accountability | Coverage to world-class depth | PARTIAL | Branch coverage is still not near exhaustive. |
+| Accountability | Security audits wired | DONE | Local security audit scripts pass. |
+| Accountability | Production security enforcement | PARTIAL | Code gates exist; real deployment secrets and providers are absent. |
+| Accountability | Catalog local floor | DONE | Catalog count is above the local floor. |
+| Accountability | Catalog market scale | NOT DONE | Inventory is far below global OTA/metasearch scale. |
+| Accountability | Provider adapter layer | DONE | Six adapters are registered. |
+| Accountability | Production provider readiness | NOT DONE | No complete paid/partner provider env group is configured. |
+| Accountability | Reviews unavailable state | DONE | Missing licensed review/provider data is surfaced as unavailable. |
+| Accountability | Licensed review/property integration | NOT DONE | No licensed provider is configured. |
+| Accountability | PWA/offline shell | DONE | PWA audit passes. |
+| Accountability | Push/mobile notification delivery | NOT DONE | Push public/private keys and provider are not configured. |
+| Accountability | Release hygiene | DONE | `release:state:strict` passed after committed changes. |
+| Accountability | Production env gate | NOT DONE | `audit:production:strict` fails until real env exists. |
+| Accountability | Docs drift prevention | DONE | `audit:docs` passes. |
+| Accountability | README, `.env.example`, runbook, plan alignment | PARTIAL | Static docs align; live deployment runbook evidence is missing. |
+| Accountability | Public API unsafe URL prevention | DONE | Public URL audit passes. |
+| Accountability | Validated catalog candidate promotion | PARTIAL | Candidate flow exists; production-scale reviewed promotion is incomplete. |
+| Accountability | Licensed media replacement | NOT DONE | Reused Unsplash imagery warnings remain. |
+| Accountability | Agent cron auth | DONE | Cron auth gate is wired and audited. |
+| Accountability | Production cron execution | NOT DONE | Not verified in deployment with real `CRON_SECRET` and persistent KV. |
+| Accountability | Ops monitoring endpoints | PARTIAL | Endpoints exist; external monitoring/webhook delivery is not configured. |
+| Accountability | Dependency audit | DONE | Approved network `npm audit` returned 0 vulnerabilities. |
+| Accountability | `audit:production:strict` in deployment | NOT DONE | No deployment proof has been provided. |
+| Accountability | No stale removed-route docs | DONE | Docs audit blocks stale route/architecture claims. |
+| Accountability | Unknown data shown explicitly | PARTIAL | Covered for many surfaces; must be kept as integrations expand. |
+| Accountability | Faked work | DONE | No completion was intentionally marked from simulation; inflated scoring was corrected downward. |
+| Stabilization Priority | Configure real admin, cron, Redis, Kinde, and partner-provider env | NOT DONE | Requires real secrets and provider contracts outside the repo. |
+| Stabilization Priority | Treat `audit:production:strict` as go-live blocker | DONE | Documented and enforced by the strict audit script. |
+| Stabilization Priority | Review modified/deleted/untracked files before staging | DONE | Release-state strict was clean before commits. |
+| Stabilization Priority | Split unrelated work into reviewable commits | DONE | Last work was split into two focused commits. |
+| Stabilization Priority | Keep generated/cache artifacts out of commits | DONE | Release-state strict reported no generated artifacts. |
+| Stabilization Priority | Raise branch coverage from 84.07% toward 85% | NOT DONE | Current floor remains 84.07%. |
+| Stabilization Priority | Prioritize remaining branch coverage hot spots | PARTIAL | Some agent/i18n/ops/admin coverage was added; Overpass/provider/candidate branches remain. |
+| Stabilization Priority | Keep coverage reports out of commits | DONE | Coverage artifacts were not staged. |
+| Stabilization Priority | Keep README, env example, runbook, and plan aligned | PARTIAL | Local docs audit passes; deployment runbook evidence is missing. |
+| Stabilization Priority | Run docs audit in CI | DONE | `audit:docs` is wired in CI. |
+| Stabilization Priority | Keep public URL and runtime JSON scanners enabled | DONE | `audit:public-api-urls` is wired and passes. |
+| Stabilization Priority | Promote only validated catalog candidates | PARTIAL | Validation path exists; production approval process is not exercised at scale. |
+| Stabilization Priority | Replace reused/stock-like catalog images | NOT DONE | Catalog audit still warns about reused city images. |
+| Stabilization Priority | Add licensed reviews/property providers | NOT DONE | No licensed provider env is configured. |
+| Stabilization Priority | Keep unknown data unavailable/not configured | PARTIAL | Local behavior exists; future integrations need continuous enforcement. |
+| Stabilization Priority | Run agent cron routes only with `CRON_SECRET` | DONE | Cron auth checks are wired and audited. |
+| Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints exist; external monitoring and webhook delivery are not configured. |
+| Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
+| Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
+| Acceptance Criteria | `npm test` passes | DONE | 165 files / 876 tests passed. |
+| Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
+| Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 95.15% lines and 84.07% branches. |
+| Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 727 static pages. |
+| Acceptance Criteria | `npm run test:e2e` passes | DONE | 72 Playwright tests passed. |
+| Acceptance Criteria | Every non-strict `npm run audit:*` passes | DONE | All non-strict audit scripts passed locally. |
+| Acceptance Criteria | `audit:production:strict` passes in deployment | NOT DONE | No deployment env proof exists. |
+| Acceptance Criteria | `npm audit --audit-level=moderate` has no moderate vulnerabilities | DONE | Approved network audit reported 0 vulnerabilities. |
+| Acceptance Criteria | README and plan contain current catalog count | DONE | Docs audit checks 502 hotels, 139 cities, 65 countries. |
+| Acceptance Criteria | No removed-route or stale architecture docs | DONE | Docs audit blocks stale claims. |
+| Backlog P0 | Configure real deployment env | NOT DONE | Requires real secrets. |
+| Backlog P0 | Run strict production audit in deployment | NOT DONE | Requires configured deployment. |
+| Backlog P0 | Verify deployed cron routes | NOT DONE | Requires deployed cron and real `CRON_SECRET`. |
+| Backlog P0 | Configure persistent KV and verify health reports persistent cache | NOT DONE | Requires Upstash/deployment env. |
+| Backlog P0 | Configure approved pricing partner and verify provider-returned rates | NOT DONE | Requires partner credentials. |
+| Backlog P0 | Configure licensed review/property provider | NOT DONE | Requires licensed provider access. |
+| Backlog P1 | Raise branch coverage from 83.26% toward 84% | DONE | The only `[x]` task is truly complete. |
+| Backlog P1 | Raise branch coverage from 84.07% toward 85% | NOT DONE | Current branch coverage is 84.07%. |
+| Backlog P1 | Add focused tests for remaining weak branches | PARTIAL | Some new tests exist; listed weak areas remain. |
+| Backlog P1 | Replace reused catalog images | NOT DONE | Image reuse warnings remain. |
+| Backlog P1 | Add stronger provenance audit | NOT DONE | Current audits do not prove every static catalog item/image/partner link has source provenance. |
+| Backlog P1 | Add deployment smoke checks | NOT DONE | Local tests exist; deployment smoke checks are not implemented/proven. |
+| Backlog P2 | Expand catalog through admin candidate workflow only | PARTIAL | Workflow exists; scale expansion is not complete. |
+| Backlog P2 | Add duplicate/provenance review dashboards | PARTIAL | Duplicate flags exist; full dashboard workflow is incomplete. |
+| Backlog P2 | Add provider coverage telemetry by city/country/date | NOT DONE | Not implemented as a coverage matrix. |
+| Backlog P2 | Add real alert delivery provider integration | NOT DONE | Webhook/push/email provider is not configured. |
+| Backlog P2 | Add web push after approved provider setup | NOT DONE | Push keys/provider are absent. |
+| Backlog P3 | Production observability dashboard | PARTIAL | Scorecard/health APIs exist; full dashboard and external metrics are incomplete. |
+| Backlog P3 | Real-user monitoring and Core Web Vitals | NOT DONE | No production RUM proof exists. |
+| Backlog P3 | Localization QA beyond Hebrew/English | PARTIAL | Hebrew/English exist; broader RTL/LTR QA is incomplete. |
+| Backlog P3 | Commercial/legal readiness | NOT DONE | Requires partner terms, affiliate/legal review, and licensed content signoff. |
+| Backlog P3 | Competitor parity tracking | NOT DONE | Not implemented as an automated product/ops tracker. |
+| Non-Negotiable | Never use `Math.random()` | DONE | Scan is clean. |
+| Non-Negotiable | Never display fabricated hotel/review/price/provider/urgency/availability/readiness data | PARTIAL | Guardrails pass; exhaustive provenance proof remains open. |
+| Non-Negotiable | Never use invented secrets | DONE | Strict readiness fails instead of accepting placeholders. |
+| Non-Negotiable | Show missing provider/credential/license/source as unavailable | PARTIAL | Existing paths do this; every future integration must preserve it. |
+
 ## Stabilization Priorities
 
 1. **Production env gate**
@@ -135,6 +237,18 @@ This section is the source of truth for what is complete versus only locally sca
 - [ ] Add international localization QA beyond Hebrew/English, including RTL/LTR layout regression checks.
 - [ ] Add commercial/legal readiness for partner terms, affiliate disclosures, privacy, retention, and licensed content display.
 - [ ] Add competitor parity tracking for inventory breadth, price freshness, mobile installability, reviews, alerts, and booking handoff quality.
+
+## Detailed Execution Plan
+
+| Phase | Substeps | Exit criteria |
+| --- | --- | --- |
+| 0. Production truth | Configure real admin/cron secrets, Upstash, Kinde, one partner pricing provider, licensed review/property provider, and alert delivery provider. | `npm run audit:production:strict` passes in deployment without placeholder values. |
+| 1. Deployment proof | Deploy, run public API smoke checks, protected admin checks, cron checks, unavailable-state checks, cache durability checks, and provider-returned rate checks. | Health reports persistent cache, partner provider configured, and no fabricated fallback data. |
+| 2. Trust and provenance | Add source/provenance coverage for catalog entries, catalog images, provider links, price observations, review snippets, and property content. | A provenance audit fails any new item that cannot be traced to an allowed source or licensed provider. |
+| 3. Quality ratchet | Raise branch coverage to 85%, then 88%, then 90%+, focusing on Overpass, provider registry, catalog candidates, alert delivery, i18n, storage hooks, and network failure paths. | Coverage floors are increased after each verified pass and CI blocks regression. |
+| 4. Content scale | Expand inventory only through candidate ingestion, duplicate detection, source review, admin approval, and licensed media replacement. | Catalog grows without fake items, duplicate identities, unsafe URLs, or reused unlicensed media. |
+| 5. Product parity | Add provider coverage matrix, price freshness, alert delivery, mobile push, RUM, Core Web Vitals, competitor parity dashboard, and legal/commercial signoff. | Product can be compared against Booking, Google Travel, KAYAK/HotelsCombined, Expedia, trivago, Fattal, and Isrotel with live metrics instead of manual claims. |
+| 6. Number-one loop | Run weekly competitor audits, source-quality audits, conversion/drop-off analysis, support-risk review, and pricing accuracy drift review. | The roadmap is driven by measured gaps in inventory, freshness, trust, speed, mobile retention, and booking handoff quality. |
 
 ## Non-Negotiables
 
