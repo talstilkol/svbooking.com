@@ -171,6 +171,7 @@ describe('weather helpers', () => {
 describe('Nominatim hotel search helpers', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it('searches and normalizes hotel results from Nominatim', async () => {
@@ -232,6 +233,59 @@ describe('Nominatim hotel search helpers', () => {
 
     fetchMock.mockResolvedValueOnce(jsonResponse(hotelResult));
     await expect(reverseGeocode({ lat: 48.8655, lon: 2.3283 })).resolves.toMatchObject({ name: 'Le Meurice' });
+  });
+
+  it('returns null for empty Nominatim hotel matches and preserves address fallbacks', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse([{ class: 'tourism', type: 'guest_house', name: 'Not Hotel' }]))
+      .mockResolvedValueOnce(jsonResponse({
+        class: 'tourism',
+        type: 'hotel',
+        display_name: 'District Hotel, Paris, France',
+        lat: '0',
+        lon: '0',
+        extratags: { website: 'https://district.example.invalid', 'brand:wikidata': 'Q123' },
+        address: { city_district: 'Central District', country: 'France' },
+        osm_id: 456,
+        osm_type: 'node',
+      }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { lookupHotel, reverseGeocode } = await import('@/lib/nominatim');
+
+    await expect(lookupHotel({ name: 'Missing Hotel' })).resolves.toBeNull();
+    await expect(reverseGeocode({ lat: 0, lon: 0 })).resolves.toMatchObject({
+      name: 'District Hotel',
+      lat: 0,
+      lon: 0,
+      city: 'Central District',
+      country: 'France',
+      brandWikidataId: 'Q123',
+      website: 'https://district.example.invalid',
+    });
+  });
+
+  it('surfaces Nominatim rate limits, HTTP failures, and request timeouts explicitly', async () => {
+    vi.stubGlobal('fetch', vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({}, false, 429))
+      .mockResolvedValueOnce(jsonResponse({}, false, 503)));
+    const { searchHotels } = await import('@/lib/nominatim');
+
+    await expect(searchHotels({ city: 'Paris' })).rejects.toThrow('Nominatim rate limited');
+    await expect(searchHotels({ city: 'Paris' })).rejects.toThrow('Nominatim HTTP 503');
+
+    vi.useFakeTimers();
+    const timeoutFetch = vi.fn((_input: string, init?: RequestInit) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+    }));
+    vi.stubGlobal('fetch', timeoutFetch);
+
+    const request = searchHotels({ city: 'Paris', timeoutMs: 25 });
+    const assertion = expect(request).rejects.toThrow('Nominatim request timed out after 25ms');
+
+    await vi.advanceTimersByTimeAsync(25);
+    await assertion;
   });
 });
 

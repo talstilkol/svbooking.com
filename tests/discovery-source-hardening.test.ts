@@ -83,6 +83,61 @@ describe('Xotelo discovery hardening', () => {
     ]);
     expect(isXoteloDiscoveryConfigured()).toBe(false);
   });
+
+  it('fails closed for missing inputs and unusable Xotelo discovery responses', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({}, false, 401))
+      .mockResolvedValueOnce(jsonResponse({ error: 'unauthorized' }))
+      .mockResolvedValueOnce(jsonResponse({ result: { hotel_key: 'g1-d1' } }))
+      .mockRejectedValueOnce(new Error('network unavailable'));
+    vi.stubGlobal('fetch', fetchMock);
+    const { listXoteloHotels, searchXoteloHotels } = await import('@/lib/xotelo-discovery');
+
+    await expect(searchXoteloHotels('')).resolves.toEqual([]);
+    await expect(listXoteloHotels('')).resolves.toEqual([]);
+    await expect(searchXoteloHotels('Paris')).resolves.toEqual([]);
+    await expect(listXoteloHotels('Paris')).resolves.toEqual([]);
+    await expect(searchXoteloHotels('Paris')).resolves.toEqual([]);
+    await expect(listXoteloHotels('Paris')).resolves.toEqual([]);
+  });
+
+  it('uses RapidAPI discovery configuration and alternate Xotelo result fields', async () => {
+    vi.stubEnv('RAPIDAPI_KEY', 'rapidapi_realistic_test_key');
+    const fetchMock = vi.fn(async () => jsonResponse({
+      data: [
+        {
+          key: 'g294217-d299320',
+          hotel_name: 'The Fullerton Hotel Singapore',
+          location: { city: 'Singapore', country: 'Singapore' },
+          stars: 5,
+        },
+      ],
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { isXoteloDiscoveryConfigured, searchXoteloHotels } = await import('@/lib/xotelo-discovery');
+
+    const hotels = await searchXoteloHotels('Singapore');
+    const requestedUrl = new URL(String(fetchMock.mock.calls[0][0]));
+    const requestInit = fetchMock.mock.calls[0][1] as RequestInit & { headers: Record<string, string> };
+
+    expect(isXoteloDiscoveryConfigured()).toBe(true);
+    expect(requestedUrl.hostname).toBe('xotelo.p.rapidapi.com');
+    expect(requestedUrl.searchParams.get('q')).toBe('Singapore');
+    expect(requestInit.cache).toBe('no-store');
+    expect(requestInit.headers['x-rapidapi-key']).toBe('rapidapi_realistic_test_key');
+    expect(requestInit.headers['x-rapidapi-host']).toBe('xotelo.p.rapidapi.com');
+    expect(hotels).toEqual([
+      {
+        hotelKey: 'g294217-d299320',
+        name: 'The Fullerton Hotel Singapore',
+        city: 'Singapore',
+        country: 'Singapore',
+        stars: 5,
+        source: 'xotelo-search',
+      },
+    ]);
+  });
 });
 
 describe('Wikidata enrichment hardening', () => {
@@ -336,6 +391,21 @@ describe('Wikidata discovery and DBpedia SPARQL hardening', () => {
 });
 
 describe('Wikivoyage parser hardening', () => {
+  it('returns null for empty or unavailable Wikivoyage travel guide summaries', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ type: 'not_found' }))
+      .mockResolvedValueOnce(jsonResponse({ type: 'no-extract' }))
+      .mockResolvedValueOnce(jsonResponse({}, false, 503));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getTravelGuide } = await import('@/lib/wikivoyage');
+
+    await expect(getTravelGuide('')).resolves.toBeNull();
+    await expect(getTravelGuide('Missing City')).resolves.toBeNull();
+    await expect(getTravelGuide('No Extract')).resolves.toBeNull();
+    await expect(getTravelGuide('Unavailable')).resolves.toBeNull();
+  });
+
   it('drops unsafe travel guide media URLs', async () => {
     const fetchMock = vi.fn(async () => jsonResponse({
       title: 'Paris',
@@ -412,5 +482,56 @@ describe('Wikivoyage parser hardening', () => {
       { name: 'Epicure', description: null, type: 'restaurant' },
     ]);
     await expect(getSafetyInfo('Paris')).resolves.toBeNull();
+  });
+
+  it('parses sourced Wikivoyage health warnings, events, and dining descriptions without fallback copy', async () => {
+    const fetchMock = vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.includes('prop=sections')) {
+        return jsonResponse({
+          parse: {
+            sections: [
+              { index: '1', line: 'Safety', level: '2' },
+              { index: '2', line: 'Stay healthy', level: '2' },
+              { index: '3', line: 'Understand', level: '2' },
+              { index: '4', line: 'Eat', level: '2' },
+            ],
+          },
+        });
+      }
+      if (url.includes('section=1')) {
+        return jsonResponse({ parse: { text: { '*': '<p>Old Town is dangerous after midnight. Wikivoyage contributors update listings.</p>' } } });
+      }
+      if (url.includes('section=2')) {
+        return jsonResponse({ parse: { text: { '*': '<p>Vaccinations are recommended for some travelers. Tap water is not safe; bottled water is common.</p>' } } });
+      }
+      if (url.includes('section=3')) {
+        return jsonResponse({ parse: { text: { '*': '<p>The city hosts the <b>Lantern Festival</b> in February with music and food events.</p><p><b>Lantern Festival</b> appears twice.</p><p><b>The</b></p>' } } });
+      }
+      return jsonResponse({ parse: { text: { '*': '<p><b>Market Kitchen</b> &amp; tea house serves regional dishes near the station.</p><p><b>AB</b></p></p>' } } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { getDiningInfo, getEventInfo, getSafetyInfo } = await import('@/lib/wikivoyage');
+
+    await expect(getSafetyInfo('Source City')).resolves.toMatchObject({
+      tips: ['Old Town is dangerous after midnight.'],
+      areas: [{ name: 'Old Town', safe: false, note: 'Exercise caution' }],
+      vaccinations: 'Vaccinations are recommended for some travelers.',
+      waterSafety: 'Drink bottled water',
+    });
+    await expect(getEventInfo('Source City')).resolves.toEqual([
+      expect.objectContaining({
+        name: 'Lantern Festival',
+        month: 'Feb',
+        icon: '🎉',
+      }),
+    ]);
+    await expect(getDiningInfo('Source City')).resolves.toEqual([
+      expect.objectContaining({
+        name: 'Market Kitchen',
+        description: expect.stringContaining('& tea house serves regional dishes near the station.'),
+        type: 'restaurant',
+      }),
+    ]);
   });
 });
