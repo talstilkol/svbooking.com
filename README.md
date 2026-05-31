@@ -185,7 +185,7 @@ After deployment, run `SITE_URL=https://your-deployment.example npm run smoke:de
 - `npm run audit:i18n` keeps English/Hebrew runtime i18n plus QA-only Arabic/French/Spanish RTL/LTR fallback checks wired without claiming full translation coverage.
 - `npm run audit:external-fetches` blocks direct external `fetch("https://...")` calls that bypass timeout handling and requires shared public-URL sanitization for content, provider-link, event-link, and enrichment helpers.
 - `npm run audit:public-api-urls` keeps the Playwright public API URL safety runtime audit wired into CI and release docs.
-- `npm run audit:public-data-contracts` keeps source/dataPolicy/unavailable contracts wired for public price, destination, event, POI, guide, review, and property-content data responses.
+- `npm run audit:public-data-contracts` keeps source/dataPolicy/unavailable contracts wired for public price, destination, weather, exchange-rate, holiday, city-info, event, POI, guide, review, and property-content data responses.
 - `npm run audit:affiliate-security` blocks unsafe outbound redirect and affiliate URL regressions.
 - `npm run audit:legal-readiness` blocks removal of privacy, terms, cookie, affiliate, and provider-handoff disclosures while external legal/partner signoff remains a launch blocker.
 - `npm run audit:security-responses` blocks cacheable shared auth, validation, and rate-limit responses.

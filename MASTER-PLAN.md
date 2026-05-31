@@ -45,7 +45,7 @@ This section is the source of truth for what is complete versus only locally sca
 | Docs drift prevention | DONE | `npm run audit:docs` passes and CI includes the docs audit. |
 | README, `.env.example`, runbook, plan alignment | PARTIAL | Audits pass for key snippets and env names, but not every operational runbook instruction has a live deployment proof. |
 | Public API unsafe URL prevention | DONE | `npm run audit:public-api-urls` passes and the Playwright JSON scanner is wired in CI. |
-| Public data response contracts | DONE | Public price, destination, event, POI, guide, review, and property-content responses are guarded for source/dataPolicy/unavailable contracts. |
+| Public data response contracts | DONE | Public price, destination, weather, exchange-rate, holiday, city-info, event, POI, guide, review, and property-content responses are guarded for source/dataPolicy/unavailable contracts. |
 | Validated catalog candidate promotion | PARTIAL | Candidate and admin approval paths exist and provenance wiring is audited; production-scale ingestion with real reviewed approvals is not complete. |
 | Licensed media replacement | NOT DONE | `audit:catalog` still warns about reused Unsplash images across cities. |
 | Agent cron auth | DONE | Cron-protected routes and `CRON_SECRET` gate are wired and audited. |
@@ -94,7 +94,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Accountability | Docs drift prevention | DONE | `audit:docs` passes. |
 | Accountability | README, `.env.example`, runbook, plan alignment | PARTIAL | Static docs align; live deployment runbook evidence is missing. |
 | Accountability | Public API unsafe URL prevention | DONE | Public URL audit passes. |
-| Accountability | Public data response contracts | DONE | `audit:public-data-contracts` guards source/dataPolicy/unavailable contracts and destination source truth. |
+| Accountability | Public data response contracts | DONE | `audit:public-data-contracts` guards source/dataPolicy/unavailable contracts, destination source truth, and direct weather/exchange/holiday/city-info source states. |
 | Accountability | Validated catalog candidate promotion | PARTIAL | Candidate flow and provenance guard audit exist; production-scale reviewed promotion is incomplete. |
 | Accountability | Licensed media replacement | NOT DONE | Reused Unsplash imagery warnings remain. |
 | Accountability | Agent cron auth | DONE | Cron auth gate is wired and audited. |
@@ -117,7 +117,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Keep README, env example, runbook, and plan aligned | PARTIAL | Local docs audit passes; deployment runbook evidence is missing. |
 | Stabilization Priority | Run docs audit in CI | DONE | `audit:docs` is wired in CI. |
 | Stabilization Priority | Keep public URL and runtime JSON scanners enabled | DONE | `audit:public-api-urls` is wired and passes. |
-| Stabilization Priority | Add public data contract audit for source/unavailable states across public data APIs | DONE | Public data contract audit now blocks source/dataPolicy/unavailable regressions and verifies destination source lists only include available sources. |
+| Stabilization Priority | Add public data contract audit for source/unavailable states across public data APIs | DONE | Public data contract audit now blocks source/dataPolicy/unavailable regressions, verifies destination source lists only include available sources, and covers weather, exchange-rate, holiday, and city-info endpoints. |
 | Stabilization Priority | Promote only validated catalog candidates | DONE | Local promotion now requires explicit admin approval plus usable provenance and verified latitude/longitude; production-scale exercise remains a separate launch task. |
 | Stabilization Priority | Replace reused/stock-like catalog images | PARTIAL | Catalog audit still warns about reused city images; ops scorecard now exposes reused media as a measurable blocker until licensed replacements are approved. |
 | Stabilization Priority | Add licensed reviews/property providers | NOT DONE | No licensed provider env is configured. |
@@ -126,7 +126,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints and RUM wiring audit exist; external monitoring and webhook delivery are not configured. |
 | Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
 | Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
-| Acceptance Criteria | `npm test` passes | DONE | 179 files / 1103 tests passed. |
+| Acceptance Criteria | `npm test` passes | DONE | 180 files / 1107 tests passed. |
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
 | Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 100% lines, statements, functions, and branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 728 static pages. |
@@ -201,7 +201,7 @@ This is the brutal re-check of every item currently marked `[x]`. DONE here mean
 | Raise `lib` line/function coverage closer to 100%, focusing on remaining uncovered functions/lines without fake tests. | DONE | Real and verified at 100% lines, statements, functions, and branches. |
 | Add focused tests for Overpass discovery, agent utilities, i18n edge cases, ops alert thresholds, and provider registry merge/circuit-breaker branches. | DONE | Real; matching tests exist across discovery, provider registry, i18n, ops alerts, and merge/circuit-breaker paths. |
 | Surface reused catalog image risk in ops scorecard and release documentation. | DONE | Real; `lib/catalog-media-quality.js`, ops scorecard, docs, and tests expose the blocker. |
-| Add public data contract audit for source/unavailable states across public data APIs. | DONE | Real; `audit:public-data-contracts` is CI-wired and checks compare, destination intel, events, POI, travel guide, price history, review, and property-content contracts. |
+| Add public data contract audit for source/unavailable states across public data APIs. | DONE | Real; `audit:public-data-contracts` is CI-wired and checks compare, destination intel, weather, exchange-rate, holiday, city-info, events, POI, travel guide, price history, review, and property-content contracts. |
 | Add a stronger provenance wiring audit for catalog candidate promotion, source URLs, provider links, and provider-returned rates. | DONE | Real for wiring and safe URLs; approved licensed image replacement remains a separate launch task. |
 | Extend provenance audit to require licensed/source metadata for every legacy static catalog item and catalog image. | DONE | Real for metadata enforcement: `buildStaticCatalogProvenanceLedger`, `audit:provenance`, and tests require source URL/host/license-status metadata without pretending the images are approved licensed replacements. |
 | Add deployment smoke checks for public APIs, protected admin APIs, cron guards, and unavailable-state behavior. | DONE | Real as a script and audit; not production proof until run against a configured deployment. |

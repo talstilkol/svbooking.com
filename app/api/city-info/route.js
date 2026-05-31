@@ -28,18 +28,33 @@ export async function GET(request) {
     const summary = await getSummary(city);
     if (!summary) {
       return Response.json(
-        { error: 'City information unavailable' },
+        {
+          error: 'City information unavailable',
+          source: 'Wikipedia',
+          sourceStatus: 'unavailable',
+          dataPolicy: 'wikipedia-summary-only',
+        },
         { status: 404, headers: { 'Cache-Control': 'no-store' } }
       );
     }
 
-    return Response.json(summary, {
+    return Response.json({
+      ...summary,
+      source: 'Wikipedia',
+      sourceStatus: 'available',
+      dataPolicy: 'wikipedia-summary-only',
+    }, {
       headers: { 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800' },
     });
   } catch (err) {
     console.error('GET /api/city-info error:', err);
     return Response.json(
-      { error: 'City information unavailable' },
+      {
+        error: 'City information unavailable',
+        source: 'Wikipedia',
+        sourceStatus: 'unavailable',
+        dataPolicy: 'wikipedia-summary-only',
+      },
       { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }

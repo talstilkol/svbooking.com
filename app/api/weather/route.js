@@ -21,7 +21,7 @@ export async function GET(request) {
     let lon = searchParams.get('lon') ? Number(searchParams.get('lon')) : null;
 
     // Resolve city name to coordinates (CITY_COORDINATES is an array with .lng)
-    if (city && (!lat || !lon)) {
+    if (city && (lat === null || lon === null)) {
       const match = CITY_COORDINATES.find(
         (c) => c.city.toLowerCase() === city.toLowerCase()
       );
@@ -31,7 +31,7 @@ export async function GET(request) {
       }
     }
 
-    if (!lat || !lon) {
+    if (lat === null || lon === null) {
       return Response.json(
         { error: 'Provide city name or lat/lon coordinates' },
         { status: 400, headers: { 'Cache-Control': 'no-store' } }
@@ -45,20 +45,37 @@ export async function GET(request) {
     if (mode === 'monthly') {
       const month = Number(searchParams.get('month') || new Date().getMonth() + 1);
       const averages = await getMonthlyAverages({ lat, lon, month });
-      return Response.json({ city, ...averages }, {
+      return Response.json({
+        city,
+        ...averages,
+        source: 'Open-Meteo',
+        sourceStatus: 'available',
+        dataPolicy: 'provider-returned-weather-only',
+      }, {
         headers: { 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=172800' },
       });
     }
 
     const days = Math.min(Number(searchParams.get('days') || '7'), 16);
     const forecast = await getForecast({ lat, lon, units, days });
-    return Response.json({ city, ...forecast }, {
+    return Response.json({
+      city,
+      ...forecast,
+      source: 'Open-Meteo',
+      sourceStatus: 'available',
+      dataPolicy: 'provider-returned-weather-only',
+    }, {
       headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' },
     });
   } catch (err) {
     console.error('GET /api/weather error:', err);
     return Response.json(
-      { error: 'Weather unavailable' },
+      {
+        error: 'Weather unavailable',
+        source: 'Open-Meteo',
+        sourceStatus: 'unavailable',
+        dataPolicy: 'provider-returned-weather-only',
+      },
       { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }

@@ -48,12 +48,18 @@ for (const relativePath of [
   'AUDIT-REPORT.md',
   'app/api/compare/helpers.js',
   'app/api/destination-intel/route.js',
+  'app/api/city-info/route.js',
+  'app/api/exchange-rates/route.js',
   'app/api/events/route.js',
+  'app/api/holidays/route.js',
   'app/api/pois/route.js',
   'app/api/price-history/route.js',
   'app/api/travel-guide/route.js',
+  'app/api/weather/route.js',
+  'lib/exchange-rates.js',
   'lib/property-content.js',
   'lib/reviews.js',
+  'tests/api-public-data-contracts.test.ts',
   'tests/api-destination-intel.test.ts',
   'tests/components/DestinationIntel.test.tsx',
 ]) {
@@ -68,12 +74,18 @@ const [
   auditReport,
   compareHelpers,
   destinationIntel,
+  cityInfoRoute,
+  exchangeRatesRoute,
   eventsRoute,
+  holidaysRoute,
   poisRoute,
   priceHistoryRoute,
   travelGuideRoute,
+  weatherRoute,
+  exchangeRatesHelper,
   propertyContent,
   reviews,
+  publicDataContractsTest,
   destinationIntelTest,
   destinationIntelComponentTest,
 ] = await Promise.all([
@@ -84,12 +96,18 @@ const [
   readProjectFile('AUDIT-REPORT.md'),
   readProjectFile('app/api/compare/helpers.js'),
   readProjectFile('app/api/destination-intel/route.js'),
+  readProjectFile('app/api/city-info/route.js'),
+  readProjectFile('app/api/exchange-rates/route.js'),
   readProjectFile('app/api/events/route.js'),
+  readProjectFile('app/api/holidays/route.js'),
   readProjectFile('app/api/pois/route.js'),
   readProjectFile('app/api/price-history/route.js'),
   readProjectFile('app/api/travel-guide/route.js'),
+  readProjectFile('app/api/weather/route.js'),
+  readProjectFile('lib/exchange-rates.js'),
   readProjectFile('lib/property-content.js'),
   readProjectFile('lib/reviews.js'),
+  readProjectFile('tests/api-public-data-contracts.test.ts'),
   readProjectFile('tests/api-destination-intel.test.ts'),
   readProjectFile('tests/components/DestinationIntel.test.tsx'),
 ]);
@@ -125,12 +143,34 @@ requireIncludes(destinationIntel, 'app/api/destination-intel/route.js', [
   'hasCoordinates',
 ]);
 
+requireIncludes(cityInfoRoute, 'app/api/city-info/route.js', [
+  "source: 'Wikipedia'",
+  "sourceStatus: 'available'",
+  "sourceStatus: 'unavailable'",
+  "dataPolicy: 'wikipedia-summary-only'",
+]);
+
+requireIncludes(exchangeRatesRoute, 'app/api/exchange-rates/route.js', [
+  "source: result.source || 'configured-exchange-rate-sources'",
+  "source: rates.source || 'configured-exchange-rate-sources'",
+  "sourceStatus: 'available'",
+  "sourceStatus: 'unavailable'",
+  "dataPolicy: 'provider-returned-exchange-rates-only'",
+]);
+
 requireIncludes(eventsRoute, 'app/api/events/route.js', [
   "source: 'not-configured'",
   'Events provider unavailable',
   "source: 'cache'",
   "source: events.length > 0 ? 'ticketmaster' : 'empty'",
   'Events unavailable',
+]);
+
+requireIncludes(holidaysRoute, 'app/api/holidays/route.js', [
+  "source: 'Nager.Date'",
+  "sourceStatus: 'available'",
+  "sourceStatus: 'unavailable'",
+  "dataPolicy: 'provider-returned-public-holidays-only'",
 ]);
 
 requireIncludes(poisRoute, 'app/api/pois/route.js', [
@@ -153,6 +193,21 @@ requireIncludes(travelGuideRoute, 'app/api/travel-guide/route.js', [
   'Travel guide unavailable',
 ]);
 
+requireIncludes(weatherRoute, 'app/api/weather/route.js', [
+  "source: 'Open-Meteo'",
+  "sourceStatus: 'available'",
+  "sourceStatus: 'unavailable'",
+  "dataPolicy: 'provider-returned-weather-only'",
+  'lat === null || lon === null',
+]);
+
+requireIncludes(exchangeRatesHelper, 'lib/exchange-rates.js', [
+  'source: rateCache.source',
+  "source: 'open.er-api.com'",
+  "source: 'currency-api'",
+  "source: 'same-currency'",
+]);
+
 requireIncludes(propertyContent, 'lib/property-content.js', [
   'available: false',
   "status: 'unavailable'",
@@ -166,6 +221,14 @@ requireIncludes(reviews, 'lib/reviews.js', [
   'source: null',
   'reviews: []',
   'No licensed review provider',
+]);
+
+requireIncludes(publicDataContractsTest, 'tests/api-public-data-contracts.test.ts', [
+  'keeps weather coordinates at zero valid',
+  'adds source contracts to exchange-rate responses',
+  'adds source contracts to city-info responses',
+  'adds source contracts to holiday responses',
+  'provider-returned-weather-only',
 ]);
 
 requireIncludes(destinationIntelTest, 'tests/api-destination-intel.test.ts', [

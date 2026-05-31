@@ -20,7 +20,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 179 test files, 1103 tests passed. |
+| `npm test` | PASS | 180 test files, 1107 tests passed. |
 | `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 100% lines, 100% statements, 100% functions, and 100% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 100%, statements 100%, functions 100%, branches 100%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
@@ -34,7 +34,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | `npm run audit:runtime` | PASS | Runtime warning audit blocks Edge Runtime reintroduction and Playwright color/env warning regressions. |
 | `npm run audit:external-fetches` | PASS | External fetch audit blocks direct `fetch("https://...")` calls, requires the shared timeout helper for network probes, covers Wikidata SPARQL hardening, and requires shared public-URL sanitization for content, provider-link, event-link, and enrichment helpers. |
 | `npm run audit:public-api-urls` | PASS | Public API URL safety audit keeps the runtime JSON URL scanner wired into package scripts, CI, README, and the production runbook. |
-| `npm run audit:public-data-contracts` | PASS | Public data contract audit keeps source/dataPolicy/unavailable contracts wired for public price, destination, event, POI, guide, review, and property-content responses. |
+| `npm run audit:public-data-contracts` | PASS | Public data contract audit keeps source/dataPolicy/unavailable contracts wired for public price, destination, weather, exchange-rate, holiday, city-info, event, POI, guide, review, and property-content responses. |
 | `npm run audit:affiliate-security` | PASS | Affiliate security audit blocks HTTP provider redirects and invalid URL tracking fallbacks. |
 | `npm run audit:legal-readiness` | PASS | Legal readiness audit keeps privacy, terms, cookie, affiliate, and provider-handoff disclosures wired while external signoff remains a launch blocker. |
 | `npm run audit:security-responses` | PASS | Shared auth, validation, and rate-limit helpers must return no-store responses, expose retry metadata, use timing-safe admin token checks, and normalize client IPs before quota keys are built. |
@@ -96,6 +96,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Kept production readiness env/media gating in `lib/production-readiness.mjs` while health and scorecard consume the shared env and launch-service contracts without importing the full strict audit gate.
 - Added `npm run audit:env` so readiness env names cannot drift across `.env.example`, README, runbook, package scripts, and CI.
 - Added `npm run audit:public-data-contracts` so public data routes keep explicit source, dataPolicy, unavailable, and verified-state contracts instead of implying unavailable upstreams were used.
+- Extended public data contracts across weather, exchange-rate, holiday, and city-info endpoints so direct public data routes expose source/sourceStatus/dataPolicy and preserve zero-coordinate weather lookups.
 - Added `npm run audit:secrets` to block committed env values and accidental production env assignments in scripts or CI.
 - Added `npm run audit:runtime` to prevent Edge Runtime static-generation regressions and Playwright env warning regressions.
 - Added `npm run audit:external-fetches` plus a shared fetch timeout helper so external probes cannot bypass abort handling.

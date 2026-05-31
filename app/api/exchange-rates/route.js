@@ -24,7 +24,12 @@ export async function GET(request) {
     // Conversion mode
     if (from && to && amount) {
       const result = await convertCurrency(amount, from.toUpperCase(), to.toUpperCase());
-      return Response.json(result, {
+      return Response.json({
+        ...result,
+        source: result.source || 'configured-exchange-rate-sources',
+        sourceStatus: 'available',
+        dataPolicy: 'provider-returned-exchange-rates-only',
+      }, {
         headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' },
       });
     }
@@ -32,13 +37,23 @@ export async function GET(request) {
     // Rates mode
     const base = (searchParams.get('base') || 'USD').toUpperCase();
     const rates = await getExchangeRates(base);
-    return Response.json(rates, {
+    return Response.json({
+      ...rates,
+      source: rates.source || 'configured-exchange-rate-sources',
+      sourceStatus: 'available',
+      dataPolicy: 'provider-returned-exchange-rates-only',
+    }, {
       headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' },
     });
   } catch (err) {
     console.error('GET /api/exchange-rates error:', err);
     return Response.json(
-      { error: 'Exchange rates unavailable' },
+      {
+        error: 'Exchange rates unavailable',
+        source: 'configured-exchange-rate-sources',
+        sourceStatus: 'unavailable',
+        dataPolicy: 'provider-returned-exchange-rates-only',
+      },
       { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }

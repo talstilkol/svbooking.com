@@ -45,7 +45,7 @@ describe('exchange rate helpers', () => {
     const converted = await convertCurrency(100, 'USD', 'EUR');
 
     expect(rates.rates).toEqual({ EUR: 0.91, GBP: 0.78 });
-    expect(converted).toEqual({ amount: 100, from: 'USD', to: 'EUR', converted: 91, rate: 0.91 });
+    expect(converted).toEqual({ amount: 100, from: 'USD', to: 'EUR', converted: 91, rate: 0.91, source: 'currency-api' });
     expect(getCurrencySymbol('ILS')).toBe('₪');
     expect(getCurrencySymbol('XYZ')).toBe('XYZ');
   });
@@ -95,6 +95,7 @@ describe('exchange rate helpers', () => {
       to: 'USD',
       converted: 50,
       rate: 1,
+      source: 'same-currency',
     });
     await expect(convertCurrency(50, 'USD', 'JPY')).rejects.toThrow('No exchange rate found');
   });

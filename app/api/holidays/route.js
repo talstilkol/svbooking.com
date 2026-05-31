@@ -67,6 +67,9 @@ export async function GET(request) {
         warning: overlapping.length > 0
           ? `Your stay overlaps with ${overlapping.length} public holiday(s). Prices may be higher.`
           : null,
+        source: 'Nager.Date',
+        sourceStatus: 'available',
+        dataPolicy: 'provider-returned-public-holidays-only',
       }, {
         headers: { 'Cache-Control': 'public, s-maxage=86400' },
       });
@@ -78,6 +81,9 @@ export async function GET(request) {
       return Response.json({
         countryCode,
         upcoming: holidays,
+        source: 'Nager.Date',
+        sourceStatus: 'available',
+        dataPolicy: 'provider-returned-public-holidays-only',
       }, {
         headers: { 'Cache-Control': 'public, s-maxage=86400' },
       });
@@ -89,6 +95,9 @@ export async function GET(request) {
       countryCode,
       year: year || new Date().getFullYear(),
       holidays,
+      source: 'Nager.Date',
+      sourceStatus: 'available',
+      dataPolicy: 'provider-returned-public-holidays-only',
     }, {
       headers: { 'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800' },
     });
@@ -103,6 +112,7 @@ export async function GET(request) {
           warning: null,
           source: 'Nager.Date',
           sourceStatus: 'unavailable',
+          dataPolicy: 'provider-returned-public-holidays-only',
         },
         { status: 200, headers: { 'Cache-Control': 'no-store' } }
       );
