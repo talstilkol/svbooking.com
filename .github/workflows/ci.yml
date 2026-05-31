@@ -50,6 +50,9 @@ jobs:
       - name: Documentation drift audit
         run: npm run audit:docs
 
+      - name: Master-plan honesty audit
+        run: npm run audit:master-plan
+
       - name: Environment contract audit
         run: npm run audit:env
 

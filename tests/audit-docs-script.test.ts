@@ -44,6 +44,7 @@ const catalog = [
 const packageJson = JSON.stringify({
   scripts: {
     'audit:docs': 'node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-docs.mjs',
+    'audit:master-plan': 'node scripts/audit-master-plan.mjs',
     'audit:env': 'node scripts/audit-env-contract.mjs',
     'audit:secrets': 'node scripts/audit-secret-hygiene.mjs',
     'audit:runtime': 'node scripts/audit-runtime-warnings.mjs',
@@ -69,6 +70,7 @@ const packageJson = JSON.stringify({
 const ci = [
   'steps:',
   '  - run: npm run audit:docs',
+  '  - run: npm run audit:master-plan',
   '  - run: npm run audit:env',
   '  - run: npm run audit:secrets',
   '  - run: npm run audit:runtime',
@@ -95,6 +97,7 @@ const validReadme = [
   'Current local catalog: 1 hotels, 1 cities, 1 countries.',
   `Never use ${forbiddenRandomApi}(). No fabricated price data.`,
   'Run npm run audit:production:strict before launch.',
+  'Run npm run audit:master-plan before launch.',
   'Run npm run audit:env before launch.',
   'Run npm run audit:secrets before launch.',
   'Run npm run audit:runtime before launch.',
@@ -121,6 +124,9 @@ const validPlan = [
   'Current catalog: 1 hotels, 1 cities, 1 countries.',
   'Release hygiene remains required.',
   'Strict readiness fails without admin, cron, Redis, Kinde, and partner-provider env.',
+  '## Checked Backlog Re-Audit',
+  '## Unfinished Launch Task Queue',
+  'FAKED | None identified',
   `Never use ${forbiddenRandomApi}(). No fabricated provider data.`,
   'Never use invented secrets.',
   'Run npm run audit:production:strict.',
@@ -130,11 +136,12 @@ const validPlan = [
 const validAuditReport = [
   '# Audit Report',
   'Current local catalog: 1 hotels, 1 cities, 1 countries.',
-  '176 test files, 1073 tests passed.',
+  '177 test files, 1075 tests passed.',
   '72 Playwright tests passed.',
   'Go-live readiness remains blocked without real deployment env.',
   'Worktree is clean before release.',
   'audit:release-deletions passed.',
+  'Master-plan honesty audit passed.',
   `Never use ${forbiddenRandomApi}(). No fabricated availability data.`,
   'Run npm run audit:production:strict.',
   '',

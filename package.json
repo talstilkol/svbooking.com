@@ -20,6 +20,7 @@
     "smoke:deployment": "node scripts/deployment-smoke.mjs",
     "audit:catalog": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-catalog.mjs",
     "audit:docs": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-docs.mjs",
+    "audit:master-plan": "node scripts/audit-master-plan.mjs",
     "audit:env": "node scripts/audit-env-contract.mjs",
     "audit:secrets": "node scripts/audit-secret-hygiene.mjs",
     "audit:runtime": "node scripts/audit-runtime-warnings.mjs",

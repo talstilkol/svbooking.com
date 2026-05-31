@@ -50,6 +50,7 @@ npm run audit:provenance
 npm run audit:deployment-smoke
 npm run audit:catalog
 npm run audit:docs
+npm run audit:master-plan
 npm run audit:env
 npm run audit:secrets
 npm run audit:runtime

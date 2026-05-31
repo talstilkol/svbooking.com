@@ -105,6 +105,7 @@ requireIncludes(readme, 'README.md', [
   'npm run audit:public-api-urls',
   'npm run audit:provenance',
   'npm run audit:deployment-smoke',
+  'npm run audit:master-plan',
   'npm run audit:affiliate-security',
   'npm run audit:legal-readiness',
   'npm run audit:security-responses',
@@ -122,14 +123,18 @@ requireIncludes(masterPlan, 'MASTER-PLAN.md', [
   'Release hygiene',
   'Strict readiness fails without admin, cron, Redis, Kinde, and partner-provider env',
   'Never use invented secrets',
+  'Checked Backlog Re-Audit',
+  'Unfinished Launch Task Queue',
+  'FAKED | None identified',
 ]);
 
 requireIncludes(auditReport, 'AUDIT-REPORT.md', [
-  '176 test files, 1073 tests passed',
+  '177 test files, 1075 tests passed',
   '72 Playwright tests passed',
   'Go-live readiness',
   'Worktree is clean',
   'audit:release-deletions',
+  'Master-plan honesty audit',
 ]);
 
 requireIncludes(packageRaw, 'package.json', [
@@ -140,6 +145,7 @@ requireIncludes(packageRaw, 'package.json', [
   '"audit:public-api-urls"',
   '"audit:provenance"',
   '"audit:deployment-smoke"',
+  '"audit:master-plan"',
   '"smoke:deployment"',
   '"audit:affiliate-security"',
   '"audit:legal-readiness"',
@@ -174,6 +180,7 @@ requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm run audit:public-api-urls',
   'npm run audit:provenance',
   'npm run audit:deployment-smoke',
+  'npm run audit:master-plan',
   'npm run audit:affiliate-security',
   'npm run audit:legal-readiness',
   'npm run audit:security-responses',

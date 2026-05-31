@@ -38,6 +38,7 @@ for (const scriptName of [
   'smoke:deployment',
   'audit:catalog',
   'audit:docs',
+  'audit:master-plan',
   'audit:env',
   'audit:secrets',
   'audit:runtime',
@@ -143,6 +144,7 @@ await requireFile('lib/i18n.js');
 await requireFile('scripts/audit-production-readiness.mjs');
 await requireFile('scripts/release-state.mjs');
 await requireFile('scripts/audit-docs.mjs');
+await requireFile('scripts/audit-master-plan.mjs');
 await requireFile('scripts/audit-env-contract.mjs');
 await requireFile('scripts/audit-secret-hygiene.mjs');
 await requireFile('scripts/audit-runtime-warnings.mjs');
@@ -185,6 +187,7 @@ requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm run audit:deployment-smoke',
   'npm run audit:catalog',
   'npm run audit:docs',
+  'npm run audit:master-plan',
   'npm run audit:env',
   'npm run audit:secrets',
   'npm run audit:runtime',

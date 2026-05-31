@@ -119,7 +119,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints and RUM wiring audit exist; external monitoring and webhook delivery are not configured. |
 | Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
 | Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
-| Acceptance Criteria | `npm test` passes | DONE | 176 files / 1073 tests passed. |
+| Acceptance Criteria | `npm test` passes | DONE | 177 files / 1075 tests passed. |
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
 | Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 99.44% lines and 99.17% branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 728 static pages. |
@@ -158,6 +158,62 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Non-Negotiable | Never display fabricated hotel/review/price/provider/urgency/availability/readiness data | PARTIAL | Guardrails pass; exhaustive provenance proof remains open. |
 | Non-Negotiable | Never use invented secrets | DONE | Strict readiness fails instead of accepting placeholders. |
 | Non-Negotiable | Show missing provider/credential/license/source as unavailable | PARTIAL | Existing paths do this; every future integration must preserve it. |
+
+## Checked Backlog Re-Audit
+
+This is the brutal re-check of every item currently marked `[x]`. DONE here means the narrow local deliverable exists and was verified; it does not mean the related production/market outcome is complete.
+
+| Checked item | Status | Brutal verdict |
+| --- | --- | --- |
+| Raise `lib` branch coverage from 83.26% toward 84%, then keep ratcheting upward. | DONE | Real and verified by the current 99.17% branch coverage result. |
+| Raise `lib` branch coverage from 84.07% toward 85%, then keep ratcheting upward. | DONE | Real and verified by the current coverage ratchet. |
+| Raise `lib` branch coverage from 85.08% toward 88%, then keep ratcheting upward. | DONE | Real and verified by the current coverage ratchet. |
+| Raise `lib` branch coverage from 88.14% toward 90%, focusing on catalog, cache/date edge cases, Wikidata enrichment, ops scorecard, and provider delivery branches. | DONE | Real; focused branch tests exist, but remaining coverage is not exhaustive. |
+| Raise `lib` branch coverage from 90.04% toward 92%, focusing on hotels-catalog, price-cache, catalog-candidates, Wikivoyage, Xotelo discovery, admin audit, OpenTripMap, rate-limit, and provider delivery branches. | DONE | Real; coverage passed far above this milestone. |
+| Raise `lib` branch coverage from 92.04% toward 94%, focusing on hotels-catalog, price-cache, catalog-candidates, cheaper-dates, Wikivoyage, KV, and provider delivery branches. | DONE | Real; coverage passed far above this milestone. |
+| Raise `lib` branch coverage from 94.17% toward 96%, focusing on hotels-catalog, Overpass POI, Wikidata enrichment, health readiness, ops scorecard, Ticketmaster, alert delivery, weather, and Wikipedia branches. | DONE | Real; coverage passed far above this milestone. |
+| Raise `lib` branch coverage from 96.16% toward 97%, focusing on hotels-catalog, ops alerts, provider observability, Nominatim, public URL safety, health readiness, and remaining API error branches. | DONE | Real; coverage passed far above this milestone. |
+| Raise `lib` branch coverage from 97% toward 98%, focusing on hotels-catalog, provider observability, price-cache, catalog-candidates, agent utilities, webhook URL, storage, and remaining API error branches. | DONE | Real; coverage passed far above this milestone. |
+| Raise `lib` branch coverage from 98% toward 99%, focusing on hotels-catalog, provider observability, price-cache, catalog-candidates, storage, and remaining API/network error branches. | DONE | Real; coverage passed above 99%, but not full 100%. |
+| Raise `lib` branch coverage beyond 99.1%, focusing on provider observability and catalog media edge branches. | DONE | Real and verified at 99.17% branches; next honest target is 99.3%. |
+| Add focused tests for Overpass discovery, agent utilities, i18n edge cases, ops alert thresholds, and provider registry merge/circuit-breaker branches. | DONE | Real; matching tests exist across discovery, provider registry, i18n, ops alerts, and merge/circuit-breaker paths. |
+| Surface reused catalog image risk in ops scorecard and release documentation. | DONE | Real; `lib/catalog-media-quality.js`, ops scorecard, docs, and tests expose the blocker. |
+| Add a stronger provenance wiring audit for catalog candidate promotion, source URLs, provider links, and provider-returned rates. | DONE | Real for wiring and safe URLs; not 100/100 because licensed image/source metadata for every legacy item is still open. |
+| Add deployment smoke checks for public APIs, protected admin APIs, cron guards, and unavailable-state behavior. | DONE | Real as a script and audit; not production proof until run against a configured deployment. |
+| Add duplicate/provenance review summaries to the admin catalog candidate APIs and dashboard. | DONE | Real; candidate API/dashboard summaries and tests exist. |
+| Add provider coverage telemetry by city/country/date so gaps are measurable before claims are displayed. | DONE | Real; provider coverage is derived from verified observation ledgers and returns insufficient-data when empty. |
+| Surface ops scorecard, alert counts, domain status, and top blockers in the authenticated dashboard. | DONE | Real; dashboard and ops scorecard surfaces exist. |
+| Add CI-wired RUM/Web Vitals wiring audit for Vercel Analytics, Speed Insights, and local Core Web Vitals instrumentation. | DONE | Real as local wiring audit; production RUM evidence is still missing. |
+| Add CI-wired legal readiness audit for privacy, terms, cookie consent, affiliate safety, and provider-handoff disclosures. | DONE | Real as a local audit; it is not legal approval. |
+| Add sourced competitor parity tracking for inventory breadth, price freshness, mobile installability, reviews, alerts, booking handoff quality, and Israel coverage. | DONE | Real as local scorecard tracking; weekly live review and production proof are still missing. |
+| FAKED | None identified | I found no checked item that is only echoed or simulated. The weakness is not fake completion; it is local-only completion without production proof on several related outcomes. |
+
+## Unfinished Launch Task Queue
+
+These are the remaining tasks required to complete the full plan. Items blocked by secrets, contracts, licensing, or a real deployment cannot be finished safely inside the repo with placeholders.
+
+| Open item | Status | Execution detail |
+| --- | --- | --- |
+| Configure real deployment env: `ADMIN_API_SECRET`, `CRON_SECRET`, Upstash Redis, Kinde, and at least one complete partner pricing provider group. | NOT DONE | Configure real values in deployment only; never commit or invent them. |
+| Run `npm run audit:production:strict` in the deployment environment and capture the passing release evidence. | NOT DONE | Requires the real deployment env above. |
+| Verify deployed cron routes with real `CRON_SECRET`: orchestrate, price-alert evaluation, and ops-alert evaluation. | NOT DONE | Requires deployed cron and real secret. |
+| Configure persistent KV and verify `/api/health` reports persistent cache, not memory. | NOT DONE | Requires Upstash Redis or compatible durable KV in deployment. |
+| Configure one approved pricing partner and verify provider-returned rates from production without fabricated fallbacks. | NOT DONE | Requires partner credentials and production smoke evidence. |
+| Configure licensed review/property-content provider access before showing review copy, ratings, or rich property descriptions. | NOT DONE | Requires licensed provider contract and integration. |
+| Run `SITE_URL=https://your-deployment.example npm run smoke:deployment` after strict production readiness passes. | NOT DONE | Requires configured deployment URL. |
+| Raise `lib` branch coverage toward 99.3%, focusing on remaining private/inaccessible hotels-catalog, price-cache, URL-safety, auth, and API/network error branches. | PARTIAL | Next local engineering task after the current 99.17% floor. |
+| Replace reused catalog images with licensed hotel- or city-specific media. | NOT DONE | Requires approved media sources and license metadata; no replacement images should be invented. |
+| Extend provenance audit to require licensed/source metadata for every legacy static catalog item and catalog image. | PARTIAL | Safe source/provenance wiring exists; complete licensed metadata enforcement is still missing. |
+| Run deployment smoke checks in a configured production deployment and capture passing evidence. | NOT DONE | Requires deployment env and `SITE_URL`. |
+| Expand catalog ingestion through the admin candidate workflow only; do not auto-promote discovered hotels. | PARTIAL | Workflow exists; large-scale reviewed expansion still needs real provider/KV operation. |
+| Exercise duplicate detection and provenance review workflows at production-scale candidate volume after persistent KV/provider ingestion is live. | NOT DONE | Requires persistent KV and real candidate ingestion volume. |
+| Add real alert delivery provider integration for price alerts, unsubscribe tokens, and ops alerts. | NOT DONE | Webhook logic exists, but no approved provider/env is configured. |
+| Add web push only after approved notification-provider setup and health readiness proof. | NOT DONE | Requires push provider and real VAPID keys. |
+| Build the external production observability layer covering uptime, provider latency, cache hit rate, alert delivery, price mismatch reports, catalog provenance quality, RUM, and webhook proof. | PARTIAL | Internal endpoints exist; external monitoring proof is missing. |
+| Capture production RUM/Core Web Vitals evidence per top route and device class. | NOT DONE | Requires deployed traffic/analytics evidence. |
+| Add international localization QA beyond Hebrew/English, including RTL/LTR layout regression checks. | PARTIAL | Hebrew/English and RTL audit exist; broader locale matrix is missing. |
+| Capture partner terms, affiliate/legal review, and licensed content display signoff. | NOT DONE | Requires external approval; local audit is not approval. |
+| Run weekly competitor source review and live production proof before treating parity status as launch evidence. | NOT DONE | Requires scheduled review process and production metrics. |
 
 ## Stabilization Priorities
 

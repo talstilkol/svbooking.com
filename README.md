@@ -135,6 +135,7 @@ npm run audit:provenance
 npm run audit:deployment-smoke
 npm run audit:catalog
 npm run audit:docs
+npm run audit:master-plan
 npm run audit:env
 npm run audit:secrets
 npm run audit:runtime
@@ -177,6 +178,7 @@ After deployment, run `SITE_URL=https://your-deployment.example npm run smoke:de
 - `npm run audit:release-deletions` keeps removed no-fake-data legacy surfaces from returning.
 - `npm run audit:provenance` keeps catalog candidate provenance, provider-link sanitization, and deployment smoke wiring from regressing.
 - `npm run audit:deployment-smoke` keeps the deployment smoke script, docs, and CI wiring aligned.
+- `npm run audit:master-plan` keeps checked roadmap items, open launch tasks, and honest DONE/PARTIAL/NOT DONE status ledgers synchronized.
 - `npm run audit:external-fetches` blocks direct external `fetch("https://...")` calls that bypass timeout handling and requires shared public-URL sanitization for content, provider-link, event-link, and enrichment helpers.
 - `npm run audit:public-api-urls` keeps the Playwright public API URL safety runtime audit wired into CI and release docs.
 - `npm run audit:affiliate-security` blocks unsafe outbound redirect and affiliate URL regressions.

@@ -20,7 +20,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 176 test files, 1073 tests passed. |
+| `npm test` | PASS | 177 test files, 1075 tests passed. |
 | `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 99.44% lines, 98.96% statements, 97.39% functions, and 99.17% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 99.4%, statements 98.9%, functions 97.2%, branches 99.1%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
@@ -28,6 +28,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
 | `npm run audit:catalog` | PASS | Catalog audit passed: 502 hotels, 139 cities, 65 countries. |
 | `npm run audit:docs` | PASS | Documentation audit passed and verifies current catalog counts plus stale-claim blockers. |
+| `npm run audit:master-plan` | PASS | Master-plan honesty audit keeps checked tasks, open launch tasks, and DONE/PARTIAL/NOT DONE ledgers synchronized. |
 | `npm run audit:env` | PASS | Environment contract audit verifies `.env.example`, README, runbook, package scripts, and CI stay aligned with production readiness env groups. |
 | `npm run audit:secrets` | PASS | Secret hygiene audit keeps `.env.example` empty-valued, env files ignored, CI free of secret contexts, and package scripts free of production env assignments. |
 | `npm run audit:runtime` | PASS | Runtime warning audit blocks Edge Runtime reintroduction and Playwright color/env warning regressions. |
@@ -72,6 +73,7 @@ The remaining blockers are not code placeholders to fill in locally:
 
 - Rewrote `README.md` and `MASTER-PLAN.md` to describe the current Next.js 16 App Router app, real APIs, Kinde auth, Upstash/KV model, provider model, and no-fabricated-data policy.
 - Added `npm run audit:docs`, `scripts/audit-docs.mjs`, and unit coverage for stale documentation claims.
+- Added `npm run audit:master-plan` and a checked-task re-audit ledger so roadmap checkboxes cannot drift away from evidence and open launch blockers.
 - Wired the docs audit into GitHub Actions and `audit:ops`.
 - Expanded and validated the local catalog to 502 hotels across 139 cities and 65 countries.
 - Updated app copy and catalog/health floors to the current 502-hotel catalog.
