@@ -29,6 +29,7 @@ This section is the source of truth for what is complete versus only locally sca
 | Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 100% lines, 100% statements, 100% functions, 100% branches; floors are now 100% for every tracked `lib` dimension. |
 | Coverage to world-class depth | DONE | `lib` coverage is 100% across lines, statements, functions, and branches; future work should preserve the ratchet and add app/runtime coverage where needed. |
 | Security audits wired | DONE | CSRF, HTML safety, storage, privacy, alert, public URL, affiliate, no-store, API error, and cron-cache audits pass locally. |
+| Cron localhost bypass removed | DONE | Cron routes fail closed when `CRON_SECRET` is missing, including localhost; tests and deployment-smoke expectations now require explicit cron auth. |
 | Production security enforcement | PARTIAL | Code gates exist, but real admin, cron, Kinde, Redis, provider, alert, and push env are not configured locally. |
 | Catalog local floor | DONE | Catalog count is 502 hotels, 139 cities, 65 countries. |
 | Catalog market scale | NOT DONE | The catalog is not comparable to large OTA/global metasearch inventory and still has reused imagery warnings. |
