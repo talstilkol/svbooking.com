@@ -24,7 +24,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 100% lines, 100% statements, 100% functions, and 100% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 100%, statements 100%, functions 100%, branches 100%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
-| `npm run test:e2e` | PASS | 73 Playwright tests passed. |
+| `npm run test:e2e` | PASS | 78 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
 | `npm run audit:catalog` | PASS | Catalog audit passed: 502 hotels, 139 cities, 65 countries. |
 | `npm run audit:docs` | PASS | Documentation audit passed and verifies current catalog counts plus stale-claim blockers. |

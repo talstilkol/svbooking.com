@@ -130,7 +130,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
 | Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 100% lines, statements, functions, and branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 728 static pages. |
-| Acceptance Criteria | `npm run test:e2e` passes | DONE | 73 Playwright tests passed. |
+| Acceptance Criteria | `npm run test:e2e` passes | DONE | 78 Playwright tests passed. |
 | Acceptance Criteria | Every non-strict `npm run audit:*` passes | DONE | All non-strict audit scripts passed locally. |
 | Acceptance Criteria | `audit:production:strict` passes in deployment | NOT DONE | No deployment env proof exists. |
 | Acceptance Criteria | `npm audit --audit-level=moderate` has no moderate vulnerabilities | DONE | Approved network audit reported 0 vulnerabilities. |
