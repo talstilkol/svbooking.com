@@ -5,13 +5,14 @@ import {
   OPTIONAL_ENV,
   PARTNER_PROVIDER_GROUPS,
   REQUIRED_ENV,
+  STRICT_LAUNCH_ENV,
 } from '../lib/production-readiness.mjs';
 
 const root = process.cwd();
 const failures = [];
 const partnerProviderEnv = [...new Set(PARTNER_PROVIDER_GROUPS.flatMap((provider) => provider.env))];
-const requiredForGoLive = [...REQUIRED_ENV, ...KINDE_REQUIRED_ENV, ...partnerProviderEnv];
-const allDocumentedEnv = [...requiredForGoLive, ...OPTIONAL_ENV];
+const requiredForGoLive = [...new Set([...REQUIRED_ENV, ...KINDE_REQUIRED_ENV, ...partnerProviderEnv, ...STRICT_LAUNCH_ENV])];
+const allDocumentedEnv = [...new Set([...requiredForGoLive, ...OPTIONAL_ENV])];
 
 async function readProjectFile(relativePath) {
   try {

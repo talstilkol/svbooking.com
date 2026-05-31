@@ -8,11 +8,12 @@ import {
   OPTIONAL_ENV,
   PARTNER_PROVIDER_GROUPS,
   REQUIRED_ENV,
+  STRICT_LAUNCH_ENV,
 } from '@/lib/production-readiness.mjs';
 
 const SCRIPT = path.join(process.cwd(), 'scripts/audit-secret-hygiene.mjs');
 const partnerProviderEnv = [...new Set(PARTNER_PROVIDER_GROUPS.flatMap((provider) => provider.env))];
-const allEnv = [...REQUIRED_ENV, ...KINDE_REQUIRED_ENV, ...partnerProviderEnv, ...OPTIONAL_ENV];
+const allEnv = [...new Set([...REQUIRED_ENV, ...KINDE_REQUIRED_ENV, ...partnerProviderEnv, ...STRICT_LAUNCH_ENV, ...OPTIONAL_ENV])];
 
 async function createFixture(files: Record<string, string>) {
   const directory = await mkdtemp(path.join(tmpdir(), 'sv-booking-secret-hygiene-'));

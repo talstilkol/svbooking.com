@@ -47,7 +47,7 @@ describe('production readiness audit script', () => {
     expect(body.productionReady).toBe(false);
   });
 
-  it('fails strict mode with required env while catalog media is not launch-ready', () => {
+  it('fails strict mode with required env while launch services and catalog media are not ready', () => {
     const result = runAudit({
       PRODUCTION_READINESS_STRICT: '1',
       ADMIN_API_SECRET: 'svbooking-admin-secret-0001',
@@ -68,7 +68,17 @@ describe('production readiness audit script', () => {
     expect(body.strict).toBe(true);
     expect(body.productionReady).toBe(false);
     expect(body.catalogMediaQuality.status).toBe('partial');
+    expect(body.launchServices.reviews.configured).toBe(false);
+    expect(body.launchServices.priceAlerts.deliveryConfigured).toBe(false);
+    expect(body.launchServices.priceAlerts.unsubscribeConfigured).toBe(false);
+    expect(body.launchServices.opsAlerts.deliveryConfigured).toBe(false);
+    expect(body.launchServices.push.configured).toBe(false);
     expect(body.blockers).toContain('Catalog media quality is not launch-ready');
+    expect(body.blockers).toContain('Licensed review/property provider is not configured');
+    expect(body.blockers).toContain('Price alert webhook delivery is not configured');
+    expect(body.blockers).toContain('Price alert unsubscribe secret is not configured');
+    expect(body.blockers).toContain('Ops alert webhook delivery is not configured');
+    expect(body.blockers).toContain('Web push keys are not configured');
     expect(body.blockers.some((blocker: string) => blocker.includes('catalog image sources require approved license metadata or replacement'))).toBe(true);
     expect(result.stdout).not.toContain('svbooking-admin-secret-0001');
     expect(result.stdout).not.toContain('svbooking-kinde-client-secret-0001');

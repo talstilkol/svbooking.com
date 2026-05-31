@@ -26,10 +26,8 @@ Set at least one partner pricing provider:
 - `MAKCORPS_API_KEY`
 - `AMADEUS_CLIENT_ID` and `AMADEUS_CLIENT_SECRET`
 
-Optional production capabilities:
+Set launch service providers before go-live:
 
-- `TICKETMASTER_API_KEY`
-- `OPENTRIPMAP_API_KEY`
 - `PRICE_ALERT_WEBHOOK_URL`
 - `PRICE_ALERT_WEBHOOK_SECRET`
 - `PRICE_ALERT_UNSUBSCRIBE_SECRET`
@@ -37,6 +35,14 @@ Optional production capabilities:
 - `OPS_ALERT_WEBHOOK_SECRET`
 - `REVIEWS_PROVIDER_NAME`
 - `REVIEWS_PROVIDER_LICENSED`
+- `GOOGLE_PLACES_API_KEY` for the current Google Places review adapter
+- `NEXT_PUBLIC_PUSH_PUBLIC_KEY`
+- `PUSH_PRIVATE_KEY`
+
+Optional enrichment capabilities:
+
+- `TICKETMASTER_API_KEY`
+- `OPENTRIPMAP_API_KEY`
 
 ## Go-Live Gate
 

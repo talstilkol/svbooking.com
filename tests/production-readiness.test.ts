@@ -19,6 +19,19 @@ const requiredEnv = {
   KINDE_POST_LOGIN_REDIRECT_URL: 'https://svbooking.com/dashboard',
 } as unknown as NodeJS.ProcessEnv;
 
+const launchServiceEnv = {
+  REVIEWS_PROVIDER_NAME: 'google-places',
+  REVIEWS_PROVIDER_LICENSED: 'true',
+  GOOGLE_PLACES_API_KEY: 'svbooking-google-places-key-0001',
+  PRICE_ALERT_WEBHOOK_URL: 'https://alerts.svbooking.com/hooks/price',
+  PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-price-alert-secret-0001',
+  PRICE_ALERT_UNSUBSCRIBE_SECRET: 'svbooking-unsubscribe-secret-0001',
+  OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.com/hooks/slo',
+  OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
+  NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'svbooking-public-push-key-0001',
+  PUSH_PRIVATE_KEY: 'svbooking-private-push-key-0001',
+} as unknown as NodeJS.ProcessEnv;
+
 const healthyCatalogMediaQuality = {
   status: 'healthy',
   score: 1,
@@ -88,7 +101,7 @@ describe('production readiness shared contract', () => {
 
   it('builds a non-secret strict readiness summary', () => {
     const summary = buildProductionReadinessSummary({
-      env: { ...requiredEnv, SERPAPI_KEY: 'svbooking-serpapi-key-0001' },
+      env: { ...requiredEnv, ...launchServiceEnv, SERPAPI_KEY: 'svbooking-serpapi-key-0001' },
       strict: true,
       catalogMediaQuality: healthyCatalogMediaQuality,
     });
@@ -97,15 +110,22 @@ describe('production readiness shared contract', () => {
     expect(summary.productionReady).toBe(true);
     expect(summary.blockers).toEqual([]);
     expect(summary.catalogMediaQuality?.status).toBe('healthy');
+    expect(summary.launchServices.reviews.configured).toBe(true);
+    expect(summary.launchServices.priceAlerts.deliveryConfigured).toBe(true);
+    expect(summary.launchServices.priceAlerts.unsubscribeConfigured).toBe(true);
+    expect(summary.launchServices.opsAlerts.deliveryConfigured).toBe(true);
+    expect(summary.launchServices.push.configured).toBe(true);
     expect(summary.pricingProviders.find((provider) => provider.name === 'SerpAPI')?.configured).toBe(true);
     expect(JSON.stringify(summary)).not.toContain('svbooking-admin-secret-0001');
     expect(JSON.stringify(summary)).not.toContain('svbooking-kinde-client-secret-0001');
     expect(JSON.stringify(summary)).not.toContain('svbooking-serpapi-key-0001');
+    expect(JSON.stringify(summary)).not.toContain('svbooking-google-places-key-0001');
+    expect(JSON.stringify(summary)).not.toContain('svbooking-price-alert-secret-0001');
   });
 
   it('keeps strict readiness blocked until catalog media quality is healthy', () => {
     const summary = buildProductionReadinessSummary({
-      env: { ...requiredEnv, SERPAPI_KEY: 'svbooking-serpapi-key-0001' },
+      env: { ...requiredEnv, ...launchServiceEnv, SERPAPI_KEY: 'svbooking-serpapi-key-0001' },
       strict: true,
       catalogMediaQuality: partialCatalogMediaQuality,
     });
@@ -115,5 +135,27 @@ describe('production readiness shared contract', () => {
     expect(summary.catalogMediaQuality?.status).toBe('partial');
     expect(summary.blockers).toContain('Catalog media quality is not launch-ready');
     expect(summary.blockers).toContain('Catalog media: 1 catalog image sources require approved license metadata or replacement');
+  });
+
+  it('keeps strict readiness blocked until launch services are configured', () => {
+    const summary = buildProductionReadinessSummary({
+      env: { ...requiredEnv, SERPAPI_KEY: 'svbooking-serpapi-key-0001' },
+      strict: true,
+      catalogMediaQuality: healthyCatalogMediaQuality,
+    });
+
+    expect(summary.productionReady).toBe(false);
+    expect(summary.launchServices.reviews.configured).toBe(false);
+    expect(summary.launchServices.priceAlerts.deliveryConfigured).toBe(false);
+    expect(summary.launchServices.priceAlerts.unsubscribeConfigured).toBe(false);
+    expect(summary.launchServices.opsAlerts.deliveryConfigured).toBe(false);
+    expect(summary.launchServices.push.configured).toBe(false);
+    expect(summary.blockers).toEqual(expect.arrayContaining([
+      'Licensed review/property provider is not configured',
+      'Price alert webhook delivery is not configured',
+      'Price alert unsubscribe secret is not configured',
+      'Ops alert webhook delivery is not configured',
+      'Web push keys are not configured',
+    ]));
   });
 });

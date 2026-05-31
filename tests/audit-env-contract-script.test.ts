@@ -8,12 +8,13 @@ import {
   OPTIONAL_ENV,
   PARTNER_PROVIDER_GROUPS,
   REQUIRED_ENV,
+  STRICT_LAUNCH_ENV,
 } from '@/lib/production-readiness.mjs';
 
 const SCRIPT = path.join(process.cwd(), 'scripts/audit-env-contract.mjs');
 const partnerProviderEnv = [...new Set(PARTNER_PROVIDER_GROUPS.flatMap((provider) => provider.env))];
-const requiredForGoLive = [...REQUIRED_ENV, ...KINDE_REQUIRED_ENV, ...partnerProviderEnv];
-const allEnv = [...requiredForGoLive, ...OPTIONAL_ENV];
+const requiredForGoLive = [...new Set([...REQUIRED_ENV, ...KINDE_REQUIRED_ENV, ...partnerProviderEnv, ...STRICT_LAUNCH_ENV])];
+const allEnv = [...new Set([...requiredForGoLive, ...OPTIONAL_ENV])];
 
 async function createFixture(files: Record<string, string>) {
   const directory = await mkdtemp(path.join(tmpdir(), 'sv-booking-env-contract-'));

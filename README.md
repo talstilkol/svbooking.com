@@ -102,14 +102,14 @@ Go-live blockers:
 - `KINDE_POST_LOGOUT_REDIRECT_URL`
 - `KINDE_POST_LOGIN_REDIRECT_URL`
 - At least one partner pricing provider env from `RAPIDAPI_KEY`, `SERPAPI_KEY`, `MAKCORPS_API_KEY`, `AMADEUS_CLIENT_ID` plus `AMADEUS_CLIENT_SECRET`
+- Licensed review/provider env: `REVIEWS_PROVIDER_NAME`, `REVIEWS_PROVIDER_LICENSED`, and `GOOGLE_PLACES_API_KEY` for the current Google Places adapter
+- Price-alert delivery env: `PRICE_ALERT_WEBHOOK_URL`, `PRICE_ALERT_WEBHOOK_SECRET`, and `PRICE_ALERT_UNSUBSCRIBE_SECRET`
+- Ops-alert delivery env: `OPS_ALERT_WEBHOOK_URL` and `OPS_ALERT_WEBHOOK_SECRET`
+- Push notification env: `NEXT_PUBLIC_PUSH_PUBLIC_KEY` and `PUSH_PRIVATE_KEY`
 - Approved catalog media quality: no reused launch images beyond the configured threshold, and image source/license metadata must be approved before strict readiness can pass
 
 Optional but important production env:
 
-- Review provider readiness env after licensing is approved
-- Price-alert webhook and unsubscribe env
-- Ops-alert webhook env
-- Push notification env
 - Ticketmaster/OpenTripMap enrichment env
 - Browser admin dashboard allowlist via `ADMIN_USER_IDS` and/or `ADMIN_EMAILS`
 

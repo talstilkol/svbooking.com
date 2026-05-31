@@ -699,6 +699,12 @@ requireIncludes(productionReadiness, 'lib/production-readiness.mjs', [
   'PLACEHOLDER_ENV_VALUES',
   'SENSITIVE_ENV_NAME_PATTERN',
   'URL_ENV_NAME_PATTERN',
+  'STRICT_LAUNCH_ENV',
+  'launchServices',
+  'Licensed review/property provider is not configured',
+  'Price alert webhook delivery is not configured',
+  'Ops alert webhook delivery is not configured',
+  'Web push keys are not configured',
   'getEnvConfigurationIssue',
   'placeholder value is not allowed',
   'must be an HTTPS URL without credentials',
@@ -716,6 +722,7 @@ requireIncludes(productionReadiness, 'lib/production-readiness.mjs', [
   'PUSH_PRIVATE_KEY',
   'REVIEWS_PROVIDER_NAME',
   'REVIEWS_PROVIDER_LICENSED',
+  'GOOGLE_PLACES_API_KEY',
   'buildCatalogMediaQuality',
   'Catalog media quality is not launch-ready',
   'Catalog media:',
@@ -727,6 +734,7 @@ const productionReadinessTest = await readProjectFile('tests/production-readines
 requireIncludes(productionReadinessTest, 'tests/production-readiness.test.ts', [
   'rejects placeholder, short, and non-HTTPS production env values',
   'keeps strict readiness blocked until catalog media quality is healthy',
+  'keeps strict readiness blocked until launch services are configured',
   'getEnvConfigurationIssue',
   'placeholder value is not allowed',
   'must be an HTTPS URL without credentials',
@@ -734,7 +742,7 @@ requireIncludes(productionReadinessTest, 'tests/production-readiness.test.ts', [
 
 const productionReadinessScriptTest = await readProjectFile('tests/production-readiness-script.test.ts');
 requireIncludes(productionReadinessScriptTest, 'tests/production-readiness-script.test.ts', [
-  'fails strict mode with required env while catalog media is not launch-ready',
+  'fails strict mode with required env while launch services and catalog media are not ready',
   'fails strict mode for placeholder or weak env values without printing them',
   'Catalog media quality is not launch-ready',
   'Invalid required env: ADMIN_API_SECRET',

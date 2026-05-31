@@ -40,7 +40,7 @@ This section is the source of truth for what is complete versus only locally sca
 | PWA/offline shell | DONE | PWA audit passes and the runbook documents network-only API behavior. |
 | Push/mobile notification delivery | NOT DONE | `NEXT_PUBLIC_PUSH_PUBLIC_KEY` and `PUSH_PRIVATE_KEY` are not configured with an approved provider. |
 | Release hygiene | DONE | `npm run release:state:strict` passes after committed changes; worktree is clean at audit time. |
-| Production env gate | NOT DONE | `npm run audit:production:strict` correctly fails locally on missing real env and unresolved catalog media quality. |
+| Production env gate | NOT DONE | `npm run audit:production:strict` correctly fails locally on missing real env, unresolved catalog media quality, licensed review provider, alert delivery, ops delivery, and push keys. |
 | Docs drift prevention | DONE | `npm run audit:docs` passes and CI includes the docs audit. |
 | README, `.env.example`, runbook, plan alignment | PARTIAL | Audits pass for key snippets and env names, but not every operational runbook instruction has a live deployment proof. |
 | Public API unsafe URL prevention | DONE | `npm run audit:public-api-urls` passes and the Playwright JSON scanner is wired in CI. |
@@ -69,7 +69,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Current State | Provider coverage | PARTIAL | Adapter layer exists; real partner credentials are not configured. |
 | Current State | Reviews and property content | PARTIAL | Unavailable state is correct; licensed rich review/property data is not live. |
 | Current State | Mobile retention | PARTIAL | PWA shell and audited RUM/Web Vitals wiring exist; push delivery is not configured. |
-| Current State | Production readiness | NOT DONE | Strict production readiness fails locally due missing real env and unresolved catalog media quality. |
+| Current State | Production readiness | NOT DONE | Strict production readiness fails locally due missing real env, unresolved catalog media quality, licensed review provider, alert delivery, ops delivery, and push keys. |
 | Current State | Release hygiene | DONE | Worktree was clean after the last release-state strict gate. |
 | Accountability | Determinism: no `Math.random()` | DONE | Scan returned no `Math.random()` or unapproved UUID usage. |
 | Accountability | No-fabrication guardrails | PARTIAL | Claims and provenance-wiring audits pass, but static legacy catalog/image provenance and future provider/content paths still need stronger licensed-source controls. |
@@ -120,7 +120,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints and RUM wiring audit exist; external monitoring and webhook delivery are not configured. |
 | Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
 | Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
-| Acceptance Criteria | `npm test` passes | DONE | 177 files / 1097 tests passed. |
+| Acceptance Criteria | `npm test` passes | DONE | 177 files / 1098 tests passed. |
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
 | Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 100% lines, statements, functions, and branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 728 static pages. |
