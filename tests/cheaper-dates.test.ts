@@ -252,7 +252,11 @@ describe('cheaper date price intelligence', () => {
       rates: [{ provider: 'unknown', total: 99 }],
       source: 'xotelo',
     });
-    vi.mocked(getCachedHeatmap).mockResolvedValue({ data: [] });
+    vi.mocked(getCachedHeatmap).mockResolvedValue({
+      data: [
+        { date: '2026-06-02', price: 0 },
+      ],
+    });
 
     const result = await findCheaperDates('g187147-d188732', '2026-06-01', '2026-06-03');
 

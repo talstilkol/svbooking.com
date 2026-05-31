@@ -599,6 +599,61 @@ describe('catalog candidate queue', () => {
     });
   });
 
+  it('rejects raw stored candidates that lack provenance without assuming nested metadata exists', async () => {
+    const mod = await import('@/lib/kv') as Record<string, unknown>;
+    const kvStore = mod.__store as Map<string, unknown>;
+    const id = 'raw-no-provenance';
+    kvStore.set(`catalog:candidate:${id}`, {
+      id,
+      hotelKey: 'g1-d96',
+      name: 'Raw Stored Candidate',
+      city: 'Paris',
+      country: 'France',
+      status: 'pending',
+      source: 'manual-admin',
+      sourceUrl: null,
+      lat: 48.8566,
+      lon: 2.3522,
+    });
+
+    await expect(approveCandidate(id, { actor: 'admin-api-secret' })).resolves.toMatchObject({
+      approved: false,
+      error: 'Candidate is missing usable provenance',
+    });
+  });
+
+  it('keeps listing order stable when same-status stored candidates lack updated timestamps', async () => {
+    const mod = await import('@/lib/kv') as Record<string, unknown>;
+    const kvStore = mod.__store as Map<string, unknown>;
+    kvStore.set('catalog:candidates:index', ['raw-sort-a', 'raw-sort-b']);
+    kvStore.set('catalog:candidate:raw-sort-a', {
+      id: 'raw-sort-a',
+      hotelKey: 'g1-d97',
+      name: 'Raw Sort A',
+      city: 'Paris',
+      country: 'France',
+      status: 'pending',
+      source: 'manual-admin',
+      provenance: null,
+      updatedAt: undefined,
+    });
+    kvStore.set('catalog:candidate:raw-sort-b', {
+      id: 'raw-sort-b',
+      hotelKey: 'g1-d98',
+      name: 'Raw Sort B',
+      city: 'Paris',
+      country: 'France',
+      status: 'pending',
+      source: 'manual-admin',
+      provenance: null,
+      updatedAt: undefined,
+    });
+
+    const listed = await listCandidates({ status: 'pending' });
+
+    expect(listed.map((candidate) => candidate.id)).toEqual(['raw-sort-a', 'raw-sort-b']);
+  });
+
   it('marks candidates stale and reports missing review targets without promotion', async () => {
     expect(await approveCandidate('missing-id')).toEqual({
       approved: false,

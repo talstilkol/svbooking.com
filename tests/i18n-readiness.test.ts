@@ -77,6 +77,7 @@ describe('i18n readiness', () => {
     expect(getTranslation('fr', 'comparePrices')).toBe('Compare prices');
     expect(getTranslation('he', 'missingTranslationKey')).toBe('missingTranslationKey');
     expect(getDictionary('fr').priceUnavailable).toBe('Price unavailable');
+    expect(getLocaleConfig('')).toMatchObject({ code: 'en', dir: 'ltr' });
     expect(formatLocalizedCurrency(99.4, 'fr', '')).toContain('$');
   });
 

@@ -186,6 +186,7 @@ describe('price accuracy ledger', () => {
     ]);
     store.set('price:mismatches:2026-05-31', [
       { provider: 'Expedia' },
+      {},
     ]);
 
     const capped = await getPriceAccuracyMetrics({ days: 60 });
@@ -193,10 +194,10 @@ describe('price accuracy ledger', () => {
 
     expect(capped.days).toBe(30);
     expect(capped.observations).toBe(2);
-    expect(capped.mismatches).toBe(1);
-    expect(capped.mismatchRate).toBe(0.5);
+    expect(capped.mismatches).toBe(2);
+    expect(capped.mismatchRate).toBe(1);
     expect(capped.byProvider['Booking.com']).toMatchObject({ observations: 1, mismatches: 0, mismatchRate: 0 });
-    expect(capped.byProvider.unknown).toMatchObject({ observations: 1, mismatches: 0, mismatchRate: 0 });
+    expect(capped.byProvider.unknown).toMatchObject({ observations: 1, mismatches: 1, mismatchRate: 1 });
     expect(capped.byProvider.Expedia).toMatchObject({ observations: 0, mismatches: 1, mismatchRate: null });
     expect(defaulted.days).toBe(7);
   });

@@ -50,6 +50,21 @@ describe('exchange rate helpers', () => {
     expect(getCurrencySymbol('XYZ')).toBe('XYZ');
   });
 
+  it('uses the fallback exchange source when the primary payload has no rates', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ result: 'success' }))
+      .mockResolvedValueOnce(jsonResponse({ usd: { ils: 3.65 } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getExchangeRates } = await import('@/lib/exchange-rates');
+
+    await expect(getExchangeRates('USD')).resolves.toMatchObject({
+      rates: { ILS: 3.65 },
+      cached: false,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('short-circuits same-currency conversion and reports missing rates', async () => {
     const fetchMock = vi.fn(async () => jsonResponse({ rates: { EUR: 0.92 } }));
     vi.stubGlobal('fetch', fetchMock);
@@ -124,7 +139,7 @@ describe('country metadata helpers', () => {
   });
 
   it('rejects missing country inputs and countries without currencies', async () => {
-    const fetchMock = vi.fn(async () => jsonResponse({ name: { common: 'Antarctica' }, currencies: {} }));
+    const fetchMock = vi.fn(async () => jsonResponse({ name: { common: 'Antarctica' } }));
     vi.stubGlobal('fetch', fetchMock);
     const { getCountryByCode, getCountryByName, getPrimaryCurrency } = await import('@/lib/countries');
 

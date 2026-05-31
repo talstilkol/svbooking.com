@@ -437,6 +437,32 @@ describe('Wikidata enrichment hardening', () => {
     expect(buildBookingUrl('fr/le-meurice', null as unknown as string, '2026-03-02')).toBe('https://www.booking.com/hotel/fr/le-meurice.html');
   });
 
+  it('ignores malformed Wikidata coordinate points while preserving sourced identifiers', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({
+      results: {
+        bindings: [
+          {
+            taId: { value: '188734' },
+            bookingId: { value: 'fr/le-meurice' },
+            coord: { value: 'Point(. 48.865)' },
+          },
+          {
+            taId: { value: '188735' },
+            bookingId: { value: 'fr/ritz-paris' },
+            coord: { value: 'not-a-point' },
+          },
+        ],
+      },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { enrichFromWikidata } = await import('@/lib/wikidata-enrich');
+
+    await expect(enrichFromWikidata(['188734', '188735'])).resolves.toEqual(new Map([
+      ['188734', { bookingSlug: 'fr/le-meurice' }],
+      ['188735', { bookingSlug: 'fr/ritz-paris' }],
+    ]));
+  });
+
   it('returns no Wikidata resolve rows when successful responses omit bindings', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({})));
     const { resolveWikidataToTripAdvisor } = await import('@/lib/wikidata-enrich');
@@ -609,6 +635,24 @@ describe('Wikidata discovery and DBpedia SPARQL hardening', () => {
     await expect(discoverHotels({ city: 'Paris', limit: 10 })).resolves.toEqual([
       expect.objectContaining({ hotelKey: 'g187147-d197601', name: 'Hotel Lutetia', city: 'Paris', country: 'France' }),
     ]);
+  });
+
+  it('returns empty Wikidata hotel discovery and city maps for sparse provider payloads', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({}))
+      .mockResolvedValueOnce(jsonResponse({}))
+      .mockResolvedValueOnce(jsonResponse({}));
+    vi.stubGlobal('fetch', fetchMock);
+    const { discoverHotels, countAvailableHotels, getCityGeoIds } = await import('@/lib/wikidata');
+
+    await expect(discoverHotels({ country: 'France', city: 'Paris', limit: 1 })).resolves.toEqual([]);
+    await expect(getCityGeoIds(['Paris', 'Paris', '', 'London'])).resolves.toEqual({});
+    await expect(countAvailableHotels()).resolves.toBe(0);
+
+    const query = capturedQuery(fetchMock, 0);
+    expect(query).toContain('rdfs:label "France"@en');
+    expect(query).toContain('LCASE("Paris")');
   });
 
   it('escapes DBpedia city filters, bounds limits, and deduplicates named hotels', async () => {
@@ -803,6 +847,61 @@ describe('Wikivoyage parser hardening', () => {
     }));
 
     await expect(getSafetyInfo('Paris')).resolves.toBeNull();
+  });
+
+  it('handles Wikivoyage sections with empty HTML without fallback copy', async () => {
+    const fetchMock = vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.includes('prop=sections')) {
+        return jsonResponse({
+          parse: {
+            sections: [
+              { index: '1', line: 'Stay safe', level: '2' },
+              { index: '2', line: 'Eat', level: '2' },
+            ],
+          },
+        });
+      }
+      return jsonResponse({ parse: { text: { '*': '' } } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { getDiningInfo, getSafetyInfo } = await import('@/lib/wikivoyage');
+
+    await expect(getSafetyInfo('Paris')).resolves.toBeNull();
+    await expect(getDiningInfo('Paris')).resolves.toBeNull();
+  });
+
+  it('parses Wikivoyage safety sections without requiring a health section', async () => {
+    const fetchMock = vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.includes('prop=sections')) {
+        return jsonResponse({
+          parse: {
+            sections: [
+              { index: '1', line: 'Stay safe', level: '2' },
+            ],
+          },
+        });
+      }
+      return jsonResponse({
+        parse: {
+          text: {
+            '*': '<p>Old Town is dangerous after dark. Al is dangerous after dark. Extremely Long Neighborhood Name Beyond Thirty Characters is dangerous after dark.</p>',
+          },
+        },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { getSafetyInfo } = await import('@/lib/wikivoyage');
+
+    await expect(getSafetyInfo('Paris')).resolves.toMatchObject({
+      tips: expect.arrayContaining(['Old Town is dangerous after dark.']),
+      areas: [
+        { name: 'Old Town', safe: false, note: 'Exercise caution' },
+      ],
+      vaccinations: null,
+      waterSafety: null,
+    });
   });
 
   it('returns only safety and health facts that are present in source sections', async () => {

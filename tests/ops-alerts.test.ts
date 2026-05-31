@@ -381,6 +381,51 @@ describe('ops alerts', () => {
     expect(result.alerts.map((item) => item.id)).not.toContain('price-accuracy-warning-drift');
   });
 
+  it('handles missing provider lists after aggregate uptime has enough evidence', async () => {
+    vi.mocked(buildHealthSnapshot).mockReturnValueOnce({
+      service: 'sv-booking',
+      status: 'healthy',
+      ready: true,
+      checkedAt: '2026-05-14T12:00:00.000Z',
+      checks: {
+        security: { productionReady: true, adminAuthConfigured: true },
+        cache: { durable: true, mode: 'persistent' },
+        providers: { available: 2 },
+        alerts: { deliveryConfigured: true, deliveryStatus: 'configured' },
+      },
+      warnings: [],
+    } as unknown as ReturnType<typeof buildHealthSnapshot>);
+    vi.mocked(buildOpsScorecard).mockReturnValueOnce({
+      service: 'sv-booking',
+      status: 'healthy',
+      score: 1,
+      blockers: [],
+    } as unknown as ReturnType<typeof buildOpsScorecard>);
+    vi.mocked(getProviderUptimeMetrics).mockResolvedValueOnce({
+      status: 'available',
+      eventCount: 5,
+      providerCount: 0,
+      successRatePct: 100,
+    } as unknown as Awaited<ReturnType<typeof getProviderUptimeMetrics>>);
+    vi.mocked(getPriceAccuracyMetrics).mockResolvedValueOnce({
+      days: 7,
+      observations: 10,
+      mismatches: 0,
+      mismatchRate: 0,
+      byProvider: {},
+    });
+
+    const result = await buildOpsAlerts({ now: new Date('2026-05-14T12:00:00.000Z') });
+
+    expect(result.status).toBe('healthy');
+    expect(result.alerts).toEqual([]);
+    expect(result.evidence.providerUptime).toMatchObject({
+      eventCount: 5,
+      providerCount: 0,
+      successRatePct: 100,
+    });
+  });
+
   it('protects ops alerts behind admin auth and no-store', async () => {
     const denied = await GET(new Request('http://localhost:3000/api/ops/alerts'));
     expect(denied!.status).toBe(401);

@@ -10,6 +10,7 @@ let fetchBehavior:
   | 'timeout-then-succeed'
   | 'fetch-failed-then-succeed'
   | 'fetch-failed-short-budget'
+  | 'non-transient-failure'
   | 'error-with-rates'
   | 'error-no-rates'
   | 'no-result'
@@ -48,6 +49,10 @@ vi.stubGlobal('fetch', vi.fn(async (url: string) => {
 
   if (fetchBehavior === 'fetch-failed-short-budget') {
     throw new Error('fetch failed');
+  }
+
+  if (fetchBehavior === 'non-transient-failure') {
+    throw new Error('permanent upstream rejection');
   }
 
   if (fetchBehavior === 'always-fail') {
@@ -178,6 +183,15 @@ describe('xotelo retry', () => {
     await expect(
       getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 1000 })
     ).rejects.toThrow('fetch failed');
+
+    expect(fetchCalls).toHaveLength(1);
+  });
+
+  it('does not retry non-transient failures and accepts a null timeout as the default budget', async () => {
+    fetchBehavior = 'non-transient-failure';
+    await expect(
+      getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: null as unknown as number })
+    ).rejects.toThrow('permanent upstream rejection');
 
     expect(fetchCalls).toHaveLength(1);
   });

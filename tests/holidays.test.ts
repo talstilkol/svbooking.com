@@ -111,6 +111,18 @@ describe('holiday provider normalization', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it('loads same-year holiday ranges without fetching the next year', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify([
+      { date: '2026-07-04', name: 'Independence Day', localName: 'Independence Day', countryCode: 'US', fixed: true, global: true, types: ['Public'] },
+    ]), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getHolidaysInRange('US', '2026-07-01', '2026-07-10')).resolves.toEqual([
+      expect.objectContaining({ date: '2026-07-04' }),
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('computes upcoming holiday distance from the current clock and includes next year near year end', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-01T00:00:00Z'));
@@ -128,6 +140,20 @@ describe('holiday provider normalization', () => {
       expect.objectContaining({ date: '2026-11-15', daysAway: 14 }),
       expect.objectContaining({ date: '2027-01-01', daysAway: 61 }),
     ]);
+  });
+
+  it('does not fetch next-year upcoming holidays before the final quarter', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-01T00:00:00Z'));
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify([
+      { date: '2026-06-15', name: 'National Day', localName: 'National Day', countryCode: 'US', fixed: true, global: true, types: ['Public'] },
+    ]), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getUpcomingHolidays('US')).resolves.toEqual([
+      expect.objectContaining({ date: '2026-06-15', daysAway: 14 }),
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('returns an explicit unavailable state for optional holiday intelligence provider gaps', async () => {

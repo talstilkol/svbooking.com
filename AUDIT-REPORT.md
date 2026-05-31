@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-The stabilization pass moved SV Booking from locally healthy but documentation-stale to a more release-ready state. The app now has current docs, a CI-wired documentation drift audit, a 502-hotel catalog, deterministic cache jitter, clean local release state, deterministic E2E trust-state checks for unavailable property amenities, and a coverage ratchet at 98% branch coverage.
+The stabilization pass moved SV Booking from locally healthy but documentation-stale to a more release-ready state. The app now has current docs, a CI-wired documentation drift audit, a 502-hotel catalog, deterministic cache jitter, clean local release state, deterministic E2E trust-state checks for unavailable property amenities, and a coverage ratchet above 99% branch coverage.
 
 The remaining blockers are not code placeholders to fill in locally:
 
@@ -20,9 +20,9 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 171 test files, 1037 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 99.22% lines, 98.62% statements, 97.11% functions, and 98% branches. |
-| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 99.2%, statements 98.6%, functions 97.1%, branches 98%. |
+| `npm test` | PASS | 173 test files, 1056 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 99.42% lines, 98.92% statements, 97.24% functions, and 99.03% branches. |
+| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 99.4%, statements 98.9%, functions 97.2%, branches 99%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 72 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
@@ -56,7 +56,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Build/test health | 10/10 | Lint, unit/API tests, build, and E2E pass. |
 | Security guardrails | 8/10 | Admin auth, CSRF, HTML safety, privacy, storage, alert, and no-store checks are wired; production enforcement still needs real env and deployment verification. |
 | Documentation integrity | 9/10 | README, master plan, audit report, CI, and docs audit now agree on current architecture/counts. |
-| Coverage depth | 9/10 | Coverage tooling runs and has a regression floor; branch coverage is 98%; the next local quality target is 99%+. |
+| Coverage depth | 9/10 | Coverage tooling runs and has a regression floor; branch coverage is above 99%; the next local quality target is exhaustive remaining edge coverage. |
 | Catalog scale | 6/10 | 502 curated hotels clears the local launch floor, but it is not market-scale and reused imagery warnings remain. |
 | Provider readiness | 5/10 | Adapter infrastructure exists; real production provider credentials are missing locally. |
 | Reviews/property content | 4/10 | APIs and UI correctly show unavailable states until licensed provider data exists; rich content is not live. |
@@ -145,6 +145,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Raised branch coverage above 96% with POI/weather/event sparse payload coverage, catalog-candidate nested ID and sparse merge coverage, user-data cleanup hardening, price-alert delivery failure coverage, review-provider fallback coverage, Xotelo retry/default coverage, cheaper-date malformed-tax coverage, and constrained ops-scorecard readiness coverage.
 - Raised branch coverage to 97% with catalog durable-load edge cases, Overpass sparse-coordinate parsing, Nominatim sparse metadata handling, geo/IP fallback hardening, URL hostname edge coverage, ops warning-only alert status, strict admin-only auth separation, and cheaper-date heatmap bracket selection coverage.
 - Raised branch coverage to 98% with admin-session auth failure coverage, price-recommendation currency fallbacks, sparse REST Countries/DBpedia payloads, invalid forwarded-origin metadata, geolocation IPv6 hardening, map-marker fallback gaps, ops alert delivery/event empty-state coverage, price-alert unsubscribe guards, and provider-observability label normalization.
+- Raised branch coverage above 99% with health-readiness edge coverage, storage/currency browser fallbacks, provider coverage duplicate metrics, catalog candidate raw-KV handling, Wikipedia batching, Wikidata sparse payloads, cheaper-date zero-price heatmaps, Xotelo non-transient retry behavior, and catalog full-load fallback coverage.
 - Added provenance and deployment-smoke audits plus a `SITE_URL`-driven deployment smoke script for post-deploy verification without fake data.
 - Added provider coverage telemetry by observation date, provider, city, and country from verified `price:observations:*` records only; empty ledgers report `insufficient-data`.
 
@@ -155,7 +156,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Branch coverage next target | Medium | `lib` branch coverage is 98%. | Continue focused tests for remaining hotels-catalog, provider observability, price-cache, catalog-candidates, storage, and remaining API/network error branches, then raise the next branch ratchet toward 99%. |
+| Branch coverage next target | Medium | `lib` branch coverage is 99.03%. | Continue focused tests for remaining private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and API/network error branches, then raise the next ratchet beyond 99%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |

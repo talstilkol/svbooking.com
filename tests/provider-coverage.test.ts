@@ -73,28 +73,34 @@ describe('provider coverage telemetry', () => {
         quotedTotal: 100,
         currency: 'USD',
       },
+      {
+        hotelKey: 'g187147-d188728',
+        provider: 'Booking.com',
+        quotedTotal: 510,
+        currency: 'USD',
+      },
     ]);
 
     const coverage = await getProviderCoverageMatrix({ days: 1 });
 
     expect(coverage.status).toBe('available');
-    expect(coverage.totalObservations).toBe(3);
+    expect(coverage.totalObservations).toBe(4);
     expect(coverage.byDate).toEqual([
       expect.objectContaining({
         date: '2026-05-31',
-        observations: 3,
+        observations: 4,
         providerCount: 3,
         cityCount: 3,
         countryCount: 3,
       }),
     ]);
     expect(coverage.byProvider).toEqual([
-      expect.objectContaining({ key: 'Booking.com', observations: 1, cities: ['Paris'], countries: ['France'] }),
+      expect.objectContaining({ key: 'Booking.com', observations: 2, cities: ['Paris'], countries: ['France'] }),
       expect.objectContaining({ key: 'Expedia', observations: 1, cities: ['London'], countries: ['United Kingdom'] }),
       expect.objectContaining({ key: 'unknown', observations: 1, cities: ['unknown'], countries: ['unknown'] }),
     ]);
     expect(coverage.byCountry).toEqual(expect.arrayContaining([
-      expect.objectContaining({ country: 'France', observations: 1, providers: ['Booking.com'] }),
+      expect.objectContaining({ country: 'France', observations: 2, providers: ['Booking.com'] }),
       expect.objectContaining({ country: 'United Kingdom', observations: 1, providers: ['Expedia'] }),
     ]));
   });

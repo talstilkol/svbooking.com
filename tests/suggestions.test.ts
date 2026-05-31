@@ -75,6 +75,24 @@ describe('buildSuggestions', () => {
     });
   });
 
+  it('skips stale and distant trips and does not infer a home city from split favorites', () => {
+    const suggestions = buildSuggestions({
+      favorites: [
+        favorite(),
+        favorite({ hotelKey: 'g60763-d93562', name: 'The Plaza', city: 'New York', country: 'United States' }),
+      ],
+      trips: [
+        trip({ id: 'past-trip', hotelKey: 'g1-d1', checkIn: '2026-05-01' }),
+        trip({ id: 'distant-trip', hotelKey: 'g1-d2', checkIn: '2026-07-01' }),
+      ],
+    });
+
+    expect(suggestions.map((suggestion) => suggestion.kind)).toEqual([
+      'plan_trip',
+      'plan_trip',
+    ]);
+  });
+
   it('suggests compare when a home city exists and no trips are saved', () => {
     const suggestions = buildSuggestions({
       favorites: [],

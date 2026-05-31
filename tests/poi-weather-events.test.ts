@@ -129,12 +129,16 @@ describe('Overpass POI helpers', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({ elements: [] }))
-      .mockResolvedValueOnce(jsonResponse({ elements: [{ id: 1 }] }));
+      .mockResolvedValueOnce(jsonResponse({ elements: [{ id: 1 }] }))
+      .mockResolvedValueOnce(jsonResponse({ elements: [] }))
+      .mockResolvedValueOnce(jsonResponse({ elements: [{ id: 2 }] }));
     vi.stubGlobal('fetch', fetchMock);
     const { discoverAttractions, discoverRestaurants } = await import('@/lib/overpass-pois');
 
     await expect(discoverAttractions({ lat: 0, lon: 0 })).resolves.toEqual([]);
     await expect(discoverRestaurants({ lat: 0, lon: 0 })).resolves.toEqual([]);
+    await expect(discoverRestaurants({ lat: 0, lon: 0 })).resolves.toEqual([]);
+    await expect(discoverAttractions({ lat: 0, lon: 0 })).resolves.toEqual([]);
   });
 
   it('surfaces Overpass rate limits, HTTP errors, and request timeouts for discovery calls', async () => {
@@ -192,16 +196,20 @@ describe('Overpass POI helpers', () => {
   });
 
   it('returns null when OSM hotel tags do not expose known amenities', async () => {
-    const fetchMock = vi.fn(async () => jsonResponse({
-      elements: [
-        { tags: { tourism: 'hotel', stars: '3' } },
-      ],
-    }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({
+        elements: [
+          { tags: { tourism: 'hotel', stars: '3' } },
+        ],
+      }))
+      .mockResolvedValueOnce(jsonResponse({ elements: [{}] }));
     vi.stubGlobal('fetch', fetchMock);
     const { getHotelAmenities } = await import('@/lib/overpass-pois');
 
     await expect(getHotelAmenities({ lat: 48.8566, lon: 2.3522, hotelName: 'A' })).resolves.toBeNull();
     await expect(getHotelAmenities({ lat: 48.8566, lon: 2.3522, hotelName: 'City Hotel' })).resolves.toBeNull();
+    await expect(getHotelAmenities({ lat: 48.8566, lon: 2.3522, hotelName: 'River Hotel' })).resolves.toBeNull();
   });
 
   it('handles empty hotel amenity matches and free internet without a duplicate WiFi tag', async () => {
@@ -654,6 +662,40 @@ describe('Ticketmaster helpers', () => {
     expect(url.searchParams.has('startDateTime')).toBe(false);
     expect(url.searchParams.has('endDateTime')).toBe(false);
     expect(events).toHaveLength(1);
+  });
+
+  it('ignores non-string Ticketmaster dates without treating them as provider failures', async () => {
+    vi.stubEnv('TICKETMASTER_API_KEY', 'tm_realistic_key_for_tests');
+    const fetchMock = vi.fn(async () => jsonResponse({
+      _embedded: {
+        events: [
+          {
+            name: 'Paris Opera Gala',
+            dates: { start: { localDate: 20260714 } },
+          },
+        ],
+      },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getEvents } = await import('@/lib/ticketmaster');
+
+    const events = await getEvents({
+      lat: 48.8566,
+      lon: 2.3522,
+      startDate: 20260701 as unknown as string,
+      endDate: null as unknown as string,
+    });
+    const url = new URL(String(fetchMock.mock.calls[0][0]));
+
+    expect(url.searchParams.has('startDateTime')).toBe(false);
+    expect(url.searchParams.has('endDateTime')).toBe(false);
+    expect(events).toEqual([
+      expect.objectContaining({
+        name: 'Paris Opera Gala',
+        date: '',
+        month: '',
+      }),
+    ]);
   });
 
   it('drops incomplete Ticketmaster events and strips unsafe ticket URLs', async () => {

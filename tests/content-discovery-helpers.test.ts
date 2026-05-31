@@ -24,12 +24,15 @@ describe('HotelDatabase static catalog adapter', () => {
 
     const parisHotels = await db.search({ city: 'paris', limit: 2 });
     const franceHotels = await db.search({ country: 'france', query: 'hotel', limit: 3, offset: 1 });
+    const londonHotels = await db.search({ city: 'london' });
     const leMeurice = await db.getByKey('g187147-d188728');
 
     expect(parisHotels).toHaveLength(2);
     expect(parisHotels.every((hotel) => hotel.city === 'Paris')).toBe(true);
     expect(franceHotels).toHaveLength(3);
     expect(franceHotels.every((hotel) => hotel.country === 'France')).toBe(true);
+    expect(londonHotels.length).toBeGreaterThan(3);
+    expect(londonHotels.every((hotel) => hotel.city === 'London')).toBe(true);
     expect(leMeurice).toMatchObject({
       hotelKey: 'g187147-d188728',
       name: 'Le Meurice',
@@ -93,6 +96,21 @@ describe('Wikipedia content helpers', () => {
     expect(summaries.size).toBe(1);
     expect(summaries.get('Paris')).toMatchObject({ title: 'Paris', extract: 'Paris summary.' });
     await expect(batchSummaries(['No Extract'])).resolves.toEqual(new Map());
+  });
+
+  it('pauses between Wikipedia summary batches after each group of four titles', async () => {
+    const fetchMock = vi.fn(async (input: string) => {
+      const title = decodeURIComponent(String(input).split('/').pop() || '').replace(/_/g, ' ');
+      return jsonResponse({ title, extract: `${title} summary.` });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { batchSummaries } = await import('@/lib/wikipedia');
+
+    const summaries = await batchSummaries(['Paris', 'London', 'Tokyo', 'Rome', 'Berlin']);
+
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expect(summaries.size).toBe(5);
+    expect(summaries.get('Berlin')).toMatchObject({ title: 'Berlin' });
   });
 
   it('strips HTML snippets from search results and reports invalid/HTTP failures', async () => {

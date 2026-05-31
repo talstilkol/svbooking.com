@@ -141,6 +141,15 @@ describe('local storage key helpers', () => {
       'USD'
     )).toBe('GBP');
     expect(JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.currency) || 'null')).toBe('GBP');
+
+    localStorage.clear();
+    localStorage.setItem('object-shaped-legacy-currency', JSON.stringify({ code: 'EUR' }));
+
+    expect(readLocalStorageStringWithFallback(
+      LOCAL_STORAGE_KEYS.currency,
+      ['object-shaped-legacy-currency'],
+      'USD'
+    )).toBe('{"code":"EUR"}');
   });
 
   it('prefers canonical JSON values and migrates JSON string fallbacks', () => {
@@ -187,6 +196,19 @@ describe('local storage key helpers', () => {
     Object.defineProperty(globalThis, 'window', {
       configurable: true,
       value: { localStorage: null },
+    });
+
+    expect(readLocalStorageExportData()).toEqual({});
+
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: {
+        localStorage: {
+          length: 1,
+          key: () => getTravelChecklistStorageKey('g187147-d188728'),
+          getItem: () => null,
+        },
+      },
     });
 
     expect(readLocalStorageExportData()).toEqual({});

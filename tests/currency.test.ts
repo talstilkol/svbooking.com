@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect } from 'vitest';
 import {
   CURRENCIES,
   EXCHANGE_RATES,
@@ -10,6 +10,13 @@ import {
 } from '@/lib/currency';
 
 describe('currency', () => {
+  afterEach(() => {
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: undefined,
+    });
+  });
+
   describe('CURRENCIES', () => {
     it('has at least 10 currencies', () => {
       expect(CURRENCIES.length).toBeGreaterThanOrEqual(10);
@@ -85,6 +92,10 @@ describe('currency', () => {
       expect(result).toContain('$');
       expect(result).toContain('100');
     });
+
+    it('falls back to the base rate for unknown but well-formed currency codes', () => {
+      expect(formatPrice(100, 'XYZ')).toContain('100');
+    });
   });
 
   describe('detectCurrency', () => {
@@ -97,6 +108,41 @@ describe('currency', () => {
     it('keeps currency reads and writes server-safe without window access', () => {
       expect(getCurrencyCode()).toBe('USD');
       expect(() => setCurrencyCode('EUR')).not.toThrow();
+    });
+
+    it('reads a valid browser-stored currency before attempting locale detection', () => {
+      const store = new Map<string, string>([
+        ['svbooking:currency', JSON.stringify('EUR')],
+      ]);
+      Object.defineProperty(globalThis, 'window', {
+        configurable: true,
+        value: {
+          localStorage: {
+            getItem: (key: string) => store.get(key) ?? null,
+            setItem: (key: string, value: string) => store.set(key, value),
+          },
+        },
+      });
+
+      expect(getCurrencyCode()).toBe('EUR');
+    });
+
+    it('falls back to detection when browser storage contains an unsupported currency', () => {
+      const store = new Map<string, string>([
+        ['svbooking:currency', JSON.stringify('BAD')],
+      ]);
+      Object.defineProperty(globalThis, 'window', {
+        configurable: true,
+        value: {
+          localStorage: {
+            getItem: (key: string) => store.get(key) ?? null,
+            setItem: (key: string, value: string) => store.set(key, value),
+          },
+        },
+      });
+
+      expect(getCurrencyCode()).toBe('USD');
+      expect(JSON.parse(store.get('svbooking:currency') || 'null')).toBe('USD');
     });
   });
 });
