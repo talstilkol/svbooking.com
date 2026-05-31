@@ -52,19 +52,19 @@ The remaining blockers are not code placeholders to fill in locally:
 
 | Domain | Score | Notes |
 | --- | ---: | --- |
-| Determinism / no fabricated data | 10/10 | Randomness guardrails pass; unknown data remains unavailable. |
+| Determinism / no fabricated data | 9/10 | Randomness guardrails pass; unknown data remains unavailable, but this is not yet a formal provenance proof for every future data path. |
 | Build/test health | 10/10 | Lint, unit/API tests, build, and E2E pass. |
-| Security guardrails | 9/10 | Admin auth, CSRF, HTML safety, privacy, storage, alert, and no-store checks are wired. |
+| Security guardrails | 8/10 | Admin auth, CSRF, HTML safety, privacy, storage, alert, and no-store checks are wired; production enforcement still needs real env and deployment verification. |
 | Documentation integrity | 9/10 | README, master plan, audit report, CI, and docs audit now agree on current architecture/counts. |
 | Coverage depth | 8/10 | Coverage tooling runs and has a regression floor; branch coverage now clears the 80% target. |
-| Catalog scale | 7/10 | 502 curated hotels clears the local launch floor, still far from market-scale coverage. |
-| Provider readiness | 6/10 | Adapter infrastructure exists; real production provider credentials are missing locally. |
-| Reviews/property content | 5/10 | APIs and UI correctly show unavailable states until licensed provider data exists. |
-| Production readiness | 5/10 | Strict readiness correctly fails until deployment env is configured. |
+| Catalog scale | 6/10 | 502 curated hotels clears the local launch floor, but it is not market-scale and reused imagery warnings remain. |
+| Provider readiness | 5/10 | Adapter infrastructure exists; real production provider credentials are missing locally. |
+| Reviews/property content | 4/10 | APIs and UI correctly show unavailable states until licensed provider data exists; rich content is not live. |
+| Production readiness | 4/10 | Strict readiness correctly fails until deployment env is configured. |
 | Release hygiene | 10/10 | Worktree is clean; keep release-state strict before deployment. |
 
-**Overall engineering score:** 8.6/10
-**Go-live readiness:** 5/10 until strict production readiness passes in deployment
+**Overall engineering score:** 8.0/10
+**Go-live readiness:** 4/10 until strict production readiness passes in deployment
 
 ## Changes Completed In This Stabilization Pass
 
