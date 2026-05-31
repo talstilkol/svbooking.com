@@ -8,7 +8,7 @@ The app is locally healthy but not production-ready until real deployment config
 | --- | ---: | --- |
 | Determinism and no-fabrication guardrails | 9/10 | `Math.random()` and unapproved UUID randomness are blocked by scans/audits; this is still not a formal proof that every future data path has complete provenance. |
 | Local build/test health | 10/10 | Lint, unit/API tests, build, and E2E are expected release gates. |
-| Coverage depth | 9/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 99.43% lines and 99.05% branches. |
+| Coverage depth | 9/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 99.43% lines and 99.07% branches. |
 | Security guardrails | 8/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, public API URL safety, and no-store audits are wired; production enforcement still depends on real env and deployment verification. |
 | Catalog quality | 6/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage and has reused catalog imagery warnings. |
 | Provider coverage | 5/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
@@ -26,7 +26,7 @@ This section is the source of truth for what is complete versus only locally sca
 | Determinism: no `Math.random()` | DONE | `rg "Math\.random\|crypto\.randomUUID" app components lib scripts tests -S` returns no matches. |
 | No-fabrication guardrails | PARTIAL | `npm run audit:guardrails` and `npm run audit:provenance` pass, but there is no exhaustive licensed-source proof for every legacy catalog item/image and future provider/content path. |
 | Local lint/unit/build/E2E health | DONE | `npm run lint`, `npm test`, `npm run build`, and `npm run test:e2e` passed locally. |
-| Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 99.43% lines, 98.94% statements, 97.3% functions, 99.05% branches. |
+| Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 99.43% lines, 98.95% statements, 97.35% functions, 99.07% branches. |
 | Coverage to world-class depth | PARTIAL | Branch coverage is above 99%, but not exhaustive; remaining weak areas include private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and remaining API/network error branches. |
 | Security audits wired | DONE | CSRF, HTML safety, storage, privacy, alert, public URL, affiliate, no-store, API error, and cron-cache audits pass locally. |
 | Production security enforcement | PARTIAL | Code gates exist, but real admin, cron, Kinde, Redis, provider, alert, and push env are not configured locally. |
@@ -105,7 +105,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Review modified/deleted/untracked files before staging | DONE | Release-state strict was clean before commits. |
 | Stabilization Priority | Split unrelated work into reviewable commits | DONE | Last work was split into two focused commits. |
 | Stabilization Priority | Keep generated/cache artifacts out of commits | DONE | Release-state strict reported no generated artifacts. |
-| Stabilization Priority | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 99.05% and the floor is 99%. |
+| Stabilization Priority | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 99.07% and the floor is 99%. |
 | Stabilization Priority | Prioritize remaining branch coverage hot spots | PARTIAL | Overpass, provider registry, i18n, ops alert, price-cache, provider accuracy, public URL, geolocation, discovery, Wikidata, Google Places reviews, catalog candidate locking, provider uptime, OpenTripMap, Xotelo, rate-limit, admin audit, ops scorecard, POI/weather/event sparse payloads, user-data cleanup, review fallback, alert delivery, durable catalog load, strict admin-only auth, cheaper-date heatmap bracket, admin-session, price-recommendation, REST Countries, DBpedia, map-marker, request-origin, ops delivery, unsubscribe-token, currency/storage, health readiness, Wikipedia batching, and catalog full-load fallback branches were expanded; remaining hot spots include private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and remaining API/network error branches. |
 | Stabilization Priority | Keep coverage reports out of commits | DONE | Coverage artifacts were not staged. |
 | Stabilization Priority | Keep README, env example, runbook, and plan aligned | PARTIAL | Local docs audit passes; deployment runbook evidence is missing. |
@@ -119,9 +119,9 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints exist; external monitoring and webhook delivery are not configured. |
 | Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
 | Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
-| Acceptance Criteria | `npm test` passes | DONE | 173 files / 1059 tests passed. |
+| Acceptance Criteria | `npm test` passes | DONE | 174 files / 1063 tests passed. |
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
-| Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 99.43% lines and 99.05% branches. |
+| Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 99.43% lines and 99.07% branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 728 static pages. |
 | Acceptance Criteria | `npm run test:e2e` passes | DONE | 72 Playwright tests passed. |
 | Acceptance Criteria | Every non-strict `npm run audit:*` passes | DONE | All non-strict audit scripts passed locally. |
@@ -136,10 +136,10 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Backlog P0 | Configure approved pricing partner and verify provider-returned rates | NOT DONE | Requires partner credentials. |
 | Backlog P0 | Configure licensed review/property provider | NOT DONE | Requires licensed provider access. |
 | Backlog P1 | Raise branch coverage from 83.26% toward 84% | DONE | Coverage ratchet has moved past this milestone. |
-| Backlog P1 | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 99.05%. |
-| Backlog P1 | Raise branch coverage from 85.08% toward 88% | DONE | Current branch coverage is 99.05% and the floor is 99%. |
-| Backlog P1 | Raise branch coverage from 88.14% toward 90% | DONE | Current branch coverage is 99.05% and the floor is 99%. |
-| Backlog P1 | Raise branch coverage from 90.04% toward 92% | DONE | Current branch coverage is 99.05%; the ratchet floor is now 99%. |
+| Backlog P1 | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 99.07%. |
+| Backlog P1 | Raise branch coverage from 85.08% toward 88% | DONE | Current branch coverage is 99.07% and the floor is 99%. |
+| Backlog P1 | Raise branch coverage from 88.14% toward 90% | DONE | Current branch coverage is 99.07% and the floor is 99%. |
+| Backlog P1 | Raise branch coverage from 90.04% toward 92% | DONE | Current branch coverage is 99.07%; the ratchet floor is now 99%. |
 | Backlog P1 | Add focused tests for remaining weak branches | PARTIAL | Focused network, provider, cache, i18n, ops, URL-safety, geolocation, discovery, Wikidata, Google Places reviews, catalog candidate locking, provider uptime, OpenTripMap, Xotelo, rate-limit, admin audit, ops scorecard, dynamic catalog, cheaper-date fallback, catalog candidates, KV adapter, webhook, DBpedia/Wikivoyage, POI/weather/event sparse payloads, user-data cleanup, review fallback, alert delivery, durable catalog load, strict admin-only auth, heatmap bracket, admin-session, price-recommendation, REST Countries, map-marker, request-origin, ops delivery, unsubscribe-token, currency/storage, health readiness, Wikipedia batching, and catalog full-load tests were added; private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and remaining API/network error branches remain. |
 | Backlog P1 | Replace reused catalog images | NOT DONE | Image reuse warnings remain. |
 | Backlog P1 | Add stronger provenance audit | PARTIAL | `audit:provenance` now checks candidate promotion provenance and provider-link sanitization; it does not yet prove every legacy static catalog item/image has licensed source metadata. |
@@ -153,7 +153,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Backlog P3 | Real-user monitoring and Core Web Vitals | NOT DONE | No production RUM proof exists. |
 | Backlog P3 | Localization QA beyond Hebrew/English | PARTIAL | Hebrew/English exist; broader RTL/LTR QA is incomplete. |
 | Backlog P3 | Commercial/legal readiness | NOT DONE | Requires partner terms, affiliate/legal review, and licensed content signoff. |
-| Backlog P3 | Competitor parity tracking | NOT DONE | Not implemented as an automated product/ops tracker. |
+| Backlog P3 | Competitor parity tracking | PARTIAL | Ops scorecard now includes sourced competitor parity tracking for inventory breadth, price freshness, mobile installability, reviews/property content, alerts, booking handoff, and Israel coverage; weekly source review and live production proof are still incomplete. |
 | Non-Negotiable | Never use `Math.random()` | DONE | Scan is clean. |
 | Non-Negotiable | Never display fabricated hotel/review/price/provider/urgency/availability/readiness data | PARTIAL | Guardrails pass; exhaustive provenance proof remains open. |
 | Non-Negotiable | Never use invented secrets | DONE | Strict readiness fails instead of accepting placeholders. |
@@ -253,7 +253,8 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 - [ ] Add real-user monitoring and Core Web Vitals tracking per top route and device class.
 - [ ] Add international localization QA beyond Hebrew/English, including RTL/LTR layout regression checks.
 - [ ] Add commercial/legal readiness for partner terms, affiliate disclosures, privacy, retention, and licensed content display.
-- [ ] Add competitor parity tracking for inventory breadth, price freshness, mobile installability, reviews, alerts, and booking handoff quality.
+- [x] Add sourced competitor parity tracking for inventory breadth, price freshness, mobile installability, reviews, alerts, booking handoff quality, and Israel coverage.
+- [ ] Run weekly competitor source review and live production proof before treating parity status as launch evidence.
 
 ## Detailed Execution Plan
 
@@ -264,7 +265,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | 2. Trust and provenance | Add source/provenance coverage for catalog entries, catalog images, provider links, price observations, review snippets, and property content. | A provenance audit fails any new item that cannot be traced to an allowed source or licensed provider. |
 | 3. Quality ratchet | Raise branch coverage beyond 99% toward exhaustive coverage, focusing on catalog, provider observability, cache, URL-safety, auth, storage, and network failure paths. | Coverage floors are increased after each verified pass and CI blocks regression. |
 | 4. Content scale | Expand inventory only through candidate ingestion, duplicate detection, source review, admin approval, and licensed media replacement. | Catalog grows without fake items, duplicate identities, unsafe URLs, or reused unlicensed media. |
-| 5. Product parity | Add provider coverage matrix, price freshness, alert delivery, mobile push, RUM, Core Web Vitals, competitor parity dashboard, and legal/commercial signoff. | Product can be compared against Booking, Google Travel, KAYAK/HotelsCombined, Expedia, trivago, Fattal, and Isrotel with live metrics instead of manual claims. |
+| 5. Product parity | Add provider coverage matrix, price freshness, alert delivery, mobile push, RUM, Core Web Vitals, competitor parity dashboard, and legal/commercial signoff. | Product can be compared against Booking, Google Travel, KAYAK/HotelsCombined, Expedia, trivago, Fattal, and Isrotel with sourced metrics instead of manual claims. |
 | 6. Number-one loop | Run weekly competitor audits, source-quality audits, conversion/drop-off analysis, support-risk review, and pricing accuracy drift review. | The roadmap is driven by measured gaps in inventory, freshness, trust, speed, mobile retention, and booking handoff quality. |
 
 ## Non-Negotiables

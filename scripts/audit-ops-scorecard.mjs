@@ -23,11 +23,13 @@ function requireIncludes(source, relativePath, snippets) {
 }
 
 await requireFile('lib/ops-scorecard.js');
+await requireFile('lib/competitor-parity.js');
 await requireFile('app/api/ops/scorecard/route.js');
 
 const scorecard = await readProjectFile('lib/ops-scorecard.js');
 requireIncludes(scorecard, 'lib/ops-scorecard.js', [
   'buildOpsScorecard',
+  'buildCompetitorParity',
   'productTruth',
   'freeOnlyLaunchReady',
   'production-readiness',
@@ -35,7 +37,29 @@ requireIncludes(scorecard, 'lib/ops-scorecard.js', [
   'reviews-and-property-content',
   'mobile-retention',
   'observability',
+  'competitor-parity',
+  'competitorParity',
   'blockers',
+]);
+
+const competitorParity = await readProjectFile('lib/competitor-parity.js');
+requireIncludes(competitorParity, 'lib/competitor-parity.js', [
+  'buildCompetitorParity',
+  'official-or-platform-owned-public-pages-only',
+  'booking',
+  'google-travel',
+  'kayak-hotelscombined',
+  'expedia',
+  'trivago',
+  'fattal',
+  'isrotel',
+  'inventory-breadth',
+  'price-freshness',
+  'mobile-installability',
+  'reviews-property-content',
+  'alerts-retention',
+  'booking-handoff-quality',
+  'local-market-coverage',
 ]);
 
 const route = await readProjectFile('app/api/ops/scorecard/route.js');

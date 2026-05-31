@@ -20,8 +20,8 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 173 test files, 1059 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 99.43% lines, 98.94% statements, 97.3% functions, and 99.05% branches. |
+| `npm test` | PASS | 174 test files, 1063 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 99.43% lines, 98.95% statements, 97.35% functions, and 99.07% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 99.4%, statements 98.9%, functions 97.2%, branches 99%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 72 Playwright tests passed. |
@@ -130,6 +130,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Hardened catalog candidate and dynamic catalog source URL handling so unsafe URLs are stripped before storage, cannot satisfy provenance checks, and cannot be promoted as catalog source links.
 - Added deterministic catalog candidate review summaries for duplicate/provenance/location/source/city queues and surfaced them through the admin candidate APIs and agent dashboard.
 - Added authenticated dashboard visibility for the ops scorecard, alert severity counts, domain status, top blockers, and global-parity blocked state.
+- Added sourced competitor parity tracking for Booking.com, Google Travel, KAYAK/HotelsCombined, Expedia, trivago, Fattal, and Isrotel across inventory, freshness, mobile, reviews, alerts, booking handoff, and Israel coverage.
 - Moved cheaper-date provider links, Ticketmaster event links, and Wikidata enrichment website/image links onto the shared public URL helper so internal/private URLs cannot leak through public API responses.
 - Added a Playwright public API URL safety runtime audit for JSON responses and a CI-wired `npm run audit:public-api-urls` guard so unsafe absolute URLs cannot quietly return through public endpoints.
 - Removed remaining local hook-dependency suppressions in hotel detail and side-by-side compare flows, and replaced CLS `any` casts in the performance monitor with a typed layout-shift entry.
@@ -158,7 +159,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Branch coverage next target | Medium | `lib` branch coverage is 99.05%. | Continue focused tests for remaining private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and API/network error branches, then raise the next ratchet beyond 99%. |
+| Branch coverage next target | Medium | `lib` branch coverage is 99.07%. | Continue focused tests for remaining private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and API/network error branches, then raise the next ratchet beyond 99%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | External observability proof | Medium | Authenticated dashboard now shows local ops scorecard and alerts; external monitoring/RUM/webhook evidence is still absent. | Configure production monitoring, RUM, and alert delivery after real env is available. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |

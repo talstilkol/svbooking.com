@@ -32,8 +32,11 @@ describe('ops scorecard', () => {
         'mobile-retention',
         'localization',
         'observability',
+        'competitor-parity',
       ])
     );
+    expect(scorecard.productTruth.competitorParity.status).toBe('blocked');
+    expect(scorecard.productTruth.competitorParity.sourcePolicy).toBe('official-or-platform-owned-public-pages-only');
     expect(scorecard.blockers.length).toBeGreaterThan(0);
     expect(JSON.stringify(scorecard)).not.toContain('admin-secret-value');
     expect(JSON.stringify(scorecard)).not.toContain('webhook-secret-value');
@@ -135,6 +138,7 @@ describe('ops scorecard', () => {
     expect(byId.get('observability')?.status).toBe('healthy');
     expect(scorecard.productTruth.freeOnlyLaunchReady).toBe(true);
     expect(scorecard.productTruth.globalParityReady).toBe(false);
+    expect(scorecard.productTruth.competitorParity.blockers.length).toBeGreaterThan(0);
     expect(JSON.stringify(scorecard)).not.toContain('cron-secret-value');
     expect(JSON.stringify(scorecard)).not.toContain('price-alert-secret');
     expect(JSON.stringify(scorecard)).not.toContain('push-private-key');
