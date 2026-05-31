@@ -20,7 +20,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 175 test files, 1071 tests passed. |
+| `npm test` | PASS | 176 test files, 1073 tests passed. |
 | `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 99.44% lines, 98.96% statements, 97.39% functions, and 99.17% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 99.4%, statements 98.9%, functions 97.2%, branches 99.1%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
@@ -34,6 +34,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | `npm run audit:external-fetches` | PASS | External fetch audit blocks direct `fetch("https://...")` calls, requires the shared timeout helper for network probes, covers Wikidata SPARQL hardening, and requires shared public-URL sanitization for content, provider-link, event-link, and enrichment helpers. |
 | `npm run audit:public-api-urls` | PASS | Public API URL safety audit keeps the runtime JSON URL scanner wired into package scripts, CI, README, and the production runbook. |
 | `npm run audit:affiliate-security` | PASS | Affiliate security audit blocks HTTP provider redirects and invalid URL tracking fallbacks. |
+| `npm run audit:legal-readiness` | PASS | Legal readiness audit keeps privacy, terms, cookie, affiliate, and provider-handoff disclosures wired while external signoff remains a launch blocker. |
 | `npm run audit:security-responses` | PASS | Shared auth, validation, and rate-limit helpers must return no-store responses, expose retry metadata, use timing-safe admin token checks, and normalize client IPs before quota keys are built. |
 | `npm run audit:csrf` | PASS | CSRF audit now covers browser mutation routes, Fetch Metadata, Origin/Referer checks, and HTTP(S)-only origin normalization. |
 | `npm run audit:api-errors` | PASS | API error cache audit blocks direct error responses without `Cache-Control: no-store`. |
@@ -41,7 +42,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | `npm run audit:ops` | PASS | Ops readiness audit passed and verifies CI/audit wiring. |
 | `npm run audit:pwa` | PASS | PWA audit verifies offline shell readiness and service-worker bypass rules for API, non-GET, and private navigation routes. |
 | `npm run audit:rum` | PASS | RUM audit verifies Vercel Analytics, Speed Insights, and local Core Web Vitals instrumentation are wired. |
-| Remaining non-strict `npm run audit:*` scripts | PASS | Agents, duplicates, providers, reviews, release deletions, i18n, price accuracy, PWA, RUM, ops scorecard, UI quality, accessibility, SEO, HTML safety, CSRF, storage, data retention, privacy, alerts, and production non-strict audits passed; privacy audit now covers fingerprint-only admin audit actors and alert audits cover webhook URL hardening. |
+| Remaining non-strict `npm run audit:*` scripts | PASS | Agents, duplicates, providers, reviews, release deletions, i18n, price accuracy, PWA, RUM, ops scorecard, UI quality, accessibility, SEO, HTML safety, CSRF, storage, data retention, privacy, alerts, legal readiness, and production non-strict audits passed; privacy audit now covers fingerprint-only admin audit actors and alert audits cover webhook URL hardening. |
 | `npm run audit:production` | PASS with blockers | Reports missing required deployment env names only; does not print secret values. |
 | `npm run audit:production:strict` | EXPECTED FAIL locally | Blocks go-live because required admin/cron/Redis/Kinde env and a complete partner pricing provider env group are missing. |
 | `npm run release:state` | PASS | Reports a clean worktree with 0 changed paths. |
@@ -91,6 +92,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Added `npm run audit:external-fetches` plus a shared fetch timeout helper so external probes cannot bypass abort handling.
 - Hardened the Wikidata discovery client with shared request timeouts, no-store external fetches, escaped SPARQL string literals, bounded `LIMIT` values, and regression tests for query injection resistance.
 - Added `npm run audit:affiliate-security` and hardened outbound provider redirects to HTTPS allowlisted URLs only.
+- Added `npm run audit:legal-readiness` so privacy, terms, cookie consent, affiliate safety, provider-handoff notices, release docs, and CI wiring cannot be removed without failing verification.
 - Added `npm run audit:security-responses` so shared admin-auth, validation, and rate-limit helpers cannot regress to cacheable security/error responses.
 - Hardened rate-limit client identity extraction so invalid forwarded IP headers, `unknown` values, IPv4 ports, bracketed IPv6 addresses, and Cloudflare IP headers are normalized before quota keys are built.
 - Hardened admin audit events so non-static actors are stored as deterministic fingerprints, client identifiers are normalized before fingerprinting, and sensitive string values are redacted even when the field name is not sensitive.
@@ -166,6 +168,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Branch coverage next target | Medium | `lib` branch coverage is 99.17%. | Continue focused tests for remaining private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and API/network error branches, then raise the next ratchet beyond 99.1%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | External observability proof | Medium | Authenticated dashboard now shows local ops scorecard and alerts, and RUM wiring is audited; external monitoring, production RUM evidence, and webhook evidence are still absent. | Configure production monitoring, RUM, and alert delivery after real env is available. |
+| Commercial/legal signoff | Medium | Legal readiness wiring is audited locally, but it is not legal approval. | Capture partner terms, affiliate/legal review, and licensed content display signoff before launch claims depend on provider programs or licensed content. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |
 

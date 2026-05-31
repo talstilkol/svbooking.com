@@ -56,6 +56,7 @@ npm run audit:runtime
 npm run audit:external-fetches
 npm run audit:public-api-urls
 npm run audit:affiliate-security
+npm run audit:legal-readiness
 npm run audit:security-responses
 npm run audit:api-errors
 npm run audit:cron-cache
@@ -90,6 +91,12 @@ npm run release:state:strict
 `release:state:strict` is the release hygiene blocker and must pass only after intended changes are staged/committed and generated artifacts are excluded.
 The public API URL safety E2E audit must stay enabled; it scans public JSON API responses for non-HTTPS, credentialed, localhost, private-network, `javascript:`, and `data:` URLs.
 After deployment, run `SITE_URL=https://your-deployment.example npm run smoke:deployment`. Add `ADMIN_API_SECRET` to that command for authenticated admin smoke checks. Add `CRON_SECRET` and `SMOKE_RUN_CRON=1` only when you intentionally want the cron orchestrator smoke to execute against the deployment.
+
+## Commercial And Legal Readiness
+
+`npm run audit:legal-readiness` verifies that privacy, terms, cookie consent, affiliate URL safety, provider-handoff notices, README, runbook, and CI wiring remain present.
+
+This audit is not legal approval. Partner terms, affiliate/legal review, and licensed content display signoff must be captured before launch claims rely on provider programs, affiliate economics, reviews, ratings, or rich property content.
 
 ## Cron Verification
 

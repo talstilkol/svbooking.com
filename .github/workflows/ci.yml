@@ -68,6 +68,9 @@ jobs:
       - name: Affiliate security audit
         run: npm run audit:affiliate-security
 
+      - name: Legal readiness audit
+        run: npm run audit:legal-readiness
+
       - name: Shared security response audit
         run: npm run audit:security-responses
 

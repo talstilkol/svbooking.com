@@ -119,7 +119,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints and RUM wiring audit exist; external monitoring and webhook delivery are not configured. |
 | Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
 | Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
-| Acceptance Criteria | `npm test` passes | DONE | 175 files / 1071 tests passed. |
+| Acceptance Criteria | `npm test` passes | DONE | 176 files / 1073 tests passed. |
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
 | Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 99.44% lines and 99.17% branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 728 static pages. |
@@ -152,7 +152,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Backlog P3 | Production observability dashboard | PARTIAL | Authenticated dashboard now surfaces ops scorecard, alert counts, domain status, and top blockers; external monitoring, RUM, and webhook proof are still incomplete. |
 | Backlog P3 | Real-user monitoring and Core Web Vitals | PARTIAL | Vercel Analytics, Speed Insights, and local Core Web Vitals instrumentation are wired and audited; production route/device proof is missing. |
 | Backlog P3 | Localization QA beyond Hebrew/English | PARTIAL | Hebrew/English exist; broader RTL/LTR QA is incomplete. |
-| Backlog P3 | Commercial/legal readiness | NOT DONE | Requires partner terms, affiliate/legal review, and licensed content signoff. |
+| Backlog P3 | Commercial/legal readiness | PARTIAL | CI-wired legal readiness audit now protects privacy, terms, cookie, affiliate, and provider-handoff disclosures; partner terms, affiliate/legal review, and licensed content display signoff remain external launch blockers. |
 | Backlog P3 | Competitor parity tracking | PARTIAL | Ops scorecard now includes sourced competitor parity tracking for inventory breadth, price freshness, mobile installability, reviews/property content, alerts, booking handoff, and Israel coverage; weekly source review and live production proof are still incomplete. |
 | Non-Negotiable | Never use `Math.random()` | DONE | Scan is clean. |
 | Non-Negotiable | Never display fabricated hotel/review/price/provider/urgency/availability/readiness data | PARTIAL | Guardrails pass; exhaustive provenance proof remains open. |
@@ -255,7 +255,8 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 - [x] Add CI-wired RUM/Web Vitals wiring audit for Vercel Analytics, Speed Insights, and local Core Web Vitals instrumentation.
 - [ ] Capture production RUM/Core Web Vitals evidence per top route and device class.
 - [ ] Add international localization QA beyond Hebrew/English, including RTL/LTR layout regression checks.
-- [ ] Add commercial/legal readiness for partner terms, affiliate disclosures, privacy, retention, and licensed content display.
+- [x] Add CI-wired legal readiness audit for privacy, terms, cookie consent, affiliate safety, and provider-handoff disclosures.
+- [ ] Capture partner terms, affiliate/legal review, and licensed content display signoff.
 - [x] Add sourced competitor parity tracking for inventory breadth, price freshness, mobile installability, reviews, alerts, booking handoff quality, and Israel coverage.
 - [ ] Run weekly competitor source review and live production proof before treating parity status as launch evidence.
 

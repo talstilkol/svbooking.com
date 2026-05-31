@@ -83,6 +83,8 @@ Admin or cron APIs:
 
 SV Booking does not process bookings directly. Checkout happens on the selected provider site when a validated provider link is available.
 
+Commercial/legal readiness remains incomplete until partner terms, affiliate/legal review, and licensed content display signoff are captured.
+
 ## Production Configuration
 
 Copy `.env.example` to the deployment environment and configure real values. Do not commit secret values.
@@ -139,6 +141,7 @@ npm run audit:runtime
 npm run audit:external-fetches
 npm run audit:public-api-urls
 npm run audit:affiliate-security
+npm run audit:legal-readiness
 npm run audit:security-responses
 npm run audit:api-errors
 npm run audit:cron-cache
@@ -177,6 +180,7 @@ After deployment, run `SITE_URL=https://your-deployment.example npm run smoke:de
 - `npm run audit:external-fetches` blocks direct external `fetch("https://...")` calls that bypass timeout handling and requires shared public-URL sanitization for content, provider-link, event-link, and enrichment helpers.
 - `npm run audit:public-api-urls` keeps the Playwright public API URL safety runtime audit wired into CI and release docs.
 - `npm run audit:affiliate-security` blocks unsafe outbound redirect and affiliate URL regressions.
+- `npm run audit:legal-readiness` blocks removal of privacy, terms, cookie, affiliate, and provider-handoff disclosures while external legal/partner signoff remains a launch blocker.
 - `npm run audit:security-responses` blocks cacheable shared auth, validation, and rate-limit responses.
 - `npm run audit:api-errors` blocks cacheable API error responses.
 - `npm run audit:cron-cache` blocks cacheable cron/agent responses.

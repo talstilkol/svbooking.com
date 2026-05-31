@@ -26,6 +26,7 @@
     "audit:external-fetches": "node scripts/audit-external-fetches.mjs",
     "audit:public-api-urls": "node scripts/audit-public-api-url-safety.mjs",
     "audit:affiliate-security": "node scripts/audit-affiliate-security.mjs",
+    "audit:legal-readiness": "node scripts/audit-legal-readiness.mjs",
     "audit:security-responses": "node scripts/audit-security-responses.mjs",
     "audit:api-errors": "node scripts/audit-api-error-cache.mjs",
     "audit:cron-cache": "node scripts/audit-cron-cache.mjs",
