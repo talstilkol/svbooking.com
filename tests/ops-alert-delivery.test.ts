@@ -96,6 +96,50 @@ describe('ops alert delivery', () => {
     expect(JSON.stringify(payload)).not.toContain('provider-secret');
     expect(JSON.stringify(payload)).not.toContain('summary-secret');
     expect(JSON.stringify(payload)).not.toContain('Bearer hidden');
+
+    const sparseReport = {
+      ...report,
+      alerts: [{
+        id: 'sparse-alert',
+        severity: 'warning',
+        domain: 'ops',
+        message: 'Sparse alert.',
+      }],
+    };
+    await deliverOpsAlertReport(sparseReport, {
+      env: {
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'ops-secret-value',
+      } as unknown as NodeJS.ProcessEnv,
+      fetchImpl: async (_url, init) => {
+        calls.push({ init: init || {} });
+        return new Response('{}', { status: 202 });
+      },
+    });
+    expect(JSON.parse(String(calls[1].init.body)).alerts[0].evidence).toEqual({});
+  });
+
+  it('sends an empty alert list when a report has no alert array', async () => {
+    const calls: Array<{ init: RequestInit }> = [];
+    const result = await deliverOpsAlertReport({
+      service: 'sv-booking',
+      checkedAt: '2026-05-14T12:00:00.000Z',
+      status: 'healthy',
+      summary: { total: 0 },
+      evidence: undefined,
+    }, {
+      env: {
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'ops-secret-value',
+      } as unknown as NodeJS.ProcessEnv,
+      fetchImpl: async (_url, init) => {
+        calls.push({ init: init || {} });
+        return new Response('{}', { status: 202 });
+      },
+    });
+
+    expect(result).toEqual({ configured: true, status: 'sent', httpStatus: 202 });
+    expect(JSON.parse(String(calls[0].init.body)).alerts).toEqual([]);
   });
 
   it('returns explicit unavailable states without attempting delivery', async () => {

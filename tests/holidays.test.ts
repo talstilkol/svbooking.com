@@ -105,6 +105,7 @@ describe('holiday provider normalization', () => {
       expect.objectContaining({ date: '2027-01-01' }),
     ]);
     await expect(getHolidaysInRange('US', '2026/02/28', '2026-03-02')).rejects.toThrow('checkIn must be YYYY-MM-DD');
+    await expect(getHolidaysInRange('US', '2026-02-28', undefined as unknown as string)).rejects.toThrow('checkOut must be YYYY-MM-DD');
     await expect(getHolidaysInRange('US', '2026-02-30', '2026-03-02')).rejects.toThrow('checkIn must be a valid date');
     await expect(getHolidaysInRange('US', '2026-03-02', '2026-03-02')).rejects.toThrow('checkIn must be before checkOut');
     expect(fetchMock).toHaveBeenCalledTimes(2);

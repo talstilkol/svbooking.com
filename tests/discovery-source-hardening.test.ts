@@ -700,7 +700,9 @@ describe('Wikidata discovery and DBpedia SPARQL hardening', () => {
           ],
         },
       }))
-      .mockResolvedValueOnce(jsonResponse({}, false, 500));
+      .mockResolvedValueOnce(jsonResponse({}, false, 500))
+      .mockResolvedValueOnce(jsonResponse({}))
+      .mockResolvedValueOnce(jsonResponse({}));
     vi.stubGlobal('fetch', fetchMock);
     const { discoverHotelsDBpedia, getAllHotelsWithWikidata } = await import('@/lib/dbpedia');
 
@@ -726,6 +728,8 @@ describe('Wikidata discovery and DBpedia SPARQL hardening', () => {
       },
     ]);
     await expect(getAllHotelsWithWikidata(1)).rejects.toThrow('DBpedia SPARQL 500');
+    await expect(discoverHotelsDBpedia({ city: 'Empty City', limit: 1 })).resolves.toEqual([]);
+    await expect(getAllHotelsWithWikidata(1)).resolves.toEqual([]);
   });
 });
 

@@ -75,6 +75,21 @@ describe('fetchWithTimeout', () => {
     })).rejects.toThrow('network unavailable');
   });
 
+  it('propagates already-aborted caller signals before the timeout fires', async () => {
+    const callerController = new AbortController();
+    callerController.abort();
+    const fetchImpl = vi.fn((_input: unknown, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+      if (init?.signal?.aborted) reject(new Error('already aborted'));
+      init?.signal?.addEventListener('abort', () => reject(new Error('already aborted')));
+    }));
+
+    await expect(fetchWithTimeout('https://example.com/abort', {
+      timeoutMs: 1000,
+      signal: callerController.signal,
+      fetchImpl: fetchImpl as typeof fetch,
+    })).rejects.toThrow('already aborted');
+  });
+
   it('parses JSON only after successful HTTP responses', async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ status: 'OK' }), { status: 200 }));
 

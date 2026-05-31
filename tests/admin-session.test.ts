@@ -42,5 +42,13 @@ describe('admin session allowlist', () => {
         ADMIN_EMAILS: 'ops@example.com',
       } as unknown as NodeJS.ProcessEnv
     )).toBe(false);
+
+    expect(isAdminUser(
+      { id: 'user-5' },
+      {
+        ADMIN_USER_IDS: '',
+        ADMIN_EMAILS: 'ops@example.com',
+      } as unknown as NodeJS.ProcessEnv
+    )).toBe(false);
   });
 });

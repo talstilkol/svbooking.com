@@ -182,7 +182,7 @@ describe('price accuracy ledger', () => {
     vi.setSystemTime(new Date('2026-05-31T12:00:00.000Z'));
     store.set('price:observations:2026-05-31', [
       { provider: 'Booking.com' },
-      { provider: '' },
+      {},
     ]);
     store.set('price:mismatches:2026-05-31', [
       { provider: 'Expedia' },

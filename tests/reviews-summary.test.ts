@@ -71,6 +71,10 @@ describe('normalizeGooglePlaces', () => {
         relativeTime: null,
       },
     ]);
+
+    expect(normalizeGooglePlaces({
+      reviews: [{ author_name: 'Dana', rating: 5, time: 1700000000 }],
+    }).reviews[0].text).toBe('');
   });
 });
 

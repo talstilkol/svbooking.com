@@ -61,4 +61,32 @@ describe('local price alert normalization', () => {
     expect(priceAlertStorageLabel(alerts[0])).toBe('Account saved');
     expect(priceAlertDeliveryLabel(alerts[0])).toBe('Server alert with unsubscribe enabled');
   });
+
+  it('defaults sparse valid alerts and labels server alerts without unsubscribe delivery honestly', () => {
+    expect(normalizeStoredPriceAlerts(null)).toEqual([]);
+    expect(normalizeStoredPriceAlerts({} as Parameters<typeof normalizeStoredPriceAlerts>[0])).toEqual([]);
+
+    const alert = normalizeStoredPriceAlert({
+      id: '   ',
+      hotelKey: 'g187147-d188728',
+      hotelName: 'Le Meurice',
+      city: 'Paris',
+      targetPrice: 550,
+      currency: '',
+      createdAt: '',
+      storage: 'server',
+      unsubscribeStatus: 'not-configured',
+      sourcePolicy: '',
+    });
+
+    expect(alert).toMatchObject({
+      id: undefined,
+      currency: 'USD',
+      createdAt: undefined,
+      storage: 'server',
+      unsubscribeStatus: 'not-configured',
+      sourcePolicy: 'verified-provider-prices-only',
+    });
+    expect(priceAlertDeliveryLabel(alert!)).toBe('Server alert saved; unsubscribe delivery not configured');
+  });
 });

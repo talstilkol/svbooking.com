@@ -166,6 +166,25 @@ describe('provider observability', () => {
     expect(rawEvents[0]).toMatchObject({ providerId: 'serpapi', operation: 'latest' });
   });
 
+  it('falls back to explicit unknown labels when malformed identity fields clean to empty strings', async () => {
+    const event = await recordProviderUptimeEvent({
+      providerId: '   ',
+      providerName: '   ',
+      operation: '   ',
+      source: '   ',
+      ok: true,
+      latencyMs: 1,
+      checkedAt: '2026-05-14T10:00:00.000Z',
+    });
+
+    expect(event).toMatchObject({
+      providerId: 'unknown',
+      providerName: 'unknown',
+      operation: 'unknown',
+      source: 'unknown',
+    });
+  });
+
   it('limits metric windows without mutating stored provider history', async () => {
     await recordProviderUptimeEvent({
       providerId: 'xotelo',

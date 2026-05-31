@@ -63,6 +63,18 @@ describe('buildSuggestions', () => {
     });
   });
 
+  it('uses singular day copy for trips starting tomorrow', () => {
+    const suggestions = buildSuggestions({
+      favorites: [],
+      trips: [trip({ checkIn: '2026-06-01' })],
+    });
+
+    expect(suggestions[0]).toMatchObject({
+      kind: 'check_prices',
+      title: 'Your Le Meurice trip starts in 1 day',
+    });
+  });
+
   it('suggests compare when a home city exists and no trips are saved', () => {
     const suggestions = buildSuggestions({
       favorites: [],

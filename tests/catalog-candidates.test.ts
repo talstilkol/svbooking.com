@@ -567,6 +567,38 @@ describe('catalog candidate queue', () => {
     ]);
   });
 
+  it('normalizes malformed stored candidate provenance and external IDs during listing', async () => {
+    const mod = await import('@/lib/kv') as Record<string, unknown>;
+    const kvStore = mod.__store as Map<string, unknown>;
+    const queued = await upsertCandidate({
+      hotelKey: 'g1-d95',
+      name: 'Malformed Stored Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'manual-admin',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q95',
+      lat: 48.8566,
+      lon: 2.3522,
+    });
+
+    kvStore.set(`catalog:candidate:${queued.candidate.id}`, {
+      ...queued.candidate,
+      sourceUrl: null,
+      provenance: null,
+      externalIds: null,
+      updatedAt: undefined,
+    });
+
+    const listed = await listCandidates({ status: 'pending' });
+    const candidate = listed.find((entry) => entry.id === queued.candidate.id);
+
+    expect(candidate).toMatchObject({
+      id: queued.candidate.id,
+      missingProvenance: true,
+      duplicate: false,
+    });
+  });
+
   it('marks candidates stale and reports missing review targets without promotion', async () => {
     expect(await approveCandidate('missing-id')).toEqual({
       approved: false,

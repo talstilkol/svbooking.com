@@ -69,6 +69,7 @@ describe('affiliate', () => {
   describe('isAllowedProviderUrl', () => {
     it('allows HTTPS provider domains only', () => {
       expect(isAllowedProviderUrl('Booking.com', 'https://www.booking.com/hotel/il/hilton-tel-aviv.html')).toBe(true);
+      expect(isAllowedProviderUrl('UnknownOTA', 'https://www.booking.com/hotel/il/hilton-tel-aviv.html')).toBe(false);
       expect(isAllowedProviderUrl('Booking.com', 'http://www.booking.com/hotel/il/hilton-tel-aviv.html')).toBe(false);
       expect(isAllowedProviderUrl('Booking.com', 'https://evil-booking.com/hotel')).toBe(false);
     });

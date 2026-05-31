@@ -38,6 +38,8 @@ describe('ops alert delivery events', () => {
   });
 
   it('stores sanitized delivery events and drops unexpected sensitive fields', async () => {
+    await expect(getOpsAlertDeliveryEvents()).resolves.toEqual([]);
+
     const stored = await appendOpsAlertDeliveryEvent({
       id: 'ops-event-1',
       at: '2026-05-14T12:00:00.000Z',

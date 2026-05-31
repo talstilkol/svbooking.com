@@ -34,6 +34,7 @@ describe('hotel popularity counters', () => {
     bumpHotelPopularity('g187147-d188728');
     bumpHotelPopularity('g186338-d193089');
     bumpHotelPopularity('not-a-hotel-key');
+    bumpHotelPopularity(undefined as unknown as string);
     bumpHotelPopularity('g1-d1<script>');
 
     await vi.advanceTimersByTimeAsync(30_000);

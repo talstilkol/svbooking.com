@@ -61,4 +61,13 @@ describe('map markers', () => {
       'Anantara Layan Phuket',
     ]);
   });
+
+  it('skips hotels without exact coordinates when their city has no coordinate fallback', () => {
+    expect(buildMapMarkers([{
+      hotelKey: 'g1-d2',
+      name: 'Unmapped City Hotel',
+      city: 'Unmapped City',
+      country: 'Unknown',
+    }])).toEqual([]);
+  });
 });

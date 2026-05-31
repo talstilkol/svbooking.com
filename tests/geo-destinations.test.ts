@@ -166,6 +166,7 @@ describe('geo provider detection', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(detectLocation('not an ip')).resolves.toBeNull();
+    await expect(detectLocation('2001:db8::1::1')).resolves.toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

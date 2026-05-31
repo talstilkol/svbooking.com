@@ -340,6 +340,25 @@ describe('price cache', () => {
     expect(result.lastCheckedAt).toBe(cachedAt);
   });
 
+  it('normalizes legacy cached rates with no timestamp metadata', async () => {
+    await kv.setWithTTL('price:g1-d1:2026-06-01:2026-06-03:USD', {
+      rates: [{ name: 'Untimestamped Provider', rate: 101 }],
+      currency: 'USD',
+      provider: 'Untimestamped Provider',
+      source: 'cached',
+    }, 7200);
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(result.fromCache).toBe(true);
+    expect(result.lastCheckedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(result.rates[0].provider).toBe('Untimestamped Provider');
+  });
+
   it('treats cached rates with invalid timestamps as stale and revalidates them', async () => {
     await kv.setWithTTL('price:g1-d1:2026-06-01:2026-06-03:USD', {
       cachedAt: 'not-a-date',

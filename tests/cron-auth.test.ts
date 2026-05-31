@@ -41,11 +41,23 @@ describe('verifyCronAuth', () => {
 
     const shortToken = verifyCronAuth(request({ Authorization: 'Bearer cron' }));
     const missingBearer = verifyCronAuth(request({ Authorization: 'cron-secret' }));
+    const missingAuthorization = verifyCronAuth(request());
 
     expect(shortToken.authorized).toBe(false);
     expect(shortToken.response!.status).toBe(401);
     expect(shortToken.response!.headers.get('cache-control')).toBe('no-store');
     expect(missingBearer.authorized).toBe(false);
     expect(missingBearer.response!.status).toBe(401);
+    expect(missingAuthorization.authorized).toBe(false);
+    expect(missingAuthorization.response!.status).toBe(401);
+  });
+
+  it('denies missing-secret cron calls when the host header is absent', () => {
+    vi.stubEnv('CRON_SECRET', '');
+
+    const auth = verifyCronAuth(new Request('https://svbooking.example/api/agents/auto/orchestrate'));
+
+    expect(auth.authorized).toBe(false);
+    expect(auth.response!.status).toBe(403);
   });
 });

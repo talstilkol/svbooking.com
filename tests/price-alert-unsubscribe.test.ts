@@ -18,6 +18,7 @@ describe('price alert unsubscribe tokens', () => {
     expect(first).toBe(second);
     expect(first).toMatch(/^u_[0-9a-f]{32}$/);
     expect(matchesPriceAlertUnsubscribeToken({ token: first, ...input }, env)).toBe(true);
+    expect(matchesPriceAlertUnsubscribeToken({ token: null, ...input }, env)).toBe(false);
     expect(matchesPriceAlertUnsubscribeToken({ token: first, uid: 'user_2', alertId: 'h_alert' }, env)).toBe(false);
   });
 

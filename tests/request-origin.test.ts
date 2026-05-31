@@ -86,6 +86,20 @@ describe('request origin guard', () => {
     expect(isSameOriginRequest(request)).toBe(false);
   });
 
+  it('rejects requests when forwarded proxy metadata cannot form a valid expected origin', () => {
+    const request = new Request('https://svbooking.com/api/me/trips', {
+      method: 'POST',
+      headers: {
+        origin: 'https://svbooking.com',
+        host: 'svbooking.com',
+        'x-forwarded-proto': 'chrome-extension',
+      },
+    });
+
+    expect(expectedRequestOrigin(request)).toBe('');
+    expect(isSameOriginRequest(request)).toBe(false);
+  });
+
   it('rejects cross-site fetch metadata even when Origin is absent', () => {
     const request = new Request('https://svbooking.com/api/me/trips', {
       method: 'POST',

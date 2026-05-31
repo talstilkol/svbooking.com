@@ -39,6 +39,7 @@ describe('webhook URL validation', () => {
       'https://172.31.255.255/hook',
       'https://192.168.1.20/hook',
       'https://198.18.0.1/hook',
+      'https://198.19.0.1/hook',
       'https://[::]/hook',
       'https://[::1]/hook',
       'https://[::ffff:127.0.0.1]/hook',
@@ -67,6 +68,7 @@ describe('webhook URL validation', () => {
   it('rejects malformed numeric webhook hosts without treating them as local overrides', () => {
     expect(validWebhookUrl('not a url')).toBeNull();
     expect(validWebhookUrl('https://999.0.0.1/hook')).toBeNull();
+    expect(validWebhookUrl(null as unknown as string)).toBeNull();
   });
 
   it('rejects non-localhost HTTP destinations', () => {
