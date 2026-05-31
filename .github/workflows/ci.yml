@@ -104,6 +104,9 @@ jobs:
       - name: PWA readiness audit
         run: npm run audit:pwa
 
+      - name: RUM and Web Vitals audit
+        run: npm run audit:rum
+
       - name: Ops scorecard audit
         run: npm run audit:ops-scorecard
 

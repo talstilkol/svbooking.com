@@ -20,7 +20,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 174 test files, 1069 tests passed. |
+| `npm test` | PASS | 175 test files, 1071 tests passed. |
 | `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 99.44% lines, 98.96% statements, 97.39% functions, and 99.17% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 99.4%, statements 98.9%, functions 97.2%, branches 99.1%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
@@ -40,7 +40,8 @@ The remaining blockers are not code placeholders to fill in locally:
 | `npm run audit:cron-cache` | PASS | Cron cache audit blocks cacheable responses from cron-protected agent routes and requires timing-safe cron bearer token checks. |
 | `npm run audit:ops` | PASS | Ops readiness audit passed and verifies CI/audit wiring. |
 | `npm run audit:pwa` | PASS | PWA audit verifies offline shell readiness and service-worker bypass rules for API, non-GET, and private navigation routes. |
-| Remaining non-strict `npm run audit:*` scripts | PASS | Agents, duplicates, providers, reviews, release deletions, i18n, price accuracy, PWA, ops scorecard, UI quality, accessibility, SEO, HTML safety, CSRF, storage, data retention, privacy, alerts, and production non-strict audits passed; privacy audit now covers fingerprint-only admin audit actors and alert audits cover webhook URL hardening. |
+| `npm run audit:rum` | PASS | RUM audit verifies Vercel Analytics, Speed Insights, and local Core Web Vitals instrumentation are wired. |
+| Remaining non-strict `npm run audit:*` scripts | PASS | Agents, duplicates, providers, reviews, release deletions, i18n, price accuracy, PWA, RUM, ops scorecard, UI quality, accessibility, SEO, HTML safety, CSRF, storage, data retention, privacy, alerts, and production non-strict audits passed; privacy audit now covers fingerprint-only admin audit actors and alert audits cover webhook URL hardening. |
 | `npm run audit:production` | PASS with blockers | Reports missing required deployment env names only; does not print secret values. |
 | `npm run audit:production:strict` | EXPECTED FAIL locally | Blocks go-live because required admin/cron/Redis/Kinde env and a complete partner pricing provider env group are missing. |
 | `npm run release:state` | PASS | Reports a clean worktree with 0 changed paths. |
@@ -133,6 +134,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Added sourced competitor parity tracking for Booking.com, Google Travel, KAYAK/HotelsCombined, Expedia, trivago, Fattal, and Isrotel across inventory, freshness, mobile, reviews, alerts, booking handoff, and Israel coverage.
 - Surfaced reused catalog media as a measurable ops scorecard blocker instead of leaving it only as a catalog audit warning.
 - Raised provider observability and catalog media edge coverage, then moved the branch coverage ratchet floor to 99.1%.
+- Added a CI-wired RUM audit for Vercel Analytics, Speed Insights, and local Core Web Vitals instrumentation while keeping production RUM proof as a launch blocker.
 - Moved cheaper-date provider links, Ticketmaster event links, and Wikidata enrichment website/image links onto the shared public URL helper so internal/private URLs cannot leak through public API responses.
 - Added a Playwright public API URL safety runtime audit for JSON responses and a CI-wired `npm run audit:public-api-urls` guard so unsafe absolute URLs cannot quietly return through public endpoints.
 - Removed remaining local hook-dependency suppressions in hotel detail and side-by-side compare flows, and replaced CLS `any` casts in the performance monitor with a typed layout-shift entry.
@@ -163,7 +165,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
 | Branch coverage next target | Medium | `lib` branch coverage is 99.17%. | Continue focused tests for remaining private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and API/network error branches, then raise the next ratchet beyond 99.1%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
-| External observability proof | Medium | Authenticated dashboard now shows local ops scorecard and alerts; external monitoring/RUM/webhook evidence is still absent. | Configure production monitoring, RUM, and alert delivery after real env is available. |
+| External observability proof | Medium | Authenticated dashboard now shows local ops scorecard and alerts, and RUM wiring is audited; external monitoring, production RUM evidence, and webhook evidence are still absent. | Configure production monitoring, RUM, and alert delivery after real env is available. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |
 

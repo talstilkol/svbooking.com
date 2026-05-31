@@ -143,6 +143,7 @@ npm run audit:security-responses
 npm run audit:api-errors
 npm run audit:cron-cache
 npm run audit:ops
+npm run audit:rum
 npm run audit:release-deletions
 npm run audit:production
 npm run release:state

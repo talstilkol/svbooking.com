@@ -60,6 +60,7 @@ for (const scriptName of [
   'audit:i18n',
   'audit:price-accuracy',
   'audit:pwa',
+  'audit:rum',
   'audit:ops-scorecard',
   'audit:ui-quality',
   'audit:accessibility',
@@ -160,6 +161,7 @@ await requireFile('scripts/audit-release-deletions.mjs');
 await requireFile('scripts/audit-i18n.mjs');
 await requireFile('scripts/audit-price-accuracy.mjs');
 await requireFile('scripts/audit-pwa.mjs');
+await requireFile('scripts/audit-rum.mjs');
 await requireFile('scripts/audit-ops-scorecard.mjs');
 await requireFile('scripts/audit-ui-quality.mjs');
 await requireFile('scripts/audit-accessibility.mjs');
@@ -200,6 +202,7 @@ requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm run audit:i18n',
   'npm run audit:price-accuracy',
   'npm run audit:pwa',
+  'npm run audit:rum',
   'npm run audit:ops-scorecard',
   'npm run audit:ui-quality',
   'npm run audit:accessibility',

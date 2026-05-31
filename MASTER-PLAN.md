@@ -13,7 +13,7 @@ The app is locally healthy but not production-ready until real deployment config
 | Catalog quality | 6/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage; reused catalog imagery is now tracked as an ops scorecard blocker. |
 | Provider coverage | 5/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
 | Reviews and property content | 4/10 | APIs return explicit unavailable states until licensed provider data is configured; rich review/property content is not live. |
-| Mobile retention | 5/10 | PWA/offline shell and local alerts exist; push delivery env and provider are not configured. |
+| Mobile retention | 5/10 | PWA/offline shell, local alerts, and audited RUM/Web Vitals wiring exist; push delivery env and provider are not configured. |
 | Production readiness | 4/10 | Strict readiness fails without admin, cron, Redis, Kinde, and partner-provider env. |
 | Release hygiene | 10/10 | The worktree is clean; keep generated/cache artifacts out of commits. |
 
@@ -47,7 +47,7 @@ This section is the source of truth for what is complete versus only locally sca
 | Licensed media replacement | NOT DONE | `audit:catalog` still warns about reused Unsplash images across cities. |
 | Agent cron auth | DONE | Cron-protected routes and `CRON_SECRET` gate are wired and audited. |
 | Production cron execution | NOT DONE | Cron routes are not verified in a real deployment with real `CRON_SECRET` and persistent KV. |
-| Ops monitoring endpoints | PARTIAL | `/api/health`, `/api/ops/scorecard`, `/api/ops/alerts`, provider uptime, price accuracy, and alert history surfaces exist; real external monitoring and webhook delivery are not configured. |
+| Ops monitoring endpoints | PARTIAL | `/api/health`, `/api/ops/scorecard`, `/api/ops/alerts`, provider uptime, price accuracy, alert history, and audited RUM wiring exist; real external monitoring and webhook delivery are not configured. |
 | Dependency audit | DONE | `npm audit --audit-level=moderate` passed in an approved network environment. |
 | `audit:production:strict` in deployment | NOT DONE | No deployment env proof has been provided. |
 | No stale removed-route docs | DONE | `npm run audit:docs` rejects removed legacy route names, old database claims, and old catalog-size claims. |
@@ -67,7 +67,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Current State | Catalog quality | PARTIAL | 502 hotels/139 cities/65 countries pass the floor; imagery reuse and market scale remain open. |
 | Current State | Provider coverage | PARTIAL | Adapter layer exists; real partner credentials are not configured. |
 | Current State | Reviews and property content | PARTIAL | Unavailable state is correct; licensed rich review/property data is not live. |
-| Current State | Mobile retention | PARTIAL | PWA shell exists; push delivery is not configured. |
+| Current State | Mobile retention | PARTIAL | PWA shell and audited RUM/Web Vitals wiring exist; push delivery is not configured. |
 | Current State | Production readiness | NOT DONE | Strict production readiness fails locally due missing real env. |
 | Current State | Release hygiene | DONE | Worktree was clean after the last release-state strict gate. |
 | Accountability | Determinism: no `Math.random()` | DONE | Scan returned no `Math.random()` or unapproved UUID usage. |
@@ -94,7 +94,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Accountability | Licensed media replacement | NOT DONE | Reused Unsplash imagery warnings remain. |
 | Accountability | Agent cron auth | DONE | Cron auth gate is wired and audited. |
 | Accountability | Production cron execution | NOT DONE | Not verified in deployment with real `CRON_SECRET` and persistent KV. |
-| Accountability | Ops monitoring endpoints | PARTIAL | Endpoints exist; external monitoring/webhook delivery is not configured. |
+| Accountability | Ops monitoring endpoints | PARTIAL | Endpoints and RUM wiring audit exist; external monitoring/webhook delivery is not configured. |
 | Accountability | Dependency audit | DONE | Approved network `npm audit` returned 0 vulnerabilities. |
 | Accountability | `audit:production:strict` in deployment | NOT DONE | No deployment proof has been provided. |
 | Accountability | No stale removed-route docs | DONE | Docs audit blocks stale route/architecture claims. |
@@ -116,10 +116,10 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Add licensed reviews/property providers | NOT DONE | No licensed provider env is configured. |
 | Stabilization Priority | Keep unknown data unavailable/not configured | PARTIAL | Local behavior exists; future integrations need continuous enforcement. |
 | Stabilization Priority | Run agent cron routes only with `CRON_SECRET` | DONE | Cron auth checks are wired and audited. |
-| Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints exist; external monitoring and webhook delivery are not configured. |
+| Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints and RUM wiring audit exist; external monitoring and webhook delivery are not configured. |
 | Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
 | Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
-| Acceptance Criteria | `npm test` passes | DONE | 174 files / 1069 tests passed. |
+| Acceptance Criteria | `npm test` passes | DONE | 175 files / 1071 tests passed. |
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
 | Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 99.44% lines and 99.17% branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 728 static pages. |
@@ -150,7 +150,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Backlog P2 | Add real alert delivery provider integration | NOT DONE | Webhook/push/email provider is not configured. |
 | Backlog P2 | Add web push after approved provider setup | NOT DONE | Push keys/provider are absent. |
 | Backlog P3 | Production observability dashboard | PARTIAL | Authenticated dashboard now surfaces ops scorecard, alert counts, domain status, and top blockers; external monitoring, RUM, and webhook proof are still incomplete. |
-| Backlog P3 | Real-user monitoring and Core Web Vitals | NOT DONE | No production RUM proof exists. |
+| Backlog P3 | Real-user monitoring and Core Web Vitals | PARTIAL | Vercel Analytics, Speed Insights, and local Core Web Vitals instrumentation are wired and audited; production route/device proof is missing. |
 | Backlog P3 | Localization QA beyond Hebrew/English | PARTIAL | Hebrew/English exist; broader RTL/LTR QA is incomplete. |
 | Backlog P3 | Commercial/legal readiness | NOT DONE | Requires partner terms, affiliate/legal review, and licensed content signoff. |
 | Backlog P3 | Competitor parity tracking | PARTIAL | Ops scorecard now includes sourced competitor parity tracking for inventory breadth, price freshness, mobile installability, reviews/property content, alerts, booking handoff, and Israel coverage; weekly source review and live production proof are still incomplete. |
@@ -252,7 +252,8 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 
 - [x] Surface ops scorecard, alert counts, domain status, and top blockers in the authenticated dashboard.
 - [ ] Build the external production observability layer covering uptime, provider latency, cache hit rate, alert delivery, price mismatch reports, catalog provenance quality, RUM, and webhook proof.
-- [ ] Add real-user monitoring and Core Web Vitals tracking per top route and device class.
+- [x] Add CI-wired RUM/Web Vitals wiring audit for Vercel Analytics, Speed Insights, and local Core Web Vitals instrumentation.
+- [ ] Capture production RUM/Core Web Vitals evidence per top route and device class.
 - [ ] Add international localization QA beyond Hebrew/English, including RTL/LTR layout regression checks.
 - [ ] Add commercial/legal readiness for partner terms, affiliate disclosures, privacy, retention, and licensed content display.
 - [x] Add sourced competitor parity tracking for inventory breadth, price freshness, mobile installability, reviews, alerts, booking handoff quality, and Israel coverage.

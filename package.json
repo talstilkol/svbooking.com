@@ -38,6 +38,7 @@
     "audit:i18n": "node scripts/audit-i18n.mjs",
     "audit:price-accuracy": "node scripts/audit-price-accuracy.mjs",
     "audit:pwa": "node scripts/audit-pwa.mjs",
+    "audit:rum": "node scripts/audit-rum.mjs",
     "audit:ops-scorecard": "node scripts/audit-ops-scorecard.mjs",
     "audit:ui-quality": "node scripts/audit-ui-quality.mjs",
     "audit:accessibility": "node scripts/audit-accessibility.mjs",
