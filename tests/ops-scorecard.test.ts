@@ -12,7 +12,7 @@ describe('ops scorecard', () => {
     const scorecard = buildOpsScorecard({
       env: {
         ADMIN_API_SECRET: 'admin-secret-value',
-        PRICE_ALERT_WEBHOOK_SECRET: 'webhook-secret-value',
+        PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-webhook-secret-scorecard-0001',
       } as unknown as NodeJS.ProcessEnv,
       now: new Date('2026-05-14T12:00:00.000Z'),
     });
@@ -42,7 +42,7 @@ describe('ops scorecard', () => {
     expect(scorecard.productTruth.catalogMediaQuality.status).toBe('partial');
     expect(scorecard.blockers.length).toBeGreaterThan(0);
     expect(JSON.stringify(scorecard)).not.toContain('admin-secret-value');
-    expect(JSON.stringify(scorecard)).not.toContain('webhook-secret-value');
+    expect(JSON.stringify(scorecard)).not.toContain('svbooking-webhook-secret-scorecard-0001');
   });
 
   it('separates free-only launch readiness from global parity claims', () => {
@@ -91,8 +91,8 @@ describe('ops scorecard', () => {
     const scorecard = buildOpsScorecard({
       env: {
         ADMIN_API_SECRET: 'admin-secret-value',
-        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
-        OPS_ALERT_WEBHOOK_SECRET: 'ops-webhook-secret',
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.com/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-webhook-scorecard-0001',
       } as unknown as NodeJS.ProcessEnv,
       now: new Date('2026-05-14T12:00:00.000Z'),
     });
@@ -101,8 +101,8 @@ describe('ops scorecard', () => {
     expect(observability?.status).toBe('healthy');
     expect(observability?.current.alertDelivery).toBe('configured');
     expect(observability?.blockers).toEqual([]);
-    expect(JSON.stringify(scorecard)).not.toContain('ops-webhook-secret');
-    expect(JSON.stringify(scorecard)).not.toContain('ops.svbooking.invalid');
+    expect(JSON.stringify(scorecard)).not.toContain('svbooking-ops-webhook-scorecard-0001');
+    expect(JSON.stringify(scorecard)).not.toContain('ops.svbooking.com');
   });
 
   it('marks configured production, reviews, mobile alerts, and observability domains without global parity claims', () => {
@@ -122,12 +122,13 @@ describe('ops scorecard', () => {
         SERPAPI_KEY: 'svbooking-serpapi-key-scorecard-0001',
         REVIEWS_PROVIDER_NAME: 'google-places',
         REVIEWS_PROVIDER_LICENSED: 'true',
-        PRICE_ALERT_WEBHOOK_URL: 'https://alerts.svbooking.invalid/hook',
-        PRICE_ALERT_WEBHOOK_SECRET: 'price-alert-secret',
-        NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'push-public-key',
-        PUSH_PRIVATE_KEY: 'push-private-key',
-        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
-        OPS_ALERT_WEBHOOK_SECRET: 'ops-alert-secret',
+        GOOGLE_PLACES_API_KEY: 'svbooking-google-places-scorecard-0001',
+        PRICE_ALERT_WEBHOOK_URL: 'https://alerts.svbooking.com/hook',
+        PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-price-alert-scorecard-0001',
+        NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'svbooking-public-push-scorecard-0001',
+        PUSH_PRIVATE_KEY: 'svbooking-private-push-scorecard-0001',
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.com/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-scorecard-0001',
       } as unknown as NodeJS.ProcessEnv,
       now: new Date('2026-05-14T12:00:00.000Z'),
     });
@@ -143,9 +144,9 @@ describe('ops scorecard', () => {
     expect(scorecard.productTruth.globalParityReady).toBe(false);
     expect(scorecard.productTruth.competitorParity.blockers.length).toBeGreaterThan(0);
     expect(JSON.stringify(scorecard)).not.toContain('cron-secret-value');
-    expect(JSON.stringify(scorecard)).not.toContain('price-alert-secret');
-    expect(JSON.stringify(scorecard)).not.toContain('push-private-key');
-    expect(JSON.stringify(scorecard)).not.toContain('ops-alert-secret');
+    expect(JSON.stringify(scorecard)).not.toContain('svbooking-price-alert-scorecard-0001');
+    expect(JSON.stringify(scorecard)).not.toContain('svbooking-private-push-scorecard-0001');
+    expect(JSON.stringify(scorecard)).not.toContain('svbooking-ops-alert-scorecard-0001');
   });
 
   it('surfaces reused catalog media as a scorecard blocker instead of hiding audit warnings', () => {

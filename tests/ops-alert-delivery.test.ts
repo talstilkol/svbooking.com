@@ -35,25 +35,33 @@ describe('ops alert delivery', () => {
       OPS_ALERT_WEBHOOK_SECRET: '',
     } as unknown as NodeJS.ProcessEnv)).toBe(false);
     expect(isOpsAlertDeliveryConfigured({
-      OPS_ALERT_WEBHOOK_URL: 'http://ops.svbooking.invalid/hook',
-      OPS_ALERT_WEBHOOK_SECRET: 'secret',
+      OPS_ALERT_WEBHOOK_URL: 'http://ops.svbooking.com/hook',
+      OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
     } as unknown as NodeJS.ProcessEnv)).toBe(false);
     expect(isOpsAlertDeliveryConfigured({
       OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
-      OPS_ALERT_WEBHOOK_SECRET: 'secret',
+      OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
+    } as unknown as NodeJS.ProcessEnv)).toBe(false);
+    expect(isOpsAlertDeliveryConfigured({
+      OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.com/hook',
+      OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
     } as unknown as NodeJS.ProcessEnv)).toBe(true);
     expect(isOpsAlertDeliveryConfigured({
       NODE_ENV: 'development',
       OPS_ALERT_WEBHOOK_URL: 'http://localhost:8787/hook',
-      OPS_ALERT_WEBHOOK_SECRET: 'secret',
+      OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
     } as unknown as NodeJS.ProcessEnv)).toBe(true);
     expect(isOpsAlertDeliveryConfigured({
       NODE_ENV: 'production',
       OPS_ALERT_WEBHOOK_URL: 'http://localhost:8787/hook',
-      OPS_ALERT_WEBHOOK_SECRET: 'secret',
+      OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
     } as unknown as NodeJS.ProcessEnv)).toBe(false);
     expect(isOpsAlertDeliveryConfigured({
-      OPS_ALERT_WEBHOOK_URL: 'https://user:pass@ops.svbooking.invalid/hook',
+      OPS_ALERT_WEBHOOK_URL: 'https://user:pass@ops.svbooking.com/hook',
+      OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
+    } as unknown as NodeJS.ProcessEnv)).toBe(false);
+    expect(isOpsAlertDeliveryConfigured({
+      OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.com/hook',
       OPS_ALERT_WEBHOOK_SECRET: 'secret',
     } as unknown as NodeJS.ProcessEnv)).toBe(false);
   });
@@ -62,8 +70,8 @@ describe('ops alert delivery', () => {
     const calls: Array<{ url: string; init: RequestInit }> = [];
     const result = await deliverOpsAlertReport(report, {
       env: {
-        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
-        OPS_ALERT_WEBHOOK_SECRET: 'ops-secret-value',
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.com/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
       } as unknown as NodeJS.ProcessEnv,
       fetchImpl: async (url, init) => {
         calls.push({ url: String(url), init: init || {} });
@@ -73,8 +81,8 @@ describe('ops alert delivery', () => {
 
     expect(result).toEqual({ configured: true, status: 'sent', httpStatus: 202 });
     expect(calls).toHaveLength(1);
-    expect(calls[0].url).toBe('https://ops.svbooking.invalid/hook');
-    expect((calls[0].init.headers as Record<string, string>).Authorization).toBe('Bearer ops-secret-value');
+    expect(calls[0].url).toBe('https://ops.svbooking.com/hook');
+    expect((calls[0].init.headers as Record<string, string>).Authorization).toBe('Bearer svbooking-ops-alert-secret-0001');
 
     const payload = JSON.parse(String(calls[0].init.body));
     expect(payload.service).toBe('sv-booking');
@@ -91,7 +99,7 @@ describe('ops alert delivery', () => {
       },
       action: 'Configure persistent Redis/KV before production scale.',
     });
-    expect(JSON.stringify(payload)).not.toContain('ops-secret-value');
+    expect(JSON.stringify(payload)).not.toContain('svbooking-ops-alert-secret-0001');
     expect(JSON.stringify(payload)).not.toContain('alert-token');
     expect(JSON.stringify(payload)).not.toContain('provider-secret');
     expect(JSON.stringify(payload)).not.toContain('summary-secret');
@@ -108,8 +116,8 @@ describe('ops alert delivery', () => {
     };
     await deliverOpsAlertReport(sparseReport, {
       env: {
-        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
-        OPS_ALERT_WEBHOOK_SECRET: 'ops-secret-value',
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.com/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
       } as unknown as NodeJS.ProcessEnv,
       fetchImpl: async (_url, init) => {
         calls.push({ init: init || {} });
@@ -129,8 +137,8 @@ describe('ops alert delivery', () => {
       evidence: undefined,
     }, {
       env: {
-        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
-        OPS_ALERT_WEBHOOK_SECRET: 'ops-secret-value',
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.com/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
       } as unknown as NodeJS.ProcessEnv,
       fetchImpl: async (_url, init) => {
         calls.push({ init: init || {} });
@@ -153,7 +161,7 @@ describe('ops alert delivery', () => {
     const invalid = await deliverOpsAlertReport(report, {
       env: {
         OPS_ALERT_WEBHOOK_URL: 'ftp://ops.svbooking.invalid/hook',
-        OPS_ALERT_WEBHOOK_SECRET: 'secret',
+        OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
       } as unknown as NodeJS.ProcessEnv,
       fetchImpl: async () => new Response('{}'),
     });
@@ -181,8 +189,8 @@ describe('ops alert delivery', () => {
       evidence: null,
     }, {
       env: {
-        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
-        OPS_ALERT_WEBHOOK_SECRET: 'ops-secret-value',
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.com/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
       } as unknown as NodeJS.ProcessEnv,
       fetchImpl: async (_url, init) => {
         calls.push({ init: init || {} });
@@ -198,8 +206,8 @@ describe('ops alert delivery', () => {
 
     const thrown = await deliverOpsAlertReport(report, {
       env: {
-        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
-        OPS_ALERT_WEBHOOK_SECRET: 'ops-secret-value',
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.com/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
       } as unknown as NodeJS.ProcessEnv,
       fetchImpl: async () => {
         throw new Error('webhook unavailable');
@@ -219,8 +227,8 @@ describe('ops alert delivery', () => {
 
       const pending = deliverOpsAlertReport(report, {
         env: {
-          OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
-          OPS_ALERT_WEBHOOK_SECRET: 'ops-secret-value',
+          OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.com/hook',
+          OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
         } as unknown as NodeJS.ProcessEnv,
         fetchImpl,
       });

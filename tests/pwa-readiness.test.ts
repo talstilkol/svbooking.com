@@ -18,17 +18,21 @@ describe('PWA readiness', () => {
     expect(isPushConfigured({} as NodeJS.ProcessEnv)).toBe(false);
   });
 
-  it('marks push readiness only when both public and private push keys exist', () => {
-    expect(isPushConfigured({ NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'public-key' } as unknown as NodeJS.ProcessEnv)).toBe(false);
+  it('marks push readiness only when both public and private push keys are configured', () => {
+    expect(isPushConfigured({ NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'svbooking-public-push-key-0001' } as unknown as NodeJS.ProcessEnv)).toBe(false);
     expect(isPushConfigured({
       NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'public-key',
       PUSH_PRIVATE_KEY: 'private-key',
+    } as unknown as NodeJS.ProcessEnv)).toBe(false);
+    expect(isPushConfigured({
+      NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'svbooking-public-push-key-0001',
+      PUSH_PRIVATE_KEY: 'svbooking-private-push-key-0001',
     } as unknown as NodeJS.ProcessEnv)).toBe(true);
 
     const readiness = getPwaReadiness({
       env: {
-        NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'public-key',
-        PUSH_PRIVATE_KEY: 'private-key',
+        NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'svbooking-public-push-key-0001',
+        PUSH_PRIVATE_KEY: 'svbooking-private-push-key-0001',
       } as unknown as NodeJS.ProcessEnv,
     });
 
@@ -37,6 +41,6 @@ describe('PWA readiness', () => {
     expect(readiness.push.status).toBe('keys-configured');
     expect(readiness.push.delivery).toBe('service-worker-handler-ready');
     expect(readiness.push.requiresUserPermission).toBe(true);
-    expect(JSON.stringify(readiness)).not.toContain('private-key');
+    expect(JSON.stringify(readiness)).not.toContain('svbooking-private-push-key-0001');
   });
 });

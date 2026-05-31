@@ -425,6 +425,7 @@ requireIncludes(agentDashboard, 'components/AgentDashboard.tsx', [
 
 const pwaReadiness = await readProjectFile('lib/pwa-readiness.js');
 requireIncludes(pwaReadiness, 'lib/pwa-readiness.js', [
+  "import { isEnvConfigured } from './production-readiness.mjs';",
   'getPwaReadiness',
   'NEXT_PUBLIC_PUSH_PUBLIC_KEY',
   'PUSH_PRIVATE_KEY',
@@ -631,6 +632,7 @@ requireIncludes(priceAlertHistoryTest, 'tests/price-alerts.test.ts', [
 const priceAlertDelivery = await readProjectFile('lib/price-alert-delivery.js');
 requireIncludes(priceAlertDelivery, 'lib/price-alert-delivery.js', [
   "import { validWebhookUrl } from './webhook-url';",
+  "import { isEnvConfigured } from './production-readiness.mjs';",
   'PRICE_ALERT_WEBHOOK_URL',
   'PRICE_ALERT_WEBHOOK_SECRET',
   'userFingerprint',
@@ -645,9 +647,11 @@ requireIncludes(webhookUrl, 'lib/webhook-url.js', [
   'production',
   'url.username || url.password',
   'LOCAL_WEBHOOK_HOSTS',
+  'DOCUMENTATION_WEBHOOK_HOSTS',
   'isRestrictedWebhookHost',
   'isPrivateIpv4',
   'isRestrictedIpv6',
+  "normalized.endsWith('.invalid')",
   '169 && second === 254',
   '192 && second === 168',
   "normalized.startsWith('::ffff:')",

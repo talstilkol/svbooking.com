@@ -41,7 +41,10 @@ async function* walk(directory) {
 const reviews = await readProjectFile('lib/reviews.js');
 requireIncludes(reviews, 'lib/reviews.js', [
   'isReviewProviderConfigured',
+  'isSupportedReviewProvider',
   'REVIEWS_PROVIDER_LICENSED',
+  'GOOGLE_PLACES_API_KEY',
+  "isEnvConfigured(env, 'GOOGLE_PLACES_API_KEY')",
   'available: false',
   'verified: false',
   'reviews: []',

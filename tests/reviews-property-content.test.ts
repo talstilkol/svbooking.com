@@ -84,6 +84,7 @@ describe('reviews and property content APIs', () => {
     expect(isReviewProviderConfigured({
       REVIEWS_PROVIDER_NAME: 'Google',
       REVIEWS_PROVIDER_LICENSED: 'true',
+      GOOGLE_PLACES_API_KEY: 'unit-test-google-places-key',
     } as unknown as NodeJS.ProcessEnv)).toBe(true);
     expect(fetchGooglePlacesReviews).toHaveBeenCalledWith(
       expect.objectContaining({ hotelKey: 'g1-d1', name: 'Verified Hotel' }),
@@ -106,6 +107,7 @@ describe('reviews and property content APIs', () => {
     expect(isReviewProviderConfigured({
       REVIEWS_PROVIDER_NAME: 'Google',
       REVIEWS_PROVIDER_LICENSED: 'false',
+      GOOGLE_PLACES_API_KEY: 'unit-test-google-places-key',
     } as unknown as NodeJS.ProcessEnv)).toBe(false);
 
     const unknownProvider = await getReviewSummary('g1-d1', {

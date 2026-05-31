@@ -152,7 +152,7 @@ describe('price alerts API', () => {
   });
 
   it('creates deterministic unsubscribe tokens when configured and cancels by public token', async () => {
-    vi.stubEnv('PRICE_ALERT_UNSUBSCRIBE_SECRET', 'unsubscribe-secret');
+    vi.stubEnv('PRICE_ALERT_UNSUBSCRIBE_SECRET', 'svbooking-unsubscribe-secret-0001');
 
     const created = await createAlert(new Request('http://localhost:3000/api/price-alerts', {
       method: 'POST',

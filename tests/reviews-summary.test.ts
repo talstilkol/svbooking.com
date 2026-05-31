@@ -12,13 +12,29 @@ describe('isReviewProviderConfigured', () => {
   it('is false without both env markers', () => {
     expect(isReviewProviderConfigured(asEnv({}))).toBe(false);
     expect(isReviewProviderConfigured(asEnv({ REVIEWS_PROVIDER_NAME: 'google-places' }))).toBe(false);
+    expect(isReviewProviderConfigured(asEnv({
+      REVIEWS_PROVIDER_NAME: 'google-places',
+      REVIEWS_PROVIDER_LICENSED: 'true',
+    }))).toBe(false);
   });
-  it('is true when name is set and licensed', () => {
+  it('is true when a supported provider is licensed and credentialed', () => {
     expect(
       isReviewProviderConfigured(
-        asEnv({ REVIEWS_PROVIDER_NAME: 'google-places', REVIEWS_PROVIDER_LICENSED: 'true' })
+        asEnv({
+          REVIEWS_PROVIDER_NAME: 'google-places',
+          REVIEWS_PROVIDER_LICENSED: 'true',
+          GOOGLE_PLACES_API_KEY: 'unit-test-google-places-key',
+        })
       )
     ).toBe(true);
+  });
+
+  it('is false for licensed but unsupported providers', () => {
+    expect(isReviewProviderConfigured(asEnv({
+      REVIEWS_PROVIDER_NAME: 'internal-provider',
+      REVIEWS_PROVIDER_LICENSED: 'true',
+      GOOGLE_PLACES_API_KEY: 'unit-test-google-places-key',
+    }))).toBe(false);
   });
 });
 
@@ -64,7 +80,7 @@ describe('normalizeGooglePlaces', () => {
     expect(out.count).toBeNull();
     expect(out.reviews).toEqual([
       {
-        author: 'Anonymous',
+        author: null,
         rating: null,
         text: 'Verified stay. '.repeat(80).slice(0, 600),
         time: null,
@@ -152,7 +168,11 @@ describe('getReviewSummary', () => {
       });
 
     const s = await getReviewSummary(SAMPLE_KEY, {
-      env: asEnv({ REVIEWS_PROVIDER_NAME: 'google-places', REVIEWS_PROVIDER_LICENSED: 'true', GOOGLE_PLACES_API_KEY: 'k' }),
+      env: asEnv({
+        REVIEWS_PROVIDER_NAME: 'google-places',
+        REVIEWS_PROVIDER_LICENSED: 'true',
+        GOOGLE_PLACES_API_KEY: 'unit-test-google-places-key',
+      }),
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
 
@@ -164,7 +184,11 @@ describe('getReviewSummary', () => {
   it('falls back to unavailable when the provider fetch fails', async () => {
     const fetchImpl = vi.fn().mockRejectedValue(new Error('network'));
     const s = await getReviewSummary(SAMPLE_KEY, {
-      env: asEnv({ REVIEWS_PROVIDER_NAME: 'google-places', REVIEWS_PROVIDER_LICENSED: 'true', GOOGLE_PLACES_API_KEY: 'k' }),
+      env: asEnv({
+        REVIEWS_PROVIDER_NAME: 'google-places',
+        REVIEWS_PROVIDER_LICENSED: 'true',
+        GOOGLE_PLACES_API_KEY: 'unit-test-google-places-key',
+      }),
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
     expect(s).toMatchObject({ available: false, status: 'unavailable' });
@@ -173,7 +197,11 @@ describe('getReviewSummary', () => {
   it('falls back to unavailable when place is not found', async () => {
     const fetchImpl = vi.fn().mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ candidates: [] }) });
     const s = await getReviewSummary(SAMPLE_KEY, {
-      env: asEnv({ REVIEWS_PROVIDER_NAME: 'google-places', REVIEWS_PROVIDER_LICENSED: 'true', GOOGLE_PLACES_API_KEY: 'k' }),
+      env: asEnv({
+        REVIEWS_PROVIDER_NAME: 'google-places',
+        REVIEWS_PROVIDER_LICENSED: 'true',
+        GOOGLE_PLACES_API_KEY: 'unit-test-google-places-key',
+      }),
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
     expect(s).toMatchObject({ available: false });

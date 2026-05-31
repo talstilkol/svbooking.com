@@ -68,6 +68,7 @@ requireIncludes(alertsRoute, 'app/api/ops/alerts/route.js', [
 const alertDelivery = await readProjectFile('lib/ops-alert-delivery.js');
 requireIncludes(alertDelivery, 'lib/ops-alert-delivery.js', [
   "import { validWebhookUrl } from './webhook-url';",
+  "import { isEnvConfigured } from './production-readiness.mjs';",
   'OPS_ALERT_WEBHOOK_URL',
   'OPS_ALERT_WEBHOOK_SECRET',
   'deliverOpsAlertReport',
@@ -82,9 +83,11 @@ requireIncludes(webhookUrl, 'lib/webhook-url.js', [
   'production',
   'url.username || url.password',
   'LOCAL_WEBHOOK_HOSTS',
+  'DOCUMENTATION_WEBHOOK_HOSTS',
   'isRestrictedWebhookHost',
   'isPrivateIpv4',
   'isRestrictedIpv6',
+  "normalized.endsWith('.invalid')",
   '169 && second === 254',
   '192 && second === 168',
   "normalized.startsWith('::ffff:')",
@@ -94,6 +97,7 @@ const webhookUrlTest = await readProjectFile('tests/webhook-url.test.ts');
 requireIncludes(webhookUrlTest, 'tests/webhook-url.test.ts', [
   'allows localhost HTTP only outside production',
   'rejects embedded credentials in webhook URLs',
+  'rejects documentation and reserved fake webhook hosts',
   'rejects local and private HTTPS destinations',
   'rejects non-localhost HTTP destinations',
   'https://100.64.0.1/hook',
@@ -103,7 +107,8 @@ requireIncludes(webhookUrlTest, 'tests/webhook-url.test.ts', [
 const opsAlertDeliveryTest = await readProjectFile('tests/ops-alert-delivery.test.ts');
 requireIncludes(opsAlertDeliveryTest, 'tests/ops-alert-delivery.test.ts', [
   "NODE_ENV: 'production'",
-  'https://user:pass@ops.svbooking.invalid/hook',
+  'https://user:pass@ops.svbooking.com/hook',
+  "OPS_ALERT_WEBHOOK_SECRET: 'secret'",
 ]);
 
 const alertEvents = await readProjectFile('lib/ops-alert-events.js');

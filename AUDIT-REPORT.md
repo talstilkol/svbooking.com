@@ -20,7 +20,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 177 test files, 1098 tests passed. |
+| `npm test` | PASS | 177 test files, 1100 tests passed. |
 | `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 100% lines, 100% statements, 100% functions, and 100% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 100%, statements 100%, functions 100%, branches 100%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
@@ -89,6 +89,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Aligned health readiness and ops scorecard with strict production readiness: Kinde env and a complete partner pricing provider env group are now explicit blockers.
 - Aligned strict production readiness with catalog media quality so unresolved reused/unapproved catalog images block go-live instead of remaining only a warning.
 - Aligned strict production readiness with licensed review/provider env, price-alert delivery, ops-alert delivery, unsubscribe, and push-key requirements so launch services cannot silently remain unavailable.
+- Aligned runtime readiness checks for reviews, alert webhooks, unsubscribe tokens, and push keys with strict env validation so placeholder hosts, short secrets, unsupported review providers, and missing Google Places keys cannot produce configured states.
 - Extracted production readiness env grouping into `lib/production-readiness.mjs` so the CLI audit, health snapshot, and ops scorecard share one contract.
 - Added `npm run audit:env` so readiness env names cannot drift across `.env.example`, README, runbook, package scripts, and CI.
 - Added `npm run audit:secrets` to block committed env values and accidental production env assignments in scripts or CI.

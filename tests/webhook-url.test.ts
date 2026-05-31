@@ -3,11 +3,17 @@ import { validWebhookUrl } from '@/lib/webhook-url';
 
 describe('webhook URL validation', () => {
   it('accepts HTTPS webhook URLs without credentials', () => {
-    expect(validWebhookUrl('https://alerts.example.com/hook#fragment')).toBe('https://alerts.example.com/hook');
+    expect(validWebhookUrl('https://alerts.svbooking.com/hook#fragment')).toBe('https://alerts.svbooking.com/hook');
   });
 
   it('rejects embedded credentials in webhook URLs', () => {
-    expect(validWebhookUrl('https://user:pass@alerts.example.com/hook')).toBeNull();
+    expect(validWebhookUrl('https://user:pass@alerts.svbooking.com/hook')).toBeNull();
+  });
+
+  it('rejects documentation and reserved fake webhook hosts', () => {
+    expect(validWebhookUrl('https://alerts.example.com/hook')).toBeNull();
+    expect(validWebhookUrl('https://ops.svbooking.invalid/hook')).toBeNull();
+    expect(validWebhookUrl('https://ops.svbooking.test/hook')).toBeNull();
   });
 
   it('allows localhost HTTP only outside production', () => {
@@ -72,7 +78,7 @@ describe('webhook URL validation', () => {
   });
 
   it('rejects non-localhost HTTP destinations', () => {
-    expect(validWebhookUrl('http://alerts.example.com/hook', {
+    expect(validWebhookUrl('http://alerts.svbooking.com/hook', {
       env: { NODE_ENV: 'development' },
     })).toBeNull();
   });

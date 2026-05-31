@@ -145,8 +145,8 @@ describe('health APIs', () => {
 
   it('reports alert delivery configured without leaking webhook secrets', async () => {
     vi.stubEnv('ADMIN_API_SECRET', 'admin-secret-health');
-    vi.stubEnv('PRICE_ALERT_WEBHOOK_URL', 'https://alerts.example.com/hook');
-    vi.stubEnv('PRICE_ALERT_WEBHOOK_SECRET', 'alert-secret-value');
+    vi.stubEnv('PRICE_ALERT_WEBHOOK_URL', 'https://alerts.svbooking.com/hook');
+    vi.stubEnv('PRICE_ALERT_WEBHOOK_SECRET', 'svbooking-alert-secret-health-0001');
 
     const response = await getHealth();
     const body = await response.json();
@@ -156,13 +156,13 @@ describe('health APIs', () => {
     expect(body.checks.alerts.deliveryStatus).toBe('configured');
     expect(body.checks.alerts.unsubscribeConfigured).toBe(false);
     expect(body.checks.opsAlerts.deliveryConfigured).toBe(false);
-    expect(JSON.stringify(body)).not.toContain('alert-secret-value');
-    expect(JSON.stringify(body)).not.toContain('alerts.example.com');
+    expect(JSON.stringify(body)).not.toContain('svbooking-alert-secret-health-0001');
+    expect(JSON.stringify(body)).not.toContain('alerts.svbooking.com');
   });
 
   it('reports alert unsubscribe configured without leaking unsubscribe secrets', async () => {
     vi.stubEnv('ADMIN_API_SECRET', 'admin-secret-health');
-    vi.stubEnv('PRICE_ALERT_UNSUBSCRIBE_SECRET', 'unsubscribe-secret-value');
+    vi.stubEnv('PRICE_ALERT_UNSUBSCRIBE_SECRET', 'svbooking-unsubscribe-health-0001');
 
     const response = await getHealth();
     const body = await response.json();
@@ -170,13 +170,13 @@ describe('health APIs', () => {
     expect(response.status).toBe(200);
     expect(body.checks.alerts.unsubscribeConfigured).toBe(true);
     expect(body.checks.alerts.unsubscribeStatus).toBe('configured');
-    expect(JSON.stringify(body)).not.toContain('unsubscribe-secret-value');
+    expect(JSON.stringify(body)).not.toContain('svbooking-unsubscribe-health-0001');
   });
 
   it('reports ops alert delivery configured without leaking webhook secrets', async () => {
     vi.stubEnv('ADMIN_API_SECRET', 'admin-secret-health');
-    vi.stubEnv('OPS_ALERT_WEBHOOK_URL', 'https://ops.example.com/hook');
-    vi.stubEnv('OPS_ALERT_WEBHOOK_SECRET', 'ops-secret-value');
+    vi.stubEnv('OPS_ALERT_WEBHOOK_URL', 'https://ops.svbooking.com/hook');
+    vi.stubEnv('OPS_ALERT_WEBHOOK_SECRET', 'svbooking-ops-secret-health-0001');
 
     const response = await getHealth();
     const body = await response.json();
@@ -184,8 +184,8 @@ describe('health APIs', () => {
     expect(response.status).toBe(200);
     expect(body.checks.opsAlerts.deliveryConfigured).toBe(true);
     expect(body.checks.opsAlerts.deliveryStatus).toBe('configured');
-    expect(JSON.stringify(body)).not.toContain('ops-secret-value');
-    expect(JSON.stringify(body)).not.toContain('ops.example.com');
+    expect(JSON.stringify(body)).not.toContain('svbooking-ops-secret-health-0001');
+    expect(JSON.stringify(body)).not.toContain('ops.svbooking.com');
   });
 
   it('fails production readiness when admin auth is not configured', async () => {

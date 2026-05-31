@@ -30,8 +30,8 @@ describe('price alert delivery', () => {
     const fetchImpl = vi.fn();
     const result = await deliverPriceAlertEvent(event, {
       env: {
-        PRICE_ALERT_WEBHOOK_URL: 'http://alerts.example.com/hooks/sv-booking',
-        PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
+        PRICE_ALERT_WEBHOOK_URL: 'http://alerts.svbooking.com/hooks/sv-booking',
+        PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-price-alert-secret-0001',
       } as unknown as NodeJS.ProcessEnv,
       fetchImpl,
     });
@@ -39,22 +39,26 @@ describe('price alert delivery', () => {
     expect(result).toEqual({ configured: false, status: 'invalid-config' });
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(isPriceAlertDeliveryConfigured({
-      PRICE_ALERT_WEBHOOK_URL: 'http://alerts.example.com/hooks/sv-booking',
-      PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
+      PRICE_ALERT_WEBHOOK_URL: 'http://alerts.svbooking.com/hooks/sv-booking',
+      PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-price-alert-secret-0001',
     } as unknown as NodeJS.ProcessEnv)).toBe(false);
     expect(isPriceAlertDeliveryConfigured({
       NODE_ENV: 'development',
       PRICE_ALERT_WEBHOOK_URL: 'http://localhost:8787/hooks/sv-booking',
-      PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
+      PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-price-alert-secret-0001',
     } as unknown as NodeJS.ProcessEnv)).toBe(true);
     expect(isPriceAlertDeliveryConfigured({
       NODE_ENV: 'production',
       PRICE_ALERT_WEBHOOK_URL: 'http://localhost:8787/hooks/sv-booking',
-      PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
+      PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-price-alert-secret-0001',
     } as unknown as NodeJS.ProcessEnv)).toBe(false);
     expect(isPriceAlertDeliveryConfigured({
-      PRICE_ALERT_WEBHOOK_URL: 'https://user:pass@alerts.example.com/hooks/sv-booking',
-      PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
+      PRICE_ALERT_WEBHOOK_URL: 'https://user:pass@alerts.svbooking.com/hooks/sv-booking',
+      PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-price-alert-secret-0001',
+    } as unknown as NodeJS.ProcessEnv)).toBe(false);
+    expect(isPriceAlertDeliveryConfigured({
+      PRICE_ALERT_WEBHOOK_URL: 'https://alerts.svbooking.com/hooks/sv-booking',
+      PRICE_ALERT_WEBHOOK_SECRET: 'secret',
     } as unknown as NodeJS.ProcessEnv)).toBe(false);
   });
 
@@ -62,8 +66,8 @@ describe('price alert delivery', () => {
     const fetchImpl = vi.fn(async () => ({ ok: true, status: 202 })) as unknown as typeof fetch;
     const result = await deliverPriceAlertEvent(event, {
       env: {
-        PRICE_ALERT_WEBHOOK_URL: 'https://alerts.example.com/hooks/sv-booking',
-        PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
+        PRICE_ALERT_WEBHOOK_URL: 'https://alerts.svbooking.com/hooks/sv-booking',
+        PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-price-alert-secret-0001',
       } as unknown as NodeJS.ProcessEnv,
       fetchImpl,
     });
@@ -76,7 +80,7 @@ describe('price alert delivery', () => {
     expect(body.unsubscribeToken).toBe('u_0123456789abcdef0123456789abcdef');
     expect(body.unsubscribePath).toContain('/api/price-alerts/unsubscribe');
     expect(JSON.stringify(body)).not.toContain('user_1');
-    expect((request! as Record<string, unknown> & { headers: Record<string, string> }).headers.Authorization).toBe('Bearer secret-value');
+    expect((request! as Record<string, unknown> & { headers: Record<string, string> }).headers.Authorization).toBe('Bearer svbooking-price-alert-secret-0001');
   });
 
   it('marks non-2xx webhook responses as failed without leaking unsubscribe defaults', async () => {
@@ -87,8 +91,8 @@ describe('price alert delivery', () => {
       unsubscribePath: '',
     }, {
       env: {
-        PRICE_ALERT_WEBHOOK_URL: 'https://alerts.example.com/hooks/sv-booking',
-        PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
+        PRICE_ALERT_WEBHOOK_URL: 'https://alerts.svbooking.com/hooks/sv-booking',
+        PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-price-alert-secret-0001',
       } as unknown as NodeJS.ProcessEnv,
       fetchImpl,
     });
@@ -107,8 +111,8 @@ describe('price alert delivery', () => {
     }) as unknown as typeof fetch;
     const result = await deliverPriceAlertEvent(event, {
       env: {
-        PRICE_ALERT_WEBHOOK_URL: 'https://alerts.example.com/hooks/sv-booking',
-        PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
+        PRICE_ALERT_WEBHOOK_URL: 'https://alerts.svbooking.com/hooks/sv-booking',
+        PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-price-alert-secret-0001',
       } as unknown as NodeJS.ProcessEnv,
       fetchImpl,
     });
@@ -127,8 +131,8 @@ describe('price alert delivery', () => {
 
       const pending = deliverPriceAlertEvent(event, {
         env: {
-          PRICE_ALERT_WEBHOOK_URL: 'https://alerts.example.com/hooks/sv-booking',
-          PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
+          PRICE_ALERT_WEBHOOK_URL: 'https://alerts.svbooking.com/hooks/sv-booking',
+          PRICE_ALERT_WEBHOOK_SECRET: 'svbooking-price-alert-secret-0001',
         } as unknown as NodeJS.ProcessEnv,
         fetchImpl,
       });
