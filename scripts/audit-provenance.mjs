@@ -39,6 +39,18 @@ function requireIncludes(source, relativePath, snippets) {
   }
 }
 
+function requireNotIncludes(source, relativePath, snippets) {
+  for (const snippet of snippets) {
+    if (source.includes(snippet)) {
+      fail(`${relativePath} must not contain direct catalog promotion path: ${snippet}`);
+    }
+  }
+}
+
+function countOccurrences(source, snippet) {
+  return source.split(snippet).length - 1;
+}
+
 function normalized(value) {
   return String(value || '').trim().toLowerCase();
 }
@@ -92,6 +104,12 @@ const [
   runbook,
   masterPlan,
   catalogCandidates,
+  catalogCandidatesRoute,
+  agentsDiscoveredRoute,
+  autoDiscoveryRoute,
+  autoBulkDiscoveryRoute,
+  autoOsmScannerRoute,
+  autoXoteloDiscoveryRoute,
   hotelsCatalog,
   priceCache,
   publicUrlSafety,
@@ -102,6 +120,12 @@ const [
   readProjectFile('PRODUCTION-RUNBOOK.md'),
   readProjectFile('MASTER-PLAN.md'),
   readProjectFile('lib/catalog-candidates.js'),
+  readProjectFile('app/api/catalog/candidates/route.js'),
+  readProjectFile('app/api/agents/discovered/route.js'),
+  readProjectFile('app/api/agents/auto/discovery/route.js'),
+  readProjectFile('app/api/agents/auto/bulk-discovery/route.js'),
+  readProjectFile('app/api/agents/auto/osm-scanner/route.js'),
+  readProjectFile('app/api/agents/auto/xotelo-discovery/route.js'),
   readProjectFile('lib/hotels-catalog.js'),
   readProjectFile('lib/price-cache.js'),
   readProjectFile('lib/utils/public-url-safety.js'),
@@ -130,16 +154,52 @@ requireIncludes(runbook, 'PRODUCTION-RUNBOOK.md', [
 requireIncludes(masterPlan, 'MASTER-PLAN.md', [
   'provenance audit',
   'deployment smoke',
+  'do not auto-promote discovered hotels',
 ]);
 
 requireIncludes(catalogCandidates, 'lib/catalog-candidates.js', [
   'normalizeHttpsUrl',
   'hasUsableProvenance',
+  'hasVerifiedLocation',
+  'function assertPromotable',
   'missing-provenance',
   'missing-location',
-  'approveCandidate',
+  'Candidate is missing usable provenance',
+  'Candidate is missing verified latitude/longitude',
+  'export async function approveCandidate',
   'addAndPersistHotel',
+  'sourceUrl: candidate.sourceUrl',
+  'externalIds: candidate.externalIds',
+  'provenance: candidate.provenance',
 ]);
+
+if (countOccurrences(catalogCandidates, 'addAndPersistHotel') !== 2) {
+  fail('lib/catalog-candidates.js must only import addAndPersistHotel and call it inside approveCandidate');
+}
+
+for (const [relativePath, source] of [
+  ['app/api/catalog/candidates/route.js', catalogCandidatesRoute],
+  ['app/api/agents/discovered/route.js', agentsDiscoveredRoute],
+]) {
+  requireIncludes(source, relativePath, [
+    'assertSameOrigin(request)',
+    'recordAdminAuditEvent',
+    'upsertCandidate',
+    'approveCandidate',
+    'NO_STORE_HEADERS',
+  ]);
+  requireNotIncludes(source, relativePath, ['addAndPersistHotel']);
+}
+
+for (const [relativePath, source] of [
+  ['app/api/agents/auto/discovery/route.js', autoDiscoveryRoute],
+  ['app/api/agents/auto/bulk-discovery/route.js', autoBulkDiscoveryRoute],
+  ['app/api/agents/auto/osm-scanner/route.js', autoOsmScannerRoute],
+  ['app/api/agents/auto/xotelo-discovery/route.js', autoXoteloDiscoveryRoute],
+]) {
+  requireIncludes(source, relativePath, ['upsertCandidates']);
+  requireNotIncludes(source, relativePath, ['addAndPersistHotel', 'approveCandidate']);
+}
 
 requireIncludes(hotelsCatalog, 'lib/hotels-catalog.js', [
   'HOTEL_KEY_PATTERN',

@@ -3,6 +3,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const roots = ['app', 'components', 'lib', 'scripts', 'tests'];
+const extraFiles = ['proxy.ts'];
 const extensions = new Set(['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx']);
 const ignoredDirectories = new Set(['.git', '.next', 'node_modules', 'coverage', 'test-results', 'playwright-report']);
 
@@ -361,6 +362,36 @@ for (const relativeRoot of roots) {
         label: snippet.label,
       });
     }
+  }
+}
+
+for (const relativePath of extraFiles) {
+  const filePath = path.join(root, relativePath);
+  let source;
+  try {
+    source = await readFile(filePath, 'utf8');
+  } catch {
+    continue;
+  }
+  const sourceForScan = source.toLowerCase();
+  for (const snippet of forbiddenSnippets) {
+    if (snippet.roots) continue;
+    if (snippet.pattern) {
+      if (!snippet.pattern.test(source)) continue;
+      violations.push({
+        file: relativePath,
+        line: findPatternLineNumber(source, snippet.pattern),
+        label: snippet.label,
+      });
+      continue;
+    }
+    const needle = snippet.value.toLowerCase();
+    if (!sourceForScan.includes(needle)) continue;
+    violations.push({
+      file: relativePath,
+      line: findLineNumber(sourceForScan, needle),
+      label: snippet.label,
+    });
   }
 }
 

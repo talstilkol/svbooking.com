@@ -23,7 +23,7 @@ This section is the source of truth for what is complete versus only locally sca
 
 | Plan item | Status | Honest verification |
 | --- | --- | --- |
-| Determinism: no `Math.random()` | DONE | `rg "Math\.random\|crypto\.randomUUID" app components lib scripts tests -S` returns no matches. |
+| Determinism: no `Math.random()` | DONE | `rg "Math\.random\|crypto\.randomUUID" app components lib scripts tests proxy.ts -S` returns no code matches. |
 | No-fabrication guardrails | PARTIAL | `npm run audit:guardrails` and `npm run audit:provenance` pass; static catalog items and image source/license-status metadata are audited, while approved licensed replacements and future provider/content paths remain open. |
 | Local lint/unit/build/E2E health | DONE | `npm run lint`, `npm test`, `npm run build`, and `npm run test:e2e` passed locally. |
 | Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 100% lines, 100% statements, 100% functions, 100% branches; floors are now 100% for every tracked `lib` dimension. |
@@ -112,7 +112,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Keep README, env example, runbook, and plan aligned | PARTIAL | Local docs audit passes; deployment runbook evidence is missing. |
 | Stabilization Priority | Run docs audit in CI | DONE | `audit:docs` is wired in CI. |
 | Stabilization Priority | Keep public URL and runtime JSON scanners enabled | DONE | `audit:public-api-urls` is wired and passes. |
-| Stabilization Priority | Promote only validated catalog candidates | PARTIAL | Validation path exists; production approval process is not exercised at scale. |
+| Stabilization Priority | Promote only validated catalog candidates | DONE | Local promotion now requires explicit admin approval plus usable provenance and verified latitude/longitude; production-scale exercise remains a separate launch task. |
 | Stabilization Priority | Replace reused/stock-like catalog images | PARTIAL | Catalog audit still warns about reused city images; ops scorecard now exposes reused media as a measurable blocker until licensed replacements are approved. |
 | Stabilization Priority | Add licensed reviews/property providers | NOT DONE | No licensed provider env is configured. |
 | Stabilization Priority | Keep unknown data unavailable/not configured | PARTIAL | Local behavior exists; future integrations need continuous enforcement. |
@@ -120,11 +120,11 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints and RUM wiring audit exist; external monitoring and webhook delivery are not configured. |
 | Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
 | Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
-| Acceptance Criteria | `npm test` passes | DONE | 177 files / 1090 tests passed. |
+| Acceptance Criteria | `npm test` passes | DONE | 177 files / 1096 tests passed. |
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
 | Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 100% lines, statements, functions, and branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 728 static pages. |
-| Acceptance Criteria | `npm run test:e2e` passes | DONE | 72 Playwright tests passed. |
+| Acceptance Criteria | `npm run test:e2e` passes | DONE | 73 Playwright tests passed. |
 | Acceptance Criteria | Every non-strict `npm run audit:*` passes | DONE | All non-strict audit scripts passed locally. |
 | Acceptance Criteria | `audit:production:strict` passes in deployment | NOT DONE | No deployment env proof exists. |
 | Acceptance Criteria | `npm audit --audit-level=moderate` has no moderate vulnerabilities | DONE | Approved network audit reported 0 vulnerabilities. |
@@ -153,7 +153,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Backlog P1 | Replace reused catalog images | PARTIAL | Image reuse warnings remain; ops scorecard now tracks the blocker so it cannot be hidden before launch. |
 | Backlog P1 | Add stronger provenance audit | DONE | `audit:provenance` now checks candidate promotion provenance, provider-link sanitization, provider-returned rate source URLs, and static catalog item/image source plus license-status metadata. |
 | Backlog P1 | Add deployment smoke checks | PARTIAL | `smoke:deployment` now exists for public, admin, cron-guard, and unavailable-state checks; it has not been run against a configured deployment. |
-| Backlog P2 | Expand catalog through admin candidate workflow only | PARTIAL | Workflow exists; scale expansion is not complete. |
+| Backlog P2 | Expand catalog through admin candidate workflow only | DONE | Discovery writes candidate queues, direct auto-promotion is audit-blocked, and scale exercise remains separate from this local workflow guard. |
 | Backlog P2 | Add duplicate/provenance review dashboards | PARTIAL | Admin APIs and the agent dashboard now expose deterministic ready/blocked/duplicate/provenance/location/source/city review summaries; production-scale reviewed operation is still incomplete. |
 | Backlog P2 | Add provider coverage telemetry by city/country/date | DONE | `/api/agents/providers/coverage` and provider dashboard summary now derive coverage from verified `price:observations:*` records and return `insufficient-data` when there is no evidence. |
 | Backlog P2 | Add real alert delivery provider integration | NOT DONE | Webhook/push/email provider is not configured. |
@@ -198,6 +198,7 @@ This is the brutal re-check of every item currently marked `[x]`. DONE here mean
 | Add a stronger provenance wiring audit for catalog candidate promotion, source URLs, provider links, and provider-returned rates. | DONE | Real for wiring and safe URLs; approved licensed image replacement remains a separate launch task. |
 | Extend provenance audit to require licensed/source metadata for every legacy static catalog item and catalog image. | DONE | Real for metadata enforcement: `buildStaticCatalogProvenanceLedger`, `audit:provenance`, and tests require source URL/host/license-status metadata without pretending the images are approved licensed replacements. |
 | Add deployment smoke checks for public APIs, protected admin APIs, cron guards, and unavailable-state behavior. | DONE | Real as a script and audit; not production proof until run against a configured deployment. |
+| Expand catalog ingestion through the admin candidate workflow only; do not auto-promote discovered hotels. | DONE | Real locally: `audit:provenance` now requires discovery agents to write candidate queues and blocks direct catalog promotion outside explicit admin approval. |
 | Add duplicate/provenance review summaries to the admin catalog candidate APIs and dashboard. | DONE | Real; candidate API/dashboard summaries and tests exist. |
 | Add provider coverage telemetry by city/country/date so gaps are measurable before claims are displayed. | DONE | Real; provider coverage is derived from verified observation ledgers and returns insufficient-data when empty. |
 | Surface ops scorecard, alert counts, domain status, and top blockers in the authenticated dashboard. | DONE | Real; dashboard and ops scorecard surfaces exist. |
@@ -222,7 +223,6 @@ These are the remaining tasks required to complete the full plan. Items blocked 
 | Run `SITE_URL=https://your-deployment.example npm run smoke:deployment` after strict production readiness passes. | NOT DONE | Requires configured deployment URL. |
 | Replace reused catalog images with licensed hotel- or city-specific media. | NOT DONE | Requires approved media sources and license metadata; no replacement images should be invented. |
 | Run deployment smoke checks in a configured production deployment and capture passing evidence. | NOT DONE | Requires deployment env and `SITE_URL`. |
-| Expand catalog ingestion through the admin candidate workflow only; do not auto-promote discovered hotels. | PARTIAL | Workflow exists; large-scale reviewed expansion still needs real provider/KV operation. |
 | Exercise duplicate detection and provenance review workflows at production-scale candidate volume after persistent KV/provider ingestion is live. | NOT DONE | Requires persistent KV and real candidate ingestion volume. |
 | Add real alert delivery provider integration for price alerts, unsubscribe tokens, and ops alerts. | NOT DONE | Webhook logic exists, but no approved provider/env is configured. |
 | Add web push only after approved notification-provider setup and health readiness proof. | NOT DONE | Requires push provider and real VAPID keys. |
@@ -320,7 +320,7 @@ These are the remaining tasks required to complete the full plan. Items blocked 
 
 ### P2: Market Scale
 
-- [ ] Expand catalog ingestion through the admin candidate workflow only; do not auto-promote discovered hotels.
+- [x] Expand catalog ingestion through the admin candidate workflow only; do not auto-promote discovered hotels.
 - [x] Add duplicate/provenance review summaries to the admin catalog candidate APIs and dashboard.
 - [ ] Exercise duplicate detection and provenance review workflows at production-scale candidate volume after persistent KV/provider ingestion is live.
 - [x] Add provider coverage telemetry by city/country/date so gaps are measurable before claims are displayed.

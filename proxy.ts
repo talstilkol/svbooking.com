@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { hashId } from '@/lib/utils/hashId';
 
 /**
  * Middleware bypass paths.
@@ -117,6 +118,23 @@ function isExploitPath(pathname: string): boolean {
   return EXPLOIT_PATHS.some((p) => lower.startsWith(p));
 }
 
+function buildRequestId(req: NextRequest): string {
+  const upstreamId = req.headers.get('x-request-id') ||
+    req.headers.get('x-vercel-id') ||
+    req.headers.get('cf-ray');
+
+  return hashId(
+    'proxy-request',
+    upstreamId || '',
+    req.method,
+    req.nextUrl.pathname,
+    req.nextUrl.search,
+    req.headers.get('user-agent') || '',
+    req.headers.get('accept-language') || '',
+    req.headers.get('referer') || ''
+  );
+}
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -125,8 +143,8 @@ export async function proxy(req: NextRequest) {
     return new NextResponse(null, { status: 404 });
   }
 
-  // Add request ID for tracing/debugging
-  const requestId = crypto.randomUUID();
+  // Add a deterministic request correlation ID without runtime randomness.
+  const requestId = buildRequestId(req);
   const response = await handleRoute(req);
   response.headers.set('X-Request-Id', requestId);
   return response;

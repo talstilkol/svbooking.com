@@ -58,6 +58,18 @@ describe('guardrail audit script', () => {
     expect(result.stderr).toContain('unstable timestamp used in deterministic hash ID');
   });
 
+  it('rejects root proxy UUID randomness', async () => {
+    const uuidCall = [['crypto', 'randomUUID'].join('.'), '()'].join('');
+    const cwd = await createFixture({
+      'proxy.ts': `export const requestId = ${uuidCall};\n`,
+    });
+
+    const result = runGuardrails(cwd);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('proxy.ts:1 unapproved UUID randomness');
+  });
+
   it('rejects unsupported live provider availability copy', async () => {
     const unsupportedCopy = ['See', 'live', 'rates', 'from', 'every', 'provider'].join(' ');
     const cwd = await createFixture({

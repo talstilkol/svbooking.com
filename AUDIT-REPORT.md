@@ -20,11 +20,11 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 177 test files, 1090 tests passed. |
+| `npm test` | PASS | 177 test files, 1096 tests passed. |
 | `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 100% lines, 100% statements, 100% functions, and 100% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 100%, statements 100%, functions 100%, branches 100%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
-| `npm run test:e2e` | PASS | 72 Playwright tests passed. |
+| `npm run test:e2e` | PASS | 73 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
 | `npm run audit:catalog` | PASS | Catalog audit passed: 502 hotels, 139 cities, 65 countries. |
 | `npm run audit:docs` | PASS | Documentation audit passed and verifies current catalog counts plus stale-claim blockers. |
@@ -98,6 +98,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Added `npm run audit:security-responses` so shared admin-auth, validation, and rate-limit helpers cannot regress to cacheable security/error responses.
 - Hardened rate-limit client identity extraction so invalid forwarded IP headers, `unknown` values, IPv4 ports, bracketed IPv6 addresses, and Cloudflare IP headers are normalized before quota keys are built.
 - Hardened admin audit events so non-static actors are stored as deterministic fingerprints, client identifiers are normalized before fingerprinting, and sensitive string values are redacted even when the field name is not sensitive.
+- Hardened proxy request correlation IDs to use deterministic hashed request attributes instead of runtime UUID randomness.
 - Hardened price-alert and ops-alert webhook URL validation with a shared helper that rejects embedded URL credentials, blocks non-localhost HTTP, and allows localhost HTTP only outside production.
 - Hardened webhook URL validation against SSRF-prone local, private, carrier-grade NAT, link-local, benchmark, IPv6 loopback, IPv6 ULA, IPv6 link-local, and IPv4-mapped IPv6 destinations even when HTTPS is used.
 - Hardened the public price-alert unsubscribe endpoint with fail-closed rate limiting and timing-safe stored-token comparison to reduce token probing risk.
@@ -122,6 +123,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Hardened geolocation IP normalization before external provider lookup, added browser hook coverage for local storage/favorites/trips/recently viewed/history, and covered browser currency detection plus legacy currency migration.
 - Hardened holiday date-range validation and country-name normalization, preserved provider-unavailable semantics, sanitized hotel popularity counters before KV writes/reads, and added coverage for those edge cases.
 - Hardened dynamic hotel catalog ingestion so discovered entries require valid TripAdvisor-style keys, trimmed real text, bounded stars/coordinates, HTTPS source URLs, and safe object provenance before runtime or KV indexing.
+- Hardened catalog candidate promotion so discovery agents can only queue candidates, while explicit admin approval is the only audited path that can persist a validated hotel into the catalog.
 - Hardened Ticketmaster event ingestion so invalid coordinates never reach the provider, request radius and size are bounded, invalid date filters are omitted, incomplete events are dropped, and unsafe ticket URLs are not surfaced.
 - Hardened the public events API route so malformed coordinates, out-of-range coordinates, invalid dates, and reversed date ranges are rejected before cache lookup, rate limiting, or provider access.
 - Hardened Xotelo pricing and heatmap calls so invalid hotel keys, dates, currencies, and timeout budgets are rejected before provider requests, and retry waits only run when the timeout budget can cover them.
