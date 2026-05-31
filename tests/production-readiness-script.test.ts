@@ -5,7 +5,7 @@ const SCRIPT = 'scripts/audit-production-readiness.mjs';
 
 function runAudit(env: Record<string, string | undefined> = {}) {
   try {
-    const stdout = execFileSync(process.execPath, [SCRIPT], {
+    const stdout = execFileSync(process.execPath, ['--disable-warning=MODULE_TYPELESS_PACKAGE_JSON', SCRIPT], {
       cwd: process.cwd(),
       encoding: 'utf8',
       env: {
@@ -47,7 +47,7 @@ describe('production readiness audit script', () => {
     expect(body.productionReady).toBe(false);
   });
 
-  it('passes strict mode with required env and one partner pricing provider', () => {
+  it('fails strict mode with required env while catalog media is not launch-ready', () => {
     const result = runAudit({
       PRODUCTION_READINESS_STRICT: '1',
       ADMIN_API_SECRET: 'svbooking-admin-secret-0001',
@@ -64,9 +64,12 @@ describe('production readiness audit script', () => {
     });
     const body = JSON.parse(result.stdout);
 
-    expect(result.status).toBe(0);
+    expect(result.status).toBe(1);
     expect(body.strict).toBe(true);
-    expect(body.productionReady).toBe(true);
+    expect(body.productionReady).toBe(false);
+    expect(body.catalogMediaQuality.status).toBe('partial');
+    expect(body.blockers).toContain('Catalog media quality is not launch-ready');
+    expect(body.blockers.some((blocker: string) => blocker.includes('catalog image sources require approved license metadata or replacement'))).toBe(true);
     expect(result.stdout).not.toContain('svbooking-admin-secret-0001');
     expect(result.stdout).not.toContain('svbooking-kinde-client-secret-0001');
     expect(result.stdout).not.toContain('svbooking-serpapi-key-0001');

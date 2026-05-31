@@ -102,6 +102,7 @@ Go-live blockers:
 - `KINDE_POST_LOGOUT_REDIRECT_URL`
 - `KINDE_POST_LOGIN_REDIRECT_URL`
 - At least one partner pricing provider env from `RAPIDAPI_KEY`, `SERPAPI_KEY`, `MAKCORPS_API_KEY`, `AMADEUS_CLIENT_ID` plus `AMADEUS_CLIENT_SECRET`
+- Approved catalog media quality: no reused launch images beyond the configured threshold, and image source/license metadata must be approved before strict readiness can pass
 
 Optional but important production env:
 
@@ -112,7 +113,7 @@ Optional but important production env:
 - Ticketmaster/OpenTripMap enrichment env
 - Browser admin dashboard allowlist via `ADMIN_USER_IDS` and/or `ADMIN_EMAILS`
 
-`npm run audit:production:strict` is the go-live gate. It is expected to fail in an unconfigured local shell.
+`npm run audit:production:strict` is the go-live gate. It is expected to fail in an unconfigured local shell and while catalog media still needs approved replacement/license evidence.
 
 ## Development Commands
 

@@ -20,7 +20,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 177 test files, 1096 tests passed. |
+| `npm test` | PASS | 177 test files, 1097 tests passed. |
 | `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 100% lines, 100% statements, 100% functions, and 100% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 100%, statements 100%, functions 100%, branches 100%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
@@ -44,8 +44,8 @@ The remaining blockers are not code placeholders to fill in locally:
 | `npm run audit:pwa` | PASS | PWA audit verifies offline shell readiness and service-worker bypass rules for API, non-GET, and private navigation routes. |
 | `npm run audit:rum` | PASS | RUM audit verifies Vercel Analytics, Speed Insights, and local Core Web Vitals instrumentation are wired. |
 | Remaining non-strict `npm run audit:*` scripts | PASS | Agents, duplicates, providers, reviews, release deletions, i18n, price accuracy, PWA, RUM, ops scorecard, UI quality, accessibility, SEO, HTML safety, CSRF, storage, data retention, privacy, alerts, legal readiness, and production non-strict audits passed; privacy audit now covers fingerprint-only admin audit actors and alert audits cover webhook URL hardening. |
-| `npm run audit:production` | PASS with blockers | Reports missing required deployment env names only; does not print secret values. |
-| `npm run audit:production:strict` | EXPECTED FAIL locally | Blocks go-live because required admin/cron/Redis/Kinde env and a complete partner pricing provider env group are missing. |
+| `npm run audit:production` | PASS with blockers | Reports missing required deployment env names and catalog media blockers; does not print secret values. |
+| `npm run audit:production:strict` | EXPECTED FAIL locally | Blocks go-live because required admin/cron/Redis/Kinde env, a complete partner pricing provider env group, and approved catalog media quality are missing. |
 | `npm run release:state` | PASS | Reports a clean worktree with 0 changed paths. |
 | `npm ls postcss --all` | PASS | Installed tree resolves to `postcss@8.5.14`. |
 | `git diff --check` | PASS | No whitespace errors. |
@@ -63,11 +63,11 @@ The remaining blockers are not code placeholders to fill in locally:
 | Catalog scale | 6/10 | 502 curated hotels clears the local launch floor, but it is not market-scale and reused imagery warnings remain. |
 | Provider readiness | 5/10 | Adapter infrastructure exists; real production provider credentials are missing locally. |
 | Reviews/property content | 4/10 | APIs and UI correctly show unavailable states until licensed provider data exists; rich content is not live. |
-| Production readiness | 4/10 | Strict readiness correctly fails until deployment env is configured. |
+| Production readiness | 4/10 | Strict readiness correctly fails until deployment env and approved catalog media quality are configured. |
 | Release hygiene | 10/10 | Worktree is clean; keep release-state strict before deployment. |
 
 **Overall engineering score:** 8.5/10
-**Go-live readiness:** 4/10 until strict production readiness passes in deployment
+**Go-live readiness:** 4/10 until strict production readiness passes in deployment with approved catalog media
 
 ## Changes Completed In This Stabilization Pass
 
@@ -87,6 +87,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Added `npm run audit:release-deletions` to keep removed static flight estimates, guarantee copy, provider trust scores, local review form, and heatmap-estimate fallback from returning.
 - Wired `npm run release:state:strict` into CI so clean checkouts fail if verification creates untracked or unstaged release artifacts.
 - Aligned health readiness and ops scorecard with strict production readiness: Kinde env and a complete partner pricing provider env group are now explicit blockers.
+- Aligned strict production readiness with catalog media quality so unresolved reused/unapproved catalog images block go-live instead of remaining only a warning.
 - Extracted production readiness env grouping into `lib/production-readiness.mjs` so the CLI audit, health snapshot, and ops scorecard share one contract.
 - Added `npm run audit:env` so readiness env names cannot drift across `.env.example`, README, runbook, package scripts, and CI.
 - Added `npm run audit:secrets` to block committed env values and accidental production env assignments in scripts or CI.

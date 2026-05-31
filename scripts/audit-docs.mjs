@@ -91,6 +91,7 @@ for (const [relativePath, source] of [
     `${forbiddenRandomApi}()`,
     'fabricated',
     'npm run audit:production:strict',
+    'catalog media',
   ]);
 }
 
@@ -129,7 +130,7 @@ requireIncludes(masterPlan, 'MASTER-PLAN.md', [
 ]);
 
 requireIncludes(auditReport, 'AUDIT-REPORT.md', [
-  '177 test files, 1096 tests passed',
+  '177 test files, 1097 tests passed',
   '73 Playwright tests passed',
   'Go-live readiness',
   'Worktree is clean',

@@ -19,6 +19,46 @@ const requiredEnv = {
   KINDE_POST_LOGIN_REDIRECT_URL: 'https://svbooking.com/dashboard',
 } as unknown as NodeJS.ProcessEnv;
 
+const healthyCatalogMediaQuality = {
+  status: 'healthy',
+  score: 1,
+  current: {
+    hotels: 2,
+    uniqueImages: 2,
+    reusedImages: 0,
+    imagesWithoutSizing: 0,
+    missingImageSourceMetadata: 0,
+    unapprovedImageSources: 0,
+    maxReuseCities: 2,
+  },
+  target: {
+    missingImages: 0,
+    invalidImages: 0,
+    nonHttpsImages: 0,
+    reusedImages: 0,
+    imagesWithoutSizing: 0,
+    maxReuseCitiesPerImage: 2,
+    licensedImageSourceMetadata: true,
+  },
+  blockers: [],
+  nextActions: [],
+};
+
+const partialCatalogMediaQuality = {
+  ...healthyCatalogMediaQuality,
+  status: 'partial',
+  score: 0.92,
+  current: {
+    ...healthyCatalogMediaQuality.current,
+    reusedImages: 1,
+    unapprovedImageSources: 1,
+  },
+  blockers: [
+    'Catalog image reused across 3 cities: https://images.example.org/paris.jpg',
+    '1 catalog image sources require approved license metadata or replacement',
+  ],
+};
+
 describe('production readiness shared contract', () => {
   it('keeps Kinde env as an all-or-nothing production requirement', () => {
     expect(isKindeConfigured(requiredEnv)).toBe(true);
@@ -50,14 +90,30 @@ describe('production readiness shared contract', () => {
     const summary = buildProductionReadinessSummary({
       env: { ...requiredEnv, SERPAPI_KEY: 'svbooking-serpapi-key-0001' },
       strict: true,
+      catalogMediaQuality: healthyCatalogMediaQuality,
     });
 
     expect(summary.strict).toBe(true);
     expect(summary.productionReady).toBe(true);
     expect(summary.blockers).toEqual([]);
+    expect(summary.catalogMediaQuality?.status).toBe('healthy');
     expect(summary.pricingProviders.find((provider) => provider.name === 'SerpAPI')?.configured).toBe(true);
     expect(JSON.stringify(summary)).not.toContain('svbooking-admin-secret-0001');
     expect(JSON.stringify(summary)).not.toContain('svbooking-kinde-client-secret-0001');
     expect(JSON.stringify(summary)).not.toContain('svbooking-serpapi-key-0001');
+  });
+
+  it('keeps strict readiness blocked until catalog media quality is healthy', () => {
+    const summary = buildProductionReadinessSummary({
+      env: { ...requiredEnv, SERPAPI_KEY: 'svbooking-serpapi-key-0001' },
+      strict: true,
+      catalogMediaQuality: partialCatalogMediaQuality,
+    });
+
+    expect(summary.strict).toBe(true);
+    expect(summary.productionReady).toBe(false);
+    expect(summary.catalogMediaQuality?.status).toBe('partial');
+    expect(summary.blockers).toContain('Catalog media quality is not launch-ready');
+    expect(summary.blockers).toContain('Catalog media: 1 catalog image sources require approved license metadata or replacement');
   });
 });
