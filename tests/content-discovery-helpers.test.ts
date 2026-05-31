@@ -154,11 +154,11 @@ describe('Wikipedia content helpers', () => {
       url: null,
     });
     await expect(search('Paris', 999)).resolves.toEqual([]);
-    expect(new URL(String(fetchMock.mock.calls[1][0])).searchParams.get('srlimit')).toBe('20');
+    expect(new URL(String((fetchMock.mock.calls[1] as unknown[])[0])).searchParams.get('srlimit')).toBe('20');
     await expect(search('No Snippet', 0)).resolves.toEqual([
       { title: 'No Snippet', snippet: '', wordcount: 5 },
     ]);
-    expect(new URL(String(fetchMock.mock.calls[2][0])).searchParams.get('srlimit')).toBe('5');
+    expect(new URL(String((fetchMock.mock.calls[2] as unknown[])[0])).searchParams.get('srlimit')).toBe('5');
     await expect(search('Sparse Result', 1)).resolves.toEqual([]);
   });
 });
@@ -213,13 +213,13 @@ describe('OpenTripMap helpers', () => {
       kinds: 'museums, bad kind, historic',
       limit: 999,
     });
-    const radiusUrl = new URL(String(fetchMock.mock.calls[0][0]));
+    const radiusUrl = new URL(String((fetchMock.mock.calls[0] as unknown[])[0]));
     expect(radiusUrl.searchParams.get('radius')).toBe('25000');
     expect(radiusUrl.searchParams.get('limit')).toBe('60');
     expect(radiusUrl.searchParams.get('kinds')).toBe('museums,historic');
 
     await getTopAttractions({ lat: 48.8566, lon: 2.3522, limit: -10 });
-    expect(new URL(String(fetchMock.mock.calls[1][0])).searchParams.get('limit')).toBe('40');
+    expect(new URL(String((fetchMock.mock.calls[1] as unknown[])[0])).searchParams.get('limit')).toBe('40');
   });
 
   it('loads place details and degrades to null for unavailable details', async () => {
@@ -278,7 +278,7 @@ describe('OpenTripMap helpers', () => {
       rate: 3,
       kinds: 'museums,cultural',
     });
-    expect(String(fetchMock.mock.calls[0][0])).toBe('https://api.opentripmap.com/0.1/en/places/xid/L1');
+    expect(String((fetchMock.mock.calls[0] as unknown[])[0])).toBe('https://api.opentripmap.com/0.1/en/places/xid/L1');
   });
 
   it('handles OpenTripMap provider failures and fallback kind mapping without inventing POIs', async () => {
@@ -323,7 +323,7 @@ describe('OpenTripMap helpers', () => {
       kinds: 'bad kind!',
       limit: 1,
     });
-    const radiusUrl = new URL(String(fetchMock.mock.calls[0][0]));
+    const radiusUrl = new URL(String((fetchMock.mock.calls[0] as unknown[])[0]));
 
     expect(radiusUrl.searchParams.get('kinds')).toBe('interesting_places,museums,historic,natural,architecture,cultural,religion,amusements');
     expect(attractions).toEqual([

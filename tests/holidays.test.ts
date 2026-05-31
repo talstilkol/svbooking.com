@@ -41,7 +41,7 @@ describe('holiday provider normalization', () => {
     await expect(getPublicHolidays('', 2027)).rejects.toThrow('Country code is required');
     await expect(getPublicHolidays('fr')).resolves.toEqual([]);
 
-    expect(String(fetchMock.mock.calls[0][0])).toContain('/publicholidays/2029/FR');
+    expect(String((fetchMock.mock.calls[0] as unknown[])[0])).toContain('/publicholidays/2029/FR');
   });
 
   it('fails closed on empty upstream responses instead of treating missing data as no holidays', async () => {

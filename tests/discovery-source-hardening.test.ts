@@ -240,8 +240,8 @@ describe('Xotelo discovery hardening', () => {
     const { isXoteloDiscoveryConfigured, searchXoteloHotels } = await import('@/lib/xotelo-discovery');
 
     const hotels = await searchXoteloHotels('Singapore');
-    const requestedUrl = new URL(String(fetchMock.mock.calls[0][0]));
-    const requestInit = fetchMock.mock.calls[0][1] as RequestInit & { headers: Record<string, string> };
+    const requestedUrl = new URL(String((fetchMock.mock.calls[0] as unknown[])[0]));
+    const requestInit = (fetchMock.mock.calls[0] as unknown[])[1] as RequestInit & { headers: Record<string, string> };
 
     expect(isXoteloDiscoveryConfigured()).toBe(true);
     expect(requestedUrl.hostname).toBe('xotelo.p.rapidapi.com');

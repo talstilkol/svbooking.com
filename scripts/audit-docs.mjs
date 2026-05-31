@@ -104,6 +104,7 @@ requireIncludes(readme, 'README.md', [
   'npm run audit:runtime',
   'npm run audit:external-fetches',
   'npm run audit:public-api-urls',
+  'npm run audit:public-data-contracts',
   'npm run audit:provenance',
   'npm run audit:deployment-smoke',
   'npm run audit:master-plan',
@@ -130,7 +131,7 @@ requireIncludes(masterPlan, 'MASTER-PLAN.md', [
 ]);
 
 requireIncludes(auditReport, 'AUDIT-REPORT.md', [
-  '177 test files, 1100 tests passed',
+  '179 test files, 1103 tests passed',
   '73 Playwright tests passed',
   'Go-live readiness',
   'Worktree is clean',

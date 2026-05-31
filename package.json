@@ -27,6 +27,7 @@
     "audit:runtime": "node scripts/audit-runtime-warnings.mjs",
     "audit:external-fetches": "node scripts/audit-external-fetches.mjs",
     "audit:public-api-urls": "node scripts/audit-public-api-url-safety.mjs",
+    "audit:public-data-contracts": "node scripts/audit-public-data-contracts.mjs",
     "audit:affiliate-security": "node scripts/audit-affiliate-security.mjs",
     "audit:legal-readiness": "node scripts/audit-legal-readiness.mjs",
     "audit:security-responses": "node scripts/audit-security-responses.mjs",

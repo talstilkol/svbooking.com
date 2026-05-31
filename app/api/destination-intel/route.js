@@ -62,8 +62,9 @@ export async function GET(request) {
     const coords = CITY_COORDINATES.find(
       (c) => c.city.toLowerCase() === city.toLowerCase()
     );
-    const lat = coords?.lat || null;
-    const lon = coords?.lng || null;
+    const lat = coords?.lat ?? null;
+    const lon = coords?.lng ?? null;
+    const hasCoordinates = Number.isFinite(lat) && Number.isFinite(lon);
 
     // Resolve country code for holidays
     const countryCode = country ? countryToCode(country) : null;
@@ -72,34 +73,46 @@ export async function GET(request) {
     const hotels = getHotelsByCity(city);
 
     // Fire all requests in parallel (all free, all fast)
-    const [wikiResult, weatherResult, holidayResult, ratesResult, sunResult] = await Promise.allSettled([
+    const [wikiResult, weatherResult, holidayResult, ratesResult, sunResult] = await Promise.all([
       // 1. Wikipedia summary
-      getSummary(city).catch(() => null),
+      getSummary(city)
+        .then((value) => ({ state: value ? 'available' : 'unavailable', value }))
+        .catch(() => ({ state: 'unavailable', value: null })),
 
       // 2. Weather forecast
-      lat && lon
-        ? getForecast({ lat, lon, days: 7 }).catch(() => null)
-        : Promise.resolve(null),
+      hasCoordinates
+        ? getForecast({ lat, lon, days: 7 })
+          .then((value) => ({ state: value?.daily?.length ? 'available' : 'unavailable', value }))
+          .catch(() => ({ state: 'unavailable', value: null }))
+        : Promise.resolve({ state: 'not-requested', value: null }),
 
       // 3. Public holidays
       countryCode && checkIn && checkOut
-        ? getHolidaysInRange(countryCode, checkIn, checkOut).catch(() => [])
+        ? getHolidaysInRange(countryCode, checkIn, checkOut)
+          .then((value) => ({ state: 'available', value: Array.isArray(value) ? value : [] }))
+          .catch(() => ({ state: 'unavailable', value: [] }))
         : countryCode
-          ? getUpcomingHolidays(countryCode).catch(() => [])
-          : Promise.resolve([]),
+          ? getUpcomingHolidays(countryCode)
+            .then((value) => ({ state: 'available', value: Array.isArray(value) ? value : [] }))
+            .catch(() => ({ state: 'unavailable', value: [] }))
+          : Promise.resolve({ state: 'not-requested', value: [] }),
 
       // 4. Exchange rates
-      getExchangeRates(baseCurrency).catch(() => null),
+      getExchangeRates(baseCurrency)
+        .then((value) => ({ state: value?.rates ? 'available' : 'unavailable', value }))
+        .catch(() => ({ state: 'unavailable', value: null })),
 
       // 5. Sunrise/sunset
-      lat && lon
-        ? getSunriseSunset({ lat, lon }).catch(() => null)
-        : Promise.resolve(null),
+      hasCoordinates
+        ? getSunriseSunset({ lat, lon })
+          .then((value) => ({ state: value ? 'available' : 'unavailable', value }))
+          .catch(() => ({ state: 'unavailable', value: null }))
+        : Promise.resolve({ state: 'not-requested', value: null }),
     ]);
 
     // Build local currency info
     let localCurrency = null;
-    const rates = ratesResult.status === 'fulfilled' ? ratesResult.value : null;
+    const rates = ratesResult.value;
     if (rates?.rates && country) {
       const COUNTRY_CURRENCIES = {
         France: 'EUR', UK: 'GBP', Japan: 'JPY', Thailand: 'THB', Israel: 'ILS',
@@ -124,7 +137,7 @@ export async function GET(request) {
     }
 
     // Compute daylight hours
-    const sun = sunResult.status === 'fulfilled' ? sunResult.value : null;
+    const sun = sunResult.value;
     let daylight = null;
     if (sun?.sunrise && sun?.sunset) {
       const rise = new Date(sun.sunrise);
@@ -137,14 +150,30 @@ export async function GET(request) {
       };
     }
 
-    const wiki = wikiResult.status === 'fulfilled' ? wikiResult.value : null;
-    const weather = weatherResult.status === 'fulfilled' ? weatherResult.value : null;
-    const holidays = holidayResult.status === 'fulfilled' ? holidayResult.value : [];
+    const wiki = wikiResult.value;
+    const weather = weatherResult.value;
+    const holidays = holidayResult.value;
+    const sourceStates = {
+      wikipedia: wikiResult.state,
+      weather: weatherResult.state,
+      holidays: holidayResult.state,
+      exchangeRates: ratesResult.state,
+      daylight: sunResult.state,
+      catalog: hotels.length > 0 ? 'available' : 'empty',
+    };
+    const sources = [
+      wiki && 'Wikipedia',
+      weather?.daily?.length && 'Open-Meteo',
+      holidayResult.state === 'available' && 'Nager.Date',
+      ratesResult.state === 'available' && 'Open Exchange Rates',
+      sunResult.state === 'available' && 'Sunrise-Sunset',
+      hotels.length > 0 && 'SV Booking catalog',
+    ].filter(Boolean);
 
     return Response.json({
       city,
       country,
-      coordinates: lat && lon ? { lat, lon } : null,
+      coordinates: hasCoordinates ? { lat, lon } : null,
       hotelsAvailable: hotels.length,
 
       // Wikipedia
@@ -165,8 +194,10 @@ export async function GET(request) {
       // Daylight
       daylight,
 
-      // Sources used
-      sources: ['Wikipedia', 'Open-Meteo', 'Nager.Date', 'Open Exchange Rates', 'Sunrise-Sunset'],
+      // Sources with confirmed available data for this response.
+      sources,
+      sourceStates,
+      dataPolicy: 'available-source-data-only',
       generatedAt: new Date().toISOString(),
     }, {
       headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' },

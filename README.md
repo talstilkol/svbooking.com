@@ -142,6 +142,7 @@ npm run audit:secrets
 npm run audit:runtime
 npm run audit:external-fetches
 npm run audit:public-api-urls
+npm run audit:public-data-contracts
 npm run audit:affiliate-security
 npm run audit:legal-readiness
 npm run audit:security-responses
@@ -167,6 +168,7 @@ After deployment, run `SITE_URL=https://your-deployment.example npm run smoke:de
 - Direct product `localStorage` access is blocked outside the centralized storage helper.
 - External `fetch` calls must use the timeout helper and must degrade to unavailable states instead of invented data.
 - Public API JSON responses must not expose unsafe absolute URLs, including non-HTTPS, credentialed, localhost, private-network, `javascript:`, or `data:` URLs.
+- Public data APIs must preserve source/dataPolicy/unavailable contracts so missing upstream data cannot look like confirmed evidence.
 - Outbound provider redirects must be HTTPS URLs on the provider allowlist; invalid URLs must fail closed.
 - Shared security responses must use `Cache-Control: no-store`; throttled responses must include retry metadata.
 - API error responses must use `Cache-Control: no-store`.
@@ -183,6 +185,7 @@ After deployment, run `SITE_URL=https://your-deployment.example npm run smoke:de
 - `npm run audit:i18n` keeps English/Hebrew runtime i18n plus QA-only Arabic/French/Spanish RTL/LTR fallback checks wired without claiming full translation coverage.
 - `npm run audit:external-fetches` blocks direct external `fetch("https://...")` calls that bypass timeout handling and requires shared public-URL sanitization for content, provider-link, event-link, and enrichment helpers.
 - `npm run audit:public-api-urls` keeps the Playwright public API URL safety runtime audit wired into CI and release docs.
+- `npm run audit:public-data-contracts` keeps source/dataPolicy/unavailable contracts wired for public price, destination, event, POI, guide, review, and property-content data responses.
 - `npm run audit:affiliate-security` blocks unsafe outbound redirect and affiliate URL regressions.
 - `npm run audit:legal-readiness` blocks removal of privacy, terms, cookie, affiliate, and provider-handoff disclosures while external legal/partner signoff remains a launch blocker.
 - `npm run audit:security-responses` blocks cacheable shared auth, validation, and rate-limit responses.

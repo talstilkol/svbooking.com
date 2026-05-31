@@ -68,6 +68,9 @@ jobs:
       - name: Public API URL safety audit
         run: npm run audit:public-api-urls
 
+      - name: Public data contract audit
+        run: npm run audit:public-data-contracts
+
       - name: Affiliate security audit
         run: npm run audit:affiliate-security
 

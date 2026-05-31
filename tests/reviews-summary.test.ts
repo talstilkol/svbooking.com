@@ -111,7 +111,7 @@ describe('fetchGooglePlacesReviews', () => {
       { name: 'Le Meurice', city: 'Paris', country: 'France' },
       { apiKey: 'key', fetchImpl: fetchImpl as unknown as typeof fetch }
     )).resolves.toBeNull();
-    expect(String(fetchImpl.mock.calls[0][0])).toContain('Le%20Meurice%2C%20Paris%2C%20France');
+    expect(String((fetchImpl.mock.calls[0] as unknown[])[0])).toContain('Le%20Meurice%2C%20Paris%2C%20France');
   });
 
   it('throws on failed Google Places HTTP responses', async () => {

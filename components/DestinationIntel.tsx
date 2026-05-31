@@ -13,7 +13,7 @@ interface DestinationIntelProps {
 interface IntelData {
   description?: string;
   image?: string;
-  weather?: Array<{ date: string; temp_max: number; temp_min: number; icon: string; label: string }>;
+  weather?: Array<{ date: string; tempMax: number; tempMin: number; icon: string; weather: string }>;
   holidays?: Array<{ date: string; name: string; localName: string }>;
   localCurrency?: { code: string; symbol: string; rate: number; example: string };
   daylight?: { sunrise: string; sunset: string; hours: number };
@@ -88,7 +88,7 @@ export default function DestinationIntel({
                     {day.icon} {new Date(day.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
                   </span>
                   <span className="text-sky-600 font-medium">
-                    {Math.round(day.temp_max)}° / {Math.round(day.temp_min)}°
+                    {Math.round(day.tempMax)}° / {Math.round(day.tempMin)}°
                   </span>
                 </div>
               ))}

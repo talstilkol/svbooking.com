@@ -62,6 +62,7 @@ npm run audit:secrets
 npm run audit:runtime
 npm run audit:external-fetches
 npm run audit:public-api-urls
+npm run audit:public-data-contracts
 npm run audit:affiliate-security
 npm run audit:legal-readiness
 npm run audit:security-responses

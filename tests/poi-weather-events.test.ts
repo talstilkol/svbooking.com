@@ -181,7 +181,7 @@ describe('Overpass POI helpers', () => {
     const { getHotelAmenities } = await import('@/lib/overpass-pois');
 
     const result = await getHotelAmenities({ lat: 0, lon: 0, hotelName: 'Le "Meurice" [Paris]' });
-    const requestedUrl = new URL(String(fetchMock.mock.calls[0][0]));
+    const requestedUrl = new URL(String((fetchMock.mock.calls[0] as unknown[])[0]));
     const query = requestedUrl.searchParams.get('data') || '';
 
     expect(query).not.toContain('"Meurice"');
@@ -265,7 +265,7 @@ describe('weather helpers', () => {
     const { getForecast } = await import('@/lib/weather');
 
     const forecast = await getForecast({ lat: 48.8566, lon: 2.3522, units: 'fahrenheit', days: 20 });
-    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    const url = new URL(String((fetchMock.mock.calls[0] as unknown[])[0]));
 
     expect(url.searchParams.get('forecast_days')).toBe('16');
     expect(url.searchParams.get('temperature_unit')).toBe('fahrenheit');
@@ -389,7 +389,7 @@ describe('Nominatim hotel search helpers', () => {
     const { searchHotels } = await import('@/lib/nominatim');
 
     const hotels = await searchHotels({ city: 'Paris', limit: 100 });
-    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    const url = new URL(String((fetchMock.mock.calls[0] as unknown[])[0]));
 
     expect(url.searchParams.get('limit')).toBe('40');
     expect(hotels).toEqual([
@@ -491,7 +491,7 @@ describe('Nominatim hotel search helpers', () => {
       rooms: null,
       website: null,
     });
-    expect(new URL(String(fetchMock.mock.calls[0][0])).searchParams.get('q')).toBe('Town Hotel');
+    expect(new URL(String((fetchMock.mock.calls[0] as unknown[])[0])).searchParams.get('q')).toBe('Town Hotel');
     await expect(reverseGeocode({ lat: 51.5, lon: -0.1 })).resolves.toBeNull();
     await expect(searchHotels({ city: 'Source Village' })).resolves.toEqual([]);
   });
@@ -601,7 +601,7 @@ describe('Ticketmaster helpers', () => {
       endDate: '2026-07-31',
       limit: 100,
     });
-    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    const url = new URL(String((fetchMock.mock.calls[0] as unknown[])[0]));
 
     expect(isConfigured()).toBe(true);
     expect(url.searchParams.get('size')).toBe('50');
@@ -655,7 +655,7 @@ describe('Ticketmaster helpers', () => {
       startDate: '2026-99-01',
       endDate: 'not-a-date',
     });
-    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    const url = new URL(String((fetchMock.mock.calls[0] as unknown[])[0]));
 
     expect(url.searchParams.get('radius')).toBe('250');
     expect(url.searchParams.get('size')).toBe('1');
@@ -685,7 +685,7 @@ describe('Ticketmaster helpers', () => {
       startDate: 20260701 as unknown as string,
       endDate: null as unknown as string,
     });
-    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    const url = new URL(String((fetchMock.mock.calls[0] as unknown[])[0]));
 
     expect(url.searchParams.has('startDateTime')).toBe(false);
     expect(url.searchParams.has('endDateTime')).toBe(false);
@@ -810,7 +810,7 @@ describe('Ticketmaster helpers', () => {
       radius: 'bad-radius' as unknown as number,
       limit: 'bad-limit' as unknown as number,
     });
-    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    const url = new URL(String((fetchMock.mock.calls[0] as unknown[])[0]));
 
     expect(url.searchParams.get('radius')).toBe('25');
     expect(url.searchParams.get('size')).toBe('10');

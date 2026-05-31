@@ -127,7 +127,7 @@ describe('geo provider detection', () => {
       currency: 'EUR',
       source: 'ip-api',
     });
-    expect(String(fetchMock.mock.calls[0][0])).toContain('/203.0.113.10?fields=');
+    expect(String((fetchMock.mock.calls[0] as unknown[])[0])).toContain('/203.0.113.10?fields=');
   });
 
   it('derives primary provider currency from country code when no currency is returned', async () => {
@@ -194,8 +194,8 @@ describe('geo provider detection', () => {
       .mockResolvedValueOnce(jsonResponse({ error: true }));
     vi.stubGlobal('fetch', fallbackError);
     await expect(detectLocation()).resolves.toBeNull();
-    expect(String(fallbackError.mock.calls[0][0])).toBe('http://ip-api.com/json/?fields=status,country,countryCode,city,lat,lon,currency,timezone,isp');
-    expect(String(fallbackError.mock.calls[1][0])).toBe('https://ipapi.co/json/');
+    expect(String((fallbackError.mock.calls[0] as unknown[])[0])).toBe('http://ip-api.com/json/?fields=status,country,countryCode,city,lat,lon,currency,timezone,isp');
+    expect(String((fallbackError.mock.calls[1] as unknown[])[0])).toBe('https://ipapi.co/json/');
   });
 
   it('falls back after primary provider HTTP failures before giving up', async () => {
@@ -208,8 +208,8 @@ describe('geo provider detection', () => {
     await expect(detectLocation('198.51.100.11')).resolves.toBeNull();
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(String(fetchMock.mock.calls[0][0])).toContain('http://ip-api.com/json/198.51.100.11');
-    expect(String(fetchMock.mock.calls[1][0])).toBe('https://ipapi.co/198.51.100.11/json/');
+    expect(String((fetchMock.mock.calls[0] as unknown[])[0])).toContain('http://ip-api.com/json/198.51.100.11');
+    expect(String((fetchMock.mock.calls[1] as unknown[])[0])).toBe('https://ipapi.co/198.51.100.11/json/');
   });
 
   it('aborts slow geolocation providers before returning null', async () => {

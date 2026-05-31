@@ -116,7 +116,10 @@ describe('ops alert evaluator route', () => {
     expect(response!.status).toBe(200);
     expect(response!.headers.get('cache-control')).toBe('no-store');
     expect(mocks.deliverOpsAlertReport).toHaveBeenCalledTimes(1);
-    const deliveredReport = mocks.deliverOpsAlertReport.mock.calls[0][0];
+    const [deliveredReport] = mocks.deliverOpsAlertReport.mock.calls[0] as [{
+      alerts: Array<{ id: string }>;
+      summary: { total: number; critical: number; warning: number; info: number };
+    }];
     expect(deliveredReport.alerts.map((alert: { id: string }) => alert.id)).toEqual([
       'cache-not-durable',
       'price-alert-delivery-not-configured',
