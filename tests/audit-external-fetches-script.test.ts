@@ -83,6 +83,19 @@ const validFiles = {
     "import { normalizeHttpsUrl } from './utils/public-url-safety';",
     '',
   ].join('\n'),
+  'lib/cheaper-dates.js': [
+    "import { normalizeHttpsUrl } from './utils/public-url-safety';",
+    '',
+  ].join('\n'),
+  'lib/ticketmaster.js': [
+    "import { fetchJsonWithTimeout } from './utils/fetch-with-timeout.js';",
+    "import { normalizeHttpsUrl } from './utils/public-url-safety';",
+    '',
+  ].join('\n'),
+  'lib/wikidata-enrich.js': [
+    "import { normalizeHttpsUrl } from './utils/public-url-safety';",
+    '',
+  ].join('\n'),
   'lib/catalog-candidates.js': [
     "import { normalizeHttpsUrl } from './utils/public-url-safety';",
     '',
@@ -113,6 +126,19 @@ const validFiles = {
   ].join('\n'),
   'tests/discovery-source-hardening.test.ts': [
     "it('drops unsafe travel guide media URLs', () => { expect('Unsafe Coordinate Hotel').toBeTruthy(); });",
+    "it('strips unsafe enrichment URLs', () => { expect('https://[::ffff:127.0.0.1]/internal.jpg').toBeTruthy(); });",
+    '',
+  ].join('\n'),
+  'tests/cheaper-dates.test.ts': [
+    "it('sanitizes provider currencies and deep links before reuse by public APIs', () => {",
+    "  expect('https://127.0.0.1/internal').toBeTruthy();",
+    '});',
+    '',
+  ].join('\n'),
+  'tests/poi-weather-events.test.ts': [
+    "it('drops incomplete Ticketmaster events and strips unsafe ticket URLs', () => {",
+    "  expect('https://127.0.0.1/paris-opera-gala').toBeTruthy();",
+    '});',
     '',
   ].join('\n'),
   'tests/catalog-candidates.test.ts': [

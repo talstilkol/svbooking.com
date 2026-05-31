@@ -20,9 +20,9 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 163 test files, 815 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 91.73% lines, 87.42% statements, 91.15% functions, and 77.89% branches. |
-| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 91.7%, statements 87.4%, functions 91.1%, branches 77.85%. |
+| `npm test` | PASS | 163 test files, 816 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 92.24% lines, 87.94% statements, 91.53% functions, and 78.46% branches. |
+| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 92.2%, statements 87.9%, functions 91.5%, branches 78.45%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 727 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 61 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
@@ -31,7 +31,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | `npm run audit:env` | PASS | Environment contract audit verifies `.env.example`, README, runbook, package scripts, and CI stay aligned with production readiness env groups. |
 | `npm run audit:secrets` | PASS | Secret hygiene audit keeps `.env.example` empty-valued, env files ignored, CI free of secret contexts, and package scripts free of production env assignments. |
 | `npm run audit:runtime` | PASS | Runtime warning audit blocks Edge Runtime reintroduction and Playwright color/env warning regressions. |
-| `npm run audit:external-fetches` | PASS | External fetch audit blocks direct `fetch("https://...")` calls, requires the shared timeout helper for network probes, covers Wikidata SPARQL hardening, and requires shared public-URL sanitization for content helpers. |
+| `npm run audit:external-fetches` | PASS | External fetch audit blocks direct `fetch("https://...")` calls, requires the shared timeout helper for network probes, covers Wikidata SPARQL hardening, and requires shared public-URL sanitization for content, provider-link, event-link, and enrichment helpers. |
 | `npm run audit:affiliate-security` | PASS | Affiliate security audit blocks HTTP provider redirects and invalid URL tracking fallbacks. |
 | `npm run audit:security-responses` | PASS | Shared auth, validation, and rate-limit helpers must return no-store responses, expose retry metadata, use timing-safe admin token checks, and normalize client IPs before quota keys are built. |
 | `npm run audit:csrf` | PASS | CSRF audit now covers browser mutation routes, Fetch Metadata, Origin/Referer checks, and HTTP(S)-only origin normalization. |
@@ -127,6 +127,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Hardened OpenTripMap helper calls so invalid coordinates fail closed before fetch, radius/limit/kinds are bounded, provider result coordinates are validated, and returned detail URLs are HTTPS-only.
 - Added shared public URL sanitization for returned content/provider links, rejected URL credentials, localhost/private destinations, CGNAT, benchmark ranges, IPv6 ULA/link-local, and IPv4-mapped IPv6, moved Wikipedia, Wikivoyage, DBpedia, OpenTripMap, and price-cache URL normalization onto the shared helper, and expanded `audit:external-fetches` to enforce it.
 - Hardened catalog candidate and dynamic catalog source URL handling so unsafe URLs are stripped before storage, cannot satisfy provenance checks, and cannot be promoted as catalog source links.
+- Moved cheaper-date provider links, Ticketmaster event links, and Wikidata enrichment website/image links onto the shared public URL helper so internal/private URLs cannot leak through public API responses.
 - Removed remaining local hook-dependency suppressions in hotel detail and side-by-side compare flows, and replaced CLS `any` casts in the performance monitor with a typed layout-shift entry.
 - Localized the home search autocomplete labels and clear action through the existing dictionary.
 
@@ -137,7 +138,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Branch coverage below next target | Medium | `lib` branch coverage is 77.89%. | Add focused tests for cache/provider/auth/error branches, then raise the coverage ratchet toward 80%. |
+| Branch coverage below next target | Medium | `lib` branch coverage is 78.46%. | Add focused tests for cache/provider/auth/error branches, then raise the coverage ratchet toward 80%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |

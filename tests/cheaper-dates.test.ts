@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/price-cache', () => ({
   getCachedRates: vi.fn(),
@@ -11,6 +11,10 @@ import { getCachedHeatmap, getCachedRates } from '@/lib/price-cache';
 describe('cheaper date price intelligence', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('uses only verified provider rates for provider-backed observations', () => {
@@ -36,6 +40,7 @@ describe('cheaper date price intelligence', () => {
         { provider: 'Booking.com', total: 120, currency: 'eur', deepLink: 'https://www.booking.com/hotel/fr/le-meurice.html' },
         { provider: 'Expedia', total: 130, currency: 'US', deepLink: 'javascript:alert(1)' },
         { provider: 'Agoda', total: 140, currency: 'gbp', deepLink: 'http://www.agoda.com/rooms' },
+        { provider: 'Trip.com', total: 150, currency: 'usd', deepLink: 'https://127.0.0.1/internal' },
       ],
       currency: 'usd',
       source: 'provider-registry',
@@ -55,6 +60,11 @@ describe('cheaper date price intelligence', () => {
       expect.objectContaining({
         provider: 'Agoda',
         currency: 'GBP',
+        deepLink: null,
+      }),
+      expect.objectContaining({
+        provider: 'Trip.com',
+        currency: 'USD',
         deepLink: null,
       }),
     ]);
@@ -86,6 +96,40 @@ describe('cheaper date price intelligence', () => {
         bookingProvider: false,
       },
     ]);
+  });
+
+  it('builds cheaper-date alternatives from verified heatmap observations', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-01T00:00:00Z'));
+    vi.mocked(getCachedRates).mockResolvedValue({
+      rates: [{ provider: 'Booking.com', total: 300, currency: 'USD', source: 'provider-registry' }],
+      source: 'provider-registry',
+    });
+    vi.mocked(getCachedHeatmap).mockImplementation(async ({ checkOut }) => {
+      const target = new Date(`${checkOut}T00:00:00Z`);
+      target.setUTCDate(target.getUTCDate() - 2);
+      return { data: [{ date: target.toISOString().slice(0, 10), price: 120 }] };
+    });
+
+    const result = await findCheaperDates('g187147-d188732', '2026-06-10', '2026-06-12');
+
+    expect(result).toMatchObject({
+      originalPrice: 300,
+      originalProvider: 'Booking.com',
+      hasRealData: true,
+      method: 'heatmap-source-observations',
+      dataPolicy: 'verified-provider-or-source-observations-only',
+    });
+    expect(result.cheapestOverall).toEqual(expect.objectContaining({
+      price: 240,
+      source: 'xotelo-heatmap',
+      bookingProvider: false,
+      savings: 60,
+      savingsPct: 20,
+    }));
+    expect(result.alternatives.near.length).toBeGreaterThan(0);
+    expect(result.alternatives.week.length).toBeGreaterThan(0);
+    expect(result.alternatives.month.length).toBeGreaterThan(0);
   });
 
   it('marks cheaper-date output unavailable when no verified observations exist', async () => {

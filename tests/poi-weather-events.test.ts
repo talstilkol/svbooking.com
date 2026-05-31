@@ -357,7 +357,7 @@ describe('Ticketmaster helpers', () => {
           },
           {
             name: 'Paris Opera Gala',
-            url: 'http://www.ticketmaster.fr/paris-opera-gala',
+            url: 'https://127.0.0.1/paris-opera-gala',
             dates: { start: { localDate: 'not-a-date' } },
             classifications: [{ segment: { name: 'Arts & Theatre' }, genre: { name: 'Opera' } }],
             priceRanges: [{ min: 0, max: 0, currency: 'EUR' }],

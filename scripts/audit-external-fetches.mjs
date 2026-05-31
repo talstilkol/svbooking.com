@@ -92,12 +92,17 @@ const [
   wikivoyageClient,
   dbpediaClient,
   opentripmapClient,
+  cheaperDates,
+  ticketmasterClient,
+  wikidataEnrich,
   catalogCandidates,
   hotelsCatalog,
   publicUrlSafety,
   wikidataTest,
   contentDiscoveryTest,
   discoverySourceHardeningTest,
+  cheaperDatesTest,
+  poiWeatherEventsTest,
   catalogCandidatesTest,
   catalogCandidatesApiTest,
   hotelsCatalogTest,
@@ -115,12 +120,17 @@ const [
   readProjectFile('lib/wikivoyage.js'),
   readProjectFile('lib/dbpedia.js'),
   readProjectFile('lib/opentripmap.js'),
+  readProjectFile('lib/cheaper-dates.js'),
+  readProjectFile('lib/ticketmaster.js'),
+  readProjectFile('lib/wikidata-enrich.js'),
   readProjectFile('lib/catalog-candidates.js'),
   readProjectFile('lib/hotels-catalog.js'),
   readProjectFile('lib/utils/public-url-safety.js'),
   readProjectFile('tests/wikidata-client.test.ts'),
   readProjectFile('tests/content-discovery-helpers.test.ts'),
   readProjectFile('tests/discovery-source-hardening.test.ts'),
+  readProjectFile('tests/cheaper-dates.test.ts'),
+  readProjectFile('tests/poi-weather-events.test.ts'),
   readProjectFile('tests/catalog-candidates.test.ts'),
   readProjectFile('tests/catalog-candidates-api.test.ts'),
   readProjectFile('tests/hotels-catalog.test.ts'),
@@ -182,6 +192,9 @@ for (const [relativePath, source] of [
   ['lib/wikivoyage.js', wikivoyageClient],
   ['lib/dbpedia.js', dbpediaClient],
   ['lib/opentripmap.js', opentripmapClient],
+  ['lib/cheaper-dates.js', cheaperDates],
+  ['lib/ticketmaster.js', ticketmasterClient],
+  ['lib/wikidata-enrich.js', wikidataEnrich],
   ['lib/catalog-candidates.js', catalogCandidates],
   ['lib/hotels-catalog.js', hotelsCatalog],
 ]) {
@@ -205,6 +218,17 @@ requireIncludes(contentDiscoveryTest, 'tests/content-discovery-helpers.test.ts',
 requireIncludes(discoverySourceHardeningTest, 'tests/discovery-source-hardening.test.ts', [
   'drops unsafe travel guide media URLs',
   'Unsafe Coordinate Hotel',
+  'https://[::ffff:127.0.0.1]/internal.jpg',
+]);
+
+requireIncludes(cheaperDatesTest, 'tests/cheaper-dates.test.ts', [
+  'sanitizes provider currencies and deep links before reuse by public APIs',
+  'https://127.0.0.1/internal',
+]);
+
+requireIncludes(poiWeatherEventsTest, 'tests/poi-weather-events.test.ts', [
+  'drops incomplete Ticketmaster events and strips unsafe ticket URLs',
+  'https://127.0.0.1/paris-opera-gala',
 ]);
 
 requireIncludes(catalogCandidatesTest, 'tests/catalog-candidates.test.ts', [

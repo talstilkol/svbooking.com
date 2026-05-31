@@ -165,7 +165,7 @@ Run `npm run release:state:strict` after staging or committing intended changes;
 - The current repository should remain clean before release. Review `git status --short` and `git diff --stat` before staging new work.
 - `npm run release:state` summarizes staged, unstaged, deleted, untracked, and generated-artifact paths for release review.
 - `npm run audit:release-deletions` keeps removed no-fake-data legacy surfaces from returning.
-- `npm run audit:external-fetches` blocks direct external `fetch("https://...")` calls that bypass timeout handling and requires shared public-URL sanitization for content helpers.
+- `npm run audit:external-fetches` blocks direct external `fetch("https://...")` calls that bypass timeout handling and requires shared public-URL sanitization for content, provider-link, event-link, and enrichment helpers.
 - `npm run audit:affiliate-security` blocks unsafe outbound redirect and affiliate URL regressions.
 - `npm run audit:security-responses` blocks cacheable shared auth, validation, and rate-limit responses.
 - `npm run audit:api-errors` blocks cacheable API error responses.
