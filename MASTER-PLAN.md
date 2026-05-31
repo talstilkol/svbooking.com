@@ -149,7 +149,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Backlog P2 | Add provider coverage telemetry by city/country/date | DONE | `/api/agents/providers/coverage` and provider dashboard summary now derive coverage from verified `price:observations:*` records and return `insufficient-data` when there is no evidence. |
 | Backlog P2 | Add real alert delivery provider integration | NOT DONE | Webhook/push/email provider is not configured. |
 | Backlog P2 | Add web push after approved provider setup | NOT DONE | Push keys/provider are absent. |
-| Backlog P3 | Production observability dashboard | PARTIAL | Scorecard/health APIs exist; full dashboard and external metrics are incomplete. |
+| Backlog P3 | Production observability dashboard | PARTIAL | Authenticated dashboard now surfaces ops scorecard, alert counts, domain status, and top blockers; external monitoring, RUM, and webhook proof are still incomplete. |
 | Backlog P3 | Real-user monitoring and Core Web Vitals | NOT DONE | No production RUM proof exists. |
 | Backlog P3 | Localization QA beyond Hebrew/English | PARTIAL | Hebrew/English exist; broader RTL/LTR QA is incomplete. |
 | Backlog P3 | Commercial/legal readiness | NOT DONE | Requires partner terms, affiliate/legal review, and licensed content signoff. |
@@ -248,7 +248,8 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 
 ### P3: Number-One Product Work
 
-- [ ] Build a production observability dashboard covering uptime, provider latency, cache hit rate, alert delivery, price mismatch reports, and catalog provenance quality.
+- [x] Surface ops scorecard, alert counts, domain status, and top blockers in the authenticated dashboard.
+- [ ] Build the external production observability layer covering uptime, provider latency, cache hit rate, alert delivery, price mismatch reports, catalog provenance quality, RUM, and webhook proof.
 - [ ] Add real-user monitoring and Core Web Vitals tracking per top route and device class.
 - [ ] Add international localization QA beyond Hebrew/English, including RTL/LTR layout regression checks.
 - [ ] Add commercial/legal readiness for partner terms, affiliate disclosures, privacy, retention, and licensed content display.

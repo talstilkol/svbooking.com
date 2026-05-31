@@ -86,6 +86,37 @@ interface BackgroundAgent {
   recentRuns?: Array<{ status: string; startedAt: string; elapsedMs: number }>;
 }
 
+interface OpsScorecardDomain {
+  id: string;
+  label: string;
+  status: 'healthy' | 'partial' | 'blocked';
+  score: number;
+  blockers?: string[];
+}
+
+interface OpsScorecard {
+  status: 'healthy' | 'partial' | 'blocked';
+  score: number;
+  checkedAt: string;
+  domains: OpsScorecardDomain[];
+  blockers?: Array<{ domain: string; blocker: string }>;
+  productTruth?: {
+    freeOnlyLaunchReady?: boolean;
+    globalParityReady?: boolean;
+  };
+}
+
+interface OpsAlerts {
+  status: 'healthy' | 'warning' | 'critical';
+  checkedAt: string;
+  summary: {
+    total: number;
+    critical: number;
+    warning: number;
+    info: number;
+  };
+}
+
 interface CatalogOption {
   hotelKey: string;
   name: string;
@@ -134,6 +165,13 @@ function isAuthRestricted(response: Response): boolean {
   return response.status === 401 || response.status === 403;
 }
 
+function statusTone(status?: string): string {
+  if (status === 'healthy') return 'bg-emerald-100 text-emerald-700';
+  if (status === 'partial' || status === 'warning') return 'bg-amber-100 text-amber-700';
+  if (status === 'blocked' || status === 'critical' || status === 'error') return 'bg-red-100 text-red-700';
+  return 'bg-zinc-100 text-zinc-600';
+}
+
 function formatTimestamp(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -156,6 +194,8 @@ export default function AgentDashboard() {
   const [hotels, setHotels] = useState<{ hotelKey: string; name: string; city: string }[]>([]);
   const [dealsScannedAt, setDealsScannedAt] = useState<string | null>(null);
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
+  const [opsScorecard, setOpsScorecard] = useState<OpsScorecard | null>(null);
+  const [opsAlerts, setOpsAlerts] = useState<OpsAlerts | null>(null);
   const [bgAgents, setBgAgents] = useState<BackgroundAgent[]>([]);
   const [bgLoading, setBgLoading] = useState(false);
   const [runningAgent, setRunningAgent] = useState<string | null>(null);
@@ -164,10 +204,11 @@ export default function AgentDashboard() {
   const [candidateStatusFilter, setCandidateStatusFilter] = useState('pending');
   const [candidateFlagFilter, setCandidateFlagFilter] = useState('all');
   const [addingHotel, setAddingHotel] = useState<string | null>(null);
-  const [loading, setLoading] = useState({ health: false, deals: false, recs: false, providers: false });
+  const [loading, setLoading] = useState({ health: false, deals: false, recs: false, providers: false, ops: false });
   const [restricted, setRestricted] = useState({
     health: false,
     providers: false,
+    ops: false,
     discovered: false,
     agents: false,
   });
@@ -243,6 +284,35 @@ export default function AgentDashboard() {
       return;
     }
     fetchProviders();
+  };
+
+  const fetchOpsDashboard = async () => {
+    setLoading((l) => ({ ...l, ops: true }));
+    try {
+      const [scorecardRes, alertsRes] = await Promise.all([
+        fetch('/api/ops/scorecard'),
+        fetch('/api/ops/alerts'),
+      ]);
+      if (isAuthRestricted(scorecardRes) || isAuthRestricted(alertsRes)) {
+        setOpsScorecard(null);
+        setOpsAlerts(null);
+        setRestricted((r) => ({ ...r, ops: true }));
+        return;
+      }
+      const [scorecardData, alertsData] = await Promise.all([
+        scorecardRes.json(),
+        alertsRes.json(),
+      ]);
+      setOpsScorecard(scorecardData);
+      setOpsAlerts(alertsData);
+      setRestricted((r) => ({ ...r, ops: false }));
+    } catch (err) {
+      console.warn('AgentDashboard: ops dashboard fetch failed', err);
+      setOpsScorecard(null);
+      setOpsAlerts(null);
+    } finally {
+      setLoading((l) => ({ ...l, ops: false }));
+    }
   };
 
   const fetchDiscovered = useCallback(async () => {
@@ -373,6 +443,7 @@ export default function AgentDashboard() {
       fetchHotels();
       fetchHealth();
       fetchProviders();
+      fetchOpsDashboard();
       fetchBgAgents();
     });
   }, []);
@@ -391,9 +462,89 @@ export default function AgentDashboard() {
     ? 'bg-zinc-300'
     : health?.status === 'healthy' ? 'bg-emerald-500' : health?.status === 'degraded' ? 'bg-amber-500' : 'bg-red-500';
   const readyCandidateCount = discoveredStats?.readyToApprove || 0;
+  const topOpsBlockers = (opsScorecard?.blockers || []).slice(0, 3);
 
   return (
     <div className="space-y-8">
+      {/* Production Readiness */}
+      <div className="bg-white border border-zinc-200 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="font-semibold text-zinc-900">Production Readiness</h3>
+            {opsScorecard?.checkedAt && (
+              <p className="text-xs text-zinc-500 mt-0.5">Last checked: {formatTimestamp(opsScorecard.checkedAt)}</p>
+            )}
+          </div>
+          <button
+            onClick={fetchOpsDashboard}
+            disabled={loading.ops}
+            className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
+          >
+            {loading.ops ? 'Loading...' : 'Refresh'}
+          </button>
+        </div>
+        {restricted.ops ? (
+          <p className="text-sm text-zinc-500">Production readiness metrics require an authorized admin session.</p>
+        ) : opsScorecard ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="rounded-md bg-zinc-50 px-3 py-2">
+                <p className="text-[10px] font-medium text-zinc-600 uppercase">Score</p>
+                <p className="text-lg font-semibold text-zinc-900">{opsScorecard.score}</p>
+              </div>
+              <div className={`rounded-md px-3 py-2 ${statusTone(opsScorecard.status)}`}>
+                <p className="text-[10px] font-medium uppercase">Status</p>
+                <p className="text-lg font-semibold capitalize">{opsScorecard.status}</p>
+              </div>
+              <div className={`rounded-md px-3 py-2 ${statusTone(opsAlerts?.status)}`}>
+                <p className="text-[10px] font-medium uppercase">Alerts</p>
+                <p className="text-lg font-semibold">{opsAlerts?.summary.total ?? 0}</p>
+              </div>
+              <div className="rounded-md bg-zinc-50 px-3 py-2">
+                <p className="text-[10px] font-medium text-zinc-600 uppercase">Global parity</p>
+                <p className="text-lg font-semibold text-zinc-900">
+                  {opsScorecard.productTruth?.globalParityReady ? 'Ready' : 'Blocked'}
+                </p>
+              </div>
+            </div>
+            {opsAlerts && (
+              <div className="flex flex-wrap gap-2 text-xs text-zinc-600">
+                <span className="rounded bg-red-50 px-2 py-1 text-red-700">Critical {opsAlerts.summary.critical}</span>
+                <span className="rounded bg-amber-50 px-2 py-1 text-amber-700">Warning {opsAlerts.summary.warning}</span>
+                <span className="rounded bg-zinc-100 px-2 py-1 text-zinc-600">Info {opsAlerts.summary.info}</span>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {opsScorecard.domains.map((domain) => (
+                <div key={domain.id} className="rounded-md bg-zinc-50 px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-zinc-900">{domain.label}</p>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded capitalize ${statusTone(domain.status)}`}>
+                      {domain.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-1">Score {domain.score}</p>
+                </div>
+              ))}
+            </div>
+            {topOpsBlockers.length > 0 && (
+              <div className="rounded-md bg-red-50 px-3 py-2">
+                <p className="text-xs font-medium text-red-700 mb-1">Top blockers</p>
+                <ul className="space-y-1">
+                  {topOpsBlockers.map((blocker) => (
+                    <li key={`${blocker.domain}:${blocker.blocker}`} className="text-xs text-red-700">
+                      {blocker.domain}: {blocker.blocker}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-zinc-500">{loading.ops ? 'Loading readiness metrics...' : 'Readiness metrics unavailable.'}</p>
+        )}
+      </div>
+
       {/* Health Status */}
       <div className="bg-white border border-zinc-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">

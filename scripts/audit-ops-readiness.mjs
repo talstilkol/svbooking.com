@@ -110,6 +110,7 @@ await requireFile('app/api/ops/scorecard/route.js');
 await requireFile('app/api/ops/alerts/route.js');
 await requireFile('app/api/ops/alerts/evaluate/route.js');
 await requireFile('app/api/ops/alerts/events/route.js');
+await requireFile('components/AgentDashboard.tsx');
 await requireFile('app/api/data-retention/route.js');
 await requireFile('app/api/me/data/route.js');
 await requireFile('app/api/agents/providers/uptime/route.js');
@@ -372,6 +373,15 @@ requireIncludes(opsAlertsEventsRoute, 'app/api/ops/alerts/events/route.js', [
   'getOpsAlertDeliveryEvents',
   'Cache-Control',
   'no-store',
+]);
+
+const agentDashboard = await readProjectFile('components/AgentDashboard.tsx');
+requireIncludes(agentDashboard, 'components/AgentDashboard.tsx', [
+  '/api/ops/scorecard',
+  '/api/ops/alerts',
+  'Production Readiness',
+  'topOpsBlockers',
+  'globalParityReady',
 ]);
 
 const pwaReadiness = await readProjectFile('lib/pwa-readiness.js');
