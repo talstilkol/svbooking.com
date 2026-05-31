@@ -136,6 +136,25 @@ describe('guardrail audit script', () => {
     expect(result.stderr).toContain('unsupported price-increase urgency claim');
   });
 
+  it('rejects unsupported broad savings and deal-value claims', async () => {
+    const maxSavings = ['Save', 'up', 'to'].join(' ');
+    const cheapestProvider = ['cheapest', 'provider'].join(' ');
+    const latestDeals = ['latest', 'hotel', 'deals'].join(' ');
+    const bestValue = ['best', 'value'].join(' ');
+    const cwd = await createFixture({
+      'components/PriceClaim.tsx': `export const copy = '${maxSavings} 25% by choosing the ${cheapestProvider}';\n`,
+      'app/deals/layout.tsx': `export const metadata = { description: 'Browse the ${latestDeals} and find the ${bestValue}.' };\n`,
+    });
+
+    const result = runGuardrails(cwd);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('unsupported broad max-savings claim');
+    expect(result.stderr).toContain('unsupported cheapest-provider claim');
+    expect(result.stderr).toContain('unsupported latest-deals freshness claim');
+    expect(result.stderr).toContain('unsupported best-value claim');
+  });
+
   it('rejects provider-trust UI labels and broad OTA coverage copy', async () => {
     const trustLabel = ['Trust', ':'].join('');
     const otaCopy = ['Compare', 'available', 'OTA', 'prices'].join(' ');

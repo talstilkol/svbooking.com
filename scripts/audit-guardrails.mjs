@@ -132,6 +132,26 @@ const forbiddenSnippets = [
     value: ['No', 'hidden', 'fees'].join(' '),
   },
   {
+    label: 'unsupported broad max-savings claim',
+    value: ['Save', 'up', 'to'].join(' '),
+    roots: ['app', 'components'],
+  },
+  {
+    label: 'unsupported cheapest-provider claim',
+    value: ['cheapest', 'provider'].join(' '),
+    roots: ['app', 'components'],
+  },
+  {
+    label: 'unsupported latest-deals freshness claim',
+    value: ['latest', 'hotel', 'deals'].join(' '),
+    roots: ['app', 'components'],
+  },
+  {
+    label: 'unsupported best-value claim',
+    value: ['best', 'value'].join(' '),
+    roots: ['app', 'components'],
+  },
+  {
     label: 'unsupported best-deal claim',
     value: ['best', 'deal'].join(' '),
   },

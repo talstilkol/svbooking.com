@@ -521,10 +521,10 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
                 <span className="text-2xl">&#128176;</span>
                 <div>
                   <p className="font-semibold text-green-800">
-                    Save up to {data.savingsPct}% ({data.currency} {data.savingsAmount.toFixed(0)})
+                    Returned-provider difference: {data.savingsPct}% ({data.currency} {data.savingsAmount.toFixed(0)})
                   </p>
                   <p className="text-green-700 text-sm">
-                    by choosing the cheapest provider for {nights} night{nights !== 1 ? 's' : ''}
+                    between the lowest and highest returned provider totals for {nights} night{nights !== 1 ? 's' : ''}
                   </p>
                 </div>
               </div>

@@ -81,7 +81,7 @@ describe('ComparisonSummary', () => {
     const copied = writeText.mock.calls[0][0] as string;
     expect(copied).toContain('Le Meurice (Paris)');
     expect(copied).toContain('Booking.com: USD 200.00');
-    expect(copied).toContain('Save 20% vs most expensive option');
+    expect(copied).toContain('Returned-provider difference: 20% vs highest returned option');
 
     await waitFor(() => {
       expect(screen.getByText(/Summary copied to clipboard/i)).toBeInTheDocument();

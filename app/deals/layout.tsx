@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Hotel Deals',
-  description: 'Browse the latest hotel deals and provider-returned rates. Compare prices from multiple booking providers to find the best value.',
+  description: 'Browse provider-returned hotel rates and compare available prices from configured booking providers.',
   alternates: { canonical: '/deals' },
 };
 

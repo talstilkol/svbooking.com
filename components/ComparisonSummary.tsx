@@ -37,7 +37,7 @@ export default function ComparisonSummary({
     `${checkIn} to ${checkOut} (${nights} night${nights !== 1 ? 's' : ''})`,
     ``,
     `Lowest returned price: ${cheapest.currency} ${cheapest.total.toFixed(2)} on ${cheapest.provider}`,
-    savingsPct > 0 ? `Save ${savingsPct}% vs most expensive option` : '',
+    savingsPct > 0 ? `Returned-provider difference: ${savingsPct}% vs highest returned option` : '',
     ``,
     `All prices:`,
     ...rates.map((r, i) => `${i === 0 ? '  * ' : '    '}${r.provider}: ${r.currency} ${r.total.toFixed(2)}`),

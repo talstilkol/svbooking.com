@@ -92,8 +92,8 @@ export async function POST(request) {
         const savingsPct = Math.round(((current.price.total - alt.price.total) / current.price.total) * 100);
         recommendations.push({
           type: 'timing_suggestion',
-          title: `Save ${savingsPct}% on ${hotel.name}`,
-          description: `Moving your trip 3 days earlier saves $${(current.price.total - alt.price.total).toFixed(0)} (${alt.altCheckIn} to ${alt.altCheckOut})`,
+          title: `Returned-rate difference: ${savingsPct}% for ${hotel.name}`,
+          description: `The alternate dates currently return $${(current.price.total - alt.price.total).toFixed(0)} less (${alt.altCheckIn} to ${alt.altCheckOut})`,
           hotel,
           action: { label: 'Compare Dates', href: `/compare?hotelKey=${hotel.hotelKey}&checkIn=${alt.altCheckIn}&checkOut=${alt.altCheckOut}` },
           priority: savingsPct >= 20 ? 'high' : 'medium',
