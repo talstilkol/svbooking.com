@@ -81,6 +81,95 @@ describe('provider observability', () => {
     ]);
   });
 
+  it('normalizes malformed provider events and reports empty metrics explicitly', async () => {
+    const emptyMetrics = await getProviderUptimeMetrics({ limit: 0 });
+
+    expect(emptyMetrics).toMatchObject({
+      status: 'unavailable',
+      eventCount: 0,
+      providerCount: 0,
+      successRatePct: null,
+      providers: [],
+      recentEvents: [],
+    });
+
+    const event = await recordProviderUptimeEvent({
+      providerId: '  Bad Provider!* ',
+      providerName: '',
+      operation: '',
+      ok: 0,
+      latencyMs: -5,
+      source: '',
+      checkedAt: '',
+    } as Parameters<typeof recordProviderUptimeEvent>[0]);
+
+    expect(event).toEqual({
+      providerId: 'bad-provider--',
+      providerName: 'Bad Provider!*',
+      operation: 'unknown',
+      ok: false,
+      latencyMs: null,
+      source: 'unknown',
+      checkedAt: '',
+    });
+
+    const limitedMetrics = await getProviderUptimeMetrics({ limit: -10 });
+    expect(limitedMetrics.eventCount).toBe(1);
+    expect(limitedMetrics.successRatePct).toBe(0);
+    expect(limitedMetrics.providers[0]).toMatchObject({
+      providerId: 'bad-provider--',
+      providerName: 'Bad Provider!*',
+      avgLatencyMs: null,
+      p95LatencyMs: null,
+      lastCheckedAt: null,
+      lastStatus: 'failed',
+      lastOperation: 'unknown',
+    });
+  });
+
+  it('limits metric windows without mutating stored provider history', async () => {
+    await recordProviderUptimeEvent({
+      providerId: 'xotelo',
+      providerName: 'Xotelo',
+      operation: 'older',
+      ok: true,
+      latencyMs: 20,
+      checkedAt: '2026-05-14T10:00:00.000Z',
+    });
+    await recordProviderUptimeEvent({
+      providerId: 'serpapi',
+      providerName: 'SerpAPI',
+      operation: 'newer',
+      ok: false,
+      latencyMs: 'bad',
+      checkedAt: '2026-05-14T10:01:00.000Z',
+    } as Parameters<typeof recordProviderUptimeEvent>[0]);
+
+    const limited = await getProviderUptimeMetrics({ limit: 1 });
+    const all = await getProviderUptimeMetrics({ limit: 9999 });
+
+    expect(limited.eventCount).toBe(1);
+    expect(limited.providerCount).toBe(1);
+    expect(limited.providers[0].providerId).toBe('serpapi');
+    expect(all.eventCount).toBe(2);
+    expect(all.providerCount).toBe(2);
+  });
+
+  it('ignores blank provider IDs when building provider summaries', async () => {
+    store.set(PROVIDER_UPTIME_EVENTS_KEY, [
+      { providerId: '', ok: true, latencyMs: 10, providerName: 'Blank Provider' },
+    ]);
+
+    const metrics = await getProviderUptimeMetrics();
+
+    expect(metrics.status).toBe('available');
+    expect(metrics.eventCount).toBe(1);
+    expect(metrics.providerCount).toBe(0);
+    expect(metrics.successRatePct).toBe(100);
+    expect(metrics.providers).toEqual([]);
+    expect(metrics.recentEvents).toHaveLength(1);
+  });
+
   it('protects provider uptime metrics behind admin auth and no-store', async () => {
     const denied = await getProviderUptime(new Request('http://localhost:3000/api/agents/providers/uptime'));
     expect(denied!.status).toBe(401);

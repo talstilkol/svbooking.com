@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Use the real kv module — without Redis env vars it falls back to in-memory
 // This tests the in-memory fallback behavior
@@ -10,6 +10,13 @@ describe('kv (in-memory mode)', () => {
     await kv.del('test:key1');
     await kv.del('test:key2');
     await kv.del('test:ttl');
+    await kv.del('test:ttl-expire');
+    await kv.del('test:glob.1');
+    await kv.del('test:glob-a');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('get/set', () => {
@@ -35,6 +42,19 @@ describe('kv (in-memory mode)', () => {
       await kv.setWithTTL('test:ttl', 'value', 3600);
       expect(await kv.get('test:ttl')).toBe('value');
     });
+
+    it('expires TTL values and omits expired entries from key scans', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-06-01T00:00:00.000Z'));
+
+      await kv.setWithTTL('test:ttl-expire', 'value', 1);
+      expect(await kv.get('test:ttl-expire')).toBe('value');
+
+      vi.setSystemTime(new Date('2026-06-01T00:00:01.001Z'));
+
+      expect(await kv.get('test:ttl-expire')).toBeNull();
+      expect(await kv.keys('test:ttl-*')).not.toContain('test:ttl-expire');
+    });
   });
 
   describe('del', () => {
@@ -56,6 +76,13 @@ describe('kv (in-memory mode)', () => {
       const results = await kv.mget('test:key1', 'test:key2', 'test:nonexistent');
       expect(results).toEqual(['a', 'b', null]);
     });
+
+    it('accepts array inputs for batch reads', async () => {
+      await kv.set('test:key1', 'a');
+      await kv.set('test:key2', 'b');
+
+      await expect(kv.mget(['test:key1', 'test:key2', 'test:nonexistent'])).resolves.toEqual(['a', 'b', null]);
+    });
   });
 
   describe('keys', () => {
@@ -65,6 +92,16 @@ describe('kv (in-memory mode)', () => {
       const matched = await kv.keys('test:*');
       expect(matched).toContain('test:key1');
       expect(matched).toContain('test:key2');
+    });
+
+    it('supports ? wildcard matching while escaping literal dots', async () => {
+      await kv.set('test:glob.1', 'dot');
+      await kv.set('test:glob-a', 'dash');
+
+      const matched = await kv.keys('test:glob.?');
+
+      expect(matched).toContain('test:glob.1');
+      expect(matched).not.toContain('test:glob-a');
     });
   });
 

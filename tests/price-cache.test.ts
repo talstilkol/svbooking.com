@@ -333,6 +333,27 @@ describe('price cache', () => {
     expect(result.fromCache).toBe(false);
   });
 
+  it('returns cached heatmaps without provider access and preserves price-source metadata', async () => {
+    await kv.setWithTTL('heatmap:g1-d1:2026-06-03', {
+      rates: [{ rate: 99, date: '2026-06-01' }],
+      provider: 'cached-xotelo',
+      cachedAt: '2026-05-14T10:00:00.000Z',
+    }, 7200);
+
+    const result = await getCachedHeatmap({
+      hotelKey: 'g1-d1',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedHeatmap>[0]);
+
+    expect(getHeatmap).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      fromCache: true,
+      freshness: 'fresh',
+      priceSource: 'heatmap',
+      provider: 'cached-xotelo',
+    });
+  });
+
   it('returns fallback data when live fetch fails and fuzzy cache exists', async () => {
     // Make live fetch fail
     vi.mocked(getHotelRates).mockRejectedValueOnce(new Error('all providers failed'));
