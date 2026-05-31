@@ -163,6 +163,8 @@ requireIncludes(publicUrlSafety, 'lib/utils/public-url-safety.js', [
   "url.protocol !== 'https:'",
   'url.username || url.password',
   'isPrivateHostname',
+  'a === 100 && b >= 64 && b <= 127',
+  "host.startsWith('::ffff:')",
 ]);
 
 for (const [relativePath, source] of [
@@ -191,6 +193,8 @@ requireIncludes(publicUrlSafetyTest, 'tests/public-url-safety.test.ts', [
   'rejects unsafe public response links',
   'https://localhost:3000/internal',
   'https://127.0.0.1/internal',
+  'https://100.64.0.1/internal',
+  'https://[::ffff:127.0.0.1]/internal',
 ]);
 
 auditPackage(packageRaw);
