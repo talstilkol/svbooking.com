@@ -20,9 +20,9 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 165 test files, 868 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 93.84% lines, 90.63% statements, 93.22% functions, and 83.26% branches. |
-| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 93.8%, statements 90.6%, functions 93.2%, branches 83.2%. |
+| `npm test` | PASS | 165 test files, 876 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 95.15% lines, 91.86% statements, 94.49% functions, and 84.07% branches. |
+| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 95.1%, statements 91.8%, functions 94.4%, branches 84%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 727 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 72 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
@@ -137,6 +137,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Raised discovery-source branch coverage with Xotelo provider failure/credential paths, Nominatim rate-limit/timeout paths, and Wikivoyage sourced parser edge cases.
 - Raised branch coverage above 82% with holiday provider failure/default-year paths and Overpass POI fallback/error coverage.
 - Raised branch coverage above 83% with REST Countries failure/default branches, admin audit failure/limit handling, KV eviction, and price-cache batch/coalescing/invalidation coverage.
+- Raised branch coverage above 84% with agent status/history failure handling, i18n fallback formatting, ops-alert healthy-state coverage, and admin session allowlist normalization.
 
 ## Residual Risks
 
@@ -145,7 +146,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Branch coverage next target | Medium | `lib` branch coverage is 83.26%. | Add focused tests for remaining Overpass discovery, agent utility, i18n, ops alert, and provider edge branches, then raise the coverage ratchet toward 84%. |
+| Branch coverage next target | Medium | `lib` branch coverage is 84.07%. | Add focused tests for remaining Overpass discovery, browser storage hooks, OpenTripMap, Xotelo, Wikidata, currency, and provider edge branches, then raise the coverage ratchet toward 85%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |

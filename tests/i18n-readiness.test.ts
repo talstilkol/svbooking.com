@@ -50,6 +50,39 @@ describe('i18n readiness', () => {
     expect(payload.fallbackPolicy).toContain('unavailable');
   });
 
+  it('falls back predictably for unsupported locales and invalid sample formatting inputs', () => {
+    const payload = buildLocalePayload({
+      acceptLanguage: 'es-MX,fr;q=0.9',
+      sampleDate: 'not-a-date',
+      sampleAmount: Number.NaN,
+      currency: '',
+    });
+
+    expect(payload.locale).toBe('en');
+    expect(payload.dir).toBe('ltr');
+    expect(payload.contentTranslation).toBe('complete');
+    expect(payload.formatting).toEqual({ date: null, currency: null });
+    expect(getLocaleConfig('he_IL')).toMatchObject({ code: 'he', dir: 'rtl' });
+    expect(formatLocalizedDate(new Date('2026-06-01T00:00:00Z'), 'en', { month: 'long' })).toContain('June');
+    expect(formatLocalizedDate('invalid-date', 'en')).toBeNull();
+    expect(formatLocalizedCurrency('not-a-number', 'en', 'USD')).toBeNull();
+  });
+
+  it('uses the default locale payload when no locale hints are supplied', () => {
+    const payload = buildLocalePayload();
+
+    expect(payload).toMatchObject({
+      locale: 'en',
+      name: 'English',
+      dir: 'ltr',
+      contentTranslation: 'complete',
+      formatting: {
+        date: null,
+        currency: null,
+      },
+    });
+  });
+
   it('exposes no-store public readiness metadata', async () => {
     const response = await getI18n(new Request('http://localhost:3000/api/i18n?locale=he&date=2026-06-01&amount=120&currency=USD'));
     const body = await response.json();

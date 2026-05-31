@@ -5,10 +5,10 @@ const root = process.cwd();
 const summaryPath = process.argv[2] || process.env.COVERAGE_SUMMARY_PATH || path.join(root, 'coverage/coverage-summary.json');
 
 const minimums = {
-  lines: 93.8,
-  statements: 90.6,
-  functions: 93.2,
-  branches: 83.2,
+  lines: 95.1,
+  statements: 91.8,
+  functions: 94.4,
+  branches: 84.0,
 };
 
 const failures = [];

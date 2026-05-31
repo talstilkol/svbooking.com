@@ -6,16 +6,53 @@ The app is locally healthy but not production-ready until real deployment config
 
 | Area | Score | Current status |
 | --- | ---: | --- |
-| Determinism and no-fabrication guardrails | 10/10 | `Math.random()` and unapproved UUID randomness are blocked; unavailable data is shown instead of generated claims. |
+| Determinism and no-fabrication guardrails | 9/10 | `Math.random()` and unapproved UUID randomness are blocked by scans/audits; this is still not a formal proof that every future data path has complete provenance. |
 | Local build/test health | 10/10 | Lint, unit/API tests, build, and E2E are expected release gates. |
-| Coverage depth | 8/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 93.84% lines and 83.26% branches. |
-| Security guardrails | 9/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, public API URL safety, and no-store audits are wired. |
-| Catalog quality | 7/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage. |
-| Provider coverage | 6/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
-| Reviews and property content | 5/10 | APIs return explicit unavailable states until licensed provider data is configured. |
-| Mobile retention | 6/10 | PWA/offline shell and local alerts exist; push delivery env is not configured. |
-| Production readiness | 5/10 | Strict readiness fails without admin, cron, Redis, Kinde, and partner-provider env. |
+| Coverage depth | 8/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 95.15% lines and 84.07% branches. |
+| Security guardrails | 8/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, public API URL safety, and no-store audits are wired; production enforcement still depends on real env and deployment verification. |
+| Catalog quality | 6/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage and has reused catalog imagery warnings. |
+| Provider coverage | 5/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
+| Reviews and property content | 4/10 | APIs return explicit unavailable states until licensed provider data is configured; rich review/property content is not live. |
+| Mobile retention | 5/10 | PWA/offline shell and local alerts exist; push delivery env and provider are not configured. |
+| Production readiness | 4/10 | Strict readiness fails without admin, cron, Redis, Kinde, and partner-provider env. |
 | Release hygiene | 10/10 | The worktree is clean; keep generated/cache artifacts out of commits. |
+
+## Accountability Audit
+
+This section is the source of truth for what is complete versus only locally scaffolded.
+
+| Plan item | Status | Honest verification |
+| --- | --- | --- |
+| Determinism: no `Math.random()` | DONE | `rg "Math\.random\|crypto\.randomUUID" app components lib scripts tests -S` returns no matches. |
+| No-fabrication guardrails | PARTIAL | `npm run audit:guardrails` passes and unavailable states exist, but there is no exhaustive provenance proof for every future provider/content path. |
+| Local lint/unit/build/E2E health | DONE | `npm run lint`, `npm test`, `npm run build`, and `npm run test:e2e` passed locally. |
+| Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 95.15% lines, 91.86% statements, 94.49% functions, 84.07% branches. |
+| Coverage to world-class depth | PARTIAL | Branch coverage is above 83%, not near exhaustive; remaining weak areas include Overpass discovery, agent utilities, i18n edge cases, ops alerts, and provider registry edges. |
+| Security audits wired | DONE | CSRF, HTML safety, storage, privacy, alert, public URL, affiliate, no-store, API error, and cron-cache audits pass locally. |
+| Production security enforcement | PARTIAL | Code gates exist, but real admin, cron, Kinde, Redis, provider, alert, and push env are not configured locally. |
+| Catalog local floor | DONE | Catalog count is 502 hotels, 139 cities, 65 countries. |
+| Catalog market scale | NOT DONE | The catalog is not comparable to large OTA/global metasearch inventory and still has reused imagery warnings. |
+| Provider adapter layer | DONE | Six adapters are registered: Xotelo, SerpAPI, Booking/RapidAPI, TripAdvisor/RapidAPI, MakCorps, and Amadeus. |
+| Production provider readiness | NOT DONE | No complete partner pricing provider env group is configured in local strict readiness. |
+| Reviews unavailable state | DONE | Review/property APIs intentionally return unavailable states when provider licensing is missing. |
+| Licensed review/property integration | NOT DONE | No licensed review/property-content provider is configured for production content. |
+| PWA/offline shell | DONE | PWA audit passes and the runbook documents network-only API behavior. |
+| Push/mobile notification delivery | NOT DONE | `NEXT_PUBLIC_PUSH_PUBLIC_KEY` and `PUSH_PRIVATE_KEY` are not configured with an approved provider. |
+| Release hygiene | DONE | `npm run release:state:strict` passes after committed changes; worktree is clean at audit time. |
+| Production env gate | NOT DONE | `npm run audit:production:strict` correctly fails locally on missing real env. |
+| Docs drift prevention | DONE | `npm run audit:docs` passes and CI includes the docs audit. |
+| README, `.env.example`, runbook, plan alignment | PARTIAL | Audits pass for key snippets and env names, but not every operational runbook instruction has a live deployment proof. |
+| Public API unsafe URL prevention | DONE | `npm run audit:public-api-urls` passes and the Playwright JSON scanner is wired in CI. |
+| Validated catalog candidate promotion | PARTIAL | Candidate and admin approval paths exist; production-scale ingestion with real reviewed approvals is not complete. |
+| Licensed media replacement | NOT DONE | `audit:catalog` still warns about reused Unsplash images across cities. |
+| Agent cron auth | DONE | Cron-protected routes and `CRON_SECRET` gate are wired and audited. |
+| Production cron execution | NOT DONE | Cron routes are not verified in a real deployment with real `CRON_SECRET` and persistent KV. |
+| Ops monitoring endpoints | PARTIAL | `/api/health`, `/api/ops/scorecard`, `/api/ops/alerts`, provider uptime, price accuracy, and alert history surfaces exist; real external monitoring and webhook delivery are not configured. |
+| Dependency audit | DONE | `npm audit --audit-level=moderate` passed in an approved network environment. |
+| `audit:production:strict` in deployment | NOT DONE | No deployment env proof has been provided. |
+| No stale removed-route docs | DONE | `npm run audit:docs` rejects removed legacy route names, old database claims, and old catalog-size claims. |
+| Unknown data shown explicitly | PARTIAL | Covered for many surfaces and audited, but requires continued enforcement as new integrations are added. |
+| Faked work | DONE | No item is intentionally marked as completed by simulation only; local-only items are marked DONE only when verified by commands, and env/provider/launch items remain PARTIAL or NOT DONE. |
 
 ## Stabilization Priorities
 
@@ -29,7 +66,7 @@ The app is locally healthy but not production-ready until real deployment config
    - Keep generated/cache artifacts out of commits.
 
 3. **Coverage ratchet**
-   - Raise `lib` branch coverage from 83.26% toward 84%, then raise the ratchet floors again in `scripts/audit-coverage.mjs`.
+   - Raise `lib` branch coverage from 84.07% toward 85%, then raise the ratchet floors again in `scripts/audit-coverage.mjs`.
    - Prioritize hotels-catalog, provider registry, cache, alert delivery, retention edge cases, and remaining API error branches.
    - Keep coverage reports out of commits unless a reviewed artifact is explicitly requested.
 
@@ -62,6 +99,42 @@ The app is locally healthy but not production-ready until real deployment config
 - `npm audit --audit-level=moderate` reports no dependency vulnerabilities in an approved network environment.
 - README and plan contain the current catalog count: 502 hotels, 139 cities, 65 countries.
 - No documentation references removed listing/booking API routes, old database architecture, old 15-hotel coverage, or unsupported no-auth/no-rate-limit claims.
+
+## Execution Backlog To Complete The Whole Plan
+
+### P0: Launch Blockers
+
+- [ ] Configure real deployment env: `ADMIN_API_SECRET`, `CRON_SECRET`, Upstash Redis, Kinde, and at least one complete partner pricing provider group.
+- [ ] Run `npm run audit:production:strict` in the deployment environment and capture the passing release evidence.
+- [ ] Verify deployed cron routes with real `CRON_SECRET`: orchestrate, price-alert evaluation, and ops-alert evaluation.
+- [ ] Configure persistent KV and verify `/api/health` reports persistent cache, not memory.
+- [ ] Configure one approved pricing partner and verify provider-returned rates from production without fabricated fallbacks.
+- [ ] Configure licensed review/property-content provider access before showing review copy, ratings, or rich property descriptions.
+
+### P1: Quality And Trust
+
+- [x] Raise `lib` branch coverage from 83.26% toward 84%, then keep ratcheting upward.
+- [ ] Raise `lib` branch coverage from 84.07% toward 85%, then keep ratcheting upward.
+- [ ] Add focused tests for Overpass discovery, agent utilities, i18n edge cases, ops alert thresholds, and provider registry merge/circuit-breaker branches.
+- [ ] Replace reused catalog images with licensed hotel- or city-specific media.
+- [ ] Add a stronger provenance audit for catalog items, images, partner links, and provider-returned rates.
+- [ ] Add deployment smoke checks for public APIs, protected admin APIs, cron APIs, and unavailable-state behavior.
+
+### P2: Market Scale
+
+- [ ] Expand catalog ingestion through the admin candidate workflow only; do not auto-promote discovered hotels.
+- [ ] Add duplicate detection and provenance review dashboards for catalog candidates at scale.
+- [ ] Add provider coverage telemetry by city/country/date so gaps are measurable before claims are displayed.
+- [ ] Add real alert delivery provider integration for price alerts, unsubscribe tokens, and ops alerts.
+- [ ] Add web push only after approved notification-provider setup and health readiness proof.
+
+### P3: Number-One Product Work
+
+- [ ] Build a production observability dashboard covering uptime, provider latency, cache hit rate, alert delivery, price mismatch reports, and catalog provenance quality.
+- [ ] Add real-user monitoring and Core Web Vitals tracking per top route and device class.
+- [ ] Add international localization QA beyond Hebrew/English, including RTL/LTR layout regression checks.
+- [ ] Add commercial/legal readiness for partner terms, affiliate disclosures, privacy, retention, and licensed content display.
+- [ ] Add competitor parity tracking for inventory breadth, price freshness, mobile installability, reviews, alerts, and booking handoff quality.
 
 ## Non-Negotiables
 

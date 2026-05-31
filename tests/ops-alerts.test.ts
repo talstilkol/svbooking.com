@@ -73,6 +73,8 @@ vi.mock('@/lib/admin-auth', () => ({
 
 import { GET } from '@/app/api/ops/alerts/route';
 import { buildOpsAlerts } from '@/lib/ops-alerts';
+import { buildHealthSnapshot } from '@/lib/health-readiness';
+import { buildOpsScorecard } from '@/lib/ops-scorecard';
 import { getProviderUptimeMetrics } from '@/lib/provider-observability';
 import { getPriceAccuracyMetrics } from '@/lib/price-accuracy';
 
@@ -196,6 +198,56 @@ describe('ops alerts', () => {
     ]));
     expect(result.alerts.map((item) => item.id)).not.toContain('provider-xotelo-critical-success-rate');
     expect(result.alerts.map((item) => item.id)).not.toContain('price-accuracy-critical-drift');
+  });
+
+  it('stays healthy when readiness, provider uptime, and price accuracy are within thresholds', async () => {
+    vi.mocked(buildHealthSnapshot).mockReturnValueOnce({
+      service: 'sv-booking',
+      status: 'healthy',
+      ready: true,
+      checkedAt: '2026-05-14T12:00:00.000Z',
+      checks: {
+        security: { productionReady: true, adminAuthConfigured: true },
+        cache: { durable: true, mode: 'persistent' },
+        providers: { available: 2 },
+        alerts: { deliveryConfigured: true, deliveryStatus: 'configured' },
+      },
+      warnings: [],
+    } as unknown as ReturnType<typeof buildHealthSnapshot>);
+    vi.mocked(buildOpsScorecard).mockReturnValueOnce({
+      service: 'sv-booking',
+      status: 'healthy',
+      score: 1,
+      blockers: [],
+    } as unknown as ReturnType<typeof buildOpsScorecard>);
+    vi.mocked(getProviderUptimeMetrics).mockResolvedValueOnce({
+      status: 'available',
+      eventCount: 5,
+      providerCount: 1,
+      successRatePct: 100,
+      providers: [{
+        providerId: 'xotelo',
+        providerName: 'Xotelo',
+        total: 5,
+        successes: 5,
+        failures: 0,
+        successRatePct: 100,
+        p95LatencyMs: 1200,
+      }],
+    } as unknown as Awaited<ReturnType<typeof getProviderUptimeMetrics>>);
+    vi.mocked(getPriceAccuracyMetrics).mockResolvedValueOnce({
+      days: 7,
+      observations: 20,
+      mismatches: 0,
+      mismatchRate: 0,
+      byProvider: {},
+    });
+
+    const result = await buildOpsAlerts({ now: new Date('2026-05-14T12:00:00.000Z') });
+
+    expect(result.status).toBe('healthy');
+    expect(result.summary).toEqual({ total: 0, critical: 0, warning: 0, info: 0 });
+    expect(result.alerts).toEqual([]);
   });
 
   it('protects ops alerts behind admin auth and no-store', async () => {
