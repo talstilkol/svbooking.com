@@ -213,6 +213,40 @@ describe('cheaper date price intelligence', () => {
     expect(result.alternatives.month.length).toBeGreaterThan(0);
   });
 
+  it('chooses a later cheaper heatmap bracket while accepting rate and min_rate fields', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-01T00:00:00Z'));
+    vi.mocked(getCachedRates).mockResolvedValue({
+      rates: [{ provider: 'Booking.com', total: 600, currency: 'USD', source: 'provider-registry' }],
+      source: 'provider-registry',
+    });
+    vi.mocked(getCachedHeatmap).mockImplementation(async ({ checkOut }) => {
+      const offsetDays = Math.round((Date.parse(`${checkOut}T00:00:00Z`) - Date.parse('2026-06-12T00:00:00Z')) / 86400000);
+      const abs = Math.abs(offsetDays);
+      const target = new Date(`${checkOut}T00:00:00Z`);
+      target.setUTCDate(target.getUTCDate() - 2);
+      const checkIn = target.toISOString().slice(0, 10);
+      if (abs <= 3) {
+        return { data: [{ chk_in: checkIn, rate: 250 }] };
+      }
+      if (abs <= 7) {
+        return { data: [{ chk_in: checkIn, rate: 150 }] };
+      }
+      return { data: [{ date: checkIn, min_rate: 90 }] };
+    });
+
+    const result = await findCheaperDates('g187147-d188732', '2026-06-10', '2026-06-12');
+
+    expect(result.method).toBe('heatmap-source-observations');
+    expect(result.alternatives.near[0].price).toBe(500);
+    expect(result.alternatives.week[0].price).toBe(300);
+    expect(result.cheapestOverall).toEqual(expect.objectContaining({
+      price: 180,
+      pricePerNight: 90,
+      source: 'xotelo-heatmap',
+    }));
+  });
+
   it('marks cheaper-date output unavailable when no verified observations exist', async () => {
     vi.mocked(getCachedRates).mockResolvedValue({
       rates: [{ provider: 'unknown', total: 99 }],

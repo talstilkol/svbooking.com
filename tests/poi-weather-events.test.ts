@@ -488,6 +488,40 @@ describe('Nominatim hotel search helpers', () => {
     await expect(searchHotels({ city: 'Source Village' })).resolves.toEqual([]);
   });
 
+  it('keeps sparse Nominatim address and extratag fields explicit', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse([{
+      class: 'tourism',
+      type: 'hotel',
+      name: 'Sparse Source Hotel',
+      lat: '35.0',
+      lon: '139.0',
+      osm_id: 789,
+      osm_type: 'node',
+    }]));
+    vi.stubGlobal('fetch', fetchMock);
+    const { searchHotels } = await import('@/lib/nominatim');
+
+    await expect(searchHotels({ city: 'Tokyo' })).resolves.toEqual([
+      {
+        name: 'Sparse Source Hotel',
+        lat: 35,
+        lon: 139,
+        city: null,
+        country: null,
+        countryCode: null,
+        stars: null,
+        rooms: null,
+        wikidataId: null,
+        brandWikidataId: null,
+        brand: null,
+        website: null,
+        address: null,
+        osmId: 789,
+        osmType: 'node',
+      },
+    ]);
+  });
+
   it('surfaces Nominatim rate limits, HTTP failures, and request timeouts explicitly', async () => {
     vi.stubGlobal('fetch', vi
       .fn()

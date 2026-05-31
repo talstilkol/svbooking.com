@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { verifyAdminAuth } from '@/lib/admin-auth';
+import { verifyAdminAuth, verifyAdminOnly } from '@/lib/admin-auth';
 
 function request(token?: string) {
   return new Request('http://localhost:3000/api/agents/providers', {
@@ -70,5 +70,23 @@ describe('verifyAdminAuth', () => {
     const auth = verifyAdminAuth(request('cron-secret'));
 
     expect(auth).toEqual({ authorized: true, subject: 'cron-secret' });
+  });
+
+  it('keeps strict admin-only auth separate from cron fallback tokens', async () => {
+    vi.stubEnv('ADMIN_API_SECRET', '');
+    vi.stubEnv('CRON_SECRET', 'cron-secret');
+
+    const missingAdmin = verifyAdminOnly(request('cron-secret'));
+    expect(missingAdmin.authorized).toBe(false);
+    expect(missingAdmin.response!.status).toBe(403);
+    expect((await missingAdmin.response!.json()).error).toBe('Admin API secret is not configured');
+
+    vi.stubEnv('ADMIN_API_SECRET', 'admin-secret');
+    const accepted = verifyAdminOnly(request('admin-secret'));
+    const cronRejected = verifyAdminOnly(request('cron-secret'));
+
+    expect(accepted).toEqual({ authorized: true, subject: 'admin-api-secret' });
+    expect(cronRejected.authorized).toBe(false);
+    expect(cronRejected.response!.status).toBe(401);
   });
 });

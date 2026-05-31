@@ -40,6 +40,8 @@ describe('Overpass hotel discovery hardening', () => {
           tags: { 'name:en': 'Royal Observatory Hotel', wikidata: 'Q1', rooms: '12' },
         },
         { type: 'node', id: 3, lat: 10, lon: 10, tags: { tourism: 'hotel' } },
+        { type: 'node', id: 4, lat: 11, lon: 11 },
+        { type: 'node', id: 5, tags: { name: 'Coordinate Missing Hotel' } },
       ],
     }));
     vi.stubGlobal('fetch', fetchMock);
@@ -47,11 +49,20 @@ describe('Overpass hotel discovery hardening', () => {
 
     const hotels = await discoverHotels({ city: 'London"\\', limit: 5 });
 
-    expect(hotels).toEqual([
+    expect(hotels).toEqual(expect.arrayContaining([
       expect.objectContaining({ name: 'Equator Hotel', lat: 0, lon: 0, stars: 4 }),
       expect.objectContaining({ name: 'Royal Observatory Hotel', lat: 51.4769, lon: 0, rooms: 12 }),
-    ]);
+    ]));
+    expect(hotels).toHaveLength(3);
     expect(capturedQuery(fetchMock)).not.toContain('"\\');
+    expect(hotels).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        name: 'Coordinate Missing Hotel',
+        lat: null,
+        lon: null,
+      }),
+    ]));
+    await expect(discoverHotels({ city: '' })).rejects.toThrow('City name is required');
     await expect(discoverHotelsNearby({ lat: Number.NaN, lon: 0 })).rejects.toThrow('Latitude and longitude are required');
     await expect(countHotels({ city: '' })).rejects.toThrow('City name is required');
   });

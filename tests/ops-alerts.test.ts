@@ -200,6 +200,64 @@ describe('ops alerts', () => {
     expect(result.alerts.map((item) => item.id)).not.toContain('price-accuracy-critical-drift');
   });
 
+  it('reports warning status when only non-critical provider alerts remain', async () => {
+    vi.mocked(buildHealthSnapshot).mockReturnValueOnce({
+      service: 'sv-booking',
+      status: 'healthy',
+      ready: true,
+      checkedAt: '2026-05-14T12:00:00.000Z',
+      checks: {
+        security: { productionReady: true, adminAuthConfigured: true },
+        cache: { durable: true, mode: 'persistent' },
+        providers: { available: 2 },
+        alerts: { deliveryConfigured: true, deliveryStatus: 'configured' },
+      },
+      warnings: [],
+    } as unknown as ReturnType<typeof buildHealthSnapshot>);
+    vi.mocked(buildOpsScorecard).mockReturnValueOnce({
+      service: 'sv-booking',
+      status: 'partial',
+      score: 0.8,
+    } as unknown as ReturnType<typeof buildOpsScorecard>);
+    vi.mocked(getProviderUptimeMetrics).mockResolvedValueOnce({
+      status: 'available',
+      eventCount: 5,
+      providerCount: 1,
+      successRatePct: 94,
+      providers: [{
+        providerId: '!!!',
+        providerName: '   ',
+        total: 5,
+        successes: 4,
+        failures: 1,
+        successRatePct: 94,
+        p95LatencyMs: 4000,
+      }],
+    } as unknown as Awaited<ReturnType<typeof getProviderUptimeMetrics>>);
+    vi.mocked(getPriceAccuracyMetrics).mockResolvedValueOnce({
+      days: 7,
+      observations: 20,
+      mismatches: 0,
+      mismatchRate: 0,
+      byProvider: {},
+    });
+
+    const result = await buildOpsAlerts({ now: new Date('2026-05-14T12:00:00.000Z') });
+
+    expect(result.status).toBe('warning');
+    expect(result.summary).toMatchObject({ critical: 0, warning: 2 });
+    expect(result.alerts).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'provider-unknown-warning-success-rate',
+        message: 'unknown success rate is below target.',
+      }),
+      expect.objectContaining({
+        id: 'provider-unknown-warning-latency',
+        message: 'unknown p95 latency is above target.',
+      }),
+    ]));
+  });
+
   it('stays healthy when readiness, provider uptime, and price accuracy are within thresholds', async () => {
     vi.mocked(buildHealthSnapshot).mockReturnValueOnce({
       service: 'sv-booking',

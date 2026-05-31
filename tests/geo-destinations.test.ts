@@ -72,6 +72,8 @@ describe('geo request helpers', () => {
       'x-real-ip': '2001:db8:zzzz::1',
     }))).toBeNull();
     expect(getClientIp(requestWithHeaders({ 'x-forwarded-for': '2001:db8:12345::1' }))).toBeNull();
+    expect(getClientIp(requestWithHeaders({ 'x-forwarded-for': '1.a.1.1' }))).toBeNull();
+    expect(getClientIp(requestWithHeaders({ 'x-forwarded-for': '[2001:db8::1' }))).toBeNull();
     expect(getClientIp(requestWithHeaders({ 'x-forwarded-for': '2001:DB8:0:0:0:0:0:1' }))).toBe('2001:db8:0:0:0:0:0:1');
   });
 
@@ -181,6 +183,20 @@ describe('geo provider detection', () => {
     await expect(detectLocation()).resolves.toBeNull();
     expect(String(fallbackError.mock.calls[0][0])).toBe('http://ip-api.com/json/?fields=status,country,countryCode,city,lat,lon,currency,timezone,isp');
     expect(String(fallbackError.mock.calls[1][0])).toBe('https://ipapi.co/json/');
+  });
+
+  it('falls back after primary provider HTTP failures before giving up', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({}, false, 503))
+      .mockResolvedValueOnce(jsonResponse({ error: true }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(detectLocation('198.51.100.11')).resolves.toBeNull();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(String(fetchMock.mock.calls[0][0])).toContain('http://ip-api.com/json/198.51.100.11');
+    expect(String(fetchMock.mock.calls[1][0])).toBe('https://ipapi.co/198.51.100.11/json/');
   });
 });
 

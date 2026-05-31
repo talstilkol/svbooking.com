@@ -391,6 +391,30 @@ describe('hotels-catalog', () => {
         city: 'Madrid',
         country: 'Spain',
       })).resolves.toBe(false);
+
+      await kv.setWithTTL('catalog:discovered', [{
+        hotelKey: 'g186338-d800001',
+        name: 'Existing Rome Hotel',
+        city: 'Rome',
+        country: 'Italy',
+      }], 3600);
+      await expect(addAndPersistHotel({
+        hotelKey: 'g187791-d900003',
+        name: 'Sourced Rome Hotel',
+        city: 'Rome',
+        country: 'Italy',
+        source: 'wikidata',
+        sourceUrl: 'https://www.wikidata.org/wiki/Q900003',
+        externalIds: { wikidataId: 'Q900003' },
+        provenance: {
+          source: 'wikidata',
+          sourceUrl: 'https://www.wikidata.org/wiki/Q900003',
+        },
+      })).resolves.toBe(true);
+      expect(await kv.get('catalog:discovered')).toEqual([
+        expect.objectContaining({ hotelKey: 'g186338-d800001' }),
+        expect.objectContaining({ hotelKey: 'g187791-d900003' }),
+      ]);
     });
   });
 });

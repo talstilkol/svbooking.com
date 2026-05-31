@@ -268,6 +268,8 @@ describe('xotelo retry', () => {
       .rejects.toThrow('Xotelo hotelKey must be a valid TripAdvisor-style key');
     await expect(getHeatmap({ hotelKey: 'g1-d1', checkOut: '2026-02-30' }))
       .rejects.toThrow('Xotelo checkOut must be a valid YYYY-MM-DD date');
+    await expect(getHeatmap({ hotelKey: 'g1-d1', checkOut: null as unknown as string }))
+      .rejects.toThrow('Xotelo checkOut must be a valid YYYY-MM-DD date');
 
     expect(fetchCalls).toHaveLength(0);
   });
