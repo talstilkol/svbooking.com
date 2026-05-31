@@ -105,6 +105,25 @@ describe('kv (in-memory mode)', () => {
     });
   });
 
+  describe('memory cap', () => {
+    it('evicts oldest in-memory entries when the development store exceeds its cap', async () => {
+      const keys = Array.from({ length: 5001 }, (_, index) => `evict:${index}`);
+
+      try {
+        for (const key of keys) {
+          await kv.set(key, key);
+        }
+
+        expect(await kv.get('evict:0')).toBeNull();
+        expect(await kv.get('evict:5000')).toBe('evict:5000');
+      } finally {
+        for (const key of keys) {
+          await kv.del(key);
+        }
+      }
+    });
+  });
+
   describe('isConfigured', () => {
     it('returns false when no Redis env vars are set', async () => {
       expect(await kv.isConfigured()).toBe(false);

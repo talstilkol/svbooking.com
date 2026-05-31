@@ -68,6 +68,7 @@ describe('exchange rate helpers', () => {
 
 describe('country metadata helpers', () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.resetModules();
   });
@@ -130,5 +131,60 @@ describe('country metadata helpers', () => {
     await expect(getCountryByCode('')).rejects.toThrow('Country code is required');
     await expect(getCountryByName('')).rejects.toThrow('Country name is required');
     await expect(getPrimaryCurrency('AQ')).resolves.toBeNull();
+  });
+
+  it('uses explicit fallbacks for sparse country payloads', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ name: {}, capital: [] }))
+      .mockResolvedValueOnce(jsonResponse({ name: {}, capital: [], cca2: 'VA' }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getCountryByCode, getCountryByName } = await import('@/lib/countries');
+
+    await expect(getCountryByCode('aq')).resolves.toEqual({
+      name: 'AQ',
+      officialName: null,
+      capital: null,
+      currencies: {},
+      languages: {},
+      timezones: [],
+      flag: '',
+      region: null,
+      subregion: null,
+      latlng: null,
+      population: null,
+    });
+
+    await expect(getCountryByName('Vatican City')).resolves.toEqual({
+      name: 'Vatican City',
+      code: 'VA',
+      capital: null,
+      currencies: {},
+      languages: {},
+      timezones: [],
+      flag: '',
+      region: null,
+      subregion: null,
+      latlng: null,
+    });
+  });
+
+  it('surfaces REST Countries HTTP errors and timeouts', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, false, 503)));
+    const { getCountryByCode } = await import('@/lib/countries');
+
+    await expect(getCountryByCode('FR')).rejects.toThrow('REST Countries HTTP 503');
+
+    vi.resetModules();
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', vi.fn((_input: string, init?: RequestInit) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+    })));
+    const { getCountryByName } = await import('@/lib/countries');
+    const request = getCountryByName('France');
+    const assertion = expect(request).rejects.toThrow('Countries request timed out');
+
+    await vi.advanceTimersByTimeAsync(8000);
+    await assertion;
   });
 });

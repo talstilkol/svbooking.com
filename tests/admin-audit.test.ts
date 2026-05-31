@@ -17,6 +17,7 @@ describe('admin audit log', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllEnvs();
+    vi.restoreAllMocks();
   });
 
   it('redacts sensitive details recursively', () => {
@@ -41,6 +42,32 @@ describe('admin audit log', () => {
       },
       values: ['[redacted]', '[redacted]', 'visible'],
     });
+  });
+
+  it('bounds and cleans complex audit details without leaking raw sensitive values', () => {
+    const manyEntries = Object.fromEntries(
+      Array.from({ length: 45 }, (_, index) => [`field-${index}`, `value-${index}`])
+    );
+
+    const sanitized = sanitizeAuditDetails({
+      empty: '',
+      ok: true,
+      count: 3,
+      none: null,
+      list: Array.from({ length: 25 }, (_, index) => index),
+      manyEntries,
+      deep: { a: { b: { c: { d: { e: 'too deep' } } } } },
+      unsafeValue: 'Basic abcdef12345',
+    }) as Record<string, unknown>;
+
+    expect(sanitized.empty).toBe('');
+    expect(sanitized.ok).toBe(true);
+    expect(sanitized.count).toBe(3);
+    expect(sanitized.none).toBeNull();
+    expect(sanitized.unsafeValue).toBe('[redacted]');
+    expect(sanitized.list).toHaveLength(20);
+    expect(Object.keys(sanitized.manyEntries as Record<string, unknown>)).toHaveLength(40);
+    expect(sanitized.deep).toEqual({ a: { b: { c: { d: '[max-depth]' } } } });
   });
 
   it('records deterministic, redacted admin events without raw client identifiers', async () => {
@@ -140,6 +167,39 @@ describe('admin audit log', () => {
     expect(first?.id).not.toBe(second?.id);
     const events = await getAdminAuditEvents(10);
     expect(events.map((event: { id: string }) => event.id)).toEqual([second?.id, first?.id]);
+  });
+
+  it('returns null instead of breaking admin mutations when audit persistence fails', async () => {
+    vi.spyOn(kv, 'get').mockRejectedValueOnce(new Error('KV unavailable'));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const event = await recordAdminAuditEvent({
+      request: new Request('http://localhost:3000/api/agents/providers', {
+        method: 'POST',
+        headers: { 'user-agent': 'vitest-admin-audit' },
+      }),
+      actor: 'cron-secret',
+      action: 'provider.health-check',
+      resource: 'xotelo',
+      details: { providerId: 'xotelo' },
+    });
+
+    expect(event).toBeNull();
+    expect(consoleSpy).toHaveBeenCalledWith('Admin audit write failed:', expect.any(Error));
+  });
+
+  it('normalizes audit read limits and drops missing event payloads', async () => {
+    await kv.setWithTTL('admin:audit:event:present-1', { id: 'present-1', action: 'first' }, 3600);
+    await kv.setWithTTL('admin:audit:event:present-2', { id: 'present-2', action: 'second' }, 3600);
+    await kv.setWithTTL('admin:audit:index', ['present-1', 'missing', 'present-2'], 3600);
+
+    await expect(getAdminAuditEvents(-4)).resolves.toEqual([
+      { id: 'present-1', action: 'first' },
+    ]);
+    await expect(getAdminAuditEvents(10)).resolves.toEqual([
+      { id: 'present-1', action: 'first' },
+      { id: 'present-2', action: 'second' },
+    ]);
   });
 
   it('protects the audit read endpoint and returns redacted events', async () => {
