@@ -8,7 +8,7 @@ const minimums = {
   lines: 99.4,
   statements: 99.2,
   functions: 97.3,
-  branches: 99.9,
+  branches: 100,
 };
 
 const failures = [];
