@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   deliverOpsAlertReport,
   isOpsAlertDeliveryConfigured,
@@ -206,5 +206,30 @@ describe('ops alert delivery', () => {
       },
     });
     expect(thrown).toEqual({ configured: true, status: 'failed' });
+  });
+
+  it('aborts slow webhook delivery attempts', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchImpl = vi.fn((_url: string | URL | Request, init?: RequestInit) => (
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+        })
+      )) as unknown as typeof fetch;
+
+      const pending = deliverOpsAlertReport(report, {
+        env: {
+          OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
+          OPS_ALERT_WEBHOOK_SECRET: 'ops-secret-value',
+        } as unknown as NodeJS.ProcessEnv,
+        fetchImpl,
+      });
+
+      await vi.advanceTimersByTimeAsync(5000);
+
+      await expect(pending).resolves.toEqual({ configured: true, status: 'failed' });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

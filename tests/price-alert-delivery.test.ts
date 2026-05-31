@@ -115,4 +115,29 @@ describe('price alert delivery', () => {
 
     expect(result).toEqual({ configured: true, status: 'failed' });
   });
+
+  it('aborts slow webhook delivery attempts', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchImpl = vi.fn((_url: string | URL | Request, init?: RequestInit) => (
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+        })
+      )) as unknown as typeof fetch;
+
+      const pending = deliverPriceAlertEvent(event, {
+        env: {
+          PRICE_ALERT_WEBHOOK_URL: 'https://alerts.example.com/hooks/sv-booking',
+          PRICE_ALERT_WEBHOOK_SECRET: 'secret-value',
+        } as unknown as NodeJS.ProcessEnv,
+        fetchImpl,
+      });
+
+      await vi.advanceTimersByTimeAsync(5000);
+
+      await expect(pending).resolves.toEqual({ configured: true, status: 'failed' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

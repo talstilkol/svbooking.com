@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { haversineKm, haversineMeters } from '@/lib/utils/geo-distance';
 import { detectLocation, findNearestCity, getClientIp } from '@/lib/geo';
+import { getCityCoordinate } from '@/lib/city-coordinates';
 import {
   CONTINENTS,
   findContinentForCountry,
@@ -90,6 +91,16 @@ describe('geo request helpers', () => {
   it('returns null when no usable city coordinates exist', () => {
     expect(findNearestCity(0, 0, [])).toBeNull();
     expect(findNearestCity(0, 0, [{ city: 'Missing', lat: Number.NaN, lon: 0 }])).toBeNull();
+  });
+
+  it('looks up static city coordinates case-insensitively', () => {
+    expect(getCityCoordinate('paris')).toMatchObject({
+      city: 'Paris',
+      country: 'France',
+      lat: 48.8566,
+      lng: 2.3522,
+    });
+    expect(getCityCoordinate('Atlantis')).toBeUndefined();
   });
 });
 

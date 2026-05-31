@@ -237,6 +237,24 @@ describe('saved hotel hooks', () => {
     expect(vi.mocked(fetch).mock.calls[0]).toMatchObject(['/api/me/favorites', { method: 'POST' }]);
 
     await act(async () => {
+      api.removeFavorite('g187147-d188728');
+    });
+
+    expect(api.favorites).toEqual([]);
+    expect(String(vi.mocked(fetch).mock.calls[1][0])).toBe('/api/me/favorites?hotelKey=g187147-d188728');
+
+    await act(async () => {
+      await api.toggleFavorite({
+        hotelKey: 'g187147-d188728',
+        name: 'Le Meurice',
+        city: 'Paris',
+        country: 'France',
+        image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800&q=80',
+      });
+    });
+    expect(api.favorites).toHaveLength(1);
+
+    await act(async () => {
       await api.toggleFavorite({
         hotelKey: 'g187147-d188728',
         name: 'Le Meurice',
@@ -247,7 +265,7 @@ describe('saved hotel hooks', () => {
     });
 
     expect(api.favorites).toEqual([]);
-    expect(String(vi.mocked(fetch).mock.calls[1][0])).toBe('/api/me/favorites?hotelKey=g187147-d188728');
+    expect(String(vi.mocked(fetch).mock.calls.at(-1)?.[0])).toBe('/api/me/favorites?hotelKey=g187147-d188728');
   });
 
   it('creates deterministic trip IDs, persists trips, and deletes cloud copies by ID', async () => {

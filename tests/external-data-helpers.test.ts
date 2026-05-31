@@ -65,6 +65,25 @@ describe('exchange rate helpers', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it('fails closed when both exchange-rate sources time out', async () => {
+    const fetchMock = vi.fn((_url: string | URL | Request, init?: RequestInit) => (
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+      })
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getExchangeRates } = await import('@/lib/exchange-rates');
+
+    const pending = getExchangeRates('USD').catch((error: Error) => error);
+    await vi.advanceTimersByTimeAsync(8000);
+    await vi.advanceTimersByTimeAsync(8000);
+
+    await expect(pending).resolves.toMatchObject({
+      message: 'Failed to fetch exchange rates from all sources',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('short-circuits same-currency conversion and reports missing rates', async () => {
     const fetchMock = vi.fn(async () => jsonResponse({ rates: { EUR: 0.92 } }));
     vi.stubGlobal('fetch', fetchMock);

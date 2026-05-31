@@ -8,7 +8,7 @@ The app is locally healthy but not production-ready until real deployment config
 | --- | ---: | --- |
 | Determinism and no-fabrication guardrails | 9/10 | `Math.random()` and unapproved UUID randomness are blocked by scans/audits; this is still not a formal proof that every future data path has complete provenance. |
 | Local build/test health | 10/10 | Lint, unit/API tests, build, and E2E are expected release gates. |
-| Coverage depth | 9/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 99.47% lines and 100% branches. |
+| Coverage depth | 9/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 99.75% lines and 100% branches. |
 | Security guardrails | 8/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, public API URL safety, and no-store audits are wired; production enforcement still depends on real env and deployment verification. |
 | Catalog quality | 6/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage; reused catalog imagery is now tracked as an ops scorecard blocker. |
 | Provider coverage | 5/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
@@ -26,8 +26,8 @@ This section is the source of truth for what is complete versus only locally sca
 | Determinism: no `Math.random()` | DONE | `rg "Math\.random\|crypto\.randomUUID" app components lib scripts tests -S` returns no matches. |
 | No-fabrication guardrails | PARTIAL | `npm run audit:guardrails` and `npm run audit:provenance` pass, but there is no exhaustive licensed-source proof for every legacy catalog item/image and future provider/content path. |
 | Local lint/unit/build/E2E health | DONE | `npm run lint`, `npm test`, `npm run build`, and `npm run test:e2e` passed locally. |
-| Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 99.47% lines, 99.27% statements, 97.39% functions, 100% branches; floors are now lines 99.4%, statements 99.2%, functions 97.3%, branches 100%. |
-| Coverage to world-class depth | PARTIAL | Branch coverage is 100%; line/function coverage is still below 100%, so the next local target is remaining uncovered lines/functions. |
+| Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 99.75% lines, 99.62% statements, 99.21% functions, 100% branches; floors are now lines 99.7%, statements 99.6%, functions 99.2%, branches 100%. |
+| Coverage to world-class depth | PARTIAL | Branch coverage is 100%; line/function coverage is above 99% but still below 100%, so the next local target is remaining uncovered lines/functions. |
 | Security audits wired | DONE | CSRF, HTML safety, storage, privacy, alert, public URL, affiliate, no-store, API error, and cron-cache audits pass locally. |
 | Production security enforcement | PARTIAL | Code gates exist, but real admin, cron, Kinde, Redis, provider, alert, and push env are not configured locally. |
 | Catalog local floor | DONE | Catalog count is 502 hotels, 139 cities, 65 countries. |
@@ -119,9 +119,9 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints and RUM wiring audit exist; external monitoring and webhook delivery are not configured. |
 | Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
 | Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
-| Acceptance Criteria | `npm test` passes | DONE | 177 files / 1076 tests passed. |
+| Acceptance Criteria | `npm test` passes | DONE | 177 files / 1081 tests passed. |
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
-| Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 99.47% lines and 100% branches. |
+| Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 99.75% lines and 100% branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 728 static pages. |
 | Acceptance Criteria | `npm run test:e2e` passes | DONE | 72 Playwright tests passed. |
 | Acceptance Criteria | Every non-strict `npm run audit:*` passes | DONE | All non-strict audit scripts passed locally. |
@@ -148,7 +148,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Backlog P1 | Raise `lib` branch coverage toward 99.8% | DONE | Coverage reached 100% branches and the ratchet floor was raised above this target. |
 | Backlog P1 | Raise `lib` branch coverage toward 99.9% | DONE | Coverage reached 100% branches and the ratchet floor was raised above this target. |
 | Backlog P1 | Raise `lib` branch coverage to 100% | DONE | Coverage reached 100% branches and the ratchet floor was raised to 100%. |
-| Backlog P1 | Raise `lib` line/function coverage closer to 100% | PARTIAL | Current line coverage is 99.47% and function coverage is 97.39%. |
+| Backlog P1 | Raise `lib` line/function coverage closer to 100% | PARTIAL | Current line coverage is 99.75% and function coverage is 99.21%. |
 | Backlog P1 | Replace reused catalog images | PARTIAL | Image reuse warnings remain; ops scorecard now tracks the blocker so it cannot be hidden before launch. |
 | Backlog P1 | Add stronger provenance audit | PARTIAL | `audit:provenance` now checks candidate promotion provenance and provider-link sanitization; it does not yet prove every legacy static catalog item/image has licensed source metadata. |
 | Backlog P1 | Add deployment smoke checks | PARTIAL | `smoke:deployment` now exists for public, admin, cron-guard, and unavailable-state checks; it has not been run against a configured deployment. |

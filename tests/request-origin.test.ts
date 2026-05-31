@@ -84,6 +84,16 @@ describe('request origin guard', () => {
     });
 
     expect(isSameOriginRequest(request)).toBe(false);
+
+    const malformed = new Request('https://svbooking.com/api/me/trips', {
+      method: 'POST',
+      headers: {
+        origin: 'not a url',
+        host: 'svbooking.com',
+      },
+    });
+
+    expect(isSameOriginRequest(malformed)).toBe(false);
   });
 
   it('rejects requests when forwarded proxy metadata cannot form a valid expected origin', () => {

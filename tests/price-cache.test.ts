@@ -62,6 +62,23 @@ describe('price cache', () => {
     expect(() => jitteredTTL(3600, '')).toThrow('TTL jitter seed is required');
   });
 
+  it('keeps heatmap responses best-effort when cache writes fail', async () => {
+    vi.mocked(kv.setWithTTL).mockRejectedValueOnce(new Error('KV write failed'));
+
+    const result = await getCachedHeatmap({
+      hotelKey: 'g1-d1',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedHeatmap>[0]);
+    await Promise.resolve();
+
+    expect(result).toMatchObject({
+      fromCache: false,
+      provider: 'xotelo',
+      source: 'xotelo',
+      freshness: 'live',
+    });
+  });
+
   it('uses the multi-provider registry for dated rates and adds freshness metadata', async () => {
     const result = await getCachedRates({
       hotelKey: 'g1-d1',

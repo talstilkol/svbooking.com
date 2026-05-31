@@ -20,9 +20,9 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 177 test files, 1076 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 99.47% lines, 99.27% statements, 97.39% functions, and 100% branches. |
-| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 99.4%, statements 99.2%, functions 97.3%, branches 100%. |
+| `npm test` | PASS | 177 test files, 1081 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 99.75% lines, 99.62% statements, 99.21% functions, and 100% branches. |
+| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 99.7%, statements 99.6%, functions 99.2%, branches 100%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 72 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
@@ -167,7 +167,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Line/function coverage next target | Low | `lib` branch coverage is 100%; line coverage is 99.47% and function coverage is 97.39%. | Continue focused tests for remaining uncovered lines/functions without weakening production behavior. |
+| Line/function coverage next target | Low | `lib` branch coverage is 100%; line coverage is 99.75% and function coverage is 99.21%. | Continue focused tests for remaining uncovered lines/functions without weakening production behavior. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | External observability proof | Medium | Authenticated dashboard now shows local ops scorecard and alerts, and RUM wiring is audited; external monitoring, production RUM evidence, and webhook evidence are still absent. | Configure production monitoring, RUM, and alert delivery after real env is available. |
 | Commercial/legal signoff | Medium | Legal readiness wiring is audited locally, but it is not legal approval. | Capture partner terms, affiliate/legal review, and licensed content display signoff before launch claims depend on provider programs or licensed content. |

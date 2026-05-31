@@ -72,6 +72,7 @@ describe('affiliate', () => {
       expect(isAllowedProviderUrl('UnknownOTA', 'https://www.booking.com/hotel/il/hilton-tel-aviv.html')).toBe(false);
       expect(isAllowedProviderUrl('Booking.com', 'http://www.booking.com/hotel/il/hilton-tel-aviv.html')).toBe(false);
       expect(isAllowedProviderUrl('Booking.com', 'https://evil-booking.com/hotel')).toBe(false);
+      expect(isAllowedProviderUrl('Booking.com', 'not-a-valid-url')).toBe(false);
     });
   });
 
