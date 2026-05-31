@@ -3,6 +3,7 @@ import { verifyAdminAuth, verifyAdminOnly } from '@/lib/admin-auth';
 import { recordAdminAuditEvent } from '@/lib/admin-audit';
 import {
   approveCandidate,
+  buildCandidateReviewSummary,
   getCandidate,
   listCandidates,
   markCandidateStale,
@@ -18,21 +19,6 @@ const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 function booleanParam(value) {
   if (value === null || value === undefined || value === '') return undefined;
   return value === 'true' || value === '1';
-}
-
-function buildSummary(candidates) {
-  return {
-    total: candidates.length,
-    pending: candidates.filter((candidate) => candidate.status === 'pending').length,
-    approved: candidates.filter((candidate) => candidate.status === 'approved').length,
-    rejected: candidates.filter((candidate) => candidate.status === 'rejected').length,
-    stale: candidates.filter((candidate) => candidate.status === 'stale').length,
-    duplicate: candidates.filter((candidate) => candidate.duplicate).length,
-    missingProvenance: candidates.filter((candidate) => candidate.missingProvenance).length,
-    missingLocation: candidates.filter((candidate) => candidate.missingLocation).length,
-    newHotels: candidates.filter((candidate) => !candidate.alreadyInCatalog).length,
-    existingHotels: candidates.filter((candidate) => candidate.alreadyInCatalog).length,
-  };
 }
 
 function candidateInputFromBody(body, fallbackSource = 'manual-admin') {
@@ -71,8 +57,10 @@ export async function GET(request) {
       limit: searchParams.get('limit') || undefined,
     });
 
+    const reviewSummary = buildCandidateReviewSummary(candidates);
     const response = {
-      ...buildSummary(candidates),
+      ...reviewSummary,
+      reviewSummary,
       candidates,
       filters: {
         city: searchParams.get('city') || null,

@@ -156,4 +156,57 @@ describe('/api/catalog/candidates', () => {
     expect(body.total).toBe(1);
     expect(body.candidates[0].duplicate).toBe(true);
   });
+
+  it('returns review summary metrics for the admin candidate dashboard', async () => {
+    await POST(request('/api/catalog/candidates', 'admin-candidate-secret', {
+      hotelKey: 'ready-dashboard-hotel',
+      name: 'Ready Dashboard Hotel',
+      city: 'Paris',
+      country: 'France',
+      source: 'wikidata',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q4200',
+      lat: 48.8566,
+      lon: 2.3522,
+    }));
+    await POST(request('/api/catalog/candidates', 'admin-candidate-secret', {
+      hotelKey: 'missing-source-dashboard-hotel',
+      name: 'Missing Source Dashboard Hotel',
+      city: 'Paris',
+      country: 'France',
+      source: 'manual-admin',
+      lat: 48.8567,
+      lon: 2.3523,
+    }));
+    await POST(request('/api/catalog/candidates', 'admin-candidate-secret', {
+      hotelKey: 'existing-hotel',
+      name: 'Existing Hotel',
+      city: 'Paris',
+      country: 'France',
+      source: 'wikidata',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q4201',
+      lat: 48.8568,
+      lon: 2.3524,
+    }));
+
+    const response = await GET(request('/api/catalog/candidates?stats=true', 'admin-candidate-secret'));
+    const body = await response!.json();
+
+    expect(response!.status).toBe(200);
+    expect(body.total).toBe(3);
+    expect(body.reviewSummary).toMatchObject({
+      total: 3,
+      pending: 3,
+      readyToApprove: 1,
+      duplicate: 1,
+      missingProvenance: 1,
+      blockedPending: 2,
+      dataPolicy: 'catalog-candidate-records-only',
+    });
+    expect(body.reviewSummary.byCity).toEqual([{ value: 'Paris', count: 3 }]);
+    expect(body.reviewSummary.bySource).toEqual([
+      { value: 'wikidata', count: 2 },
+      { value: 'manual-admin', count: 1 },
+    ]);
+    expect(body.catalogStats).toEqual({ total: 133 });
+  });
 });

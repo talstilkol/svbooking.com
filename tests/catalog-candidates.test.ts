@@ -28,6 +28,7 @@ import { addAndPersistHotel, findHotel } from '@/lib/hotels-catalog';
 import { kv } from '@/lib/kv';
 import {
   approveCandidate,
+  buildCandidateReviewSummary,
   getCandidate,
   getCandidateId,
   listCandidates,
@@ -463,6 +464,168 @@ describe('catalog candidate queue', () => {
       duplicate: false,
     });
     expect(all.map((candidate) => candidate.status)).toEqual(['pending', 'rejected', 'stale']);
+  });
+
+  it('builds a deterministic review summary for duplicate and provenance dashboards', async () => {
+    vi.mocked(findHotel).mockImplementation((hotelKey) => (
+      hotelKey === 'g1-d503'
+        ? { hotelKey, name: 'Existing Candidate', city: 'Paris', country: 'France' }
+        : null
+    ));
+
+    await upsertCandidate({
+      hotelKey: 'g1-d500',
+      name: 'Ready Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'wikidata',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q500',
+      lat: 48.8566,
+      lon: 2.3522,
+    });
+    await upsertCandidate({
+      hotelKey: 'g1-d501',
+      name: 'Missing Source Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'manual-admin',
+      lat: 48.8567,
+      lon: 2.3523,
+    });
+    await upsertCandidate({
+      hotelKey: 'g1-d502',
+      name: 'Missing Location Candidate',
+      city: 'London',
+      country: 'United Kingdom',
+      source: 'osm-scanner-agent',
+      sourceUrl: 'https://www.openstreetmap.org/node/502',
+    });
+    await upsertCandidate({
+      hotelKey: 'g1-d503',
+      name: 'Existing Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'wikidata',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q503',
+      lat: 48.8568,
+      lon: 2.3524,
+    });
+
+    const candidates = await listCandidates({ status: 'pending' });
+    const summary = buildCandidateReviewSummary(candidates);
+
+    expect(summary).toMatchObject({
+      total: 4,
+      pending: 4,
+      duplicate: 1,
+      missingProvenance: 1,
+      missingLocation: 1,
+      missingPromotionFields: 0,
+      readyToApprove: 1,
+      promotable: 1,
+      blockedPending: 3,
+      dataPolicy: 'catalog-candidate-records-only',
+      reviewQueues: {
+        readyToApprove: 1,
+        duplicate: 1,
+        missingProvenance: 1,
+        missingLocation: 1,
+      },
+    });
+    expect(summary.byCity).toEqual([
+      { value: 'Paris', count: 3 },
+      { value: 'London', count: 1 },
+    ]);
+    expect(summary.bySource).toEqual([
+      { value: 'wikidata', count: 2 },
+      { value: 'manual-admin', count: 1 },
+      { value: 'osm-scanner-agent', count: 1 },
+    ]);
+    expect(summary.validationFlags).toEqual([
+      { value: 'already-in-catalog', count: 1 },
+      { value: 'missing-location', count: 1 },
+      { value: 'missing-provenance', count: 1 },
+    ]);
+  });
+
+  it('summarizes raw review edge states without inventing missing metadata', () => {
+    expect(buildCandidateReviewSummary(null)).toMatchObject({
+      total: 0,
+      pending: 0,
+      approved: 0,
+      byStatus: [],
+      bySource: [],
+      byCity: [],
+      dataPolicy: 'catalog-candidate-records-only',
+    });
+
+    const summary = buildCandidateReviewSummary([
+      {
+        id: 'raw-duplicate-fingerprint',
+        hotelKey: 'g1-d701',
+        name: 'Duplicate Fingerprint Candidate',
+        city: 'Rome',
+        country: 'Italy',
+        status: 'pending',
+        duplicate: true,
+        source: '',
+        provenance: { source: 'wikidata', sourceUrl: 'https://www.wikidata.org/wiki/Q701' },
+        lat: 41.9028,
+        lon: 12.4964,
+        createdAt: '2026-05-31T08:00:00.000Z',
+        updatedAt: '2026-05-31T08:00:00.000Z',
+      },
+      {
+        id: 'raw-approved-incomplete',
+        name: 'Approved Incomplete Candidate',
+        discoveredForCity: 'Madrid',
+        status: 'approved',
+        provenance: null,
+        updatedAt: '2026-05-31T10:00:00.000Z',
+      },
+      {
+        id: 'raw-unknown-state',
+        name: 'Unknown State Candidate',
+        country: 'Spain',
+        provenance: null,
+      },
+    ]);
+
+    expect(summary).toMatchObject({
+      total: 3,
+      pending: 1,
+      approved: 1,
+      rejected: 0,
+      stale: 0,
+      duplicate: 1,
+      missingProvenance: 2,
+      missingLocation: 2,
+      missingPromotionFields: 2,
+      readyToApprove: 0,
+      blockedPending: 1,
+      oldestPendingAt: '2026-05-31T08:00:00.000Z',
+      newestUpdatedAt: '2026-05-31T10:00:00.000Z',
+    });
+    expect(summary.byStatus).toEqual([
+      { value: 'approved', count: 1 },
+      { value: 'pending', count: 1 },
+      { value: 'unknown', count: 1 },
+    ]);
+    expect(summary.bySource).toEqual([
+      { value: 'unavailable', count: 2 },
+      { value: 'wikidata', count: 1 },
+    ]);
+    expect(summary.byCity).toEqual([
+      { value: 'Madrid', count: 1 },
+      { value: 'Rome', count: 1 },
+      { value: 'unavailable', count: 1 },
+    ]);
+    expect(summary.validationFlags).toEqual([
+      { value: 'missing-location', count: 2 },
+      { value: 'missing-promotion-fields', count: 2 },
+      { value: 'missing-provenance', count: 2 },
+      { value: 'duplicate-fingerprint', count: 1 },
+    ]);
   });
 
   it('deduplicates repeated index entries and sorts equal-status candidates by updated timestamp', async () => {

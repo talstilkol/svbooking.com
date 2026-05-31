@@ -20,8 +20,8 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 173 test files, 1056 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 99.42% lines, 98.92% statements, 97.24% functions, and 99.03% branches. |
+| `npm test` | PASS | 173 test files, 1059 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 99.43% lines, 98.94% statements, 97.3% functions, and 99.05% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 99.4%, statements 98.9%, functions 97.2%, branches 99%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 72 Playwright tests passed. |
@@ -128,6 +128,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Hardened OpenTripMap helper calls so invalid coordinates fail closed before fetch, radius/limit/kinds are bounded, provider result coordinates are validated, and returned detail URLs are HTTPS-only.
 - Added shared public URL sanitization for returned content/provider links, rejected URL credentials, localhost/private destinations, CGNAT, benchmark ranges, IPv6 ULA/link-local, and IPv4-mapped IPv6, moved Wikipedia, Wikivoyage, DBpedia, OpenTripMap, and price-cache URL normalization onto the shared helper, and expanded `audit:external-fetches` to enforce it.
 - Hardened catalog candidate and dynamic catalog source URL handling so unsafe URLs are stripped before storage, cannot satisfy provenance checks, and cannot be promoted as catalog source links.
+- Added deterministic catalog candidate review summaries for duplicate/provenance/location/source/city queues and surfaced them through the admin candidate APIs and agent dashboard.
 - Moved cheaper-date provider links, Ticketmaster event links, and Wikidata enrichment website/image links onto the shared public URL helper so internal/private URLs cannot leak through public API responses.
 - Added a Playwright public API URL safety runtime audit for JSON responses and a CI-wired `npm run audit:public-api-urls` guard so unsafe absolute URLs cannot quietly return through public endpoints.
 - Removed remaining local hook-dependency suppressions in hotel detail and side-by-side compare flows, and replaced CLS `any` casts in the performance monitor with a typed layout-shift entry.
@@ -156,7 +157,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Branch coverage next target | Medium | `lib` branch coverage is 99.03%. | Continue focused tests for remaining private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and API/network error branches, then raise the next ratchet beyond 99%. |
+| Branch coverage next target | Medium | `lib` branch coverage is 99.05%. | Continue focused tests for remaining private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and API/network error branches, then raise the next ratchet beyond 99%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |

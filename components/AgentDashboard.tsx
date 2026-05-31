@@ -103,7 +103,31 @@ interface CatalogCandidate {
   alreadyInCatalog: boolean;
   duplicate?: boolean;
   missingProvenance?: boolean;
+  missingLocation?: boolean;
+  source?: string;
+  updatedAt?: string;
+  validationFlags?: string[];
   discoveredForCity?: string;
+}
+
+interface CandidateBucket {
+  value: string;
+  count: number;
+}
+
+interface CandidateReviewSummary {
+  total: number;
+  newHotels: number;
+  pending?: number;
+  duplicate?: number;
+  missingProvenance?: number;
+  missingLocation?: number;
+  missingPromotionFields?: number;
+  readyToApprove?: number;
+  blockedPending?: number;
+  bySource?: CandidateBucket[];
+  byCity?: CandidateBucket[];
+  dataPolicy?: string;
 }
 
 function isAuthRestricted(response: Response): boolean {
@@ -136,7 +160,7 @@ export default function AgentDashboard() {
   const [bgLoading, setBgLoading] = useState(false);
   const [runningAgent, setRunningAgent] = useState<string | null>(null);
   const [discoveredHotels, setDiscoveredHotels] = useState<CatalogCandidate[]>([]);
-  const [discoveredStats, setDiscoveredStats] = useState<{ total: number; newHotels: number; pending?: number; duplicate?: number; missingProvenance?: number } | null>(null);
+  const [discoveredStats, setDiscoveredStats] = useState<CandidateReviewSummary | null>(null);
   const [candidateStatusFilter, setCandidateStatusFilter] = useState('pending');
   const [candidateFlagFilter, setCandidateFlagFilter] = useState('all');
   const [addingHotel, setAddingHotel] = useState<string | null>(null);
@@ -235,13 +259,21 @@ export default function AgentDashboard() {
         return;
       }
       const data = await res.json();
+      const reviewSummary = data.reviewSummary || data;
       setDiscoveredHotels(data.candidates || []);
       setDiscoveredStats({
-        total: data.total,
-        newHotels: data.newHotels,
-        pending: data.pending,
-        duplicate: data.duplicate,
-        missingProvenance: data.missingProvenance,
+        total: Number(reviewSummary.total || 0),
+        newHotels: Number(reviewSummary.newHotels || 0),
+        pending: reviewSummary.pending,
+        duplicate: reviewSummary.duplicate,
+        missingProvenance: reviewSummary.missingProvenance,
+        missingLocation: reviewSummary.missingLocation,
+        missingPromotionFields: reviewSummary.missingPromotionFields,
+        readyToApprove: reviewSummary.readyToApprove,
+        blockedPending: reviewSummary.blockedPending,
+        bySource: Array.isArray(reviewSummary.bySource) ? reviewSummary.bySource : [],
+        byCity: Array.isArray(reviewSummary.byCity) ? reviewSummary.byCity : [],
+        dataPolicy: reviewSummary.dataPolicy,
       });
       setRestricted((r) => ({ ...r, discovered: false }));
     } catch (err) { console.warn('AgentDashboard: discovered hotels fetch failed', err); setDiscoveredHotels([]); }
@@ -358,6 +390,7 @@ export default function AgentDashboard() {
   const statusColor = restricted.health
     ? 'bg-zinc-300'
     : health?.status === 'healthy' ? 'bg-emerald-500' : health?.status === 'degraded' ? 'bg-amber-500' : 'bg-red-500';
+  const readyCandidateCount = discoveredStats?.readyToApprove || 0;
 
   return (
     <div className="space-y-8">
@@ -553,7 +586,7 @@ export default function AgentDashboard() {
       </div>
 
       {/* Discovered Hotels */}
-      {(restricted.discovered || discoveredHotels.length > 0) && (
+      {(restricted.discovered || discoveredStats || discoveredHotels.length > 0) && (
         <div className="bg-white border border-zinc-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -564,8 +597,8 @@ export default function AgentDashboard() {
                 <p className="text-xs text-zinc-500 mt-0.5">
                   {discoveredStats.total} candidates
                   {typeof discoveredStats.pending === 'number' && `, ${discoveredStats.pending} pending`}
-                  {discoveredStats.newHotels > 0 && (
-                    <span className="text-emerald-600 font-medium"> ({discoveredStats.newHotels} new)</span>
+                  {readyCandidateCount > 0 && (
+                    <span className="text-emerald-600 font-medium"> ({readyCandidateCount} ready)</span>
                   )}
                 </p>
               )}
@@ -600,13 +633,13 @@ export default function AgentDashboard() {
               >
                 Refresh
               </button>
-              {discoveredStats && discoveredStats.newHotels > 0 && (
+              {discoveredStats && readyCandidateCount > 0 && (
                 <button
                   onClick={addAllDiscovered}
                   disabled={addingHotel !== null}
                   className="text-sm px-3 py-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
                 >
-                  {addingHotel === 'all' ? 'Approving...' : `Approve ${discoveredStats.newHotels} New`}
+                  {addingHotel === 'all' ? 'Approving...' : `Approve ${readyCandidateCount} Ready`}
                 </button>
               )}
             </div>
@@ -615,6 +648,41 @@ export default function AgentDashboard() {
           {restricted.discovered ? (
             <p className="text-sm text-zinc-500">Discovered catalog operations require an authorized admin session.</p>
           ) : (
+          <>
+          {discoveredStats && (
+            <div className="mb-4 space-y-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <div className="rounded-md bg-emerald-50 px-3 py-2">
+                  <p className="text-[10px] font-medium text-emerald-700 uppercase">Ready</p>
+                  <p className="text-lg font-semibold text-emerald-800">{readyCandidateCount}</p>
+                </div>
+                <div className="rounded-md bg-amber-50 px-3 py-2">
+                  <p className="text-[10px] font-medium text-amber-700 uppercase">Missing source</p>
+                  <p className="text-lg font-semibold text-amber-800">{discoveredStats.missingProvenance || 0}</p>
+                </div>
+                <div className="rounded-md bg-red-50 px-3 py-2">
+                  <p className="text-[10px] font-medium text-red-700 uppercase">Duplicate</p>
+                  <p className="text-lg font-semibold text-red-800">{discoveredStats.duplicate || 0}</p>
+                </div>
+                <div className="rounded-md bg-zinc-50 px-3 py-2">
+                  <p className="text-[10px] font-medium text-zinc-600 uppercase">No location</p>
+                  <p className="text-lg font-semibold text-zinc-800">{discoveredStats.missingLocation || 0}</p>
+                </div>
+                <div className="rounded-md bg-zinc-50 px-3 py-2">
+                  <p className="text-[10px] font-medium text-zinc-600 uppercase">Blocked</p>
+                  <p className="text-lg font-semibold text-zinc-800">{discoveredStats.blockedPending || 0}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-zinc-500">
+                <p>
+                  Sources: {(discoveredStats.bySource || []).slice(0, 4).map((bucket) => `${bucket.value} ${bucket.count}`).join(', ') || 'unavailable'}
+                </p>
+                <p>
+                  Cities: {(discoveredStats.byCity || []).slice(0, 4).map((bucket) => `${bucket.value} ${bucket.count}`).join(', ') || 'unavailable'}
+                </p>
+              </div>
+            </div>
+          )}
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {discoveredHotels.slice(0, 20).map((hotel) => (
               <div key={hotel.hotelKey} className="flex items-center gap-3 p-2 bg-zinc-50 rounded-lg">
@@ -633,14 +701,23 @@ export default function AgentDashboard() {
                     {hotel.missingProvenance && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Missing source</span>
                     )}
+                    {hotel.missingLocation && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-600">No location</span>
+                    )}
+                    {hotel.duplicate && !hotel.alreadyInCatalog && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700">Duplicate</span>
+                    )}
                   </div>
-                  <p className="text-xs text-zinc-500">{hotel.city}, {hotel.country}</p>
+                  <p className="text-xs text-zinc-500">
+                    {hotel.city}, {hotel.country}
+                    {hotel.source && ` - ${hotel.source}`}
+                  </p>
                 </div>
                 {hotel.status === 'pending' && (
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => reviewCandidate(hotel, 'approve')}
-                      disabled={addingHotel !== null || hotel.missingProvenance}
+                      disabled={addingHotel !== null || hotel.missingProvenance || hotel.missingLocation || hotel.duplicate}
                       className="text-xs px-2 py-1 text-emerald-600 hover:bg-emerald-50 rounded disabled:opacity-50"
                     >
                       {addingHotel === hotel.id ? 'Working...' : 'Approve'}
@@ -669,6 +746,7 @@ export default function AgentDashboard() {
               </p>
             )}
           </div>
+          </>
           )}
         </div>
       )}

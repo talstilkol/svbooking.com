@@ -4,6 +4,7 @@ import { verifyAdminAuth } from '@/lib/admin-auth';
 import { recordAdminAuditEvent } from '@/lib/admin-audit';
 import {
   approveCandidate,
+  buildCandidateReviewSummary,
   getCandidate,
   listCandidates,
   markCandidateStale,
@@ -84,20 +85,13 @@ export async function GET(request) {
       return (a.city || '').localeCompare(b.city || '');
     });
 
+    const reviewSummary = buildCandidateReviewSummary(hotels);
     const response = {
-      total: hotels.length,
-      pending: hotels.filter((h) => h.status === 'pending').length,
-      approved: hotels.filter((h) => h.status === 'approved').length,
-      rejected: hotels.filter((h) => h.status === 'rejected').length,
-      stale: hotels.filter((h) => h.status === 'stale').length,
-      duplicate: hotels.filter((h) => h.duplicate).length,
-      missingProvenance: hotels.filter((h) => h.missingProvenance).length,
-      missingLocation: hotels.filter((h) => h.missingLocation).length,
-      newHotels: hotels.filter((h) => !h.alreadyInCatalog).length,
-      existingHotels: hotels.filter((h) => h.alreadyInCatalog).length,
+      ...reviewSummary,
       citiesScanned: discoveredKeys.length,
       hotels,
       candidates: hotels,
+      reviewSummary,
     };
 
     if (includeStats) {
