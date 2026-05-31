@@ -220,6 +220,46 @@ describe('ops scorecard', () => {
     ]);
   });
 
+  it('treats non-string catalog media as missing and normalizes blank cities without fabricated labels', () => {
+    const image = 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80';
+    const mediaQuality = buildCatalogMediaQuality({
+      hotels: [
+        {
+          hotelKey: 'unknown/unavailable',
+          name: 'unknown/unavailable',
+          city: 'unknown/unavailable',
+          image: null,
+        },
+        {
+          hotelKey: 'unknown/unavailable',
+          name: 'unknown/unavailable',
+          city: '   ',
+          image,
+        },
+        {
+          hotelKey: 'unknown/unavailable',
+          name: 'unknown/unavailable',
+          city: 'Tel Aviv',
+          image,
+        },
+      ],
+      maxReuseCities: 1,
+    } as Parameters<typeof buildCatalogMediaQuality>[0]);
+
+    expect(mediaQuality.status).toBe('blocked');
+    expect(mediaQuality.reusedImages).toEqual([
+      {
+        image,
+        cityCount: 2,
+        cities: ['Tel Aviv', 'unknown/unavailable'],
+      },
+    ]);
+    expect(mediaQuality.blockers).toEqual([
+      'unknown/unavailable: missing catalog image',
+      `Catalog image reused across 2 cities: ${image}`,
+    ]);
+  });
+
   it('protects the scorecard route with admin bearer auth and no-store caching', async () => {
     vi.stubEnv('ADMIN_API_SECRET', 'admin-scorecard-secret');
 
