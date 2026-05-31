@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('ops scorecard constrained readiness states', () => {
+  type MockHotel = { hotelKey?: string; image?: string };
+
   afterEach(() => {
     vi.doUnmock('@/lib/hotels-catalog');
     vi.doUnmock('@/lib/providers/index');
@@ -19,6 +21,26 @@ describe('ops scorecard constrained readiness states', () => {
       })),
       listCities: () => ['Paris'],
       listCountries: () => ['France'],
+      buildStaticCatalogProvenanceLedger: ({ hotels = [] }: { hotels?: MockHotel[] } = {}) => hotels.map((hotel) => ({
+        hotelKey: hotel.hotelKey || null,
+        catalogItem: {
+          status: hotel.hotelKey ? 'source-metadata-available' : 'missing-source-key',
+          source: 'tripadvisor-xotelo-key',
+          sourceUrl: null,
+          sourceUrlStatus: 'not-stored',
+          externalIds: {},
+          dataPolicy: 'identity-only-no-review-price-or-availability-claims',
+        },
+        image: {
+          status: hotel.image ? 'source-metadata-available' : 'missing-image-source-url',
+          source: hotel.image ? 'unsplash-image-url' : null,
+          sourceHost: hotel.image ? 'images.unsplash.com' : null,
+          sourceUrl: hotel.image || null,
+          licenseStatus: hotel.image ? 'requires-approved-license-metadata' : 'missing',
+          approvedLicense: false,
+          replacementRequired: true,
+        },
+      })),
     }));
     vi.doMock('@/lib/providers/index', () => ({
       getProviderStatus: () => [{

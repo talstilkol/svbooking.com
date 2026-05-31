@@ -133,6 +133,8 @@ The remaining blockers are not code placeholders to fill in locally:
 - Hardened OpenTripMap helper calls so invalid coordinates fail closed before fetch, radius/limit/kinds are bounded, provider result coordinates are validated, and returned detail URLs are HTTPS-only.
 - Added shared public URL sanitization for returned content/provider links, rejected URL credentials, localhost/private destinations, CGNAT, benchmark ranges, IPv6 ULA/link-local, and IPv4-mapped IPv6, moved Wikipedia, Wikivoyage, DBpedia, OpenTripMap, and price-cache URL normalization onto the shared helper, and expanded `audit:external-fetches` to enforce it.
 - Hardened catalog candidate and dynamic catalog source URL handling so unsafe URLs are stripped before storage, cannot satisfy provenance checks, and cannot be promoted as catalog source links.
+- Added a static catalog provenance ledger so every legacy catalog item exposes TripAdvisor/Xotelo identity metadata and every catalog image exposes source URL, host, and license-status metadata without pretending reused images are approved licensed replacements.
+- Added QA-only Arabic, French, and Spanish locale coverage so `audit:i18n`, unit tests, and Playwright exercise RTL/LTR fallback behavior beyond English/Hebrew without claiming those translations are complete.
 - Added deterministic catalog candidate review summaries for duplicate/provenance/location/source/city queues and surfaced them through the admin candidate APIs and agent dashboard.
 - Added authenticated dashboard visibility for the ops scorecard, alert severity counts, domain status, top blockers, and global-parity blocked state.
 - Added sourced competitor parity tracking for Booking.com, Google Travel, KAYAK/HotelsCombined, Expedia, trivago, Fattal, and Isrotel across inventory, freshness, mobile, reviews, alerts, booking handoff, and Israel coverage.
@@ -171,7 +173,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | External observability proof | Medium | Authenticated dashboard now shows local ops scorecard and alerts, and RUM wiring is audited; external monitoring, production RUM evidence, and webhook evidence are still absent. | Configure production monitoring, RUM, and alert delivery after real env is available. |
 | Commercial/legal signoff | Medium | Legal readiness wiring is audited locally, but it is not legal approval. | Capture partner terms, affiliate/legal review, and licensed content display signoff before launch claims depend on provider programs or licensed content. |
-| Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
+| Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities; the ops scorecard also reports image sources that still need approved license metadata or replacement. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |
 
 ## Release Gate

@@ -24,7 +24,7 @@ This section is the source of truth for what is complete versus only locally sca
 | Plan item | Status | Honest verification |
 | --- | --- | --- |
 | Determinism: no `Math.random()` | DONE | `rg "Math\.random\|crypto\.randomUUID" app components lib scripts tests -S` returns no matches. |
-| No-fabrication guardrails | PARTIAL | `npm run audit:guardrails` and `npm run audit:provenance` pass, but there is no exhaustive licensed-source proof for every legacy catalog item/image and future provider/content path. |
+| No-fabrication guardrails | PARTIAL | `npm run audit:guardrails` and `npm run audit:provenance` pass; static catalog items and image source/license-status metadata are audited, while approved licensed replacements and future provider/content paths remain open. |
 | Local lint/unit/build/E2E health | DONE | `npm run lint`, `npm test`, `npm run build`, and `npm run test:e2e` passed locally. |
 | Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 100% lines, 100% statements, 100% functions, 100% branches; floors are now 100% for every tracked `lib` dimension. |
 | Coverage to world-class depth | DONE | `lib` coverage is 100% across lines, statements, functions, and branches; future work should preserve the ratchet and add app/runtime coverage where needed. |
@@ -151,7 +151,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Backlog P1 | Raise `lib` branch coverage to 100% | DONE | Coverage reached 100% branches and the ratchet floor was raised to 100%. |
 | Backlog P1 | Raise `lib` line/function coverage closer to 100% | DONE | Current line, statement, function, and branch coverage is 100%. |
 | Backlog P1 | Replace reused catalog images | PARTIAL | Image reuse warnings remain; ops scorecard now tracks the blocker so it cannot be hidden before launch. |
-| Backlog P1 | Add stronger provenance audit | PARTIAL | `audit:provenance` now checks candidate promotion provenance and provider-link sanitization; it does not yet prove every legacy static catalog item/image has licensed source metadata. |
+| Backlog P1 | Add stronger provenance audit | DONE | `audit:provenance` now checks candidate promotion provenance, provider-link sanitization, provider-returned rate source URLs, and static catalog item/image source plus license-status metadata. |
 | Backlog P1 | Add deployment smoke checks | PARTIAL | `smoke:deployment` now exists for public, admin, cron-guard, and unavailable-state checks; it has not been run against a configured deployment. |
 | Backlog P2 | Expand catalog through admin candidate workflow only | PARTIAL | Workflow exists; scale expansion is not complete. |
 | Backlog P2 | Add duplicate/provenance review dashboards | PARTIAL | Admin APIs and the agent dashboard now expose deterministic ready/blocked/duplicate/provenance/location/source/city review summaries; production-scale reviewed operation is still incomplete. |
@@ -160,7 +160,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Backlog P2 | Add web push after approved provider setup | NOT DONE | Push keys/provider are absent. |
 | Backlog P3 | Production observability dashboard | PARTIAL | Authenticated dashboard now surfaces ops scorecard, alert counts, domain status, and top blockers; external monitoring, RUM, and webhook proof are still incomplete. |
 | Backlog P3 | Real-user monitoring and Core Web Vitals | PARTIAL | Vercel Analytics, Speed Insights, and local Core Web Vitals instrumentation are wired and audited; production route/device proof is missing. |
-| Backlog P3 | Localization QA beyond Hebrew/English | PARTIAL | Hebrew/English exist; broader RTL/LTR QA is incomplete. |
+| Backlog P3 | Localization QA beyond Hebrew/English | DONE | QA-only Arabic, French, and Spanish locale matrix exists; Arabic exercises RTL, French/Spanish exercise LTR, and fallback-only content is explicit until full translations are approved. |
 | Backlog P3 | Commercial/legal readiness | PARTIAL | CI-wired legal readiness audit now protects privacy, terms, cookie, affiliate, and provider-handoff disclosures; partner terms, affiliate/legal review, and licensed content display signoff remain external launch blockers. |
 | Backlog P3 | Competitor parity tracking | PARTIAL | Ops scorecard now includes sourced competitor parity tracking for inventory breadth, price freshness, mobile installability, reviews/property content, alerts, booking handoff, and Israel coverage; weekly source review and live production proof are still incomplete. |
 | Non-Negotiable | Never use `Math.random()` | DONE | Scan is clean. |
@@ -195,12 +195,14 @@ This is the brutal re-check of every item currently marked `[x]`. DONE here mean
 | Raise `lib` line/function coverage closer to 100%, focusing on remaining uncovered functions/lines without fake tests. | DONE | Real and verified at 100% lines, statements, functions, and branches. |
 | Add focused tests for Overpass discovery, agent utilities, i18n edge cases, ops alert thresholds, and provider registry merge/circuit-breaker branches. | DONE | Real; matching tests exist across discovery, provider registry, i18n, ops alerts, and merge/circuit-breaker paths. |
 | Surface reused catalog image risk in ops scorecard and release documentation. | DONE | Real; `lib/catalog-media-quality.js`, ops scorecard, docs, and tests expose the blocker. |
-| Add a stronger provenance wiring audit for catalog candidate promotion, source URLs, provider links, and provider-returned rates. | DONE | Real for wiring and safe URLs; not 100/100 because licensed image/source metadata for every legacy item is still open. |
+| Add a stronger provenance wiring audit for catalog candidate promotion, source URLs, provider links, and provider-returned rates. | DONE | Real for wiring and safe URLs; approved licensed image replacement remains a separate launch task. |
+| Extend provenance audit to require licensed/source metadata for every legacy static catalog item and catalog image. | DONE | Real for metadata enforcement: `buildStaticCatalogProvenanceLedger`, `audit:provenance`, and tests require source URL/host/license-status metadata without pretending the images are approved licensed replacements. |
 | Add deployment smoke checks for public APIs, protected admin APIs, cron guards, and unavailable-state behavior. | DONE | Real as a script and audit; not production proof until run against a configured deployment. |
 | Add duplicate/provenance review summaries to the admin catalog candidate APIs and dashboard. | DONE | Real; candidate API/dashboard summaries and tests exist. |
 | Add provider coverage telemetry by city/country/date so gaps are measurable before claims are displayed. | DONE | Real; provider coverage is derived from verified observation ledgers and returns insufficient-data when empty. |
 | Surface ops scorecard, alert counts, domain status, and top blockers in the authenticated dashboard. | DONE | Real; dashboard and ops scorecard surfaces exist. |
 | Add CI-wired RUM/Web Vitals wiring audit for Vercel Analytics, Speed Insights, and local Core Web Vitals instrumentation. | DONE | Real as local wiring audit; production RUM evidence is still missing. |
+| Add international localization QA beyond Hebrew/English, including RTL/LTR layout regression checks. | DONE | Real as QA-only locale coverage: `LOCALE_QA_MATRIX`, `buildLocaleQaReport`, `audit:i18n`, unit tests, and Playwright checks exercise Arabic RTL plus French LTR without claiming translated content is complete. |
 | Add CI-wired legal readiness audit for privacy, terms, cookie consent, affiliate safety, and provider-handoff disclosures. | DONE | Real as a local audit; it is not legal approval. |
 | Add sourced competitor parity tracking for inventory breadth, price freshness, mobile installability, reviews, alerts, booking handoff quality, and Israel coverage. | DONE | Real as local scorecard tracking; weekly live review and production proof are still missing. |
 | FAKED | None identified | I found no checked item that is only echoed or simulated. The weakness is not fake completion; it is local-only completion without production proof on several related outcomes. |
@@ -219,7 +221,6 @@ These are the remaining tasks required to complete the full plan. Items blocked 
 | Configure licensed review/property-content provider access before showing review copy, ratings, or rich property descriptions. | NOT DONE | Requires licensed provider contract and integration. |
 | Run `SITE_URL=https://your-deployment.example npm run smoke:deployment` after strict production readiness passes. | NOT DONE | Requires configured deployment URL. |
 | Replace reused catalog images with licensed hotel- or city-specific media. | NOT DONE | Requires approved media sources and license metadata; no replacement images should be invented. |
-| Extend provenance audit to require licensed/source metadata for every legacy static catalog item and catalog image. | PARTIAL | Safe source/provenance wiring exists; complete licensed metadata enforcement is still missing. |
 | Run deployment smoke checks in a configured production deployment and capture passing evidence. | NOT DONE | Requires deployment env and `SITE_URL`. |
 | Expand catalog ingestion through the admin candidate workflow only; do not auto-promote discovered hotels. | PARTIAL | Workflow exists; large-scale reviewed expansion still needs real provider/KV operation. |
 | Exercise duplicate detection and provenance review workflows at production-scale candidate volume after persistent KV/provider ingestion is live. | NOT DONE | Requires persistent KV and real candidate ingestion volume. |
@@ -227,7 +228,6 @@ These are the remaining tasks required to complete the full plan. Items blocked 
 | Add web push only after approved notification-provider setup and health readiness proof. | NOT DONE | Requires push provider and real VAPID keys. |
 | Build the external production observability layer covering uptime, provider latency, cache hit rate, alert delivery, price mismatch reports, catalog provenance quality, RUM, and webhook proof. | PARTIAL | Internal endpoints exist; external monitoring proof is missing. |
 | Capture production RUM/Core Web Vitals evidence per top route and device class. | NOT DONE | Requires deployed traffic/analytics evidence. |
-| Add international localization QA beyond Hebrew/English, including RTL/LTR layout regression checks. | PARTIAL | Hebrew/English and RTL audit exist; broader locale matrix is missing. |
 | Capture partner terms, affiliate/legal review, and licensed content display signoff. | NOT DONE | Requires external approval; local audit is not approval. |
 | Run weekly competitor source review and live production proof before treating parity status as launch evidence. | NOT DONE | Requires scheduled review process and production metrics. |
 
@@ -314,7 +314,7 @@ These are the remaining tasks required to complete the full plan. Items blocked 
 - [x] Surface reused catalog image risk in ops scorecard and release documentation.
 - [ ] Replace reused catalog images with licensed hotel- or city-specific media.
 - [x] Add a stronger provenance wiring audit for catalog candidate promotion, source URLs, provider links, and provider-returned rates.
-- [ ] Extend provenance audit to require licensed/source metadata for every legacy static catalog item and catalog image.
+- [x] Extend provenance audit to require licensed/source metadata for every legacy static catalog item and catalog image.
 - [x] Add deployment smoke checks for public APIs, protected admin APIs, cron guards, and unavailable-state behavior.
 - [ ] Run deployment smoke checks in a configured production deployment and capture passing evidence.
 
@@ -333,7 +333,7 @@ These are the remaining tasks required to complete the full plan. Items blocked 
 - [ ] Build the external production observability layer covering uptime, provider latency, cache hit rate, alert delivery, price mismatch reports, catalog provenance quality, RUM, and webhook proof.
 - [x] Add CI-wired RUM/Web Vitals wiring audit for Vercel Analytics, Speed Insights, and local Core Web Vitals instrumentation.
 - [ ] Capture production RUM/Core Web Vitals evidence per top route and device class.
-- [ ] Add international localization QA beyond Hebrew/English, including RTL/LTR layout regression checks.
+- [x] Add international localization QA beyond Hebrew/English, including RTL/LTR layout regression checks.
 - [x] Add CI-wired legal readiness audit for privacy, terms, cookie consent, affiliate safety, and provider-handoff disclosures.
 - [ ] Capture partner terms, affiliate/legal review, and licensed content display signoff.
 - [x] Add sourced competitor parity tracking for inventory breadth, price freshness, mobile installability, reviews, alerts, booking handoff quality, and Israel coverage.

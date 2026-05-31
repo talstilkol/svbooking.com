@@ -176,9 +176,10 @@ After deployment, run `SITE_URL=https://your-deployment.example npm run smoke:de
 - The current repository should remain clean before release. Review `git status --short` and `git diff --stat` before staging new work.
 - `npm run release:state` summarizes staged, unstaged, deleted, untracked, and generated-artifact paths for release review.
 - `npm run audit:release-deletions` keeps removed no-fake-data legacy surfaces from returning.
-- `npm run audit:provenance` keeps catalog candidate provenance, provider-link sanitization, and deployment smoke wiring from regressing.
+- `npm run audit:provenance` keeps catalog candidate provenance, provider-link sanitization, static catalog identity provenance, catalog image source/license-status metadata, and deployment smoke wiring from regressing.
 - `npm run audit:deployment-smoke` keeps the deployment smoke script, docs, and CI wiring aligned.
 - `npm run audit:master-plan` keeps checked roadmap items, open launch tasks, and honest DONE/PARTIAL/NOT DONE status ledgers synchronized.
+- `npm run audit:i18n` keeps English/Hebrew runtime i18n plus QA-only Arabic/French/Spanish RTL/LTR fallback checks wired without claiming full translation coverage.
 - `npm run audit:external-fetches` blocks direct external `fetch("https://...")` calls that bypass timeout handling and requires shared public-URL sanitization for content, provider-link, event-link, and enrichment helpers.
 - `npm run audit:public-api-urls` keeps the Playwright public API URL safety runtime audit wired into CI and release docs.
 - `npm run audit:affiliate-security` blocks unsafe outbound redirect and affiliate URL regressions.

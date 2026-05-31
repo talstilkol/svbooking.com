@@ -32,4 +32,25 @@ test.describe('i18n and RTL runtime', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'he');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   });
+
+  test('applies non-public QA locale directions without claiming translated content', async ({ page, request }) => {
+    const response = await request.get('/api/i18n?locale=ar&date=2026-06-01&amount=120&currency=USD');
+    const body = await response.json();
+
+    expect(response.ok()).toBeTruthy();
+    expect(body.selected.locale).toBe('ar');
+    expect(body.selected.dir).toBe('rtl');
+    expect(body.selected.contentTranslation).toBe('fallback-only');
+    expect(body.selected.dictionary.searchHotels).toBe('Search hotels');
+
+    await page.goto('/?locale=ar');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(page.locator('html')).toHaveAttribute('data-locale-direction', 'rtl');
+
+    await page.goto('/?locale=fr');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+    await expect(page.locator('html')).toHaveAttribute('data-locale-direction', 'ltr');
+  });
 });

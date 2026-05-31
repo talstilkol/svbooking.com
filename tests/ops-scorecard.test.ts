@@ -153,7 +153,9 @@ describe('ops scorecard', () => {
 
     expect(mediaQuality.status).toBe('partial');
     expect(mediaQuality.current.reusedImages).toBeGreaterThan(0);
+    expect(mediaQuality.current.unapprovedImageSources).toBeGreaterThan(0);
     expect(mediaQuality.blockers.some((blocker) => blocker.includes('Catalog image reused across'))).toBe(true);
+    expect(mediaQuality.blockers.some((blocker) => blocker.includes('require approved license metadata or replacement'))).toBe(true);
     expect(mediaQuality.target.licensedImageSourceMetadata).toBe(true);
   });
 
@@ -179,13 +181,67 @@ describe('ops scorecard', () => {
     ]);
   });
 
-  it('marks catalog media healthy when current reuse stays below the configured review threshold', () => {
+  it('keeps catalog media partial until image license metadata is approved even when reuse is below the review threshold', () => {
     const mediaQuality = buildCatalogMediaQuality({ maxReuseCities: 10 });
+
+    expect(mediaQuality.status).toBe('partial');
+    expect(mediaQuality.current.reusedImages).toBe(0);
+    expect(mediaQuality.current.unapprovedImageSources).toBeGreaterThan(0);
+    expect(mediaQuality.blockers).toEqual([
+      `${mediaQuality.current.unapprovedImageSources} catalog image sources require approved license metadata or replacement`,
+    ]);
+  });
+
+  it('marks catalog media healthy only when image source metadata and license approval are present', () => {
+    const image = 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80';
+    const mediaQuality = buildCatalogMediaQuality({
+      hotels: [{
+        hotelKey: 'g1-d1',
+        name: 'Licensed Media Hotel',
+        city: 'Paris',
+        image,
+      }],
+      provenanceLedger: [{
+        image: {
+          status: 'source-metadata-available',
+          source: 'approved-media-library',
+          sourceHost: 'images.unsplash.com',
+          sourceUrl: image,
+          licenseStatus: 'approved',
+          approvedLicense: true,
+          replacementRequired: false,
+        },
+      }],
+    } as Parameters<typeof buildCatalogMediaQuality>[0]);
 
     expect(mediaQuality.status).toBe('healthy');
     expect(mediaQuality.score).toBe(1);
-    expect(mediaQuality.current.reusedImages).toBe(0);
+    expect(mediaQuality.current.missingImageSourceMetadata).toBe(0);
+    expect(mediaQuality.current.unapprovedImageSources).toBe(0);
     expect(mediaQuality.blockers).toEqual([]);
+  });
+
+  it('keeps valid images partial when source metadata is missing and handles malformed hotel inputs', () => {
+    const image = 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80';
+    const missingMetadata = buildCatalogMediaQuality({
+      hotels: [{
+        hotelKey: 'g1-d1',
+        city: 'Paris',
+        image,
+      }],
+      provenanceLedger: [{ image: { status: 'missing-image-source-url' } }],
+    } as Parameters<typeof buildCatalogMediaQuality>[0]);
+    const malformed = buildCatalogMediaQuality({
+      hotels: null,
+    } as Parameters<typeof buildCatalogMediaQuality>[0]);
+
+    expect(missingMetadata.status).toBe('partial');
+    expect(missingMetadata.current.missingImageSourceMetadata).toBe(1);
+    expect(missingMetadata.blockers).toEqual([
+      '1 catalog images are missing source or license-status metadata',
+    ]);
+    expect(malformed.status).toBe('blocked');
+    expect(malformed.current.hotels).toBe(0);
   });
 
   it('blocks an empty catalog media set instead of creating replacement media', () => {
@@ -215,6 +271,7 @@ describe('ops scorecard', () => {
     expect(mediaQuality.current.imagesWithoutSizing).toBe(1);
     expect(mediaQuality.blockers).toEqual([
       'unknown/unavailable: catalog image URL is not HTTPS',
+      '2 catalog image sources require approved license metadata or replacement',
     ]);
   });
 
@@ -261,6 +318,7 @@ describe('ops scorecard', () => {
     expect(mediaQuality.blockers).toEqual([
       'unknown/unavailable: missing catalog image',
       `Catalog image reused across 2 cities: ${image}`,
+      '1 catalog image sources require approved license metadata or replacement',
     ]);
   });
 

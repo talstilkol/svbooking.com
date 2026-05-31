@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { HOTELS } from '../lib/hotels-catalog.js';
+import { HOTELS, buildStaticCatalogProvenanceLedger } from '../lib/hotels-catalog.js';
 
 const root = process.cwd();
 const failures = [];
@@ -144,6 +144,11 @@ requireIncludes(catalogCandidates, 'lib/catalog-candidates.js', [
 requireIncludes(hotelsCatalog, 'lib/hotels-catalog.js', [
   'HOTEL_KEY_PATTERN',
   'BLOCKED_CATALOG_TEXT_VALUES',
+  'buildStaticCatalogProvenanceLedger',
+  'getStaticCatalogItemProvenance',
+  'getStaticCatalogImageProvenance',
+  'licenseStatus',
+  'sourceUrlStatus',
   'sourceUrl: normalizeHttpsUrl',
   'provenance: normalizeNullableObject',
 ]);
@@ -166,13 +171,42 @@ requireIncludes(publicUrlSafety, 'lib/utils/public-url-safety.js', [
 if (!Array.isArray(HOTELS) || HOTELS.length === 0) {
   fail('Static catalog provenance cannot be audited because HOTELS is empty');
 } else {
+  const provenanceLedger = buildStaticCatalogProvenanceLedger({ hotels: HOTELS });
+  if (provenanceLedger.length !== HOTELS.length) {
+    fail(`Static catalog provenance ledger has ${provenanceLedger.length} entries for ${HOTELS.length} hotels`);
+  }
+
   const seenKeys = new Set();
-  for (const hotel of HOTELS) {
+  for (const [index, hotel] of HOTELS.entries()) {
+    const provenance = provenanceLedger[index];
     validateStaticCatalogItemProvenance(hotel);
     if (seenKeys.has(hotel.hotelKey)) {
       fail(`Static catalog provenance has duplicate hotel key: ${hotel.hotelKey}`);
     }
     seenKeys.add(hotel.hotelKey);
+
+    if (provenance?.catalogItem?.status !== 'source-metadata-available') {
+      fail(`${hotel.hotelKey} is missing static catalog source metadata`);
+    }
+    if (provenance?.catalogItem?.source !== 'tripadvisor-xotelo-key') {
+      fail(`${hotel.hotelKey} static catalog source must identify the TripAdvisor/Xotelo key policy`);
+    }
+    if (!provenance?.catalogItem?.externalIds?.tripadvisorLocationId || !provenance?.catalogItem?.externalIds?.tripadvisorHotelId) {
+      fail(`${hotel.hotelKey} static catalog provenance must expose derived TripAdvisor IDs`);
+    }
+    if (!provenance?.catalogItem?.dataPolicy?.includes('identity-only')) {
+      fail(`${hotel.hotelKey} static catalog provenance must not imply review, price, or availability claims`);
+    }
+
+    if (provenance?.image?.status !== 'source-metadata-available') {
+      fail(`${hotel.hotelKey} is missing catalog image source metadata`);
+    }
+    if (!provenance?.image?.sourceUrl || !provenance?.image?.sourceHost || !provenance?.image?.licenseStatus) {
+      fail(`${hotel.hotelKey} catalog image provenance must include source URL, host, and license-status metadata`);
+    }
+    if (provenance?.image?.approvedLicense === true && provenance?.image?.replacementRequired === true) {
+      fail(`${hotel.hotelKey} catalog image provenance cannot both approve the license and require replacement`);
+    }
   }
 }
 

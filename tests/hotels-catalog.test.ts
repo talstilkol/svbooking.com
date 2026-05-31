@@ -13,6 +13,9 @@ import {
   addAndPersistHotel,
   getFullCatalog,
   getCatalogStats,
+  buildStaticCatalogProvenanceLedger,
+  getStaticCatalogItemProvenance,
+  getStaticCatalogImageProvenance,
 } from '@/lib/hotels-catalog';
 
 describe('hotels-catalog', () => {
@@ -34,6 +37,45 @@ describe('hotels-catalog', () => {
     it('has no duplicate hotel keys', () => {
       const keys = new Set(HOTELS.map((h) => h.hotelKey));
       expect(keys.size).toBe(HOTELS.length);
+    });
+
+    it('exposes source and license-status metadata for every static catalog item and image', () => {
+      const ledger = buildStaticCatalogProvenanceLedger();
+
+      expect(ledger).toHaveLength(HOTELS.length);
+      for (const entry of ledger) {
+        expect(entry.catalogItem.status).toBe('source-metadata-available');
+        expect(entry.catalogItem.source).toBe('tripadvisor-xotelo-key');
+        expect(entry.catalogItem.sourceUrl).toBeNull();
+        expect(entry.catalogItem.sourceUrlStatus).toBe('not-stored');
+        expect(entry.catalogItem.dataPolicy).toContain('identity-only');
+        expect(entry.catalogItem.externalIds.tripadvisorLocationId).toMatch(/^\d+$/);
+        expect(entry.catalogItem.externalIds.tripadvisorHotelId).toMatch(/^\d+$/);
+
+        expect(entry.image.status).toBe('source-metadata-available');
+        expect(entry.image.source).toBe('unsplash-image-url');
+        expect(entry.image.sourceHost).toBe('images.unsplash.com');
+        expect(entry.image.sourceUrl).toMatch(/^https:\/\/images\.unsplash\.com\//);
+        expect(entry.image.licenseStatus).toBe('requires-approved-license-metadata');
+        expect(entry.image.approvedLicense).toBe(false);
+        expect(entry.image.replacementRequired).toBe(true);
+      }
+    });
+
+    it('does not approve malformed catalog or image provenance', () => {
+      expect(getStaticCatalogItemProvenance({ hotelKey: 'not-a-source-key' }).status).toBe('missing-source-key');
+      expect(getStaticCatalogImageProvenance({ image: '' })).toMatchObject({
+        status: 'missing-image-source-url',
+        approvedLicense: false,
+        replacementRequired: true,
+      });
+      expect(getStaticCatalogImageProvenance({ image: 'https://assets.example/image.jpg' })).toMatchObject({
+        status: 'source-host-not-allowlisted',
+        source: null,
+        licenseStatus: 'missing',
+        approvedLicense: false,
+      });
+      expect(buildStaticCatalogProvenanceLedger({ hotels: null as unknown as typeof HOTELS })).toEqual([]);
     });
   });
 

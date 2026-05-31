@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { GET as getI18n } from '@/app/api/i18n/route';
 import {
   buildLocalePayload,
+  buildLocaleQaReport,
   formatLocalizedCurrency,
   formatLocalizedDate,
   getDictionary,
@@ -23,6 +24,14 @@ describe('i18n readiness', () => {
       ])
     );
     expect(readiness.contentTranslation).toBe('partial');
+    expect(readiness.qaMatrixStatus).toBe('qa-matrix-ready');
+    expect(readiness.qaLocales).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'ar', dir: 'rtl', public: false, contentTranslation: 'fallback-only' }),
+        expect.objectContaining({ code: 'fr', dir: 'ltr', public: false, contentTranslation: 'fallback-only' }),
+        expect.objectContaining({ code: 'es', dir: 'ltr', public: false, contentTranslation: 'fallback-only' }),
+      ])
+    );
     expect(readiness.fallbackPolicy).toContain('English');
     expect(readiness.dictionaries.he).toBeGreaterThan(0);
     expect(getLocaleConfig('he').dir).toBe('rtl');
@@ -48,6 +57,37 @@ describe('i18n readiness', () => {
     expect(payload.formatting.date).toBeTruthy();
     expect(payload.formatting.currency).toBeTruthy();
     expect(payload.fallbackPolicy).toContain('unavailable');
+  });
+
+  it('keeps non-public locale QA explicit without claiming completed translations', () => {
+    const payload = buildLocalePayload({
+      locale: 'ar',
+      sampleDate: '2026-06-01',
+      sampleAmount: 120,
+      currency: 'USD',
+    });
+    const qaReport = buildLocaleQaReport();
+
+    expect(payload.locale).toBe('ar');
+    expect(payload.dir).toBe('rtl');
+    expect(payload.contentTranslation).toBe('fallback-only');
+    expect(payload.dictionary.searchHotels).toBe('Search hotels');
+    expect(payload.formatting.date).toBeTruthy();
+    expect(payload.formatting.currency).toBeTruthy();
+    expect(qaReport.requiredDirections).toEqual(['ltr', 'rtl']);
+    expect(qaReport.qaLocales).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'ar',
+          runtimeExpectation: { htmlLang: 'ar', htmlDir: 'rtl' },
+          dictionaryPolicy: 'falls-back-to-English-until-full-translation-is-approved',
+        }),
+        expect.objectContaining({
+          code: 'fr',
+          runtimeExpectation: { htmlLang: 'fr', htmlDir: 'ltr' },
+        }),
+      ])
+    );
   });
 
   it('falls back predictably for unsupported locales and invalid sample formatting inputs', () => {

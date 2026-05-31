@@ -17,9 +17,14 @@ function requireIncludes(source, relativePath, snippets) {
 const i18n = await readProjectFile('lib/i18n.js');
 requireIncludes(i18n, 'lib/i18n.js', [
   'SUPPORTED_LOCALES',
+  'LOCALE_QA_MATRIX',
   "code: 'en'",
   "code: 'he'",
+  "code: 'ar'",
+  "code: 'fr'",
+  "code: 'es'",
   "dir: 'rtl'",
+  "dir: 'ltr'",
   'CORE_TRANSLATIONS',
   'resolveLocale',
   'getDictionary',
@@ -27,7 +32,10 @@ requireIncludes(i18n, 'lib/i18n.js', [
   'formatLocalizedDate',
   'formatLocalizedCurrency',
   'buildLocalePayload',
+  'buildLocaleQaReport',
   'getI18nReadiness',
+  'qaMatrixStatus',
+  'fallback-only',
   "contentTranslation: 'partial'",
   'fallbackPolicy',
 ]);
