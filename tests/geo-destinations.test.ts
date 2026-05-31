@@ -137,6 +137,22 @@ describe('geo provider detection', () => {
     await expect(detectLocation('not an ip')).resolves.toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it('returns null when both geolocation providers fail or fallback marks the response as an error', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      throw new Error('network unavailable');
+    }));
+    await expect(detectLocation('198.51.100.8')).resolves.toBeNull();
+
+    const fallbackError = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ status: 'fail' }))
+      .mockResolvedValueOnce(jsonResponse({ error: true }));
+    vi.stubGlobal('fetch', fallbackError);
+    await expect(detectLocation()).resolves.toBeNull();
+    expect(String(fallbackError.mock.calls[0][0])).toBe('http://ip-api.com/json/?fields=status,country,countryCode,city,lat,lon,currency,timezone,isp');
+    expect(String(fallbackError.mock.calls[1][0])).toBe('https://ipapi.co/json/');
+  });
 });
 
 describe('destination catalog helpers', () => {

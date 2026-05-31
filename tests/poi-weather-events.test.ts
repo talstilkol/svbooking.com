@@ -558,11 +558,47 @@ describe('Ticketmaster helpers', () => {
     ]);
   });
 
+  it('maps less common Ticketmaster sport and entertainment genres without provider claims', async () => {
+    vi.stubEnv('TICKETMASTER_API_KEY', 'tm_realistic_key_for_tests');
+    const genres = [
+      ['Ice Hockey Finals', 'Sports', 'Hockey', '🏒'],
+      ['Open Golf Day', 'Sports', 'Golf', '⛳'],
+      ['Boxing Night', 'Sports', 'Boxing', '🥊'],
+      ['City Games', 'Sports', 'Cycling', '🏟️'],
+      ['Film Premiere', 'Film', 'Premiere', '🎬'],
+      ['Comedy Hour', 'Miscellaneous', 'Stand-Up Comedy', '😂'],
+      ['Family Matinee', 'Miscellaneous', 'Family', '👨‍👩‍👧‍👦'],
+      ['Circus Night', 'Miscellaneous', 'Circus', '🎪'],
+    ];
+    const fetchMock = vi.fn(async () => jsonResponse({
+      _embedded: {
+        events: genres.map(([name, segment, genre]) => ({
+          name,
+          dates: { start: { localDate: '2026-07-20' } },
+          classifications: [{ segment: { name: segment }, genre: { name: genre } }],
+        })),
+      },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getEvents } = await import('@/lib/ticketmaster');
+
+    const events = await getEvents({ lat: 48.8566, lon: 2.3522, limit: 10 });
+
+    expect(events.map((event) => [event.name, event.icon])).toEqual(
+      genres.map((entry) => [entry[0], entry[3]])
+    );
+  });
+
   it('degrades to empty events when the upstream response is unavailable', async () => {
     vi.stubEnv('TICKETMASTER_API_KEY', 'tm_realistic_key_for_tests');
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, false, 503)));
     const { getEvents } = await import('@/lib/ticketmaster');
 
+    await expect(getEvents({ lat: 48.8566, lon: 2.3522 })).resolves.toEqual([]);
+
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      throw new Error('network unavailable');
+    }));
     await expect(getEvents({ lat: 48.8566, lon: 2.3522 })).resolves.toEqual([]);
   });
 });

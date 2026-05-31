@@ -20,9 +20,9 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 166 test files, 890 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 95.63% lines, 92.73% statements, 94.77% functions, and 85.08% branches. |
-| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 95.6%, statements 92.7%, functions 94.7%, branches 85%. |
+| `npm test` | PASS | 166 test files, 916 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 97.07% lines, 94.46% statements, 95.32% functions, and 88.14% branches. |
+| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 97%, statements 94.4%, functions 95.3%, branches 88.1%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 72 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
@@ -56,14 +56,14 @@ The remaining blockers are not code placeholders to fill in locally:
 | Build/test health | 10/10 | Lint, unit/API tests, build, and E2E pass. |
 | Security guardrails | 8/10 | Admin auth, CSRF, HTML safety, privacy, storage, alert, and no-store checks are wired; production enforcement still needs real env and deployment verification. |
 | Documentation integrity | 9/10 | README, master plan, audit report, CI, and docs audit now agree on current architecture/counts. |
-| Coverage depth | 8/10 | Coverage tooling runs and has a regression floor; branch coverage now clears the 80% target. |
+| Coverage depth | 8.8/10 | Coverage tooling runs and has a regression floor; branch coverage is 88.14%; the next local quality target is 90%+. |
 | Catalog scale | 6/10 | 502 curated hotels clears the local launch floor, but it is not market-scale and reused imagery warnings remain. |
 | Provider readiness | 5/10 | Adapter infrastructure exists; real production provider credentials are missing locally. |
 | Reviews/property content | 4/10 | APIs and UI correctly show unavailable states until licensed provider data exists; rich content is not live. |
 | Production readiness | 4/10 | Strict readiness correctly fails until deployment env is configured. |
 | Release hygiene | 10/10 | Worktree is clean; keep release-state strict before deployment. |
 
-**Overall engineering score:** 8.0/10
+**Overall engineering score:** 8.1/10
 **Go-live readiness:** 4/10 until strict production readiness passes in deployment
 
 ## Changes Completed In This Stabilization Pass
@@ -138,7 +138,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Raised branch coverage above 82% with holiday provider failure/default-year paths and Overpass POI fallback/error coverage.
 - Raised branch coverage above 83% with REST Countries failure/default branches, admin audit failure/limit handling, KV eviction, and price-cache batch/coalescing/invalidation coverage.
 - Raised branch coverage above 84% with agent status/history failure handling, i18n fallback formatting, ops-alert healthy-state coverage, and admin session allowlist normalization.
-- Raised branch coverage above 85% with browser storage hydration/cancellation, local storage string fallback hardening, currency server-safety, and catalog candidate review-state coverage.
+- Raised branch coverage above 88% with Overpass failure paths, provider registry diagnostics, i18n locale edges, ops alert thresholds, price-cache stale/fuzzy paths, provider accuracy ledgers, Ticketmaster/OpenTripMap branches, and URL/geo safety cases.
 - Added provenance and deployment-smoke audits plus a `SITE_URL`-driven deployment smoke script for post-deploy verification without fake data.
 - Added provider coverage telemetry by observation date, provider, city, and country from verified `price:observations:*` records only; empty ledgers report `insufficient-data`.
 
@@ -149,7 +149,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Branch coverage next target | Medium | `lib` branch coverage is 85.08%. | Add focused tests for remaining Overpass discovery, OpenTripMap, Xotelo, Wikidata, provider registry, catalog-candidate edge branches, and alert delivery, then raise the coverage ratchet toward 88%. |
+| Branch coverage next target | Medium | `lib` branch coverage is 88.14%. | Continue focused tests for remaining hotels-catalog, price-cache, cheaper-dates, Wikidata enrichment, ops scorecard, and provider delivery branches, then raise the next branch ratchet toward 90%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |

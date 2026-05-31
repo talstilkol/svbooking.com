@@ -248,4 +248,24 @@ describe('OpenTripMap helpers', () => {
     });
     expect(String(fetchMock.mock.calls[0][0])).toBe('https://api.opentripmap.com/0.1/en/places/xid/L1');
   });
+
+  it('handles OpenTripMap provider failures and fallback kind mapping without inventing POIs', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse([
+        { xid: 'P1', name: 'Partial Kind Museum', point: { lat: 0, lon: 0 }, kinds: 'museum', rate: 1 },
+        { xid: 'U1', name: 'Unmapped Point', point: { lat: 0, lon: 0.001 }, kinds: 'rare_kind', rate: 1 },
+      ]))
+      .mockRejectedValueOnce(new Error('OpenTripMap unavailable'))
+      .mockRejectedValueOnce(new Error('OpenTripMap detail unavailable'));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getAttractions, getPlaceDetails } = await import('@/lib/opentripmap');
+
+    await expect(getAttractions({ lat: 0, lon: 0, kinds: {} as unknown as string, limit: 2 })).resolves.toEqual([
+      expect.objectContaining({ name: 'Partial Kind Museum', type: 'Museum', icon: '🎨' }),
+      expect.objectContaining({ name: 'Unmapped Point', type: 'Attraction', icon: '📍' }),
+    ]);
+    await expect(getAttractions({ lat: 0, lon: 0 })).resolves.toEqual([]);
+    await expect(getPlaceDetails('L1')).resolves.toBeNull();
+  });
 });

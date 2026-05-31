@@ -68,6 +68,18 @@ describe('i18n readiness', () => {
     expect(formatLocalizedCurrency('not-a-number', 'en', 'USD')).toBeNull();
   });
 
+  it('normalizes mixed locale hints and falls back per missing dictionary key', () => {
+    expect(resolveLocale({ acceptLanguage: 'fr-CA;q=1.0, he-IL;q=0.9, en;q=0.8' }).code).toBe('he');
+    expect(resolveLocale({ locale: 'HE_il', acceptLanguage: 'en;q=1.0' })).toMatchObject({
+      code: 'he',
+      dir: 'rtl',
+    });
+    expect(getTranslation('fr', 'comparePrices')).toBe('Compare prices');
+    expect(getTranslation('he', 'missingTranslationKey')).toBe('missingTranslationKey');
+    expect(getDictionary('fr').priceUnavailable).toBe('Price unavailable');
+    expect(formatLocalizedCurrency(99.4, 'fr', '')).toContain('$');
+  });
+
   it('uses the default locale payload when no locale hints are supplied', () => {
     const payload = buildLocalePayload();
 

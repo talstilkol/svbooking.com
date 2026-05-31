@@ -55,6 +55,117 @@ describe('Overpass hotel discovery hardening', () => {
     await expect(discoverHotelsNearby({ lat: Number.NaN, lon: 0 })).rejects.toThrow('Latitude and longitude are required');
     await expect(countHotels({ city: '' })).rejects.toThrow('City name is required');
   });
+
+  it('builds narrowed Wikidata-only queries and parses optional hotel metadata', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({
+        elements: [
+          {
+            type: 'relation',
+            id: 44,
+            center: { lat: 48.8566, lon: 2.3522 },
+            tags: {
+              name: 'Grand Hotel',
+              brand: 'Grand Brand',
+              wikidata: 'Q123',
+              'brand:wikidata': 'Q456',
+              'contact:website': 'https://grand.example.invalid',
+              'contact:phone': '+33100000000',
+              operator: 'Grand Operator',
+            },
+          },
+        ],
+      }))
+      .mockResolvedValueOnce(jsonResponse({
+        elements: [
+          {
+            type: 'node',
+            id: 45,
+            lat: 48.85,
+            lon: 2.35,
+            tags: {
+              name: 'Nearby Hotel',
+              wikidata: 'Q789',
+              phone: '+33111111111',
+              website: 'https://nearby.example.invalid',
+            },
+          },
+        ],
+      }))
+      .mockResolvedValueOnce(jsonResponse({ elements: [{ tags: { total: '12' } }] }))
+      .mockResolvedValueOnce(jsonResponse({ elements: [{}] }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { discoverHotels, discoverHotelsNearby, countHotels } = await import('@/lib/overpass');
+
+    const cityHotels = await discoverHotels({
+      city: 'Paris"\\',
+      country: 'France"\\',
+      wikidataOnly: true,
+      limit: 7,
+    });
+    const nearbyHotels = await discoverHotelsNearby({
+      lat: 48.8566,
+      lon: 2.3522,
+      radiusKm: 3,
+      limit: 4,
+    });
+
+    expect(capturedQuery(fetchMock, 0)).toContain('area["name"="Paris"]');
+    expect(capturedQuery(fetchMock, 0)).toContain('area["name:en"="France"]');
+    expect(capturedQuery(fetchMock, 0)).toContain('["wikidata"]');
+    expect(capturedQuery(fetchMock, 0)).toContain('out body 7');
+    expect(cityHotels).toEqual([
+      expect.objectContaining({
+        name: 'Grand Hotel',
+        lat: 48.8566,
+        lon: 2.3522,
+        brand: 'Grand Brand',
+        wikidataId: 'Q123',
+        brandWikidataId: 'Q456',
+        website: 'https://grand.example.invalid',
+        phone: '+33100000000',
+        operator: 'Grand Operator',
+      }),
+    ]);
+    expect(capturedQuery(fetchMock, 1)).toContain('around:3000,48.8566,2.3522');
+    expect(capturedQuery(fetchMock, 1)).toContain('out body 4');
+    expect(nearbyHotels[0]).toMatchObject({
+      name: 'Nearby Hotel',
+      wikidataId: 'Q789',
+      phone: '+33111111111',
+      website: 'https://nearby.example.invalid',
+    });
+    await expect(countHotels({ city: 'Paris' })).resolves.toBe(12);
+    await expect(countHotels({ city: 'Paris' })).resolves.toBe(0);
+  });
+
+  it('surfaces Overpass rate limits, HTTP failures, empty responses, and timeouts without fabricating hotels', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({}, false, 429))
+      .mockResolvedValueOnce(jsonResponse({}, false, 503))
+      .mockResolvedValueOnce(jsonResponse({ elements: [] }))
+      .mockImplementationOnce((_url: string, init: RequestInit) => new Promise((_resolve, reject) => {
+        init.signal?.addEventListener('abort', () => {
+          const error = new Error('aborted');
+          error.name = 'AbortError';
+          reject(error);
+        });
+      }));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.useFakeTimers();
+    const { discoverHotels, countHotels } = await import('@/lib/overpass');
+
+    await expect(discoverHotels({ city: 'Paris' })).rejects.toThrow('Overpass rate limited');
+    await expect(discoverHotels({ city: 'Paris' })).rejects.toThrow('Overpass HTTP 503');
+    await expect(discoverHotels({ city: 'Paris' })).resolves.toEqual([]);
+
+    const timedOut = expect(countHotels({ city: 'Paris', timeoutMs: 25 }))
+      .rejects.toThrow('Overpass request timed out after 25ms');
+    await vi.advanceTimersByTimeAsync(25);
+    await timedOut;
+  });
 });
 
 describe('Xotelo discovery hardening', () => {
@@ -422,6 +533,28 @@ describe('Wikivoyage parser hardening', () => {
       thumbnail: null,
       url: null,
     });
+  });
+
+  it('degrades cleanly when Wikivoyage summary, section list, or section content fetches fail', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      throw new Error('Wikivoyage unavailable');
+    }));
+    const { getDiningInfo, getEventInfo, getSafetyInfo, getTravelGuide } = await import('@/lib/wikivoyage');
+
+    await expect(getTravelGuide('Paris')).resolves.toBeNull();
+    await expect(getSafetyInfo('Paris')).resolves.toBeNull();
+    await expect(getEventInfo('Paris')).resolves.toEqual([]);
+    await expect(getDiningInfo('Paris')).resolves.toBeNull();
+
+    vi.stubGlobal('fetch', vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url.includes('prop=sections')) {
+        return jsonResponse({ parse: { sections: [{ index: '10', line: 'Stay safe', level: '2' }] } });
+      }
+      throw new Error('Wikivoyage section unavailable');
+    }));
+
+    await expect(getSafetyInfo('Paris')).resolves.toBeNull();
   });
 
   it('returns only safety and health facts that are present in source sections', async () => {

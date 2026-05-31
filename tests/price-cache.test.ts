@@ -433,6 +433,56 @@ describe('price cache', () => {
     expect(getHotelRates).not.toHaveBeenCalled();
   });
 
+  it('uses default adaptive TTLs for invalid check-in dates', async () => {
+    const ninetyMinAgo = new Date(Date.now() - 90 * 60 * 1000).toISOString();
+    await kv.setWithTTL('price:g1-d1:not-a-date:2026-06-03:USD', {
+      cachedAt: ninetyMinAgo,
+      result: {
+        rates: [{ name: 'Default TTL Provider', rate: 150, tax: 15 }],
+        currency: 'USD',
+        provider: 'Default TTL Provider',
+        source: 'provider-registry',
+      },
+    }, 7200);
+
+    const result = await getCachedRates({
+      hotelKey: 'g1-d1',
+      hotelName: 'Test',
+      city: 'Paris',
+      checkIn: 'not-a-date',
+      checkOut: '2026-06-03',
+    } as Parameters<typeof getCachedRates>[0]);
+
+    expect(result.fromCache).toBe(true);
+    expect(result.freshness).toBe('stale');
+    expect(result.partial).toBe(true);
+  });
+
+  it('batch revalidates stale exact hits while returning cached data immediately', async () => {
+    await kv.setWithTTL('price:g1-d1:2026-06-01:2026-06-03:USD', {
+      cachedAt: '2026-01-01T00:00:00.000Z',
+      result: {
+        rates: [{ name: 'Stale Batch Provider', rate: 120, tax: 12 }],
+        currency: 'USD',
+        provider: 'Stale Batch Provider',
+        source: 'provider-registry',
+      },
+    }, 7200);
+
+    const [result] = await getCachedRatesBatch([
+      { hotelKey: 'g1-d1', hotelName: 'Hotel A', city: 'Paris', checkIn: '2026-06-01', checkOut: '2026-06-03' },
+    ]);
+
+    expect(result.fromCache).toBe(true);
+    expect(result.freshness).toBe('stale');
+    expect(result.partial).toBe(true);
+    expect(result.rates[0].provider).toBe('Stale Batch Provider');
+    expect(getHotelRates).toHaveBeenCalledWith(expect.objectContaining({
+      hotelKey: 'g1-d1',
+      checkIn: '2026-06-01',
+    }));
+  });
+
   it('keeps heatmap data labeled as a price source, not a booking provider', async () => {
     const result = await getCachedHeatmap({ hotelKey: 'g1-d1', checkOut: '2026-06-03' } as Parameters<typeof getCachedHeatmap>[0]);
 

@@ -3,7 +3,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Track fetch calls to verify retry behavior
 const fetchCalls: Array<{ url: string; attempt: number }> = [];
 let fetchAttempt = 0;
-let fetchBehavior: 'succeed' | 'fail-then-succeed' | 'always-fail' | 'timeout-then-succeed' | 'error-with-rates' | 'error-no-rates' = 'succeed';
+let fetchBehavior:
+  | 'succeed'
+  | 'fail-then-succeed'
+  | 'always-fail'
+  | 'timeout-then-succeed'
+  | 'fetch-failed-then-succeed'
+  | 'error-with-rates'
+  | 'error-no-rates'
+  | 'no-result'
+  | 'heatmap-success' = 'succeed';
 
 vi.stubGlobal('fetch', vi.fn(async (url: string) => {
   fetchAttempt++;
@@ -29,6 +38,13 @@ vi.stubGlobal('fetch', vi.fn(async (url: string) => {
     return new Response(JSON.stringify({ result: { rates: [{ name: 'Booking.com', rate: 100, tax: 20 }], currency: 'USD' } }), { status: 200 });
   }
 
+  if (fetchBehavior === 'fetch-failed-then-succeed') {
+    if (fetchAttempt === 1) {
+      throw new Error('fetch failed');
+    }
+    return new Response(JSON.stringify({ result: { rates: [{ name: 'Booking.com', rate: 100, tax: 20 }], currency: 'USD' } }), { status: 200 });
+  }
+
   if (fetchBehavior === 'always-fail') {
     return new Response('Server Error', { status: 500 });
   }
@@ -43,6 +59,14 @@ vi.stubGlobal('fetch', vi.fn(async (url: string) => {
 
   if (fetchBehavior === 'error-no-rates') {
     return new Response(JSON.stringify({ error: true, result: { rates: [] } }), { status: 200 });
+  }
+
+  if (fetchBehavior === 'no-result') {
+    return new Response(JSON.stringify({}), { status: 200 });
+  }
+
+  if (fetchBehavior === 'heatmap-success') {
+    return new Response(JSON.stringify({ result: { rates: [{ date: '2026-06-01', rate: 120 }] } }), { status: 200 });
   }
 
   return new Response('Not Found', { status: 404 });
@@ -103,6 +127,14 @@ describe('xotelo retry', () => {
     expect(fetchCalls).toHaveLength(2);
   });
 
+  it('retries once on network fetch failures and succeeds', async () => {
+    fetchBehavior = 'fetch-failed-then-succeed';
+    const result = await getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 10000 });
+
+    expect(result.rates).toHaveLength(1);
+    expect(fetchCalls).toHaveLength(2);
+  });
+
   it('throws after retry also fails', async () => {
     fetchBehavior = 'always-fail';
     await expect(
@@ -136,6 +168,46 @@ describe('xotelo retry', () => {
     await expect(
       getRates({ hotelKey: 'g1-d1', checkIn: '2026-06-01', checkOut: '2026-06-03', timeoutMs: 10000 })
     ).rejects.toThrow('Xotelo: rates unavailable');
+  });
+
+  it('returns an empty rate result when Xotelo sends no error and no result payload', async () => {
+    fetchBehavior = 'no-result';
+
+    await expect(getRates({
+      hotelKey: 'g1-d1',
+      checkIn: '2026-06-01',
+      checkOut: '2026-06-03',
+      timeoutMs: 10000,
+    })).resolves.toEqual({ rates: [] });
+  });
+
+  it('fetches heatmap observations and surfaces heatmap-specific upstream failures', async () => {
+    fetchBehavior = 'heatmap-success';
+
+    await expect(getHeatmap({
+      hotelKey: 'g1-d1',
+      checkOut: '2026-06-03',
+      timeoutMs: 10000,
+    })).resolves.toEqual({ rates: [{ date: '2026-06-01', rate: 120 }] });
+
+    fetchCalls.length = 0;
+    fetchAttempt = 0;
+    fetchBehavior = 'error-no-rates';
+    await expect(getHeatmap({
+      hotelKey: 'g1-d1',
+      checkOut: '2026-06-03',
+      timeoutMs: 10000,
+    })).rejects.toThrow('Xotelo: heatmap unavailable');
+
+    fetchCalls.length = 0;
+    fetchAttempt = 0;
+    fetchBehavior = 'always-fail';
+    await expect(getHeatmap({
+      hotelKey: 'g1-d1',
+      checkOut: '2026-06-03',
+      timeoutMs: 1000,
+    })).rejects.toThrow('Xotelo HTTP 500');
+    expect(fetchCalls).toHaveLength(1);
   });
 
   it('rejects invalid request parameters before calling Xotelo', async () => {

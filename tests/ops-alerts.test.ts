@@ -250,6 +250,79 @@ describe('ops alerts', () => {
     expect(result.alerts).toEqual([]);
   });
 
+  it('falls back to unknown provider identity and does not invent alerts for null threshold metrics', async () => {
+    vi.mocked(buildHealthSnapshot).mockReturnValueOnce({
+      service: 'sv-booking',
+      status: 'healthy',
+      ready: true,
+      checkedAt: '2026-05-14T12:00:00.000Z',
+      checks: {
+        security: { productionReady: true, adminAuthConfigured: true },
+        cache: { durable: true, mode: 'persistent' },
+        providers: { available: 2 },
+        alerts: { deliveryConfigured: true, deliveryStatus: 'configured' },
+      },
+      warnings: [],
+    } as unknown as ReturnType<typeof buildHealthSnapshot>);
+    vi.mocked(buildOpsScorecard).mockReturnValueOnce({
+      service: 'sv-booking',
+      status: 'healthy',
+      score: 1,
+      blockers: [],
+    } as unknown as ReturnType<typeof buildOpsScorecard>);
+    vi.mocked(getProviderUptimeMetrics).mockResolvedValueOnce({
+      status: 'available',
+      eventCount: 10,
+      providerCount: 2,
+      successRatePct: null,
+      providers: [
+        {
+          providerId: '',
+          providerName: '',
+          total: 'not-a-number',
+          successes: 0,
+          failures: 0,
+          successRatePct: null,
+          p95LatencyMs: null,
+        },
+        {
+          providerId: 'null-metrics',
+          providerName: 'Null Metrics',
+          total: 5,
+          successes: 0,
+          failures: 0,
+          successRatePct: null,
+          p95LatencyMs: null,
+        },
+      ],
+    } as unknown as Awaited<ReturnType<typeof getProviderUptimeMetrics>>);
+    vi.mocked(getPriceAccuracyMetrics).mockResolvedValueOnce({
+      days: 7,
+      observations: 10,
+      mismatches: 0,
+      mismatchRate: null,
+      byProvider: {},
+    });
+
+    const result = await buildOpsAlerts({ now: new Date('2026-05-14T12:00:00.000Z') });
+
+    expect(result.status).toBe('healthy');
+    expect(result.alerts).toEqual([
+      expect.objectContaining({
+        id: 'provider-unknown-insufficient-data',
+        severity: 'info',
+        evidence: expect.objectContaining({
+          providerId: 'unknown',
+          eventCount: 0,
+          requiredEvents: 5,
+        }),
+      }),
+    ]);
+    expect(result.alerts.map((item) => item.id)).not.toContain('provider-null-metrics-warning-success-rate');
+    expect(result.alerts.map((item) => item.id)).not.toContain('provider-null-metrics-warning-latency');
+    expect(result.alerts.map((item) => item.id)).not.toContain('price-accuracy-warning-drift');
+  });
+
   it('protects ops alerts behind admin auth and no-store', async () => {
     const denied = await GET(new Request('http://localhost:3000/api/ops/alerts'));
     expect(denied!.status).toBe(401);

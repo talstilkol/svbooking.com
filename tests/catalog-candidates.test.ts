@@ -250,6 +250,60 @@ describe('catalog candidate queue', () => {
     }));
   });
 
+  it('filters candidate lists by comma status, city, source, duplicate and provenance state', async () => {
+    await upsertCandidate({
+      hotelKey: 'g1-d81',
+      name: 'Filtered Candidate A',
+      city: 'Paris',
+      country: 'France',
+      source: 'osm-scanner-agent',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q81',
+      lat: 48.8566,
+      lon: 2.3522,
+      status: 'pending',
+    });
+    await upsertCandidate({
+      hotelKey: 'g1-d82',
+      name: 'Filtered Candidate B',
+      city: 'Paris',
+      country: 'France',
+      source: 'osm-scanner-agent',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q82',
+      lat: 48.8567,
+      lon: 2.3523,
+      status: 'stale',
+    });
+    await upsertCandidate({
+      hotelKey: 'g1-d83',
+      name: 'Filtered Candidate C',
+      city: 'London',
+      country: 'United Kingdom',
+      source: 'manual-admin',
+      lat: 51.5072,
+      lon: -0.1276,
+      status: 'rejected',
+    });
+
+    const filtered = await listCandidates({
+      city: 'paris',
+      status: 'pending,stale',
+      source: 'osm-scanner-agent',
+      duplicate: false,
+      missingProvenance: false,
+      limit: 1,
+    });
+    const all = await listCandidates({ status: 'pending,stale,rejected' });
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]).toMatchObject({
+      city: 'Paris',
+      source: 'osm-scanner-agent',
+      missingProvenance: false,
+      duplicate: false,
+    });
+    expect(all.map((candidate) => candidate.status)).toEqual(['pending', 'rejected', 'stale']);
+  });
+
   it('marks candidates stale and reports missing review targets without promotion', async () => {
     expect(await rejectCandidate('missing-id')).toEqual({
       rejected: false,

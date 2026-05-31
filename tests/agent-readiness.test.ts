@@ -8,6 +8,7 @@ import {
   getAllAgentReadiness,
   getAllAgentStatuses,
   runAgent,
+  verifyCronAuth,
 } from '@/lib/agent-utils';
 
 describe('agent readiness metadata', () => {
@@ -124,5 +125,34 @@ describe('agent readiness metadata', () => {
       `Agent ${AGENT_NAMES.DEAL_SCANNER} execution failed:`,
       expect.any(Error)
     );
+  });
+
+  it('verifies cron auth with localhost dev fallback and timing-safe bearer checks', async () => {
+    vi.stubEnv('CRON_SECRET', '');
+
+    expect(verifyCronAuth(new Request('http://localhost:3000/api/cron', {
+      headers: { host: 'localhost:3000' },
+    }))).toEqual({ authorized: true });
+
+    const missingSecret = verifyCronAuth(new Request('https://svbooking.com/api/cron', {
+      headers: { host: 'svbooking.com' },
+    }));
+    expect(missingSecret.authorized).toBe(false);
+    expect(missingSecret.response?.status).toBe(403);
+    await expect(missingSecret.response!.json()).resolves.toEqual({
+      error: 'CRON_SECRET not configured',
+    });
+
+    vi.stubEnv('CRON_SECRET', 'cron-secret-value');
+    expect(verifyCronAuth(new Request('https://svbooking.com/api/cron', {
+      headers: { authorization: 'Bearer cron-secret-value' },
+    }))).toEqual({ authorized: true });
+
+    const invalid = verifyCronAuth(new Request('https://svbooking.com/api/cron', {
+      headers: { authorization: 'Basic cron-secret-value' },
+    }));
+    expect(invalid.authorized).toBe(false);
+    expect(invalid.response?.status).toBe(401);
+    expect(invalid.response?.headers.get('Cache-Control')).toBe('no-store');
   });
 });

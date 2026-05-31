@@ -20,7 +20,7 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 
 import { GET, POST } from '@/app/api/price-accuracy/route';
-import { getPriceAccuracyMetrics, recordPriceObservation } from '@/lib/price-accuracy';
+import { getPriceAccuracyMetrics, recordPriceMismatch, recordPriceObservation } from '@/lib/price-accuracy';
 
 function post(body: Record<string, unknown>, headers: Record<string, string> = {}) {
   return new Request('http://localhost:3000/api/price-accuracy', {
@@ -40,6 +40,7 @@ describe('price accuracy ledger', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   it('records mismatch reports only for known providers with numeric totals', async () => {
@@ -116,5 +117,74 @@ describe('price accuracy ledger', () => {
   it('returns null mismatch rate when there is no observation denominator', async () => {
     const metrics = await getPriceAccuracyMetrics({ days: 1 });
     expect(metrics.mismatchRate).toBeNull();
+  });
+
+  it('normalizes missing observation fields and caps daily ledgers', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-31T12:00:00.000Z'));
+    store.set('price:observations:2026-05-31', Array.from({ length: 1005 }, (_value, index) => ({
+      id: `existing-observation-${index}`,
+      provider: 'Booking.com',
+    })));
+    store.set('price:mismatches:2026-05-31', Array.from({ length: 505 }, (_value, index) => ({
+      id: `existing-mismatch-${index}`,
+      provider: 'Booking.com',
+    })));
+
+    const observation = await recordPriceObservation({
+      hotelKey: '',
+      provider: '',
+      quotedTotal: 'not-a-number',
+      currency: 'EUR',
+      taxesIncluded: true,
+      source: 'click',
+    });
+    const mismatch = await recordPriceMismatch({
+      hotelKey: '',
+      provider: 'Expedia',
+      quotedTotal: 'bad-quote',
+      observedTotal: 'bad-observed',
+      currency: 'EUR',
+    });
+
+    expect(observation).toMatchObject({
+      hotelKey: 'unknown',
+      provider: 'unknown',
+      quotedTotal: null,
+      currency: 'EUR',
+      taxesIncluded: true,
+    });
+    expect(mismatch).toMatchObject({
+      hotelKey: 'unknown',
+      provider: 'Expedia',
+      quotedTotal: null,
+      observedTotal: null,
+    });
+    expect((store.get('price:observations:2026-05-31') as unknown[])).toHaveLength(1000);
+    expect((store.get('price:mismatches:2026-05-31') as unknown[])).toHaveLength(500);
+  });
+
+  it('caps metric windows and reports mismatch-only providers without a denominator', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-31T12:00:00.000Z'));
+    store.set('price:observations:2026-05-31', [
+      { provider: 'Booking.com' },
+      { provider: '' },
+    ]);
+    store.set('price:mismatches:2026-05-31', [
+      { provider: 'Expedia' },
+    ]);
+
+    const capped = await getPriceAccuracyMetrics({ days: 60 });
+    const defaulted = await getPriceAccuracyMetrics({ days: 'not-a-number' as unknown as number });
+
+    expect(capped.days).toBe(30);
+    expect(capped.observations).toBe(2);
+    expect(capped.mismatches).toBe(1);
+    expect(capped.mismatchRate).toBe(0.5);
+    expect(capped.byProvider['Booking.com']).toMatchObject({ observations: 1, mismatches: 0, mismatchRate: 0 });
+    expect(capped.byProvider.unknown).toMatchObject({ observations: 1, mismatches: 0, mismatchRate: 0 });
+    expect(capped.byProvider.Expedia).toMatchObject({ observations: 0, mismatches: 1, mismatchRate: null });
+    expect(defaulted.days).toBe(7);
   });
 });
