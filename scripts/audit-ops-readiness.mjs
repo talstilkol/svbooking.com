@@ -92,6 +92,7 @@ await requireFile('lib/health-readiness.js');
 await requireFile('lib/production-readiness.mjs');
 await requireFile('lib/ops-scorecard.js');
 await requireFile('lib/competitor-parity.js');
+await requireFile('lib/catalog-media-quality.js');
 await requireFile('lib/pwa-readiness.js');
 await requireFile('lib/data-retention.js');
 await requireFile('lib/user-data.js');
@@ -308,10 +309,13 @@ const opsScorecard = await readProjectFile('lib/ops-scorecard.js');
 requireIncludes(opsScorecard, 'lib/ops-scorecard.js', [
   'buildOpsScorecard',
   'buildCompetitorParity',
+  'buildCatalogMediaQuality',
   'productTruth',
   'freeOnlyLaunchReady',
   'production-readiness',
   'inventory-scale',
+  'catalog-media-quality',
+  'catalogMediaQuality',
   'reviews-and-property-content',
   'mobile-retention',
   'observability',
@@ -319,6 +323,15 @@ requireIncludes(opsScorecard, 'lib/ops-scorecard.js', [
   'competitorParity',
   '/api/ops/alerts',
   'blockers',
+]);
+
+const catalogMediaQuality = await readProjectFile('lib/catalog-media-quality.js');
+requireIncludes(catalogMediaQuality, 'lib/catalog-media-quality.js', [
+  'buildCatalogMediaQuality',
+  'MAX_REUSE_CITIES_PER_IMAGE',
+  'reusedImages',
+  'licensedImageSourceMetadata',
+  'Replace reused catalog media',
 ]);
 
 const competitorParity = await readProjectFile('lib/competitor-parity.js');

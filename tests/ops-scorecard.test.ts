@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildOpsScorecard } from '@/lib/ops-scorecard';
+import { buildCatalogMediaQuality } from '@/lib/catalog-media-quality';
 import { GET as getOpsScorecard } from '@/app/api/ops/scorecard/route';
 
 describe('ops scorecard', () => {
@@ -28,6 +29,7 @@ describe('ops scorecard', () => {
       expect.arrayContaining([
         'production-readiness',
         'inventory-scale',
+        'catalog-media-quality',
         'reviews-and-property-content',
         'mobile-retention',
         'localization',
@@ -37,6 +39,7 @@ describe('ops scorecard', () => {
     );
     expect(scorecard.productTruth.competitorParity.status).toBe('blocked');
     expect(scorecard.productTruth.competitorParity.sourcePolicy).toBe('official-or-platform-owned-public-pages-only');
+    expect(scorecard.productTruth.catalogMediaQuality.status).toBe('partial');
     expect(scorecard.blockers.length).toBeGreaterThan(0);
     expect(JSON.stringify(scorecard)).not.toContain('admin-secret-value');
     expect(JSON.stringify(scorecard)).not.toContain('webhook-secret-value');
@@ -143,6 +146,78 @@ describe('ops scorecard', () => {
     expect(JSON.stringify(scorecard)).not.toContain('price-alert-secret');
     expect(JSON.stringify(scorecard)).not.toContain('push-private-key');
     expect(JSON.stringify(scorecard)).not.toContain('ops-alert-secret');
+  });
+
+  it('surfaces reused catalog media as a scorecard blocker instead of hiding audit warnings', () => {
+    const mediaQuality = buildCatalogMediaQuality();
+
+    expect(mediaQuality.status).toBe('partial');
+    expect(mediaQuality.current.reusedImages).toBeGreaterThan(0);
+    expect(mediaQuality.blockers.some((blocker) => blocker.includes('Catalog image reused across'))).toBe(true);
+    expect(mediaQuality.target.licensedImageSourceMetadata).toBe(true);
+  });
+
+  it('blocks missing or invalid catalog media without inventing replacement images', () => {
+    const mediaQuality = buildCatalogMediaQuality({
+      hotels: [
+        {
+          hotelKey: 'unknown/unavailable',
+          city: 'unknown/unavailable',
+          image: '',
+        },
+        {
+          hotelKey: 'unknown/unavailable',
+          city: 'unknown/unavailable',
+          image: 'unknown/unavailable',
+        },
+      ],
+    });
+
+    expect(mediaQuality.status).toBe('blocked');
+    expect(mediaQuality.score).toBe(0);
+    expect(mediaQuality.blockers).toEqual([
+      'unknown/unavailable: missing catalog image',
+      'unknown/unavailable: invalid catalog image URL',
+    ]);
+  });
+
+  it('marks catalog media healthy when current reuse stays below the configured review threshold', () => {
+    const mediaQuality = buildCatalogMediaQuality({ maxReuseCities: 10 });
+
+    expect(mediaQuality.status).toBe('healthy');
+    expect(mediaQuality.score).toBe(1);
+    expect(mediaQuality.current.reusedImages).toBe(0);
+    expect(mediaQuality.blockers).toEqual([]);
+  });
+
+  it('blocks an empty catalog media set instead of creating replacement media', () => {
+    const mediaQuality = buildCatalogMediaQuality({ hotels: [] });
+
+    expect(mediaQuality.status).toBe('blocked');
+    expect(mediaQuality.score).toBe(0);
+    expect(mediaQuality.blockers).toEqual(['No catalog hotels available for media quality scoring']);
+  });
+
+  it('tracks non-HTTPS media and missing sizing parameters as review findings', () => {
+    const mediaQuality = buildCatalogMediaQuality({
+      hotels: [
+        {
+          name: 'unknown/unavailable',
+          city: 'unknown/unavailable',
+          image: 'http://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80',
+        },
+        {
+          city: 'unknown/unavailable',
+          image: 'https://images.unsplash.com/photo-1560969184-10fe8719e047',
+        },
+      ],
+    });
+
+    expect(mediaQuality.status).toBe('blocked');
+    expect(mediaQuality.current.imagesWithoutSizing).toBe(1);
+    expect(mediaQuality.blockers).toEqual([
+      'unknown/unavailable: catalog image URL is not HTTPS',
+    ]);
   });
 
   it('protects the scorecard route with admin bearer auth and no-store caching', async () => {

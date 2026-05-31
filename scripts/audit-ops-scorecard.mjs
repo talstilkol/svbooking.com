@@ -24,22 +24,35 @@ function requireIncludes(source, relativePath, snippets) {
 
 await requireFile('lib/ops-scorecard.js');
 await requireFile('lib/competitor-parity.js');
+await requireFile('lib/catalog-media-quality.js');
 await requireFile('app/api/ops/scorecard/route.js');
 
 const scorecard = await readProjectFile('lib/ops-scorecard.js');
 requireIncludes(scorecard, 'lib/ops-scorecard.js', [
   'buildOpsScorecard',
   'buildCompetitorParity',
+  'buildCatalogMediaQuality',
   'productTruth',
   'freeOnlyLaunchReady',
   'production-readiness',
   'inventory-scale',
+  'catalog-media-quality',
+  'catalogMediaQuality',
   'reviews-and-property-content',
   'mobile-retention',
   'observability',
   'competitor-parity',
   'competitorParity',
   'blockers',
+]);
+
+const catalogMediaQuality = await readProjectFile('lib/catalog-media-quality.js');
+requireIncludes(catalogMediaQuality, 'lib/catalog-media-quality.js', [
+  'buildCatalogMediaQuality',
+  'MAX_REUSE_CITIES_PER_IMAGE',
+  'reusedImages',
+  'licensedImageSourceMetadata',
+  'Replace reused catalog media',
 ]);
 
 const competitorParity = await readProjectFile('lib/competitor-parity.js');

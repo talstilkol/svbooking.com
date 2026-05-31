@@ -8,9 +8,9 @@ The app is locally healthy but not production-ready until real deployment config
 | --- | ---: | --- |
 | Determinism and no-fabrication guardrails | 9/10 | `Math.random()` and unapproved UUID randomness are blocked by scans/audits; this is still not a formal proof that every future data path has complete provenance. |
 | Local build/test health | 10/10 | Lint, unit/API tests, build, and E2E are expected release gates. |
-| Coverage depth | 9/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 99.43% lines and 99.07% branches. |
+| Coverage depth | 9/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 99.44% lines and 99.02% branches. |
 | Security guardrails | 8/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, public API URL safety, and no-store audits are wired; production enforcement still depends on real env and deployment verification. |
-| Catalog quality | 6/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage and has reused catalog imagery warnings. |
+| Catalog quality | 6/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage; reused catalog imagery is now tracked as an ops scorecard blocker. |
 | Provider coverage | 5/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
 | Reviews and property content | 4/10 | APIs return explicit unavailable states until licensed provider data is configured; rich review/property content is not live. |
 | Mobile retention | 5/10 | PWA/offline shell and local alerts exist; push delivery env and provider are not configured. |
@@ -26,7 +26,7 @@ This section is the source of truth for what is complete versus only locally sca
 | Determinism: no `Math.random()` | DONE | `rg "Math\.random\|crypto\.randomUUID" app components lib scripts tests -S` returns no matches. |
 | No-fabrication guardrails | PARTIAL | `npm run audit:guardrails` and `npm run audit:provenance` pass, but there is no exhaustive licensed-source proof for every legacy catalog item/image and future provider/content path. |
 | Local lint/unit/build/E2E health | DONE | `npm run lint`, `npm test`, `npm run build`, and `npm run test:e2e` passed locally. |
-| Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 99.43% lines, 98.95% statements, 97.35% functions, 99.07% branches. |
+| Coverage ratchet current floor | DONE | `npm run audit:coverage` passes at 99.44% lines, 98.96% statements, 97.39% functions, 99.02% branches. |
 | Coverage to world-class depth | PARTIAL | Branch coverage is above 99%, but not exhaustive; remaining weak areas include private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and remaining API/network error branches. |
 | Security audits wired | DONE | CSRF, HTML safety, storage, privacy, alert, public URL, affiliate, no-store, API error, and cron-cache audits pass locally. |
 | Production security enforcement | PARTIAL | Code gates exist, but real admin, cron, Kinde, Redis, provider, alert, and push env are not configured locally. |
@@ -105,23 +105,23 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Review modified/deleted/untracked files before staging | DONE | Release-state strict was clean before commits. |
 | Stabilization Priority | Split unrelated work into reviewable commits | DONE | Last work was split into two focused commits. |
 | Stabilization Priority | Keep generated/cache artifacts out of commits | DONE | Release-state strict reported no generated artifacts. |
-| Stabilization Priority | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 99.07% and the floor is 99%. |
+| Stabilization Priority | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 99.02% and the floor is 99%. |
 | Stabilization Priority | Prioritize remaining branch coverage hot spots | PARTIAL | Overpass, provider registry, i18n, ops alert, price-cache, provider accuracy, public URL, geolocation, discovery, Wikidata, Google Places reviews, catalog candidate locking, provider uptime, OpenTripMap, Xotelo, rate-limit, admin audit, ops scorecard, POI/weather/event sparse payloads, user-data cleanup, review fallback, alert delivery, durable catalog load, strict admin-only auth, cheaper-date heatmap bracket, admin-session, price-recommendation, REST Countries, DBpedia, map-marker, request-origin, ops delivery, unsubscribe-token, currency/storage, health readiness, Wikipedia batching, and catalog full-load fallback branches were expanded; remaining hot spots include private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and remaining API/network error branches. |
 | Stabilization Priority | Keep coverage reports out of commits | DONE | Coverage artifacts were not staged. |
 | Stabilization Priority | Keep README, env example, runbook, and plan aligned | PARTIAL | Local docs audit passes; deployment runbook evidence is missing. |
 | Stabilization Priority | Run docs audit in CI | DONE | `audit:docs` is wired in CI. |
 | Stabilization Priority | Keep public URL and runtime JSON scanners enabled | DONE | `audit:public-api-urls` is wired and passes. |
 | Stabilization Priority | Promote only validated catalog candidates | PARTIAL | Validation path exists; production approval process is not exercised at scale. |
-| Stabilization Priority | Replace reused/stock-like catalog images | NOT DONE | Catalog audit still warns about reused city images. |
+| Stabilization Priority | Replace reused/stock-like catalog images | PARTIAL | Catalog audit still warns about reused city images; ops scorecard now exposes reused media as a measurable blocker until licensed replacements are approved. |
 | Stabilization Priority | Add licensed reviews/property providers | NOT DONE | No licensed provider env is configured. |
 | Stabilization Priority | Keep unknown data unavailable/not configured | PARTIAL | Local behavior exists; future integrations need continuous enforcement. |
 | Stabilization Priority | Run agent cron routes only with `CRON_SECRET` | DONE | Cron auth checks are wired and audited. |
 | Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints exist; external monitoring and webhook delivery are not configured. |
 | Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
 | Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
-| Acceptance Criteria | `npm test` passes | DONE | 174 files / 1063 tests passed. |
+| Acceptance Criteria | `npm test` passes | DONE | 174 files / 1068 tests passed. |
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
-| Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 99.43% lines and 99.07% branches. |
+| Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 99.44% lines and 99.02% branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 728 static pages. |
 | Acceptance Criteria | `npm run test:e2e` passes | DONE | 72 Playwright tests passed. |
 | Acceptance Criteria | Every non-strict `npm run audit:*` passes | DONE | All non-strict audit scripts passed locally. |
@@ -136,12 +136,12 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Backlog P0 | Configure approved pricing partner and verify provider-returned rates | NOT DONE | Requires partner credentials. |
 | Backlog P0 | Configure licensed review/property provider | NOT DONE | Requires licensed provider access. |
 | Backlog P1 | Raise branch coverage from 83.26% toward 84% | DONE | Coverage ratchet has moved past this milestone. |
-| Backlog P1 | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 99.07%. |
-| Backlog P1 | Raise branch coverage from 85.08% toward 88% | DONE | Current branch coverage is 99.07% and the floor is 99%. |
-| Backlog P1 | Raise branch coverage from 88.14% toward 90% | DONE | Current branch coverage is 99.07% and the floor is 99%. |
-| Backlog P1 | Raise branch coverage from 90.04% toward 92% | DONE | Current branch coverage is 99.07%; the ratchet floor is now 99%. |
+| Backlog P1 | Raise branch coverage from 84.07% toward 85% | DONE | Current branch coverage is 99.02%. |
+| Backlog P1 | Raise branch coverage from 85.08% toward 88% | DONE | Current branch coverage is 99.02% and the floor is 99%. |
+| Backlog P1 | Raise branch coverage from 88.14% toward 90% | DONE | Current branch coverage is 99.02% and the floor is 99%. |
+| Backlog P1 | Raise branch coverage from 90.04% toward 92% | DONE | Current branch coverage is 99.02%; the ratchet floor is now 99%. |
 | Backlog P1 | Add focused tests for remaining weak branches | PARTIAL | Focused network, provider, cache, i18n, ops, URL-safety, geolocation, discovery, Wikidata, Google Places reviews, catalog candidate locking, provider uptime, OpenTripMap, Xotelo, rate-limit, admin audit, ops scorecard, dynamic catalog, cheaper-date fallback, catalog candidates, KV adapter, webhook, DBpedia/Wikivoyage, POI/weather/event sparse payloads, user-data cleanup, review fallback, alert delivery, durable catalog load, strict admin-only auth, heatmap bracket, admin-session, price-recommendation, REST Countries, map-marker, request-origin, ops delivery, unsubscribe-token, currency/storage, health readiness, Wikipedia batching, and catalog full-load tests were added; private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and remaining API/network error branches remain. |
-| Backlog P1 | Replace reused catalog images | NOT DONE | Image reuse warnings remain. |
+| Backlog P1 | Replace reused catalog images | PARTIAL | Image reuse warnings remain; ops scorecard now tracks the blocker so it cannot be hidden before launch. |
 | Backlog P1 | Add stronger provenance audit | PARTIAL | `audit:provenance` now checks candidate promotion provenance and provider-link sanitization; it does not yet prove every legacy static catalog item/image has licensed source metadata. |
 | Backlog P1 | Add deployment smoke checks | PARTIAL | `smoke:deployment` now exists for public, admin, cron-guard, and unavailable-state checks; it has not been run against a configured deployment. |
 | Backlog P2 | Expand catalog through admin candidate workflow only | PARTIAL | Workflow exists; scale expansion is not complete. |
@@ -231,6 +231,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 - [x] Raise `lib` branch coverage from 98% toward 99%, focusing on hotels-catalog, provider observability, price-cache, catalog-candidates, storage, and remaining API/network error branches.
 - [ ] Raise `lib` branch coverage beyond 99%, focusing on remaining private/inaccessible hotels-catalog, provider observability, price-cache, URL-safety, auth, and API/network error branches.
 - [x] Add focused tests for Overpass discovery, agent utilities, i18n edge cases, ops alert thresholds, and provider registry merge/circuit-breaker branches.
+- [x] Surface reused catalog image risk in ops scorecard and release documentation.
 - [ ] Replace reused catalog images with licensed hotel- or city-specific media.
 - [x] Add a stronger provenance wiring audit for catalog candidate promotion, source URLs, provider links, and provider-returned rates.
 - [ ] Extend provenance audit to require licensed/source metadata for every legacy static catalog item and catalog image.
