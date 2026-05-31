@@ -42,6 +42,7 @@ import {
   getCachedRatesBatch,
   invalidateHeatmap,
   invalidateRates,
+  jitteredTTL,
 } from '@/lib/price-cache';
 
 describe('price cache', () => {
@@ -49,6 +50,16 @@ describe('price cache', () => {
     const mod = await import('@/lib/kv') as Record<string, unknown>;
     (mod.__store as Map<string, unknown>).clear();
     vi.clearAllMocks();
+  });
+
+  it('requires a deterministic seed for TTL jitter', () => {
+    const seed = 'price:g1-d1:2026-06-01:2026-06-03:USD';
+    const first = jitteredTTL(3600, seed);
+
+    expect(jitteredTTL(3600, seed)).toBe(first);
+    expect(first).toBeGreaterThanOrEqual(3060);
+    expect(first).toBeLessThanOrEqual(4140);
+    expect(() => jitteredTTL(3600, '')).toThrow('TTL jitter seed is required');
   });
 
   it('uses the multi-provider registry for dated rates and adds freshness metadata', async () => {
