@@ -9,7 +9,7 @@ The app is locally healthy but not production-ready until real deployment config
 | Determinism and no-fabrication guardrails | 10/10 | `Math.random()` and unapproved UUID randomness are blocked; unavailable data is shown instead of generated claims. |
 | Local build/test health | 10/10 | Lint, unit/API tests, build, and E2E are expected release gates. |
 | Coverage depth | 8/10 | `npm run audit:coverage` now enforces a ratchet floor; current `lib` coverage is 92.24% lines and 78.46% branches. |
-| Security guardrails | 9/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, and no-store audits are wired. |
+| Security guardrails | 9/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, public API URL safety, and no-store audits are wired. |
 | Catalog quality | 7/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage. |
 | Provider coverage | 6/10 | Six pricing adapters exist, but production needs real configured partner credentials beyond the no-auth baseline. |
 | Reviews and property content | 5/10 | APIs return explicit unavailable states until licensed provider data is configured. |
@@ -36,6 +36,7 @@ The app is locally healthy but not production-ready until real deployment config
 4. **Docs and drift prevention**
    - Keep `README.md`, `.env.example`, `PRODUCTION-RUNBOOK.md`, and this plan aligned with actual routes and scripts.
    - Run `npm run audit:docs` in CI so removed routes and stale architecture claims do not return.
+   - Keep `npm run audit:public-api-urls` and the Playwright runtime JSON scanner enabled so unsafe absolute URLs cannot return through public APIs.
 
 5. **Market readiness**
    - Promote only validated catalog candidates with real hotel keys and source provenance.

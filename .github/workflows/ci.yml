@@ -56,6 +56,9 @@ jobs:
       - name: External fetch audit
         run: npm run audit:external-fetches
 
+      - name: Public API URL safety audit
+        run: npm run audit:public-api-urls
+
       - name: Affiliate security audit
         run: npm run audit:affiliate-security
 

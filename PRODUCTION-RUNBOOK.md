@@ -52,6 +52,7 @@ npm run audit:env
 npm run audit:secrets
 npm run audit:runtime
 npm run audit:external-fetches
+npm run audit:public-api-urls
 npm run audit:affiliate-security
 npm run audit:security-responses
 npm run audit:api-errors
@@ -85,6 +86,7 @@ npm run release:state:strict
 `audit:production` prints variable names and configured/missing status only. It must never print secret values.
 `audit:production:strict` is the go-live blocker and must pass in the deployment environment.
 `release:state:strict` is the release hygiene blocker and must pass only after intended changes are staged/committed and generated artifacts are excluded.
+The public API URL safety E2E audit must stay enabled; it scans public JSON API responses for non-HTTPS, credentialed, localhost, private-network, `javascript:`, and `data:` URLs.
 
 ## Cron Verification
 

@@ -102,6 +102,7 @@ requireIncludes(readme, 'README.md', [
   'npm run audit:secrets',
   'npm run audit:runtime',
   'npm run audit:external-fetches',
+  'npm run audit:public-api-urls',
   'npm run audit:affiliate-security',
   'npm run audit:security-responses',
   'npm run audit:api-errors',
@@ -119,8 +120,8 @@ requireIncludes(masterPlan, 'MASTER-PLAN.md', [
 ]);
 
 requireIncludes(auditReport, 'AUDIT-REPORT.md', [
-  '163 test files, 816 tests passed',
-  '61 Playwright tests passed',
+  '164 test files, 818 tests passed',
+  '69 Playwright tests passed',
   'Go-live readiness',
   'Worktree is clean',
   'audit:release-deletions',
@@ -131,6 +132,7 @@ requireIncludes(packageRaw, 'package.json', [
   '"audit:secrets"',
   '"audit:runtime"',
   '"audit:external-fetches"',
+  '"audit:public-api-urls"',
   '"audit:affiliate-security"',
   '"audit:security-responses"',
   '"audit:api-errors"',
@@ -159,6 +161,7 @@ requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm run audit:secrets',
   'npm run audit:runtime',
   'npm run audit:external-fetches',
+  'npm run audit:public-api-urls',
   'npm run audit:affiliate-security',
   'npm run audit:security-responses',
   'npm run audit:api-errors',

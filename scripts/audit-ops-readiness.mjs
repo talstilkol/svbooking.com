@@ -39,6 +39,7 @@ for (const scriptName of [
   'audit:secrets',
   'audit:runtime',
   'audit:external-fetches',
+  'audit:public-api-urls',
   'audit:affiliate-security',
   'audit:security-responses',
   'audit:api-errors',
@@ -136,6 +137,7 @@ await requireFile('scripts/audit-env-contract.mjs');
 await requireFile('scripts/audit-secret-hygiene.mjs');
 await requireFile('scripts/audit-runtime-warnings.mjs');
 await requireFile('scripts/audit-external-fetches.mjs');
+await requireFile('scripts/audit-public-api-url-safety.mjs');
 await requireFile('scripts/audit-affiliate-security.mjs');
 await requireFile('scripts/audit-security-responses.mjs');
 await requireFile('scripts/audit-api-error-cache.mjs');
@@ -170,6 +172,7 @@ requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm run audit:secrets',
   'npm run audit:runtime',
   'npm run audit:external-fetches',
+  'npm run audit:public-api-urls',
   'npm run audit:affiliate-security',
   'npm run audit:security-responses',
   'npm run audit:api-errors',

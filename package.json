@@ -21,6 +21,7 @@
     "audit:secrets": "node scripts/audit-secret-hygiene.mjs",
     "audit:runtime": "node scripts/audit-runtime-warnings.mjs",
     "audit:external-fetches": "node scripts/audit-external-fetches.mjs",
+    "audit:public-api-urls": "node scripts/audit-public-api-url-safety.mjs",
     "audit:affiliate-security": "node scripts/audit-affiliate-security.mjs",
     "audit:security-responses": "node scripts/audit-security-responses.mjs",
     "audit:api-errors": "node scripts/audit-api-error-cache.mjs",

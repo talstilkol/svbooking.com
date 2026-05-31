@@ -20,11 +20,11 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 163 test files, 816 tests passed. |
+| `npm test` | PASS | 164 test files, 818 tests passed. |
 | `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 92.24% lines, 87.94% statements, 91.53% functions, and 78.46% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 92.2%, statements 87.9%, functions 91.5%, branches 78.45%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 727 static pages without the previous Edge-runtime static-generation warning. |
-| `npm run test:e2e` | PASS | 61 Playwright tests passed. |
+| `npm run test:e2e` | PASS | 69 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
 | `npm run audit:catalog` | PASS | Catalog audit passed: 502 hotels, 139 cities, 65 countries. |
 | `npm run audit:docs` | PASS | Documentation audit passed and verifies current catalog counts plus stale-claim blockers. |
@@ -32,6 +32,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | `npm run audit:secrets` | PASS | Secret hygiene audit keeps `.env.example` empty-valued, env files ignored, CI free of secret contexts, and package scripts free of production env assignments. |
 | `npm run audit:runtime` | PASS | Runtime warning audit blocks Edge Runtime reintroduction and Playwright color/env warning regressions. |
 | `npm run audit:external-fetches` | PASS | External fetch audit blocks direct `fetch("https://...")` calls, requires the shared timeout helper for network probes, covers Wikidata SPARQL hardening, and requires shared public-URL sanitization for content, provider-link, event-link, and enrichment helpers. |
+| `npm run audit:public-api-urls` | PASS | Public API URL safety audit keeps the runtime JSON URL scanner wired into package scripts, CI, README, and the production runbook. |
 | `npm run audit:affiliate-security` | PASS | Affiliate security audit blocks HTTP provider redirects and invalid URL tracking fallbacks. |
 | `npm run audit:security-responses` | PASS | Shared auth, validation, and rate-limit helpers must return no-store responses, expose retry metadata, use timing-safe admin token checks, and normalize client IPs before quota keys are built. |
 | `npm run audit:csrf` | PASS | CSRF audit now covers browser mutation routes, Fetch Metadata, Origin/Referer checks, and HTTP(S)-only origin normalization. |
@@ -128,6 +129,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Added shared public URL sanitization for returned content/provider links, rejected URL credentials, localhost/private destinations, CGNAT, benchmark ranges, IPv6 ULA/link-local, and IPv4-mapped IPv6, moved Wikipedia, Wikivoyage, DBpedia, OpenTripMap, and price-cache URL normalization onto the shared helper, and expanded `audit:external-fetches` to enforce it.
 - Hardened catalog candidate and dynamic catalog source URL handling so unsafe URLs are stripped before storage, cannot satisfy provenance checks, and cannot be promoted as catalog source links.
 - Moved cheaper-date provider links, Ticketmaster event links, and Wikidata enrichment website/image links onto the shared public URL helper so internal/private URLs cannot leak through public API responses.
+- Added a Playwright public API URL safety runtime audit for JSON responses and a CI-wired `npm run audit:public-api-urls` guard so unsafe absolute URLs cannot quietly return through public endpoints.
 - Removed remaining local hook-dependency suppressions in hotel detail and side-by-side compare flows, and replaced CLS `any` casts in the performance monitor with a typed layout-shift entry.
 - Localized the home search autocomplete labels and clear action through the existing dictionary.
 

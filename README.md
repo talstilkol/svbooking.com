@@ -134,6 +134,7 @@ npm run audit:env
 npm run audit:secrets
 npm run audit:runtime
 npm run audit:external-fetches
+npm run audit:public-api-urls
 npm run audit:affiliate-security
 npm run audit:security-responses
 npm run audit:api-errors
@@ -155,6 +156,7 @@ Run `npm run release:state:strict` after staging or committing intended changes;
 - IDs must be deterministic; use `lib/utils/hashId.ts` for content-derived IDs.
 - Direct product `localStorage` access is blocked outside the centralized storage helper.
 - External `fetch` calls must use the timeout helper and must degrade to unavailable states instead of invented data.
+- Public API JSON responses must not expose unsafe absolute URLs, including non-HTTPS, credentialed, localhost, private-network, `javascript:`, or `data:` URLs.
 - Outbound provider redirects must be HTTPS URLs on the provider allowlist; invalid URLs must fail closed.
 - Shared security responses must use `Cache-Control: no-store`; throttled responses must include retry metadata.
 - API error responses must use `Cache-Control: no-store`.
@@ -166,6 +168,7 @@ Run `npm run release:state:strict` after staging or committing intended changes;
 - `npm run release:state` summarizes staged, unstaged, deleted, untracked, and generated-artifact paths for release review.
 - `npm run audit:release-deletions` keeps removed no-fake-data legacy surfaces from returning.
 - `npm run audit:external-fetches` blocks direct external `fetch("https://...")` calls that bypass timeout handling and requires shared public-URL sanitization for content, provider-link, event-link, and enrichment helpers.
+- `npm run audit:public-api-urls` keeps the Playwright public API URL safety runtime audit wired into CI and release docs.
 - `npm run audit:affiliate-security` blocks unsafe outbound redirect and affiliate URL regressions.
 - `npm run audit:security-responses` blocks cacheable shared auth, validation, and rate-limit responses.
 - `npm run audit:api-errors` blocks cacheable API error responses.
