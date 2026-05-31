@@ -112,6 +112,28 @@ describe('Wikipedia content helpers', () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, false, 500)));
     await expect(getSummary('Paris')).rejects.toThrow('Wikipedia HTTP 500');
   });
+
+  it('drops unsafe Wikipedia media URLs and bounds search limits', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({
+        title: 'Unsafe Article',
+        thumbnail: { source: 'http://upload.wikimedia.org/unsafe-thumb.jpg' },
+        originalimage: { source: 'https://user:pass@upload.wikimedia.org/unsafe.jpg' },
+        content_urls: { desktop: { page: 'https://localhost/wiki/Unsafe_Article' } },
+      }))
+      .mockResolvedValueOnce(jsonResponse({ query: { search: [] } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getSummary, search } = await import('@/lib/wikipedia');
+
+    await expect(getSummary('Unsafe Article')).resolves.toMatchObject({
+      thumbnail: null,
+      originalImage: null,
+      url: null,
+    });
+    await expect(search('Paris', 999)).resolves.toEqual([]);
+    expect(new URL(String(fetchMock.mock.calls[1][0])).searchParams.get('srlimit')).toBe('20');
+  });
 });
 
 describe('OpenTripMap helpers', () => {

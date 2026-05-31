@@ -63,10 +63,53 @@ const validFiles = {
     "export async function discoverHotels() { return fetchWithTimeout('url', { cache: 'no-store' }); }",
     '',
   ].join('\n'),
+  'lib/wikipedia.js': [
+    "import { fetchWithTimeout } from './utils/fetch-with-timeout';",
+    "import { normalizeHttpsUrl } from './utils/public-url-safety';",
+    '',
+  ].join('\n'),
+  'lib/wikivoyage.js': [
+    "import { fetchWithTimeout } from './utils/fetch-with-timeout';",
+    "import { normalizeHttpsUrl } from './utils/public-url-safety';",
+    '',
+  ].join('\n'),
+  'lib/dbpedia.js': [
+    "import { fetchWithTimeout } from './utils/fetch-with-timeout';",
+    "import { normalizeHttpsUrl } from './utils/public-url-safety';",
+    '',
+  ].join('\n'),
+  'lib/opentripmap.js': [
+    "import { fetchWithTimeout } from './utils/fetch-with-timeout';",
+    "import { normalizeHttpsUrl } from './utils/public-url-safety';",
+    '',
+  ].join('\n'),
+  'lib/utils/public-url-safety.js': [
+    'function isPrivateHostname() {}',
+    'export function normalizeHttpsUrl(value) {',
+    "  if (url.protocol !== 'https:') return null;",
+    '  if (url.username || url.password) return null;',
+    '}',
+    '',
+  ].join('\n'),
   'tests/wikidata-client.test.ts': [
     "it('escapes country and city filters', () => { expect(AbortSignal).toBeTruthy(); });",
     "it('bounds unsafe discovery limits', () => {});",
     "it('deduplicates and escapes city label lookups', () => {});",
+    '',
+  ].join('\n'),
+  'tests/content-discovery-helpers.test.ts': [
+    "it('drops unsafe Wikipedia media URLs and bounds search limits', () => { expect('srlimit').toBeTruthy(); });",
+    '',
+  ].join('\n'),
+  'tests/discovery-source-hardening.test.ts': [
+    "it('drops unsafe travel guide media URLs', () => { expect('Unsafe Coordinate Hotel').toBeTruthy(); });",
+    '',
+  ].join('\n'),
+  'tests/public-url-safety.test.ts': [
+    "it('rejects unsafe public response links', () => {",
+    "  expect('https://localhost:3000/internal').toBeTruthy();",
+    "  expect('https://127.0.0.1/internal').toBeTruthy();",
+    '});',
     '',
   ].join('\n'),
   'package.json': JSON.stringify({

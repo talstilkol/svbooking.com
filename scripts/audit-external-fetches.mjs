@@ -88,7 +88,15 @@ const [
   healthMonitor,
   destinationIntel,
   wikidataClient,
+  wikipediaClient,
+  wikivoyageClient,
+  dbpediaClient,
+  opentripmapClient,
+  publicUrlSafety,
   wikidataTest,
+  contentDiscoveryTest,
+  discoverySourceHardeningTest,
+  publicUrlSafetyTest,
   packageRaw,
   ci,
   readme,
@@ -98,7 +106,15 @@ const [
   readProjectFile('app/api/agents/auto/health-monitor/route.js'),
   readProjectFile('app/api/destination-intel/route.js'),
   readProjectFile('lib/wikidata.js'),
+  readProjectFile('lib/wikipedia.js'),
+  readProjectFile('lib/wikivoyage.js'),
+  readProjectFile('lib/dbpedia.js'),
+  readProjectFile('lib/opentripmap.js'),
+  readProjectFile('lib/utils/public-url-safety.js'),
   readProjectFile('tests/wikidata-client.test.ts'),
+  readProjectFile('tests/content-discovery-helpers.test.ts'),
+  readProjectFile('tests/discovery-source-hardening.test.ts'),
+  readProjectFile('tests/public-url-safety.test.ts'),
   readProjectFile('package.json'),
   readProjectFile('.github/workflows/ci.yml'),
   readProjectFile('README.md'),
@@ -140,6 +156,41 @@ requireIncludes(wikidataTest, 'tests/wikidata-client.test.ts', [
   'bounds unsafe discovery limits',
   'deduplicates and escapes city label lookups',
   'AbortSignal',
+]);
+
+requireIncludes(publicUrlSafety, 'lib/utils/public-url-safety.js', [
+  'export function normalizeHttpsUrl',
+  "url.protocol !== 'https:'",
+  'url.username || url.password',
+  'isPrivateHostname',
+]);
+
+for (const [relativePath, source] of [
+  ['lib/wikipedia.js', wikipediaClient],
+  ['lib/wikivoyage.js', wikivoyageClient],
+  ['lib/dbpedia.js', dbpediaClient],
+  ['lib/opentripmap.js', opentripmapClient],
+]) {
+  requireIncludes(source, relativePath, [
+    'fetchWithTimeout',
+    'normalizeHttpsUrl',
+  ]);
+}
+
+requireIncludes(contentDiscoveryTest, 'tests/content-discovery-helpers.test.ts', [
+  'drops unsafe Wikipedia media URLs and bounds search limits',
+  'srlimit',
+]);
+
+requireIncludes(discoverySourceHardeningTest, 'tests/discovery-source-hardening.test.ts', [
+  'drops unsafe travel guide media URLs',
+  'Unsafe Coordinate Hotel',
+]);
+
+requireIncludes(publicUrlSafetyTest, 'tests/public-url-safety.test.ts', [
+  'rejects unsafe public response links',
+  'https://localhost:3000/internal',
+  'https://127.0.0.1/internal',
 ]);
 
 auditPackage(packageRaw);

@@ -270,29 +270,44 @@ describe('Wikidata discovery and DBpedia SPARQL hardening', () => {
   });
 
   it('escapes DBpedia city filters, bounds limits, and deduplicates named hotels', async () => {
-    const fetchMock = vi.fn(async () => jsonResponse({
-      results: {
-        bindings: [
-          {
-            hotel: { value: 'http://dbpedia.org/resource/Le_Meurice' },
-            name: { value: 'Le Meurice' },
-            abstract: { value: 'Le Meurice is a historic palace hotel in Paris.'.repeat(10) },
-            lat: { value: '48.865' },
-            lon: { value: '2.328' },
-            wikidata: { value: 'http://www.wikidata.org/entity/Q1585817' },
-          },
-          {
-            hotel: { value: 'http://dbpedia.org/resource/Le_Meurice' },
-            name: { value: 'Le Meurice' },
-          },
-        ],
-      },
-    }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({
+        results: {
+          bindings: [
+            {
+              hotel: { value: 'http://dbpedia.org/resource/Le_Meurice' },
+              name: { value: 'Le Meurice' },
+              abstract: { value: 'Le Meurice is a historic palace hotel in Paris.'.repeat(10) },
+              lat: { value: '48.865' },
+              lon: { value: '2.328' },
+              wikidata: { value: 'http://www.wikidata.org/entity/Q1585817' },
+            },
+            {
+              hotel: { value: 'http://dbpedia.org/resource/Le_Meurice' },
+              name: { value: 'Le Meurice' },
+            },
+          ],
+        },
+      }))
+      .mockResolvedValueOnce(jsonResponse({
+        results: {
+          bindings: [
+            {
+              name: { value: 'Unsafe Coordinate Hotel' },
+              lat: { value: '999' },
+              lon: { value: '-999' },
+              wikidata: { value: 'http://www.wikidata.org/entity/not-a-qid' },
+              locName: { value: 'Paris' },
+            },
+          ],
+        },
+      }));
     vi.stubGlobal('fetch', fetchMock);
     const { discoverHotelsDBpedia, getAllHotelsWithWikidata } = await import('@/lib/dbpedia');
 
     const hotels = await discoverHotelsDBpedia({ city: 'Paris" . ?evil ?p ?o', limit: 9999 });
-    await getAllHotelsWithWikidata(-5);
+    const allHotels = await getAllHotelsWithWikidata(-5);
     const discoveryQuery = capturedQuery(fetchMock, 0);
     const allHotelsQuery = capturedQuery(fetchMock, 1);
 
@@ -308,10 +323,37 @@ describe('Wikidata discovery and DBpedia SPARQL hardening', () => {
         wikidataId: 'Q1585817',
       }),
     ]);
+    expect(allHotels).toEqual([
+      {
+        name: 'Unsafe Coordinate Hotel',
+        lat: null,
+        lon: null,
+        wikidataId: null,
+        city: 'Paris',
+      },
+    ]);
   });
 });
 
 describe('Wikivoyage parser hardening', () => {
+  it('drops unsafe travel guide media URLs', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({
+      title: 'Paris',
+      extract: 'Paris travel guide.',
+      thumbnail: { source: 'http://upload.wikimedia.org/paris.jpg' },
+      content_urls: { desktop: { page: 'https://user:pass@en.wikivoyage.org/wiki/Paris' } },
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getTravelGuide } = await import('@/lib/wikivoyage');
+
+    await expect(getTravelGuide('Paris')).resolves.toEqual({
+      title: 'Paris',
+      extract: 'Paris travel guide.',
+      thumbnail: null,
+      url: null,
+    });
+  });
+
   it('returns only safety and health facts that are present in source sections', async () => {
     const fetchMock = vi.fn(async (input: string) => {
       const url = String(input);
