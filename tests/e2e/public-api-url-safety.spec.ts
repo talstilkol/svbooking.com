@@ -7,6 +7,9 @@ const PUBLIC_API_URL_CASES = [
   { label: 'search catalog', path: '/api/search?city=Paris', allowedStatuses: [200] },
   { label: 'catalog stats', path: '/api/catalog/stats', allowedStatuses: [200] },
   { label: 'events unavailable state', path: '/api/events?city=Paris&startDate=2026-07-01&endDate=2026-07-31', allowedStatuses: [200] },
+  { label: 'reviews unavailable state', path: '/api/reviews/g297930-d305178', allowedStatuses: [200] },
+  { label: 'property content unavailable state', path: '/api/property-content/g297930-d305178', allowedStatuses: [200] },
+  { label: 'price history unavailable state', path: '/api/price-history?hotelKey=g297930-d305178&period=30', allowedStatuses: [200] },
   { label: 'i18n payload', path: '/api/i18n?locale=he&date=2026-06-01&amount=120&currency=USD', allowedStatuses: [200] },
   { label: 'health readiness', path: '/api/health', allowedStatuses: [200, 503] },
 ];
