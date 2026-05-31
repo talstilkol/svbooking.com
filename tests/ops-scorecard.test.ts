@@ -237,6 +237,12 @@ describe('ops scorecard', () => {
         {
           hotelKey: 'unknown/unavailable',
           name: 'unknown/unavailable',
+          city: '   ',
+          image,
+        },
+        {
+          hotelKey: 'unknown/unavailable',
+          name: 'unknown/unavailable',
           city: 'Tel Aviv',
           image,
         },

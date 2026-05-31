@@ -588,6 +588,7 @@ describe('catalog candidate queue', () => {
         name: 'Unknown State Candidate',
         country: 'Spain',
         provenance: null,
+        validationFlags: [''],
       },
     ]);
 
@@ -625,6 +626,7 @@ describe('catalog candidate queue', () => {
       { value: 'missing-promotion-fields', count: 2 },
       { value: 'missing-provenance', count: 2 },
       { value: 'duplicate-fingerprint', count: 1 },
+      { value: 'unavailable', count: 1 },
     ]);
   });
 

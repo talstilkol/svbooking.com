@@ -34,7 +34,7 @@ describe('coverage audit script', () => {
       lines: { pct: 99.42 },
       statements: { pct: 98.92 },
       functions: { pct: 97.34 },
-      branches: { pct: 99.31 },
+      branches: { pct: 99.51 },
     });
 
     const result = runCoverageAudit(summaryPath);
@@ -68,6 +68,6 @@ describe('coverage audit script', () => {
     const result = runCoverageAudit(summaryPath);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain('branches coverage 97.99% is below the ratchet floor 99.3%');
+    expect(result.stderr).toContain('branches coverage 97.99% is below the ratchet floor 99.5%');
   });
 });
