@@ -272,6 +272,7 @@ describe('price alerts API', () => {
 
   it('indexes users and evaluates alerts from verified provider prices only', async () => {
     vi.stubEnv('ADMIN_API_SECRET', 'admin-test-secret');
+    vi.stubEnv('CRON_SECRET', 'cron-test-secret');
 
     await createAlert(new Request('http://localhost:3000/api/price-alerts', {
       method: 'POST',
@@ -286,7 +287,7 @@ describe('price alerts API', () => {
     }));
 
     const response = await evaluateAlerts(new Request('http://localhost:3000/api/price-alerts/evaluate', {
-      headers: { host: 'localhost:3000' },
+      headers: { Authorization: 'Bearer cron-test-secret', host: 'localhost:3000' },
     }));
     const body = await response!.json();
 
@@ -321,6 +322,7 @@ describe('price alerts API', () => {
 
   it('does not trigger alerts from stale or partial price data', async () => {
     vi.stubEnv('ADMIN_API_SECRET', 'admin-test-secret');
+    vi.stubEnv('CRON_SECRET', 'cron-test-secret');
     vi.mocked(getCachedRates).mockResolvedValueOnce({
       rates: [{
         provider: 'Cached Provider',
@@ -349,7 +351,7 @@ describe('price alerts API', () => {
     }));
 
     const response = await evaluateAlerts(new Request('http://localhost:3000/api/price-alerts/evaluate', {
-      headers: { host: 'localhost:3000' },
+      headers: { Authorization: 'Bearer cron-test-secret', host: 'localhost:3000' },
     }));
     const body = await response!.json();
 

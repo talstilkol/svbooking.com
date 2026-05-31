@@ -10,10 +10,16 @@ describe('verifyCronAuth', () => {
     vi.unstubAllEnvs();
   });
 
-  it('allows localhost cron calls only when no cron secret is configured', () => {
+  it('denies localhost cron calls when no cron secret is configured', async () => {
     vi.stubEnv('CRON_SECRET', '');
 
-    expect(verifyCronAuth(request({ host: 'localhost:3000' }))).toEqual({ authorized: true });
+    const auth = verifyCronAuth(request({ host: 'localhost:3000' }));
+    const body = await auth.response!.json();
+
+    expect(auth.authorized).toBe(false);
+    expect(auth.response!.status).toBe(403);
+    expect(auth.response!.headers.get('cache-control')).toBe('no-store');
+    expect(body.error).toBe('CRON_SECRET not configured');
   });
 
   it('denies non-local cron calls when cron secret is missing', async () => {

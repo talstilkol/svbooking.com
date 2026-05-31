@@ -167,12 +167,14 @@ describe('agent readiness metadata', () => {
     );
   });
 
-  it('verifies cron auth with localhost dev fallback and timing-safe bearer checks', async () => {
+  it('verifies cron auth fails closed without a secret and uses timing-safe bearer checks', async () => {
     vi.stubEnv('CRON_SECRET', '');
 
-    expect(verifyCronAuth(new Request('http://localhost:3000/api/cron', {
+    const localhostMissingSecret = verifyCronAuth(new Request('http://localhost:3000/api/cron', {
       headers: { host: 'localhost:3000' },
-    }))).toEqual({ authorized: true });
+    }));
+    expect(localhostMissingSecret.authorized).toBe(false);
+    expect(localhostMissingSecret.response?.status).toBe(403);
 
     const missingSecret = verifyCronAuth(new Request('https://svbooking.com/api/cron', {
       headers: { host: 'svbooking.com' },

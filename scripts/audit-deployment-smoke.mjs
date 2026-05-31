@@ -55,6 +55,11 @@ requireIncludes(runbook, 'PRODUCTION-RUNBOOK.md', [
 
 requireIncludes(smokeScript, 'scripts/deployment-smoke.mjs', [
   'SITE_URL',
+  'SMOKE_TIMEOUT_MS',
+  'AbortController',
+  'isLocalSite',
+  'expectedAdminGuardStatus',
+  'propertySections',
   '/api/health',
   '/api/catalog/stats',
   '/api/i18n?locale=en',
