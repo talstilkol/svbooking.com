@@ -31,10 +31,10 @@ function runCoverageAudit(summaryPath: string) {
 describe('coverage audit script', () => {
   it('passes when current coverage clears the ratchet floors', async () => {
     const summaryPath = await writeSummary({
-      lines: { pct: 93.09 },
-      statements: { pct: 89.34 },
-      functions: { pct: 92.38 },
-      branches: { pct: 81.31 },
+      lines: { pct: 93.25 },
+      statements: { pct: 89.87 },
+      functions: { pct: 92.66 },
+      branches: { pct: 82.25 },
     });
 
     const result = runCoverageAudit(summaryPath);
@@ -54,20 +54,20 @@ describe('coverage audit script', () => {
     const result = runCoverageAudit(summaryPath);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain('lines coverage 90.99% is below the ratchet floor 93.05%');
+    expect(result.stderr).toContain('lines coverage 90.99% is below the ratchet floor 93.2%');
   });
 
   it('fails when branch coverage regresses below its floor', async () => {
     const summaryPath = await writeSummary({
-      lines: { pct: 93.09 },
-      statements: { pct: 89.34 },
-      functions: { pct: 92.38 },
-      branches: { pct: 81.29 },
+      lines: { pct: 93.25 },
+      statements: { pct: 89.87 },
+      functions: { pct: 92.66 },
+      branches: { pct: 82.19 },
     });
 
     const result = runCoverageAudit(summaryPath);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain('branches coverage 81.29% is below the ratchet floor 81.3%');
+    expect(result.stderr).toContain('branches coverage 82.19% is below the ratchet floor 82.2%');
   });
 });

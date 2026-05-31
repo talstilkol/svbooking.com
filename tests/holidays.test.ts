@@ -32,6 +32,18 @@ describe('holiday provider normalization', () => {
     }]);
   });
 
+  it('requires a country code and defaults the year from the current clock', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2029-04-15T00:00:00Z'));
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify([]), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getPublicHolidays('', 2027)).rejects.toThrow('Country code is required');
+    await expect(getPublicHolidays('fr')).resolves.toEqual([]);
+
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/publicholidays/2029/FR');
+  });
+
   it('fails closed on empty upstream responses instead of treating missing data as no holidays', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 200 })));
 
@@ -44,10 +56,37 @@ describe('holiday provider normalization', () => {
     await expect(getPublicHolidays('US', 2027)).rejects.toThrow('invalid JSON');
   });
 
+  it('fails closed on provider HTTP errors and unexpected payload shapes', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('[]', { status: 503 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ date: '2027-01-01' }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getPublicHolidays('US', 2027)).rejects.toThrow('Holidays API HTTP 503');
+    await expect(getPublicHolidays('US', 2027)).rejects.toThrow('unexpected payload');
+  });
+
+  it('surfaces provider request timeouts as unavailable holiday data', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', vi.fn((_input: string, init?: RequestInit) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+    })));
+
+    const request = getPublicHolidays('US', 2027);
+    const assertion = expect(request).rejects.toThrow('Holidays request timed out');
+
+    await vi.advanceTimersByTimeAsync(8000);
+    await assertion;
+  });
+
   it('normalizes country names without requiring exact casing', () => {
     expect(countryToCode(' france ')).toBe('FR');
     expect(countryToCode('UNITED KINGDOM')).toBe('GB');
+    expect(countryToCode('uae')).toBe('AE');
+    expect(countryToCode('south korea')).toBe('KR');
     expect(countryToCode('unknown')).toBeNull();
+    expect(countryToCode(null)).toBeNull();
   });
 
   it('loads holidays across year boundaries and validates date ranges before upstream lookup', async () => {
@@ -65,6 +104,7 @@ describe('holiday provider normalization', () => {
       expect.objectContaining({ date: '2026-12-25' }),
       expect.objectContaining({ date: '2027-01-01' }),
     ]);
+    await expect(getHolidaysInRange('US', '2026/02/28', '2026-03-02')).rejects.toThrow('checkIn must be YYYY-MM-DD');
     await expect(getHolidaysInRange('US', '2026-02-30', '2026-03-02')).rejects.toThrow('checkIn must be a valid date');
     await expect(getHolidaysInRange('US', '2026-03-02', '2026-03-02')).rejects.toThrow('checkIn must be before checkOut');
     expect(fetchMock).toHaveBeenCalledTimes(2);

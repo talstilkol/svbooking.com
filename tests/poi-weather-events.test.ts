@@ -12,6 +12,7 @@ function jsonResponse(body: unknown, ok = true, status = 200) {
 describe('Overpass POI helpers', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it('discovers attractions and preserves zero coordinates from OSM elements', async () => {
@@ -37,6 +38,30 @@ describe('Overpass POI helpers', () => {
     expect(attractions).toHaveLength(2);
   });
 
+  it('maps attraction fallback types and kilometer distances from OSM tags', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({
+      elements: [
+        { id: 1, lat: 0.02, lon: 0, tags: { 'name:en': 'Old Quarter', historic: 'district' } },
+        { id: 2, lat: 0.01, lon: 0, tags: { name: 'Canal Walk', leisure: 'promenade', website: 'https://www.paris.fr/' } },
+        { id: 3, lat: 0.03, lon: 0, tags: { name: 'River Aquarium', tourism: 'aquarium' } },
+        { id: 4, lat: 0.04, lon: 0, tags: { name: 'Unclassified Landmark' } },
+        { id: 5, lat: 0.05, lon: 0, tags: { tourism: 'viewpoint' } },
+      ],
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { discoverAttractions } = await import('@/lib/overpass-pois');
+
+    const attractions = await discoverAttractions({ lat: 0, lon: 0, limit: 10 });
+
+    expect(attractions).toEqual([
+      expect.objectContaining({ name: 'Canal Walk', type: 'Promenade', icon: '🌳', distance: '1.1 km' }),
+      expect.objectContaining({ name: 'Old Quarter', type: 'Historic', icon: '🏛️', distance: '2.2 km' }),
+      expect.objectContaining({ name: 'River Aquarium', type: 'Aquarium', icon: '📍', distance: '3.3 km' }),
+      expect.objectContaining({ name: 'Unclassified Landmark', type: 'Place', icon: '📍', distance: '4.4 km' }),
+    ]);
+    expect(attractions[0].website).toBe('https://www.paris.fr/');
+  });
+
   it('discovers restaurants and maps cuisine labels deterministically', async () => {
     const fetchMock = vi.fn(async () => jsonResponse({
       elements: [
@@ -51,6 +76,75 @@ describe('Overpass POI helpers', () => {
 
     expect(restaurants.map((restaurant) => restaurant.cuisine)).toEqual(['French', 'Japanese']);
     expect(restaurants[0]).toMatchObject({ name: 'Epicure', phone: '+33123456789' });
+  });
+
+  it('keeps restaurant metadata when cuisine tags are missing', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({
+      elements: [
+        {
+          id: 1,
+          lat: 0,
+          lon: 0.01,
+          tags: {
+            'name:en': 'Riverside Kitchen',
+            'contact:phone': '+33111111111',
+            opening_hours: 'Mo-Fr 09:00-18:00',
+            stars: '4',
+            website: 'https://www.oetkercollection.com/hotels/le-bristol-paris/restaurants-bar/epicure/',
+          },
+        },
+        {
+          id: 2,
+          lat: 0,
+          lon: 0.02,
+          tags: { name: 'Riverside Kitchen', cuisine: 'thai' },
+        },
+        {
+          id: 3,
+          lat: 0,
+          lon: 0.03,
+          tags: {},
+        },
+      ],
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { discoverRestaurants } = await import('@/lib/overpass-pois');
+
+    const restaurants = await discoverRestaurants({ lat: 0, lon: 0, limit: 10 });
+
+    expect(restaurants).toEqual([
+      expect.objectContaining({
+        name: 'Riverside Kitchen',
+        cuisine: 'Restaurant',
+        icon: '🍽️',
+        phone: '+33111111111',
+        openingHours: 'Mo-Fr 09:00-18:00',
+        stars: 4,
+        website: 'https://www.oetkercollection.com/hotels/le-bristol-paris/restaurants-bar/epicure/',
+      }),
+    ]);
+  });
+
+  it('surfaces Overpass rate limits, HTTP errors, and request timeouts for discovery calls', async () => {
+    vi.stubGlobal('fetch', vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({}, false, 429))
+      .mockResolvedValueOnce(jsonResponse({}, false, 503)));
+    const { discoverAttractions, discoverRestaurants } = await import('@/lib/overpass-pois');
+
+    await expect(discoverAttractions({ lat: 0, lon: 0 })).rejects.toThrow('Overpass rate limited');
+    await expect(discoverRestaurants({ lat: 0, lon: 0 })).rejects.toThrow('Overpass HTTP 503');
+
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', vi.fn((_input: string, init?: RequestInit) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+    })));
+
+    const request = discoverAttractions({ lat: 0, lon: 0, timeoutMs: 20 });
+    const assertion = expect(request).rejects.toThrow('Overpass timeout');
+
+    await vi.advanceTimersByTimeAsync(20);
+    await assertion;
   });
 
   it('returns hotel amenities for valid zero coordinates and sanitizes hotel-name query text', async () => {
@@ -83,6 +177,19 @@ describe('Overpass POI helpers', () => {
       ],
       stars: 5,
     });
+  });
+
+  it('returns null when OSM hotel tags do not expose known amenities', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({
+      elements: [
+        { tags: { tourism: 'hotel', stars: '3' } },
+      ],
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getHotelAmenities } = await import('@/lib/overpass-pois');
+
+    await expect(getHotelAmenities({ lat: 48.8566, lon: 2.3522, hotelName: 'A' })).resolves.toBeNull();
+    await expect(getHotelAmenities({ lat: 48.8566, lon: 2.3522, hotelName: 'City Hotel' })).resolves.toBeNull();
   });
 
   it('returns null when hotel amenity inputs are unusable or Overpass fails', async () => {
