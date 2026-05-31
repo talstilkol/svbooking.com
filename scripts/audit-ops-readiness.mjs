@@ -92,6 +92,7 @@ await requireFile('.github/workflows/ci.yml');
 await requireFile('lib/admin-auth.js');
 await requireFile('lib/admin-audit.js');
 await requireFile('lib/health-readiness.js');
+await requireFile('lib/env-config.mjs');
 await requireFile('lib/production-readiness.mjs');
 await requireFile('lib/ops-scorecard.js');
 await requireFile('lib/competitor-parity.js');
@@ -425,7 +426,7 @@ requireIncludes(agentDashboard, 'components/AgentDashboard.tsx', [
 
 const pwaReadiness = await readProjectFile('lib/pwa-readiness.js');
 requireIncludes(pwaReadiness, 'lib/pwa-readiness.js', [
-  "import { isEnvConfigured } from './production-readiness.mjs';",
+  "import { isEnvConfigured } from './env-config.mjs';",
   'getPwaReadiness',
   'NEXT_PUBLIC_PUSH_PUBLIC_KEY',
   'PUSH_PRIVATE_KEY',
@@ -632,7 +633,7 @@ requireIncludes(priceAlertHistoryTest, 'tests/price-alerts.test.ts', [
 const priceAlertDelivery = await readProjectFile('lib/price-alert-delivery.js');
 requireIncludes(priceAlertDelivery, 'lib/price-alert-delivery.js', [
   "import { validWebhookUrl } from './webhook-url';",
-  "import { isEnvConfigured } from './production-readiness.mjs';",
+  "import { isEnvConfigured } from './env-config.mjs';",
   'PRICE_ALERT_WEBHOOK_URL',
   'PRICE_ALERT_WEBHOOK_SECRET',
   'userFingerprint',
@@ -696,29 +697,41 @@ requireIncludes(priceAlertsTest, 'tests/price-alerts.test.ts', [
   'Too many requests. Please try again later.',
 ]);
 
-const productionReadiness = await readProjectFile('lib/production-readiness.mjs');
-requireIncludes(productionReadiness, 'lib/production-readiness.mjs', [
-  'PRODUCTION_READINESS_STRICT',
+const envConfig = await readProjectFile('lib/env-config.mjs');
+requireIncludes(envConfig, 'lib/env-config.mjs', [
   'MIN_SECRET_ENV_LENGTH',
   'PLACEHOLDER_ENV_VALUES',
   'SENSITIVE_ENV_NAME_PATTERN',
   'URL_ENV_NAME_PATTERN',
   'STRICT_LAUNCH_ENV',
+  'getEnvConfigurationIssue',
+  'placeholder value is not allowed',
+  'must be an HTTPS URL without credentials',
+  'must be at least',
+  'ADMIN_API_SECRET',
+  'CRON_SECRET',
+  'UPSTASH_REDIS_REST_URL',
+  'UPSTASH_REDIS_REST_TOKEN',
+  'PRICE_ALERT_UNSUBSCRIBE_SECRET',
+  'OPS_ALERT_WEBHOOK_URL',
+  'OPS_ALERT_WEBHOOK_SECRET',
+  'NEXT_PUBLIC_PUSH_PUBLIC_KEY',
+  'PUSH_PRIVATE_KEY',
+  'REVIEWS_PROVIDER_NAME',
+  'REVIEWS_PROVIDER_LICENSED',
+  'GOOGLE_PLACES_API_KEY',
+]);
+
+const productionReadiness = await readProjectFile('lib/production-readiness.mjs');
+requireIncludes(productionReadiness, 'lib/production-readiness.mjs', [
+  'PRODUCTION_READINESS_STRICT',
   'launchServices',
   'Licensed review/property provider is not configured',
   'Price alert webhook delivery is not configured',
   'Ops alert webhook delivery is not configured',
   'Web push keys are not configured',
-  'getEnvConfigurationIssue',
-  'placeholder value is not allowed',
-  'must be an HTTPS URL without credentials',
-  'must be at least',
   'Invalid required env',
   'Invalid Kinde env',
-  'ADMIN_API_SECRET',
-  'CRON_SECRET',
-  'UPSTASH_REDIS_REST_URL',
-  'UPSTASH_REDIS_REST_TOKEN',
   'PRICE_ALERT_UNSUBSCRIBE_SECRET',
   'OPS_ALERT_WEBHOOK_URL',
   'OPS_ALERT_WEBHOOK_SECRET',

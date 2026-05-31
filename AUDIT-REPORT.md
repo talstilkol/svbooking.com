@@ -90,6 +90,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Aligned strict production readiness with catalog media quality so unresolved reused/unapproved catalog images block go-live instead of remaining only a warning.
 - Aligned strict production readiness with licensed review/provider env, price-alert delivery, ops-alert delivery, unsubscribe, and push-key requirements so launch services cannot silently remain unavailable.
 - Aligned runtime readiness checks for reviews, alert webhooks, unsubscribe tokens, and push keys with strict env validation so placeholder hosts, short secrets, unsupported review providers, and missing Google Places keys cannot produce configured states.
+- Extracted strict env validation into `lib/env-config.mjs` so runtime health, alerts, reviews, and PWA readiness can share the same validation contract without importing the full production-readiness/media gate.
 - Extracted production readiness env grouping into `lib/production-readiness.mjs` so the CLI audit, health snapshot, and ops scorecard share one contract.
 - Added `npm run audit:env` so readiness env names cannot drift across `.env.example`, README, runbook, package scripts, and CI.
 - Added `npm run audit:secrets` to block committed env values and accidental production env assignments in scripts or CI.

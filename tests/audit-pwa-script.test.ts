@@ -38,7 +38,7 @@ const validFiles = {
   'app/offline/page.tsx': 'export default function Offline() { return null; }\n',
   'components/ServiceWorkerRegistration.tsx': "if (process.env.NODE_ENV === 'production') navigator.serviceWorker.register('/sw.js');\n",
   'lib/pwa-readiness.js': [
-    "import { isEnvConfigured } from './production-readiness.mjs';",
+    "import { isEnvConfigured } from './env-config.mjs';",
     '',
     'export function getPwaReadiness() {',
     "  return { serviceWorker: { pushHandler: 'service-worker-handler-ready' }, offline: { livePrices: 'network-required' }, push: { requiresUserPermission: true }, env: ['NEXT_PUBLIC_PUSH_PUBLIC_KEY', 'PUSH_PRIVATE_KEY'] };",

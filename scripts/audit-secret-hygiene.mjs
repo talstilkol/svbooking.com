@@ -6,7 +6,7 @@ import {
   PARTNER_PROVIDER_GROUPS,
   REQUIRED_ENV,
   STRICT_LAUNCH_ENV,
-} from '../lib/production-readiness.mjs';
+} from '../lib/env-config.mjs';
 
 const root = process.cwd();
 const failures = [];

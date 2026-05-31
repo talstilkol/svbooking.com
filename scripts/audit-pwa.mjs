@@ -68,7 +68,7 @@ requireIncludes(registration, 'components/ServiceWorkerRegistration.tsx', [
 
 const readiness = await readProjectFile('lib/pwa-readiness.js');
 requireIncludes(readiness, 'lib/pwa-readiness.js', [
-  "import { isEnvConfigured } from './production-readiness.mjs';",
+  "import { isEnvConfigured } from './env-config.mjs';",
   'getPwaReadiness',
   'NEXT_PUBLIC_PUSH_PUBLIC_KEY',
   'PUSH_PRIVATE_KEY',

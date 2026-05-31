@@ -68,7 +68,7 @@ requireIncludes(alertsRoute, 'app/api/ops/alerts/route.js', [
 const alertDelivery = await readProjectFile('lib/ops-alert-delivery.js');
 requireIncludes(alertDelivery, 'lib/ops-alert-delivery.js', [
   "import { validWebhookUrl } from './webhook-url';",
-  "import { isEnvConfigured } from './production-readiness.mjs';",
+  "import { isEnvConfigured } from './env-config.mjs';",
   'OPS_ALERT_WEBHOOK_URL',
   'OPS_ALERT_WEBHOOK_SECRET',
   'deliverOpsAlertReport',

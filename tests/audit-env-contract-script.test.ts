@@ -9,7 +9,7 @@ import {
   PARTNER_PROVIDER_GROUPS,
   REQUIRED_ENV,
   STRICT_LAUNCH_ENV,
-} from '@/lib/production-readiness.mjs';
+} from '@/lib/env-config.mjs';
 
 const SCRIPT = path.join(process.cwd(), 'scripts/audit-env-contract.mjs');
 const partnerProviderEnv = [...new Set(PARTNER_PROVIDER_GROUPS.flatMap((provider) => provider.env))];

@@ -54,7 +54,7 @@ vi.mock('@/lib/ops-alert-delivery', () => ({
   isOpsAlertDeliveryConfigured: () => false,
 }));
 
-vi.mock('@/lib/production-readiness.mjs', () => ({
+vi.mock('@/lib/env-config.mjs', () => ({
   getConfiguredPartnerProviderIds: () => ['serpapi'],
   isEnvConfigured: (env: Record<string, string | undefined>, name: string) => Boolean(env[name]),
   isKindeConfigured: (env: Record<string, string | undefined>) => Boolean(
