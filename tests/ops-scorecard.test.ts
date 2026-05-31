@@ -161,8 +161,6 @@ describe('ops scorecard', () => {
     const mediaQuality = buildCatalogMediaQuality({
       hotels: [
         {
-          hotelKey: 'unknown/unavailable',
-          city: 'unknown/unavailable',
           image: '',
         },
         {
@@ -233,7 +231,7 @@ describe('ops scorecard', () => {
         {
           hotelKey: 'unknown/unavailable',
           name: 'unknown/unavailable',
-          city: '   ',
+          city: '',
           image,
         },
         {

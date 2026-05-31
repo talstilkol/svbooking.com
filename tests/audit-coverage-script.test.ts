@@ -33,8 +33,8 @@ describe('coverage audit script', () => {
     const summaryPath = await writeSummary({
       lines: { pct: 99.42 },
       statements: { pct: 98.92 },
-      functions: { pct: 97.24 },
-      branches: { pct: 99.11 },
+      functions: { pct: 97.34 },
+      branches: { pct: 99.31 },
     });
 
     const result = runCoverageAudit(summaryPath);
@@ -61,13 +61,13 @@ describe('coverage audit script', () => {
     const summaryPath = await writeSummary({
       lines: { pct: 99.42 },
       statements: { pct: 98.92 },
-      functions: { pct: 97.24 },
+      functions: { pct: 97.34 },
       branches: { pct: 97.99 },
     });
 
     const result = runCoverageAudit(summaryPath);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain('branches coverage 97.99% is below the ratchet floor 99.1%');
+    expect(result.stderr).toContain('branches coverage 97.99% is below the ratchet floor 99.3%');
   });
 });

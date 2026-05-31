@@ -27,6 +27,7 @@ describe('public URL safety helper', () => {
     expect(normalizeHttpsUrl('https://app.localhost/internal')).toBeNull();
     expect(normalizeHttpsUrl('https://./internal')).toBeNull();
     expect(normalizeHttpsUrl('https://public.example.com./path')).toBe('https://public.example.com./path');
+    expect(normalizeHttpsUrl('https://1.2.3.example/path')).toBe('https://1.2.3.example/path');
     expect(normalizeHttpsUrl('https://8.8.8.8/path')).toBe('https://8.8.8.8/path');
     expect(normalizeHttpsUrl('https://[::]/internal')).toBeNull();
     expect(normalizeHttpsUrl('https://[::1]/internal')).toBeNull();
