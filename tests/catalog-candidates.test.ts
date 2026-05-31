@@ -24,7 +24,7 @@ vi.mock('@/lib/hotels-catalog', () => ({
   addAndPersistHotel: vi.fn(async () => true),
 }));
 
-import { addAndPersistHotel } from '@/lib/hotels-catalog';
+import { addAndPersistHotel, findHotel } from '@/lib/hotels-catalog';
 import {
   approveCandidate,
   getCandidate,
@@ -68,6 +68,45 @@ describe('catalog candidate queue', () => {
     expect(candidates[0].provenance.sources).toContain('second-source');
     expect(candidates[0].missingProvenance).toBe(false);
     expect(candidates[0].missingLocation).toBe(false);
+  });
+
+  it('uses discovered city fallback, validates unknown statuses, and marks existing catalog duplicates', async () => {
+    vi.mocked(findHotel).mockReturnValueOnce({
+      hotelKey: 'g1-d20',
+      name: 'Le Meurice',
+      city: 'Paris',
+      country: 'France',
+    });
+
+    const queued = await upsertCandidate({
+      hotelKey: 'g1-d20',
+      name: '  Le   Meurice  ',
+      country: 'France',
+      status: 'not-a-status',
+      provenance: { url: 'https://www.wikidata.org/wiki/Q160937' },
+      externalIds: { osmId: 'relation/1', providerHotelId: '188728' },
+      lat: '48.865',
+      lon: '2.328',
+    }, {
+      status: 'stale',
+      source: 'wikidata',
+      discoveredForCity: 'Paris',
+    });
+
+    expect(queued.saved).toBe(true);
+    expect(queued.candidate).toMatchObject({
+      name: 'Le Meurice',
+      city: 'Paris',
+      source: 'wikidata',
+      status: 'stale',
+      duplicate: true,
+      missingProvenance: false,
+      missingLocation: false,
+      externalIds: {
+        osmId: 'relation/1',
+        providerHotelId: '188728',
+      },
+    });
   });
 
   it('requires complete fields before promotion to the catalog', async () => {
@@ -223,6 +262,54 @@ describe('catalog candidate queue', () => {
     expect(rejected.rejected).toBe(true);
     expect(rejected.candidate.status).toBe('rejected');
     expect(rejected.candidate.rejectionReason).toBe('duplicate');
+  });
+
+  it('keeps approved/rejected candidates locked when later discovery updates arrive', async () => {
+    const approvedQueued = await upsertCandidate({
+      hotelKey: 'g1-d61',
+      name: 'Approved Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'wikidata',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q61',
+      lat: 48.8566,
+      lon: 2.3522,
+    });
+    await approveCandidate(approvedQueued.candidate.id, { actor: 'admin-api-secret' });
+
+    const updatedApproved = await upsertCandidate({
+      hotelKey: 'g1-d61',
+      name: 'Approved Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'osm',
+      status: 'pending',
+      sourceUrl: 'https://www.openstreetmap.org/node/61',
+      lat: 48.8567,
+      lon: 2.3523,
+    });
+
+    expect(updatedApproved.candidate.status).toBe('approved');
+    expect(updatedApproved.candidate.provenance.sources).toEqual(expect.arrayContaining(['wikidata', 'osm']));
+
+    const rejectedQueued = await upsertCandidate({
+      hotelKey: 'g1-d62',
+      name: 'Rejected Candidate',
+      city: 'Paris',
+      country: 'France',
+      source: 'wikidata',
+      sourceUrl: 'https://www.wikidata.org/wiki/Q62',
+      lat: 48.8566,
+      lon: 2.3522,
+    });
+    await rejectCandidate(rejectedQueued.candidate.id, { actor: 'admin-api-secret', reason: 'duplicate' });
+    const approvedRejected = await approveCandidate(rejectedQueued.candidate.id, { actor: 'admin-api-secret' });
+
+    expect(approvedRejected).toMatchObject({
+      approved: false,
+      error: 'Rejected candidates cannot be approved',
+    });
+    expect(addAndPersistHotel).toHaveBeenCalledTimes(1);
   });
 
   it('skips incomplete batch candidates and returns null for missing IDs', async () => {

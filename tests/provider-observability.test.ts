@@ -127,6 +127,45 @@ describe('provider observability', () => {
     });
   });
 
+  it('falls back to unknown provider identity and caps retained event history', async () => {
+    const event = await recordProviderUptimeEvent({
+      providerId: '',
+      providerName: '',
+      operation: 'health-check',
+      ok: true,
+      latencyMs: 12.4,
+      checkedAt: '2026-05-14T10:00:00.000Z',
+    });
+
+    expect(event).toMatchObject({
+      providerId: 'unknown',
+      providerName: 'unknown',
+      latencyMs: 12,
+    });
+
+    store.set(PROVIDER_UPTIME_EVENTS_KEY, Array.from({ length: 1000 }, (_, index) => ({
+      providerId: 'xotelo',
+      providerName: 'Xotelo',
+      operation: `probe-${index}`,
+      ok: true,
+      latencyMs: index,
+      checkedAt: `2026-05-14T10:${String(index % 60).padStart(2, '0')}:00.000Z`,
+    })));
+
+    await recordProviderUptimeEvent({
+      providerId: 'serpapi',
+      providerName: 'SerpAPI',
+      operation: 'latest',
+      ok: false,
+      latencyMs: 500,
+      checkedAt: '2026-05-14T11:00:00.000Z',
+    });
+
+    const rawEvents = store.get(PROVIDER_UPTIME_EVENTS_KEY) as Array<Record<string, unknown>>;
+    expect(rawEvents).toHaveLength(1000);
+    expect(rawEvents[0]).toMatchObject({ providerId: 'serpapi', operation: 'latest' });
+  });
+
   it('limits metric windows without mutating stored provider history', async () => {
     await recordProviderUptimeEvent({
       providerId: 'xotelo',

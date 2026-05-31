@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { getReviewSummary, isReviewProviderConfigured } from '@/lib/reviews';
-import { normalizeGooglePlaces } from '@/lib/reviews/google-places';
+import { fetchGooglePlacesReviews, normalizeGooglePlaces } from '@/lib/reviews/google-places';
 import { HOTELS } from '@/lib/hotels-catalog';
 
 const SAMPLE_KEY = (HOTELS[0] as { hotelKey: string }).hotelKey;
@@ -45,6 +45,62 @@ describe('normalizeGooglePlaces', () => {
   it('handles missing fields safely', () => {
     expect(normalizeGooglePlaces({})).toEqual({ rating: null, count: null, reviews: [] });
     expect(normalizeGooglePlaces(null)).toEqual({ rating: null, count: null, reviews: [] });
+  });
+
+  it('normalizes invalid review fields without inventing author, rating, or dates', () => {
+    const out = normalizeGooglePlaces({
+      rating: 'not-rated',
+      user_ratings_total: 'not-counted',
+      reviews: [
+        {
+          text: 'Verified stay. '.repeat(80),
+          rating: 'not-a-number',
+          time: 'not-a-time',
+        },
+      ],
+    });
+
+    expect(out.rating).toBeNull();
+    expect(out.count).toBeNull();
+    expect(out.reviews).toEqual([
+      {
+        author: 'Anonymous',
+        rating: null,
+        text: 'Verified stay. '.repeat(80).slice(0, 600),
+        time: null,
+        relativeTime: null,
+      },
+    ]);
+  });
+});
+
+describe('fetchGooglePlacesReviews', () => {
+  it('fails closed when required configuration or hotel identity is missing', async () => {
+    await expect(fetchGooglePlacesReviews({ name: 'Le Meurice' }, { apiKey: '' }))
+      .rejects.toThrow('GOOGLE_PLACES_API_KEY is not configured');
+    await expect(fetchGooglePlacesReviews(null, { apiKey: 'key' }))
+      .rejects.toThrow('hotel name is required');
+  });
+
+  it('returns null when place details do not include a result object', async () => {
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ candidates: [{ place_id: 'PID' }] }) })
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
+
+    await expect(fetchGooglePlacesReviews(
+      { name: 'Le Meurice', city: 'Paris', country: 'France' },
+      { apiKey: 'key', fetchImpl: fetchImpl as unknown as typeof fetch }
+    )).resolves.toBeNull();
+    expect(String(fetchImpl.mock.calls[0][0])).toContain('Le%20Meurice%2C%20Paris%2C%20France');
+  });
+
+  it('throws on failed Google Places HTTP responses', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 429 });
+
+    await expect(fetchGooglePlacesReviews(
+      { name: 'Le Meurice', city: 'Paris', country: 'France' },
+      { apiKey: 'key', fetchImpl: fetchImpl as unknown as typeof fetch }
+    )).rejects.toThrow('HTTP 429');
   });
 });
 
@@ -96,5 +152,13 @@ describe('getReviewSummary', () => {
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
     expect(s).toMatchObject({ available: false });
+  });
+
+  it('keeps unknown licensed provider names unavailable', async () => {
+    const s = await getReviewSummary(SAMPLE_KEY, {
+      env: asEnv({ REVIEWS_PROVIDER_NAME: 'licensed-but-unsupported', REVIEWS_PROVIDER_LICENSED: 'true' }),
+    });
+
+    expect(s).toMatchObject({ available: false, source: null, verified: false });
   });
 });

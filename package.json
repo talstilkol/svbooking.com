@@ -15,7 +15,7 @@
     "release:state": "node scripts/release-state.mjs",
     "release:state:strict": "node scripts/release-state.mjs --strict",
     "audit:guardrails": "node scripts/audit-guardrails.mjs",
-    "audit:provenance": "node scripts/audit-provenance.mjs",
+    "audit:provenance": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-provenance.mjs",
     "audit:deployment-smoke": "node scripts/audit-deployment-smoke.mjs",
     "smoke:deployment": "node scripts/deployment-smoke.mjs",
     "audit:catalog": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-catalog.mjs",

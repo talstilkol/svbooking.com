@@ -94,6 +94,11 @@ describe('hotels-catalog', () => {
       hotels.forEach((h) => expect(h.country).toBe('France'));
     });
 
+    it('returns all hotels when country is empty', () => {
+      expect(getHotelsByCountry('')).toBe(HOTELS);
+      expect(getHotelsByCountry(undefined as unknown as string)).toBe(HOTELS);
+    });
+
     it('returns empty array for unknown country', () => {
       expect(getHotelsByCountry('Narnia')).toEqual([]);
     });
@@ -179,6 +184,18 @@ describe('hotels-catalog', () => {
       // Should find Paris hotels via fuzzy match
       expect(results.length).toBeGreaterThan(0);
     });
+
+    it('covers country matches, city typo matches, and non-fuzzy query boundaries', () => {
+      const france = searchHotels('France');
+      expect(france.length).toBeGreaterThan(0);
+      expect(france.some((hotel) => hotel.country === 'France')).toBe(true);
+
+      const tokyoTypo = searchHotels('Tokio');
+      expect(tokyoTypo.some((hotel) => hotel.city === 'Tokyo')).toBe(true);
+
+      expect(searchHotels('qx')).toEqual([]);
+      expect(searchHotels('query-that-is-too-long-for-fuzzy')).toEqual([]);
+    });
   });
 
   describe('addDiscoveredHotel', () => {
@@ -238,6 +255,46 @@ describe('hotels-catalog', () => {
       });
       expect(getHotelsByCity('Paris')).toContain(hotel);
       expect(getCatalogStats().discoveredHotels).toBe(before.discoveredHotels + 1);
+    });
+
+    it('indexes a verified discovered hotel for a new city without assigning an unmapped continent', () => {
+      const before = getCatalogStats();
+      const added = addDiscoveredHotel({
+        hotelKey: 'g609123-d497853',
+        name: 'Hotel Arctic',
+        city: 'Ilulissat',
+        country: 'Greenland',
+        stars: 4,
+        lat: 69.2198,
+        lon: -51.0986,
+        source: 'tripadvisor',
+        sourceUrl: 'https://www.tripadvisor.com/Hotel_Review-g609123-d497853-Reviews-Hotel_Arctic-Ilulissat_Qaasuitsup_Municipality.html',
+        externalIds: { tripadvisorLocationId: '609123', tripadvisorHotelId: '497853' },
+        provenance: {
+          source: 'tripadvisor',
+          sourceUrl: 'https://www.tripadvisor.com/Hotel_Review-g609123-d497853-Reviews-Hotel_Arctic-Ilulissat_Qaasuitsup_Municipality.html',
+        },
+      });
+
+      expect(added).toBe(true);
+      const hotel = findHotel('g609123-d497853');
+      expect(hotel).toMatchObject({
+        name: 'Hotel Arctic',
+        city: 'Ilulissat',
+        country: 'Greenland',
+        image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80',
+        discovered: true,
+      });
+      expect(getHotelsByCity('Ilulissat')).toContain(hotel);
+      expect(getHotelsByCountry('Greenland')).toContain(hotel);
+      expect(getHotelsByContinent('europe')).not.toContain(hotel);
+      expect(getCatalogStats()).toMatchObject({
+        totalHotels: before.totalHotels + 1,
+        discoveredHotels: before.discoveredHotels + 1,
+        cities: before.cities + 1,
+        countries: before.countries + 1,
+        continents: before.continents,
+      });
     });
   });
 });

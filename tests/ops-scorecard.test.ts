@@ -99,6 +99,48 @@ describe('ops scorecard', () => {
     expect(JSON.stringify(scorecard)).not.toContain('ops.svbooking.invalid');
   });
 
+  it('marks configured production, reviews, mobile alerts, and observability domains without global parity claims', () => {
+    const scorecard = buildOpsScorecard({
+      env: {
+        NODE_ENV: 'production',
+        ADMIN_API_SECRET: 'admin-secret-value',
+        CRON_SECRET: 'cron-secret-value',
+        UPSTASH_REDIS_REST_URL: 'https://redis.svbooking.com',
+        UPSTASH_REDIS_REST_TOKEN: 'svbooking-redis-token-scorecard-0001',
+        KINDE_CLIENT_ID: 'svbooking-kinde-client-id-0001',
+        KINDE_CLIENT_SECRET: 'svbooking-kinde-client-secret-0001',
+        KINDE_ISSUER_URL: 'https://auth.svbooking.com',
+        KINDE_SITE_URL: 'https://svbooking.com',
+        KINDE_POST_LOGOUT_REDIRECT_URL: 'https://svbooking.com',
+        KINDE_POST_LOGIN_REDIRECT_URL: 'https://svbooking.com/dashboard',
+        SERPAPI_KEY: 'svbooking-serpapi-key-scorecard-0001',
+        REVIEWS_PROVIDER_NAME: 'google-places',
+        REVIEWS_PROVIDER_LICENSED: 'true',
+        PRICE_ALERT_WEBHOOK_URL: 'https://alerts.svbooking.invalid/hook',
+        PRICE_ALERT_WEBHOOK_SECRET: 'price-alert-secret',
+        NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'push-public-key',
+        PUSH_PRIVATE_KEY: 'push-private-key',
+        OPS_ALERT_WEBHOOK_URL: 'https://ops.svbooking.invalid/hook',
+        OPS_ALERT_WEBHOOK_SECRET: 'ops-alert-secret',
+      } as unknown as NodeJS.ProcessEnv,
+      now: new Date('2026-05-14T12:00:00.000Z'),
+    });
+
+    const byId = new Map(scorecard.domains.map((domain) => [domain.id, domain]));
+
+    expect(byId.get('production-readiness')?.status).toBe('healthy');
+    expect(byId.get('reviews-and-property-content')?.status).toBe('partial');
+    expect(byId.get('reviews-and-property-content')?.blockers).toEqual([]);
+    expect(byId.get('mobile-retention')?.status).toBe('healthy');
+    expect(byId.get('observability')?.status).toBe('healthy');
+    expect(scorecard.productTruth.freeOnlyLaunchReady).toBe(true);
+    expect(scorecard.productTruth.globalParityReady).toBe(false);
+    expect(JSON.stringify(scorecard)).not.toContain('cron-secret-value');
+    expect(JSON.stringify(scorecard)).not.toContain('price-alert-secret');
+    expect(JSON.stringify(scorecard)).not.toContain('push-private-key');
+    expect(JSON.stringify(scorecard)).not.toContain('ops-alert-secret');
+  });
+
   it('protects the scorecard route with admin bearer auth and no-store caching', async () => {
     vi.stubEnv('ADMIN_API_SECRET', 'admin-scorecard-secret');
 

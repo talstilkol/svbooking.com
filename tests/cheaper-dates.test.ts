@@ -70,6 +70,31 @@ describe('cheaper date price intelligence', () => {
     ]);
   });
 
+  it('filters blocked sources, heatmap price sources, and normalizes negative taxes', () => {
+    const rates = getVerifiedRateObservations({
+      rates: [
+        { provider: 'Booking.com', rate: 100, tax: -20, currency: 'US', source: 'provider-registry' },
+        { provider: 'Expedia', total: 120, source: 'unknown' },
+        { provider: 'Agoda', total: 130, priceSource: 'heatmap', source: 'provider-registry' },
+        { provider: '', total: 140, source: 'provider-registry' },
+      ],
+      currency: 'not-a-currency',
+      source: 'provider-registry',
+    });
+
+    expect(rates).toEqual([
+      expect.objectContaining({
+        provider: 'Booking.com',
+        rate: 100,
+        tax: 0,
+        total: 100,
+        currency: 'USD',
+        source: 'provider-registry',
+      }),
+    ]);
+    expect(getVerifiedRateObservations(null)).toEqual([]);
+  });
+
   it('returns heatmap calendar entries as source observations, not booking offers', async () => {
     vi.mocked(getCachedHeatmap).mockResolvedValueOnce({
       data: [
@@ -222,6 +247,75 @@ describe('cheaper date price intelligence', () => {
     }
   });
 
+  it('returns unavailable immediately when the hotel key is missing', async () => {
+    const result = await findCheaperDates('', '2026-06-01', '2026-06-03');
+
+    expect(result).toMatchObject({
+      hasRealData: false,
+      method: 'unavailable',
+      availabilityReason: 'Missing hotel key for cheaper-date lookup',
+    });
+    expect(getCachedRates).not.toHaveBeenCalled();
+    expect(getCachedHeatmap).not.toHaveBeenCalled();
+  });
+
+  it('continues with heatmap observations when the original provider-rate lookup fails', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-01T00:00:00Z'));
+    vi.mocked(getCachedRates).mockRejectedValue(new Error('provider unavailable'));
+    vi.mocked(getCachedHeatmap).mockImplementation(async ({ checkOut }) => {
+      const target = new Date(`${checkOut}T00:00:00Z`);
+      target.setUTCDate(target.getUTCDate() - 2);
+      return { data: [{ date: target.toISOString().slice(0, 10), price: 100 }] };
+    });
+
+    const result = await findCheaperDates('g187147-d188732', '2026-06-10', '2026-06-12');
+
+    expect(result.originalPrice).toBeNull();
+    expect(result.hasRealData).toBe(true);
+    expect(result.method).toBe('heatmap-source-observations');
+    expect(result.cheapestOverall).toEqual(expect.objectContaining({
+      price: 200,
+      savings: 0,
+      savingsPct: 0,
+      bookingProvider: false,
+    }));
+  });
+
+  it('uses provider fallback batches even when some provider calls reject', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-01T00:00:00Z'));
+    vi.mocked(getCachedHeatmap).mockRejectedValue(new Error('heatmap unavailable'));
+    vi.mocked(getCachedRates).mockImplementation(async ({ checkIn }) => {
+      if (checkIn === '2026-06-10') {
+        return {
+          rates: [{ provider: 'Booking.com', total: 300, currency: 'USD', source: 'provider-registry' }],
+          source: 'provider-registry',
+        };
+      }
+      if (checkIn === '2026-06-07') {
+        throw new Error('candidate unavailable');
+      }
+      if (checkIn === '2026-06-08') {
+        return {
+          rates: [{ provider: 'Expedia', total: 250, currency: 'USD', source: 'provider-registry' }],
+          source: 'provider-registry',
+        };
+      }
+      return { rates: [], source: 'provider-registry' };
+    });
+
+    const result = await findCheaperDates('g187147-d188732', '2026-06-10', '2026-06-12');
+
+    expect(result.method).toBe('provider-rates-fallback');
+    expect(result.cheapestOverall).toEqual(expect.objectContaining({
+      checkIn: '2026-06-08',
+      price: 250,
+      provider: 'Expedia',
+      bookingProvider: true,
+    }));
+  });
+
   it('fails closed for invalid direct cheaper-date calls before provider access', async () => {
     const result = await findCheaperDates('g187147-d188732', '2026-02-30', '2026-06-03');
 
@@ -251,6 +345,12 @@ describe('cheaper date price intelligence', () => {
   });
 
   it('skips heatmap calendar provider access when direct input dates are invalid', async () => {
+    await expect(getHeatmapCalendar({
+      hotelKey: '',
+      checkOut: '2026-06-03',
+      today: '2026-06-01',
+    })).resolves.toEqual([]);
+
     await expect(getHeatmapCalendar({
       hotelKey: 'g187147-d188732',
       checkOut: '2026-02-30',
@@ -287,6 +387,27 @@ describe('cheaper date price intelligence', () => {
       today: '2026-06-01',
     })).resolves.toEqual([
       expect.objectContaining({ date: '2026-06-05', price: 230 }),
+    ]);
+  });
+
+  it('accepts heatmap calendar rates payloads and rounds observed prices', async () => {
+    vi.mocked(getCachedHeatmap).mockResolvedValueOnce({
+      rates: [
+        { chk_in: '2026-06-05', min_rate: 230.126 },
+        { date: '2026-06-06', price: null },
+      ],
+    });
+
+    await expect(getHeatmapCalendar({
+      hotelKey: 'g187147-d188732',
+      checkOut: '2026-06-07',
+      today: '2026-06-01',
+    })).resolves.toEqual([
+      expect.objectContaining({
+        date: '2026-06-05',
+        price: 230.13,
+        bookingProvider: false,
+      }),
     ]);
   });
 });

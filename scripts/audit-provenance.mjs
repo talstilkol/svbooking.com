@@ -1,8 +1,22 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { HOTELS } from '../lib/hotels-catalog.js';
 
 const root = process.cwd();
 const failures = [];
+const HOTEL_KEY_PATTERN = /^g\d+-d\d+$/;
+const ALLOWED_STATIC_IMAGE_HOSTS = new Set(['images.unsplash.com']);
+const BLOCKED_CATALOG_TEXT_VALUES = new Set([
+  'demo',
+  'example',
+  'fake',
+  'placeholder',
+  'sample',
+  'test',
+  'tbd',
+  'unknown',
+  'unverified',
+]);
 
 function fail(message) {
   failures.push(message);
@@ -22,6 +36,52 @@ function requireIncludes(source, relativePath, snippets) {
     if (!source.includes(snippet)) {
       fail(`${relativePath} is missing provenance guard: ${snippet}`);
     }
+  }
+}
+
+function normalized(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function validateCatalogText(hotel, field) {
+  const value = hotel[field];
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    fail(`${hotel.hotelKey || 'missing-key'} lacks static catalog ${field} provenance`);
+    return;
+  }
+
+  if (BLOCKED_CATALOG_TEXT_VALUES.has(normalized(value))) {
+    fail(`${hotel.hotelKey} uses blocked catalog ${field} value: ${value}`);
+  }
+}
+
+function validateStaticCatalogItemProvenance(hotel) {
+  validateCatalogText(hotel, 'hotelKey');
+  validateCatalogText(hotel, 'name');
+  validateCatalogText(hotel, 'city');
+  validateCatalogText(hotel, 'country');
+  validateCatalogText(hotel, 'image');
+
+  if (!HOTEL_KEY_PATTERN.test(String(hotel.hotelKey || ''))) {
+    fail(`${hotel.hotelKey || 'missing-key'} is not a TripAdvisor/Xotelo source key`);
+  }
+
+  let imageUrl;
+  try {
+    imageUrl = new URL(hotel.image);
+  } catch {
+    fail(`${hotel.hotelKey || 'missing-key'} image source is not a valid URL`);
+    return;
+  }
+
+  if (imageUrl.protocol !== 'https:') {
+    fail(`${hotel.hotelKey} image source must be HTTPS`);
+  }
+  if (!ALLOWED_STATIC_IMAGE_HOSTS.has(imageUrl.hostname)) {
+    fail(`${hotel.hotelKey} image source host is not allowlisted: ${imageUrl.hostname}`);
+  }
+  if (!imageUrl.searchParams.has('w') || !imageUrl.searchParams.has('q')) {
+    fail(`${hotel.hotelKey} image source must include explicit width and quality parameters`);
   }
 }
 
@@ -102,6 +162,19 @@ requireIncludes(publicUrlSafety, 'lib/utils/public-url-safety.js', [
   'url.username || url.password',
   'isPrivateHostname',
 ]);
+
+if (!Array.isArray(HOTELS) || HOTELS.length === 0) {
+  fail('Static catalog provenance cannot be audited because HOTELS is empty');
+} else {
+  const seenKeys = new Set();
+  for (const hotel of HOTELS) {
+    validateStaticCatalogItemProvenance(hotel);
+    if (seenKeys.has(hotel.hotelKey)) {
+      fail(`Static catalog provenance has duplicate hotel key: ${hotel.hotelKey}`);
+    }
+    seenKeys.add(hotel.hotelKey);
+  }
+}
 
 if (failures.length > 0) {
   console.error('Provenance audit failures:');

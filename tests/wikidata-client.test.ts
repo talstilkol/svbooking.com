@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { discoverHotels, getCityGeoIds } from '@/lib/wikidata';
+import { countAvailableHotels, discoverHotels, getCityGeoIds } from '@/lib/wikidata';
 
 function stubWikidata(payload: unknown) {
   const fetchMock = vi.fn(async () => new Response(JSON.stringify(payload), {
@@ -96,5 +96,89 @@ describe('Wikidata client hardening', () => {
     expect(query.match(/"Paris"@en/g)).toHaveLength(1);
     expect(query).toContain('"Tel \\"Aviv"@en');
     expect(result).toEqual({ Paris: '187147' });
+  });
+
+  it('skips malformed discovery rows, deduplicates hotel keys, and normalizes Wikidata city labels', async () => {
+    stubWikidata({
+      results: {
+        bindings: [
+          {
+            hotelLabel: { value: 'Le Meurice' },
+            tripAdvisorId: { value: '188728' },
+            adminAreaLabel: { value: '8th arrondissement of Paris' },
+            cityTAId: { value: '187147' },
+            countryLabel: { value: 'France' },
+          },
+          {
+            hotelLabel: { value: 'Duplicate Le Meurice' },
+            tripAdvisorId: { value: '188728' },
+            adminAreaLabel: { value: 'Paris' },
+            cityTAId: { value: '187147' },
+            countryLabel: { value: 'France' },
+          },
+          {
+            hotelLabel: { value: 'The Ritz London' },
+            tripAdvisorId: { value: '187591' },
+            adminAreaLabel: { value: 'City of London' },
+            cityTAId: { value: '186338' },
+            countryLabel: { value: 'United Kingdom' },
+            coord: { value: 'not-a-point' },
+          },
+          {
+            hotelLabel: { value: 'Wythe Hotel' },
+            tripAdvisorId: { value: '1152565' },
+            adminAreaLabel: { value: 'Borough of Brooklyn' },
+            cityTAId: { value: '60827' },
+            countryLabel: { value: 'USA' },
+          },
+          {
+            hotelLabel: { value: 'Missing Country' },
+            tripAdvisorId: { value: '1' },
+            adminAreaLabel: { value: 'Paris' },
+            cityTAId: { value: '187147' },
+          },
+          {
+            hotelLabel: { value: 'Missing City Key' },
+            tripAdvisorId: { value: '2' },
+            adminAreaLabel: { value: 'Paris' },
+            countryLabel: { value: 'France' },
+          },
+        ],
+      },
+    });
+
+    const hotels = await discoverHotels({ limit: 20 });
+
+    expect(hotels.map((hotel) => hotel.hotelKey)).toEqual([
+      'g187147-d188728',
+      'g186338-d187591',
+      'g60827-d1152565',
+    ]);
+    expect(hotels.map((hotel) => hotel.city)).toEqual(['Paris', 'London', 'Brooklyn']);
+    expect(hotels[1]).toMatchObject({ lat: null, lon: null });
+  });
+
+  it('handles empty city lookups and missing count bindings without provider fallbacks', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(getCityGeoIds([])).resolves.toEqual({});
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ results: { bindings: [] } }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }));
+
+    await expect(countAvailableHotels()).resolves.toBe(0);
+  });
+
+  it('surfaces failed Wikidata SPARQL responses instead of masking them', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('unavailable', {
+      status: 503,
+      statusText: 'Unavailable',
+    })));
+
+    await expect(countAvailableHotels()).rejects.toThrow('Wikidata SPARQL 503: Unavailable');
   });
 });

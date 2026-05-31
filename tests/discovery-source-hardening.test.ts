@@ -404,6 +404,75 @@ describe('Wikidata enrichment hardening', () => {
       cityName: 'Paris France',
     });
   });
+
+  it('does not call Wikidata when enrichment or resolve inputs have no valid identifiers', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { enrichFromWikidata, resolveWikidataToTripAdvisor, buildBookingUrl } = await import('@/lib/wikidata-enrich');
+
+    await expect(enrichFromWikidata(['abc', 'P31', 'bad-id'])).resolves.toEqual(new Map());
+    await expect(resolveWikidataToTripAdvisor(['P31', 'not-a-qid', 'Qbad'])).resolves.toEqual(new Map());
+    expect(buildBookingUrl('', '2026-06-01', '2026-06-03')).toBeNull();
+    expect(buildBookingUrl('fr//hotel-paris', '2026-06-01', '2026-06-03')).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('returns empty enrichment maps when Wikidata requests fail', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ error: 'unavailable' }, false, 503)));
+    const { enrichFromWikidata, resolveWikidataToTripAdvisor } = await import('@/lib/wikidata-enrich');
+
+    await expect(enrichFromWikidata(['188728'])).resolves.toEqual(new Map());
+    await expect(resolveWikidataToTripAdvisor(['Q19675'])).resolves.toEqual(new Map());
+    expect(consoleSpy).toHaveBeenCalledWith('Wikidata enrichment unavailable');
+    expect(consoleSpy).toHaveBeenCalledWith('Wikidata resolve unavailable');
+    consoleSpy.mockRestore();
+  });
+
+  it('chunks large Wikidata enrichment and resolve requests deterministically', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({
+        results: {
+          bindings: [
+            { taId: { value: '1000' }, bookingId: { value: 'fr/le-meurice' } },
+          ],
+        },
+      }))
+      .mockResolvedValueOnce(jsonResponse({ results: { bindings: [] } }))
+      .mockResolvedValueOnce(jsonResponse({
+        results: {
+          bindings: [
+            {
+              item: { value: 'http://www.wikidata.org/entity/Q1000' },
+              taId: { value: '188728' },
+            },
+          ],
+        },
+      }))
+      .mockResolvedValueOnce(jsonResponse({ results: { bindings: [] } }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { enrichFromWikidata, resolveWikidataToTripAdvisor } = await import('@/lib/wikidata-enrich');
+
+    const enrichmentPromise = enrichFromWikidata(Array.from({ length: 41 }, (_, index) => String(1000 + index)));
+    await vi.runAllTimersAsync();
+    await expect(enrichmentPromise).resolves.toEqual(new Map([
+      ['1000', { bookingSlug: 'fr/le-meurice' }],
+    ]));
+
+    const resolvePromise = resolveWikidataToTripAdvisor(Array.from({ length: 51 }, (_, index) => `Q${1000 + index}`));
+    await vi.runAllTimersAsync();
+    await expect(resolvePromise).resolves.toEqual(new Map([
+      ['Q1000', { tripAdvisorId: '188728', cityTripAdvisorId: null, cityName: null }],
+    ]));
+
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(capturedQuery(fetchMock, 0).match(/"\d+"/g)).toHaveLength(40);
+    expect(capturedQuery(fetchMock, 1).match(/"\d+"/g)).toHaveLength(1);
+    expect(capturedQuery(fetchMock, 2).match(/wd:Q\d+/g)).toHaveLength(50);
+    expect(capturedQuery(fetchMock, 3).match(/wd:Q\d+/g)).toHaveLength(1);
+  });
 });
 
 describe('Wikidata discovery and DBpedia SPARQL hardening', () => {
