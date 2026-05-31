@@ -12,6 +12,8 @@ vi.mock('@/lib/hotels-catalog', () => ({
   addAndPersistHotel: vi.fn(() => true),
   findHotel: vi.fn(() => null),
   getCatalogStats: vi.fn(() => ({ total: 133 })),
+  listCities: vi.fn(() => ['Paris']),
+  listCountries: vi.fn(() => ['France']),
 }));
 
 vi.mock('@/lib/kv', () => {

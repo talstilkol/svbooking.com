@@ -61,6 +61,7 @@ requireIncludes(smokeScript, 'scripts/deployment-smoke.mjs', [
   '/api/reviews/g187147-d188728',
   '/api/property-content/g187147-d188728',
   '/api/ops/scorecard',
+  '/api/agents/providers/coverage',
   '/api/agents/auto/orchestrate',
   'SMOKE_RUN_CRON',
 ]);

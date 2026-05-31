@@ -31,7 +31,17 @@ requireIncludes(providerRoute, 'app/api/agents/providers/route.js', [
   'no-store',
   'resetProvider',
   'getProviderUptimeMetrics',
+  'getProviderCoverageMatrix',
   'uptimeSuccessRatePct',
+  'coverageObservationCount',
+]);
+
+const providerCoverageRoute = await readProjectFile('app/api/agents/providers/coverage/route.js');
+requireIncludes(providerCoverageRoute, 'app/api/agents/providers/coverage/route.js', [
+  'verifyAdminAuth',
+  'getProviderCoverageMatrix',
+  'Cache-Control',
+  'no-store',
 ]);
 
 const providerUptimeRoute = await readProjectFile('app/api/agents/providers/uptime/route.js');
@@ -50,6 +60,17 @@ requireIncludes(providerObservability, 'lib/provider-observability.js', [
   'RETENTION_SECONDS.providerUptimeEvents',
   'rawErrorStorage',
   'not-allowed',
+]);
+
+const providerCoverage = await readProjectFile('lib/provider-coverage.js');
+requireIncludes(providerCoverage, 'lib/provider-coverage.js', [
+  'verified-provider-observations-only',
+  'price:observations:',
+  'findHotel',
+  'byProvider',
+  'byCountry',
+  'byCity',
+  'insufficient-data',
 ]);
 
 const priceCache = await readProjectFile('lib/price-cache.js');

@@ -1,6 +1,7 @@
 import { getProviderStatus, resetProvider } from '@/lib/providers/index';
 import { verifyAdminAuth } from '@/lib/admin-auth';
 import { recordAdminAuditEvent } from '@/lib/admin-audit';
+import { getProviderCoverageMatrix } from '@/lib/provider-coverage';
 import { getProviderUptimeMetrics } from '@/lib/provider-observability';
 import { assertSameOrigin } from '@/lib/request-origin';
 import { errorResponse } from '@/lib/validation';
@@ -37,6 +38,7 @@ export async function GET(request) {
     const available = providers.filter((p) => p.available).length;
 
     const uptime = await getProviderUptimeMetrics({ limit: 200 });
+    const coverage = await getProviderCoverageMatrix({ days: 7 });
 
     return Response.json({
       summary: {
@@ -49,8 +51,13 @@ export async function GET(request) {
         uptimeStatus: uptime.status,
         uptimeEventCount: uptime.eventCount,
         uptimeSuccessRatePct: uptime.successRatePct,
+        coverageStatus: coverage.status,
+        coverageObservationCount: coverage.totalObservations,
+        coverageObservedCities: coverage.catalogScope.observedCities,
+        coverageObservedCountries: coverage.catalogScope.observedCountries,
       },
       uptime,
+      coverage,
       providers,
     }, { headers: NO_STORE_HEADERS });
   } catch (err) {

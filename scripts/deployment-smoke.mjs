@@ -70,10 +70,14 @@ if (property.body?.status !== 'unavailable' && property.body?.availability !== '
 }
 
 await expectStatus('admin scorecard unauthenticated guard', '/api/ops/scorecard', 401, {}, { noStore: true });
+await expectStatus('provider coverage unauthenticated guard', '/api/agents/providers/coverage', 401, {}, { noStore: true });
 await expectStatus('cron orchestrate unauthenticated guard', '/api/agents/auto/orchestrate', 401, {}, { noStore: true });
 
 if (adminSecret) {
   await expectStatus('admin scorecard authenticated smoke', '/api/ops/scorecard', 200, {
+    headers: { Authorization: `Bearer ${adminSecret}` },
+  }, { noStore: true });
+  await expectStatus('provider coverage authenticated smoke', '/api/agents/providers/coverage', 200, {
     headers: { Authorization: `Bearer ${adminSecret}` },
   }, { noStore: true });
 }

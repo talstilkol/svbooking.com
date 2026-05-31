@@ -203,6 +203,10 @@ User-owned alerts, favorites, trips, and preferences persist until user action o
 
 Use `/api/agents/providers/uptime` with admin bearer auth to inspect the provider uptime ledger. It returns no-store success rate, latency, latest status, and recent sanitized events from live provider attempts and health probes. Raw upstream errors and secret values must not be stored in this ledger.
 
+## Provider Coverage
+
+Use `/api/agents/providers/coverage` with admin bearer auth to inspect provider coverage by observation date, provider, city, and country. It is derived only from `price:observations:*` records and returns `insufficient-data` until verified provider observations exist. Do not present city/country/provider coverage claims in product copy unless this matrix has supporting observations for the relevant scope.
+
 ## Non-Negotiable Guardrails
 
 - Do not use `Math.random()`.

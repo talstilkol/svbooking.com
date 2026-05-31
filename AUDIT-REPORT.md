@@ -20,10 +20,10 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 165 test files, 887 tests passed. |
-| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 95.55% lines, 92.61% statements, 94.64% functions, and 85.03% branches. |
-| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 95.5%, statements 92.6%, functions 94.6%, branches 85%. |
-| `npm run build` | PASS | Next.js 16.2.6 compiled and generated 727 static pages without the previous Edge-runtime static-generation warning. |
+| `npm test` | PASS | 166 test files, 890 tests passed. |
+| `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 95.63% lines, 92.73% statements, 94.77% functions, and 85.08% branches. |
+| `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 95.6%, statements 92.7%, functions 94.7%, branches 85%. |
+| `npm run build` | PASS | Next.js 16.2.6 compiled and generated 728 static pages without the previous Edge-runtime static-generation warning. |
 | `npm run test:e2e` | PASS | 72 Playwright tests passed. |
 | `npm run audit:guardrails` | PASS | Forbidden randomness and unsupported product-claim guardrails passed. |
 | `npm run audit:catalog` | PASS | Catalog audit passed: 502 hotels, 139 cities, 65 countries. |
@@ -140,6 +140,7 @@ The remaining blockers are not code placeholders to fill in locally:
 - Raised branch coverage above 84% with agent status/history failure handling, i18n fallback formatting, ops-alert healthy-state coverage, and admin session allowlist normalization.
 - Raised branch coverage above 85% with browser storage hydration/cancellation, local storage string fallback hardening, currency server-safety, and catalog candidate review-state coverage.
 - Added provenance and deployment-smoke audits plus a `SITE_URL`-driven deployment smoke script for post-deploy verification without fake data.
+- Added provider coverage telemetry by observation date, provider, city, and country from verified `price:observations:*` records only; empty ledgers report `insufficient-data`.
 
 ## Residual Risks
 
@@ -148,7 +149,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Missing production secrets | High | Strict readiness fails locally. | Configure real admin, cron, Upstash, Kinde, and provider env in deployment. |
 | No complete partner pricing provider configured | High | Xotelo baseline may work, but production scale needs a complete partner provider env group. | Configure one approved provider group, such as `SERPAPI_KEY` or both Amadeus env values. |
 | Licensed reviews unavailable | High | App correctly shows unavailable review/property content. | Integrate a licensed review/property-content source before displaying review claims. |
-| Branch coverage next target | Medium | `lib` branch coverage is 85.03%. | Add focused tests for remaining Overpass discovery, OpenTripMap, Xotelo, Wikidata, provider registry, catalog-candidate edge branches, and alert delivery, then raise the coverage ratchet toward 88%. |
+| Branch coverage next target | Medium | `lib` branch coverage is 85.08%. | Add focused tests for remaining Overpass discovery, OpenTripMap, Xotelo, Wikidata, provider registry, catalog-candidate edge branches, and alert delivery, then raise the coverage ratchet toward 88%. |
 | Inventory scale | Medium | 502 hotels clears the local floor but is not market-scale. | Continue validated candidate ingestion and admin approval toward a much larger catalog. |
 | Reused catalog imagery | Low | `audit:catalog` passes but warns about reused Unsplash images across cities. | Replace reused media with licensed, city- or hotel-specific images as provenance is approved. |
 | Clean worktree discipline | Medium | Worktree is clean. | Keep `npm run release:state:strict` passing before release. |

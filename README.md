@@ -65,6 +65,7 @@ Admin or cron APIs:
 
 - `/api/agents/providers`
 - `/api/agents/providers/uptime`
+- `/api/agents/providers/coverage`
 - `/api/agents/discovered`
 - `/api/agents/audit`
 - `/api/agents/auto/*`
