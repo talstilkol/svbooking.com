@@ -331,7 +331,7 @@ function RecipeDetailPage({
           <a
             href={activeRecipe.sourceUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:border-slate-900"
           >
             מקור

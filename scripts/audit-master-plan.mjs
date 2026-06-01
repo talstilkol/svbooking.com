@@ -53,7 +53,7 @@ if (!packageJson?.scripts?.['audit:master-plan']) {
 requireIncludes(ci, '.github/workflows/ci.yml', ['npm run audit:master-plan']);
 requireIncludes(readme, 'README.md', ['npm run audit:master-plan']);
 requireIncludes(auditReport, 'AUDIT-REPORT.md', [
-  '181 test files, 1112 tests passed',
+  '183 test files, 1117 tests passed',
   'Master-plan honesty audit',
 ]);
 
@@ -61,7 +61,7 @@ requireIncludes(masterPlan, 'MASTER-PLAN.md', [
   '## Checked Backlog Re-Audit',
   '## Unfinished Launch Task Queue',
   'FAKED | None identified',
-  '181 files / 1112 tests passed',
+  '183 files / 1117 tests passed',
 ]);
 
 const checkedSection = extractSection(masterPlan, 'Checked Backlog Re-Audit');

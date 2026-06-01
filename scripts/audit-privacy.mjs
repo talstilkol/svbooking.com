@@ -146,6 +146,13 @@ requireIncludes(dataExport, 'components/DataExport.tsx', [
 
 const privacyPage = await readProjectFile('app/privacy/page.tsx');
 requireIncludes(privacyPage, 'app/privacy/page.tsx', [
+  'LegalDocument',
+  'privacyEn',
+  'privacyHe',
+]);
+
+const legalContent = await readProjectFile('lib/legal-content.ts');
+requireIncludes(legalContent, 'lib/legal-content.ts', [
   'May 14, 2026',
   '/api/me/data',
   '/api/data-retention',

@@ -36,6 +36,7 @@ function auditPackage(packageRaw) {
 const [
   privacyPage,
   termsPage,
+  legalContent,
   priceNotice,
   cookieConsent,
   affiliate,
@@ -48,6 +49,7 @@ const [
 ] = await Promise.all([
   readProjectFile('app/privacy/page.tsx'),
   readProjectFile('app/terms/page.tsx'),
+  readProjectFile('lib/legal-content.ts'),
   readProjectFile('components/PriceComparisonNotice.tsx'),
   readProjectFile('components/CookieConsent.tsx'),
   readProjectFile('lib/affiliate.ts'),
@@ -60,6 +62,18 @@ const [
 ]);
 
 requireIncludes(privacyPage, 'app/privacy/page.tsx', [
+  'LegalDocument',
+  'privacyEn',
+  'privacyHe',
+]);
+
+requireIncludes(termsPage, 'app/terms/page.tsx', [
+  'LegalDocument',
+  'termsEn',
+  'termsHe',
+]);
+
+requireIncludes(legalContent, 'lib/legal-content.ts', [
   'data minimization',
   'No payment card data',
   'browser storage',
@@ -69,12 +83,12 @@ requireIncludes(privacyPage, 'app/privacy/page.tsx', [
   'provider-returned hotel price comparison data',
 ]);
 
-requireIncludes(termsPage, 'app/terms/page.tsx', [
+requireIncludes(legalContent, 'lib/legal-content.ts', [
   'We do not process bookings directly',
   'provider-returned prices',
   'Always verify the final',
   'respective provider',
-  'provided &quot;as is&quot;',
+  'provided "as is"',
   'trademarks belong to their respective owners',
   'display it for comparison purposes',
 ]);

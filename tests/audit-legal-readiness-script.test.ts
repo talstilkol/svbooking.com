@@ -32,6 +32,16 @@ function runAudit(cwd: string) {
 
 const validFiles = {
   'app/privacy/page.tsx': [
+    'import LegalDocument from "@/components/LegalDocument";',
+    'import { privacyEn, privacyHe } from "@/lib/legal-content";',
+    'export default function PrivacyPage() { return <LegalDocument en={privacyEn} he={privacyHe} />; }',
+  ].join('\n'),
+  'app/terms/page.tsx': [
+    'import LegalDocument from "@/components/LegalDocument";',
+    'import { termsEn, termsHe } from "@/lib/legal-content";',
+    'export default function TermsPage() { return <LegalDocument en={termsEn} he={termsHe} />; }',
+  ].join('\n'),
+  'lib/legal-content.ts': [
     'SV Booking is built around data minimization.',
     'No payment card data is collected or processed by SV Booking.',
     'Local records may use browser storage.',
@@ -39,13 +49,11 @@ const validFiles = {
     'Operational logs use deterministic fingerprints.',
     'We do not use cookie data to invent reviews, prices, savings, or availability.',
     'provider-returned hotel price comparison data is fetched only from configured providers.',
-  ].join('\n'),
-  'app/terms/page.tsx': [
     'We do not process bookings directly.',
     'Current provider-returned prices may change.',
     'Always verify the final price on the booking provider website.',
     'Bookings are completed on the respective provider website.',
-    'SV Booking is provided &quot;as is&quot; without warranties.',
+    'SV Booking is provided "as is" without warranties.',
     'Hotel names, logos, and trademarks belong to their respective owners.',
     'Provider data is shown and display it for comparison purposes.',
   ].join('\n'),
