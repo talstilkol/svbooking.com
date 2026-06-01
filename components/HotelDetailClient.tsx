@@ -20,7 +20,12 @@ import ViewTracker from '@/components/ViewTracker';
 import HotelBadges from '@/components/HotelBadges';
 import PriceComparisonChart from '@/components/PriceComparisonChart';
 import { HotelOfferJsonLd } from '@/components/SchemaOrg';
+import { useLocale } from '@/components/LocaleProvider';
 import type { CatalogHotel, ProviderRate } from '@/lib/types';
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
 
 // Dynamic imports for below-the-fold components (reduces initial JS bundle)
 const PriceTrend = dynamic(() => import('@/components/PriceTrend'), { ssr: false });
@@ -127,6 +132,7 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
   const { addRecentlyViewed } = useRecentlyViewed();
   const { currency } = useCurrency();
   const { showToast } = useToast();
+  const { t } = useLocale();
 
   // Track recently viewed on mount
   useEffect(() => {
@@ -164,11 +170,11 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
       if (!res.ok) throw new Error('Price comparison unavailable');
       setData(json);
     } catch {
-      setError('Price comparison is unavailable right now.');
+      setError(t('compareUnavailableNow'));
     } finally {
       setLoading(false);
     }
-  }, [hotelKey, checkIn, checkOut, currency]);
+  }, [hotelKey, checkIn, checkOut, currency, t]);
 
   const handleRefresh = useCallback(async () => {
     if (!checkIn || !checkOut || refreshing) return;
@@ -261,14 +267,14 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
 
   const handleShare = async () => {
     const url = `${window.location.origin}/hotel/${hotelKey}`;
-    const text = `Check out ${displayHotel.name} in ${displayHotel.city} — compare prices from available providers`;
+    const text = interpolate(t('hdShareText'), { name: displayHotel.name, city: displayHotel.city });
     if (navigator.share) {
       try {
         await navigator.share({ title: displayHotel.name, text, url });
       } catch { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(url);
-      showToast('Link copied to clipboard!', 'success');
+      showToast(t('hdLinkCopied'), 'success');
     }
   };
 
@@ -327,7 +333,7 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
           onClick={() => router.back()}
           className="absolute top-4 left-4 flex items-center gap-2 bg-white/20 backdrop-blur text-white px-3 py-2 rounded-lg hover:bg-white/30 transition text-sm font-medium"
         >
-          &larr; Back
+          &larr; {t('hdBack')}
         </button>
 
         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
@@ -344,15 +350,15 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={handleShare}
-                aria-label="Share this hotel"
+                aria-label={t('hdShareAria')}
                 className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center hover:scale-110 transition"
               >
                 <span className="text-xl">&#128279;</span>
               </button>
               {hydrated && (
                 <button
-                  onClick={() => { toggleFavorite(displayHotel); showToast(fav ? `Removed ${displayHotel.name} from favorites` : `Added ${displayHotel.name} to favorites`, 'success'); }}
-                  aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
+                  onClick={() => { toggleFavorite(displayHotel); showToast(interpolate(fav ? t('hdFavRemovedToast') : t('hdFavAddedToast'), { name: displayHotel.name }), 'success'); }}
+                  aria-label={fav ? t('hdFavRemoveAria') : t('hdFavAddAria')}
                   className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center hover:scale-110 transition"
                 >
                   <span className={`text-2xl ${fav ? 'text-red-400' : 'text-white/70'}`}>
@@ -376,8 +382,8 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
         {/* Breadcrumb */}
         <Breadcrumb
           items={[
-            { label: 'Home', href: '/' },
-            { label: 'Search', href: '/search' },
+            { label: t('compareHome'), href: '/' },
+            { label: t('navSearch'), href: '/search' },
             { label: displayHotel.city, href: `/search?city=${encodeURIComponent(displayHotel.city)}` },
             { label: displayHotel.name },
           ]}
@@ -395,13 +401,13 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
           className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8"
         >
           <h2 className="text-lg font-semibold text-slate-800 mb-4">
-            {searched ? 'Change dates' : 'Check availability & prices'}
+            {searched ? t('hdChangeDates') : t('hdCheckAvailability')}
           </h2>
           <ProviderLogos className="mb-4" />
           <div className="flex flex-wrap gap-4 items-end">
             <div className="flex-1 min-w-[140px]">
               <label htmlFor="hotel-checkin" className="block text-sm font-medium text-slate-600 mb-1">
-                Check-in
+                {t('compareCheckIn')}
               </label>
               <input
                 id="hotel-checkin"
@@ -421,7 +427,7 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
             </div>
             <div className="flex-1 min-w-[140px]">
               <label htmlFor="hotel-checkout" className="block text-sm font-medium text-slate-600 mb-1">
-                Check-out
+                {t('compareCheckOut')}
               </label>
               <input
                 id="hotel-checkout"
@@ -437,7 +443,7 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
               disabled={loading || !checkIn || !checkOut}
               className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-semibold transition"
             >
-              {loading ? 'Loading…' : 'Compare prices'}
+              {loading ? t('hdLoading') : t('comparePrices')}
             </button>
           </div>
         </form>
@@ -461,7 +467,7 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
-            <strong>Error:</strong> {error}
+            <strong>{t('compareErrorPrefix')}</strong> {error}
           </div>
         )}
 
@@ -488,10 +494,10 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
             {data.freshness === 'estimated' && (
               <span
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5"
-                title={data.estimatedFromDates ? `Based on prices for ${data.estimatedFromDates.checkIn} to ${data.estimatedFromDates.checkOut}` : 'Estimated from nearby dates'}
+                title={data.estimatedFromDates ? interpolate(t('hdEstimatedFrom'), { from: data.estimatedFromDates.checkIn, to: data.estimatedFromDates.checkOut }) : t('hdEstimatedNearby')}
               >
                 <span>~</span>
-                Estimated prices — updating live
+                {t('hdEstimatedLive')}
               </span>
             )}
             {(data.freshness === 'stale' || data.freshness === 'estimated') && (
@@ -499,14 +505,14 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
                 onClick={handleRefresh}
                 disabled={refreshing}
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg px-3 py-1.5 transition disabled:opacity-50"
-                title="Refresh provider prices"
+                title={t('hdRefreshTitle')}
               >
                 {refreshing ? (
                   <span className="inline-block w-3 h-3 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <span>↻</span>
                 )}
-                {refreshing ? 'Refreshing...' : 'Refresh prices'}
+                {refreshing ? t('chRefreshing') : t('compareRefresh')}
               </button>
             )}
           </div>
@@ -521,10 +527,10 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
                 <span className="text-2xl">&#128176;</span>
                 <div>
                   <p className="font-semibold text-green-800">
-                    Returned-provider difference: {data.savingsPct}% ({data.currency} {data.savingsAmount.toFixed(0)})
+                    {interpolate(t('hdSavings'), { pct: data.savingsPct, currency: data.currency, amount: data.savingsAmount.toFixed(0) })}
                   </p>
                   <p className="text-green-700 text-sm">
-                    between the lowest and highest returned provider totals for {nights} night{nights !== 1 ? 's' : ''}
+                    {interpolate(t('hdSavingsDesc'), { nights, nightWord: nights === 1 ? t('hdNight') : t('hdNights') })}
                   </p>
                 </div>
               </div>
@@ -539,10 +545,10 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
                 const isCheapest = rate.provider === data.cheapest?.provider;
                 const colorClass = PROVIDER_COLORS[rate.provider] || 'bg-slate-100 text-slate-700';
                 const taxLabel = rate.taxesIncluded === true
-                  ? 'taxes included'
+                  ? t('hdTaxIncluded')
                   : rate.taxesIncluded === false
-                    ? 'taxes may be excluded'
-                    : 'tax status unavailable';
+                    ? t('hdTaxExcluded')
+                    : t('hdTaxUnknown');
                 return (
                   <div
                     key={`${rate.provider}-${rate.code || idx}`}
@@ -552,7 +558,7 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
                   >
                     {isCheapest && (
                       <span className="absolute -mt-10 text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full border border-green-300">
-                        Lowest returned price
+                        {t('chLowestPrice')}
                       </span>
                     )}
                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -565,7 +571,7 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
                       </span>
                       {isCheapest && (
                         <span className="hidden sm:inline text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-                          Lowest returned price
+                          {t('chLowestPrice')}
                         </span>
                       )}
                     </div>
@@ -574,7 +580,7 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
                         {rate.currency} {rate.total.toFixed(0)}
                       </div>
                       <div className="text-xs text-slate-500">
-                        {rate.currency} {(rate.total / nights).toFixed(0)}/night &middot; {taxLabel}
+                        {rate.currency} {(rate.total / nights).toFixed(0)}{t('chPerNight')} &middot; {taxLabel}
                       </div>
                     </div>
                     <button
@@ -605,10 +611,10 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
                         }
                       }}
                       disabled={!rate.deepLink}
-                      title={rate.deepLink ? 'Open provider-returned link' : 'Provider search unavailable'}
+                      title={rate.deepLink ? t('hdOpenProviderTitle') : t('compareProviderUnavailable')}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-semibold transition shrink-0 cursor-pointer disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
                     >
-                      {rate.deepLink ? 'Open provider' : 'Unavailable'}
+                      {rate.deepLink ? t('compareOpenProvider') : t('hdUnavailable')}
                     </button>
                   </div>
                 );
@@ -621,18 +627,18 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
                 href={`/compare?hotelKey=${hotelKey}&checkIn=${data.checkIn}&checkOut=${data.checkOut}`}
                 className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 text-sm font-medium transition"
               >
-                Full comparison view &rarr;
+                {t('hdFullComparison')} &rarr;
               </Link>
               <Link
                 href={`/trips?hotelKey=${hotelKey}`}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium transition"
               >
-                Save to trip planner &rarr;
+                {t('hdSaveTrip')} &rarr;
               </Link>
               <ShareModal
                 url={typeof window !== 'undefined' ? `${window.location.origin}/hotel/${hotelKey}` : ''}
                 title={data.hotel.name}
-                description={`Compare prices for ${data.hotel.name} in ${data.hotel.city} from available providers`}
+                description={interpolate(t('hdShareModalDesc'), { name: data.hotel.name, city: data.hotel.city })}
               />
               <PrintButton />
               <DeepLink
@@ -726,8 +732,8 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
         {!loading && searched && data?.rates.length === 0 && (
           <div className="text-center py-16 text-slate-500">
             <div className="text-5xl mb-4">&#128269;</div>
-            <p className="text-lg font-medium">No prices available for these dates</p>
-            <p className="text-sm mt-2">Try different dates or check the full comparison page.</p>
+            <p className="text-lg font-medium">{t('hdNoPrices')}</p>
+            <p className="text-sm mt-2">{t('hdNoPricesDesc')}</p>
           </div>
         )}
 
@@ -735,11 +741,11 @@ export default function HotelDetailClient({ hotel, initialPrice }: HotelDetailCl
         {!loading && !searched && (
           <div className="text-center py-12 text-slate-500">
             <div className="text-5xl mb-4">&#128197;</div>
-            <p className="text-lg">Select dates above to compare provider-returned prices when available</p>
+            <p className="text-lg">{t('hdSelectDates')}</p>
             {initialPrice && initialPrice.price > 0 && (
               <p className="mt-3 text-sm text-slate-500">
-                Recently seen from <span className="font-medium text-slate-600">${initialPrice.price.toLocaleString()}</span> {initialPrice.currency}/night via {initialPrice.provider}
-                <span className="text-xs text-slate-500 ml-1">(approximate)</span>
+                {t('hdRecentlySeenPrefix')} <span className="font-medium text-slate-600">${initialPrice.price.toLocaleString()}</span> {interpolate(t('hdRecentlySeenVia'), { currency: initialPrice.currency, provider: initialPrice.provider })}
+                <span className="text-xs text-slate-500 ml-1">{t('hdApproximate')}</span>
               </p>
             )}
           </div>
