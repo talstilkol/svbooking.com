@@ -6,6 +6,11 @@ import Reveal from '@/components/ui/Reveal';
 import { useToast } from '@/components/Toast';
 import { useFavorites, useTrips } from '@/lib/useLocalStorage';
 import Skeleton from '@/components/Skeleton';
+import { useLocale } from '@/components/LocaleProvider';
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
 
 interface Props {
   userEmail: string;
@@ -24,6 +29,7 @@ interface Prefs {
 
 export default function ProfileClient({ userEmail, userName, userFamilyName, userPicture }: Props) {
   const toast = useToast();
+  const { t } = useLocale();
   const { favorites } = useFavorites();
   const { trips } = useTrips();
   const [prefs, setPrefs] = useState<Prefs>({
@@ -57,9 +63,9 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
         body: JSON.stringify(prefs),
       });
       if (!res.ok) throw new Error('Preferences save failed');
-      toast.showToast('Preferences saved');
+      toast.showToast(t('profSavedOk'));
     } catch {
-      toast.showToast('Preferences could not be saved right now.', 'error');
+      toast.showToast(t('profSaveError'), 'error');
     } finally {
       setSaving(false);
     }
@@ -111,14 +117,14 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
             <Heart className="w-8 h-8 text-pink-500" />
             <div>
               <div className="text-2xl font-bold">{favorites.length}</div>
-              <div className="text-sm text-zinc-600">Favorites</div>
+              <div className="text-sm text-zinc-600">{t('navFavorites')}</div>
             </div>
           </div>
           <div className="p-4 rounded-2xl bg-white border border-zinc-200/60 flex items-center gap-3">
             <Plane className="w-8 h-8 text-purple-500" />
             <div>
               <div className="text-2xl font-bold">{trips.length}</div>
-              <div className="text-sm text-zinc-600">Trips planned</div>
+              <div className="text-sm text-zinc-600">{t('profTripsPlanned')}</div>
             </div>
           </div>
         </div>
@@ -127,10 +133,10 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
       <Reveal delay={0.16}>
         <div className="bg-white rounded-2xl p-6 border border-zinc-200/60">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold">Travel preferences</h2>
+            <h2 className="text-xl font-bold">{t('profTravelPrefs')}</h2>
             {!cloudEnabled && (
               <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">
-                Local only (KV not configured)
+                {t('profLocalOnly')}
               </span>
             )}
           </div>
@@ -154,13 +160,13 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
               <div>
                 <label className="text-sm font-medium text-zinc-700 flex items-center gap-2 mb-1.5">
                   <MapPin className="w-4 h-4" />
-                  Home city
+                  {t('profHomeCity')}
                 </label>
                 <input
                   type="text"
                   value={prefs.homeCity || ''}
                   onChange={(e) => setPrefs({ ...prefs, homeCity: e.target.value })}
-                  placeholder="e.g. Tel Aviv"
+                  placeholder={t('profHomeCityPlaceholder')}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white"
                 />
               </div>
@@ -169,7 +175,7 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                 <div>
                   <label className="text-sm font-medium text-zinc-700 flex items-center gap-2 mb-1.5">
                     <Users className="w-4 h-4" />
-                    Default guests
+                    {t('profDefaultGuests')}
                   </label>
                   <input
                     type="number"
@@ -183,7 +189,7 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                 <div>
                   <label className="text-sm font-medium text-zinc-700 flex items-center gap-2 mb-1.5">
                     <Calendar className="w-4 h-4" />
-                    Default nights
+                    {t('profDefaultNights')}
                   </label>
                   <input
                     type="number"
@@ -197,7 +203,7 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                 <div>
                   <label className="text-sm font-medium text-zinc-700 flex items-center gap-2 mb-1.5">
                     <DollarSign className="w-4 h-4" />
-                    Currency
+                    {t('profCurrency')}
                   </label>
                   <select
                     value={prefs.currency || 'USD'}
@@ -214,7 +220,7 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
 
               <div>
                 <label className="text-sm font-medium text-zinc-700 mb-1.5 block">
-                  Favorite destinations
+                  {t('profFavDestinations')}
                 </label>
                 <div className="flex gap-2 mb-2">
                   <input
@@ -227,7 +233,7 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                         addDestination();
                       }
                     }}
-                    placeholder="Add a city…"
+                    placeholder={t('profAddCityPlaceholder')}
                     className="flex-1 px-3 py-2 rounded-lg border border-zinc-300 bg-white"
                   />
                   <button
@@ -235,7 +241,7 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                     onClick={addDestination}
                     className="px-4 py-2 rounded-lg bg-zinc-200 hover:bg-zinc-300 text-sm font-semibold"
                   >
-                    Add
+                    {t('profAdd')}
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -245,13 +251,13 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                       className="animate-fade-in inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm"
                     >
                       {d}
-                      <button onClick={() => removeDestination(d)} className="ml-1 hover:text-indigo-900" aria-label={`Remove ${d}`}>
+                      <button onClick={() => removeDestination(d)} className="ml-1 hover:text-indigo-900" aria-label={interpolate(t('profRemoveDest'), { name: d })}>
                         ×
                       </button>
                     </span>
                   ))}
                   {(prefs.favoriteDestinations || []).length === 0 && (
-                    <span className="text-sm text-zinc-500">None yet.</span>
+                    <span className="text-sm text-zinc-500">{t('profNoneYet')}</span>
                   )}
                 </div>
               </div>
@@ -262,7 +268,7 @@ export default function ProfileClient({ userEmail, userName, userFamilyName, use
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-linear-to-r from-indigo-600 to-pink-600 text-white font-semibold shadow-lg disabled:opacity-60 transition-transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Save className="w-4 h-4" />
-                {saving ? 'Saving…' : 'Save preferences'}
+                {saving ? t('profSaving') : t('profSavePrefs')}
               </button>
             </div>
           )}
