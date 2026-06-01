@@ -23,6 +23,7 @@ const PUBLIC_PAGE_BYPASS_PATHS = [
   '/trips',
   '/about',
   '/contact',
+  '/recipes',
   '/offline',
   '/privacy',
   '/terms',
