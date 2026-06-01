@@ -107,6 +107,7 @@ requireIncludes(readme, 'README.md', [
   'npm run audit:public-data-contracts',
   'npm run audit:provenance',
   'npm run audit:deployment-smoke',
+  'npm run audit:catalog-media-ledger',
   'npm run audit:master-plan',
   'npm run audit:affiliate-security',
   'npm run audit:legal-readiness',
@@ -132,7 +133,7 @@ requireIncludes(masterPlan, 'MASTER-PLAN.md', [
 ]);
 
 requireIncludes(auditReport, 'AUDIT-REPORT.md', [
-  '181 test files, 1111 tests passed',
+  '181 test files, 1112 tests passed',
   '78 Playwright tests passed',
   'Go-live readiness',
   'Worktree is clean',
@@ -148,6 +149,7 @@ requireIncludes(packageRaw, 'package.json', [
   '"audit:public-api-urls"',
   '"audit:provenance"',
   '"audit:deployment-smoke"',
+  '"audit:catalog-media-ledger"',
   '"audit:master-plan"',
   '"smoke:deployment"',
   '"audit:affiliate-security"',
@@ -184,6 +186,7 @@ requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm run audit:public-api-urls',
   'npm run audit:provenance',
   'npm run audit:deployment-smoke',
+  'npm run audit:catalog-media-ledger',
   'npm run audit:master-plan',
   'npm run audit:affiliate-security',
   'npm run audit:legal-readiness',

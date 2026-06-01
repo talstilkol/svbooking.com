@@ -20,6 +20,7 @@
     "audit:deployment-smoke": "node scripts/audit-deployment-smoke.mjs",
     "smoke:deployment": "node scripts/deployment-smoke.mjs",
     "audit:catalog": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-catalog.mjs",
+    "audit:catalog-media-ledger": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-catalog-media-ledger.mjs",
     "catalog:media:ledger": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/catalog-media-action-ledger.mjs",
     "audit:docs": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-docs.mjs",
     "audit:master-plan": "node scripts/audit-master-plan.mjs",

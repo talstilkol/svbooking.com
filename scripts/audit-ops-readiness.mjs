@@ -37,6 +37,7 @@ for (const scriptName of [
   'audit:deployment-smoke',
   'smoke:deployment',
   'audit:catalog',
+  'audit:catalog-media-ledger',
   'audit:docs',
   'audit:master-plan',
   'audit:env',
@@ -162,6 +163,7 @@ await requireFile('scripts/audit-cron-cache.mjs');
 await requireFile('scripts/audit-coverage.mjs');
 await requireFile('scripts/audit-provenance.mjs');
 await requireFile('scripts/audit-deployment-smoke.mjs');
+await requireFile('scripts/audit-catalog-media-ledger.mjs');
 await requireFile('scripts/deployment-smoke.mjs');
 await requireFile('scripts/audit-providers.mjs');
 await requireFile('scripts/audit-reviews.mjs');
@@ -190,6 +192,7 @@ requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm run audit:provenance',
   'npm run audit:deployment-smoke',
   'npm run audit:catalog',
+  'npm run audit:catalog-media-ledger',
   'npm run audit:docs',
   'npm run audit:master-plan',
   'npm run audit:env',

@@ -47,6 +47,9 @@ jobs:
       - name: Catalog audit
         run: npm run audit:catalog
 
+      - name: Catalog media ledger audit
+        run: npm run audit:catalog-media-ledger
+
       - name: Documentation drift audit
         run: npm run audit:docs
 

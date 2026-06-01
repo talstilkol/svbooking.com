@@ -135,6 +135,7 @@ npm run audit:guardrails
 npm run audit:provenance
 npm run audit:deployment-smoke
 npm run audit:catalog
+npm run audit:catalog-media-ledger
 npm run audit:docs
 npm run audit:master-plan
 npm run audit:env
