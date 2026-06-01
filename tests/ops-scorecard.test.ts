@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildOpsScorecard } from '@/lib/ops-scorecard';
-import { buildCatalogMediaQuality } from '@/lib/catalog-media-quality';
+import { buildCatalogMediaActionLedger, buildCatalogMediaQuality } from '@/lib/catalog-media-quality';
 import { GET as getOpsScorecard } from '@/app/api/ops/scorecard/route';
 
 const healthyCatalogMediaQuality = {
@@ -65,6 +65,7 @@ describe('ops scorecard', () => {
     expect(scorecard.productTruth.competitorParity.status).toBe('blocked');
     expect(scorecard.productTruth.competitorParity.sourcePolicy).toBe('official-or-platform-owned-public-pages-only');
     expect(scorecard.productTruth.catalogMediaQuality.status).toBe('partial');
+    expect(scorecard.productTruth.catalogMediaQuality.actionLedger.totalItems).toBeGreaterThan(0);
     expect(scorecard.blockers.length).toBeGreaterThan(0);
     expect(JSON.stringify(scorecard)).not.toContain('admin-secret-value');
     expect(JSON.stringify(scorecard)).not.toContain('svbooking-webhook-secret-scorecard-0001');
@@ -193,6 +194,90 @@ describe('ops scorecard', () => {
     expect(mediaQuality.blockers.some((blocker) => blocker.includes('Catalog image reused across'))).toBe(true);
     expect(mediaQuality.blockers.some((blocker) => blocker.includes('require approved license metadata or replacement'))).toBe(true);
     expect(mediaQuality.target.licensedImageSourceMetadata).toBe(true);
+    expect(mediaQuality.actionLedger.totalItems).toBeGreaterThan(0);
+    expect(mediaQuality.actionLedger.reusedImageSources).toBe(mediaQuality.current.reusedImages);
+    expect(mediaQuality.actionLedger.unapprovedImageSources).toBe(mediaQuality.current.unapprovedImageSources);
+  });
+
+  it('builds a deterministic catalog media action ledger without approving unlicensed images', () => {
+    const defaultLedger = buildCatalogMediaActionLedger();
+    const malformedLedger = buildCatalogMediaActionLedger({
+      hotels: null,
+    } as Parameters<typeof buildCatalogMediaActionLedger>[0]);
+    const image = 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80';
+    const ledger = buildCatalogMediaActionLedger({
+      hotels: [
+        { hotelKey: 'g1-d1', name: 'One', city: 'Paris', country: 'France', image },
+        { hotelKey: 'g1-d2', name: 'Two', city: 'London', country: 'United Kingdom', image },
+        { hotelKey: 'g1-d3', name: 'Three', city: 'Rome', country: 'Italy', image },
+      ],
+      maxReuseCities: 2,
+    } as Parameters<typeof buildCatalogMediaActionLedger>[0]);
+
+    expect(defaultLedger.summary.totalItems).toBeGreaterThan(0);
+    expect(malformedLedger).toEqual({
+      summary: {
+        totalItems: 0,
+        totalHotels: 0,
+        reusedImageSources: 0,
+        unapprovedImageSources: 0,
+        missingOrInvalidImageItems: 0,
+        maxReuseCities: 2,
+      },
+      items: [],
+    });
+    expect(ledger.summary).toEqual({
+      totalItems: 1,
+      totalHotels: 3,
+      reusedImageSources: 1,
+      unapprovedImageSources: 1,
+      missingOrInvalidImageItems: 0,
+      maxReuseCities: 2,
+    });
+    expect(ledger.items[0]).toMatchObject({
+      image,
+      sourceHost: 'images.unsplash.com',
+      licenseStatus: 'requires-approved-license-metadata',
+      approvedLicense: false,
+      replacementRequired: true,
+      cityCount: 3,
+      cities: ['London', 'Paris', 'Rome'],
+      hotelCount: 3,
+      reasons: ['license-approval-required', 'reused-across-cities'],
+    });
+    expect(ledger.items[0].hotels.map((hotel) => hotel.hotelKey)).toEqual(['g1-d2', 'g1-d1', 'g1-d3']);
+  });
+
+  it('tracks missing, malformed, and unsafe media in the catalog media action ledger', () => {
+    const ledger = buildCatalogMediaActionLedger({
+      hotels: [
+        { hotelKey: '', name: '', city: '', country: '', image: '' },
+        { hotelKey: 'g1-d2', name: 'Broken', city: 'Paris', country: 'France', image: 'not a url' },
+        { hotelKey: 'g1-d3', name: 'Unsafe', city: 'Rome', country: 'Italy', image: 'http://images.unsplash.com/photo-x' },
+      ],
+      provenanceLedger: [],
+    } as Parameters<typeof buildCatalogMediaActionLedger>[0]);
+
+    expect(ledger.summary).toEqual({
+      totalItems: 3,
+      totalHotels: 3,
+      reusedImageSources: 0,
+      unapprovedImageSources: 0,
+      missingOrInvalidImageItems: 2,
+      maxReuseCities: 2,
+    });
+    expect(ledger.items.map((item) => item.reasons)).toEqual(expect.arrayContaining([
+      ['non-https-image-url', 'missing-sizing-params', 'missing-source-or-license-metadata'],
+      ['invalid-image-url'],
+      ['missing-image'],
+    ]));
+    const missingItem = ledger.items.find((item) => item.reasons.includes('missing-image'));
+    expect(missingItem?.hotels[0]).toEqual({
+      hotelKey: 'catalog-index-0',
+      name: null,
+      city: 'unknown/unavailable',
+      country: null,
+    });
   });
 
   it('blocks missing or invalid catalog media without inventing replacement images', () => {

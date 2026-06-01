@@ -68,6 +68,9 @@ describe('production readiness audit script', () => {
     expect(body.strict).toBe(true);
     expect(body.productionReady).toBe(false);
     expect(body.catalogMediaQuality.status).toBe('partial');
+    expect(body.catalogMediaQuality.actionLedger.totalItems).toBe(112);
+    expect(body.catalogMediaQuality.actionLedger.unapprovedImageSources).toBe(112);
+    expect(body.catalogMediaQuality.actionLedger.reusedImageSources).toBe(6);
     expect(body.launchServices.reviews.configured).toBe(false);
     expect(body.launchServices.priceAlerts.deliveryConfigured).toBe(false);
     expect(body.launchServices.priceAlerts.unsubscribeConfigured).toBe(false);

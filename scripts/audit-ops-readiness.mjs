@@ -349,7 +349,9 @@ requireIncludes(opsScorecard, 'lib/ops-scorecard.js', [
 const catalogMediaQuality = await readProjectFile('lib/catalog-media-quality.js');
 requireIncludes(catalogMediaQuality, 'lib/catalog-media-quality.js', [
   'buildCatalogMediaQuality',
+  'buildCatalogMediaActionLedger',
   'MAX_REUSE_CITIES_PER_IMAGE',
+  'actionLedger',
   'reusedImages',
   'licensedImageSourceMetadata',
   'Replace reused catalog media',

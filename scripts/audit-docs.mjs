@@ -115,6 +115,7 @@ requireIncludes(readme, 'README.md', [
   'npm run audit:cron-cache',
   'npm run audit:coverage',
   'npm run audit:rum',
+  'npm run catalog:media:ledger',
   'npm audit',
   'dependency metadata',
   'npm run release:state',
@@ -131,7 +132,7 @@ requireIncludes(masterPlan, 'MASTER-PLAN.md', [
 ]);
 
 requireIncludes(auditReport, 'AUDIT-REPORT.md', [
-  '180 test files, 1108 tests passed',
+  '181 test files, 1111 tests passed',
   '78 Playwright tests passed',
   'Go-live readiness',
   'Worktree is clean',
@@ -156,6 +157,7 @@ requireIncludes(packageRaw, 'package.json', [
   '"audit:cron-cache"',
   '"audit:coverage"',
   '"audit:rum"',
+  '"catalog:media:ledger"',
   '"test:coverage"',
   '"release:state"',
   '"release:state:strict"',

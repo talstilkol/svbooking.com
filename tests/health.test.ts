@@ -130,6 +130,7 @@ describe('health APIs', () => {
     expect(snapshot.checks.security.kindeConfigured).toBe(true);
     expect(snapshot.checks.providers.partnerConfigured).toBe(true);
     expect(snapshot.checks.catalogMediaQuality.status).toBe('healthy');
+    expect(snapshot.checks.catalogMediaQuality.actionLedger).toBeNull();
     expect(snapshot.checks.launchServices.priceAlerts.unsubscribeConfigured).toBe(true);
     expect(JSON.stringify(snapshot)).not.toContain('svbooking-redis-token-health-0001');
     expect(JSON.stringify(snapshot)).not.toContain('svbooking-kinde-client-secret-0001');

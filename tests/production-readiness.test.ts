@@ -70,6 +70,14 @@ const partialCatalogMediaQuality = {
     'Catalog image reused across 3 cities: https://images.example.org/paris.jpg',
     '1 catalog image sources require approved license metadata or replacement',
   ],
+  actionLedger: {
+    totalItems: 1,
+    totalHotels: 3,
+    reusedImageSources: 1,
+    unapprovedImageSources: 1,
+    missingOrInvalidImageItems: 0,
+    maxReuseCities: 2,
+  },
 };
 
 describe('production readiness shared contract', () => {
@@ -133,6 +141,8 @@ describe('production readiness shared contract', () => {
     expect(summary.strict).toBe(true);
     expect(summary.productionReady).toBe(false);
     expect(summary.catalogMediaQuality?.status).toBe('partial');
+    expect(summary.catalogMediaQuality?.actionLedger?.totalItems).toBe(1);
+    expect(summary.catalogMediaQuality?.actionLedger?.unapprovedImageSources).toBe(1);
     expect(summary.blockers).toContain('Catalog media quality is not launch-ready');
     expect(summary.blockers).toContain('Catalog media: 1 catalog image sources require approved license metadata or replacement');
   });

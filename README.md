@@ -152,11 +152,13 @@ npm run audit:ops
 npm run audit:rum
 npm run audit:release-deletions
 npm run audit:production
+npm run catalog:media:ledger
 npm run release:state
 ```
 
 Run every `npm run audit:*` script before release. `npm audit --audit-level=moderate` contacts the npm registry and sends dependency metadata; run it only in an environment where that disclosure is approved.
 Run `npm run release:state:strict` after staging or committing intended changes; it fails while the worktree still has uncommitted or untracked paths.
+Run `npm run catalog:media:ledger` to print the exact catalog media replacement or license-approval queue without approving any image automatically.
 After deployment, run `SITE_URL=https://your-deployment.example npm run smoke:deployment`; add `ADMIN_API_SECRET` for authenticated admin smoke checks and set `SMOKE_RUN_CRON=1` with `CRON_SECRET` only when you intentionally want the cron route executed.
 
 ## Data Rules
