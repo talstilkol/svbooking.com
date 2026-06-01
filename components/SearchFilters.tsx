@@ -1,6 +1,11 @@
 'use client';
 
 import { Filter, Star, DollarSign, Wifi, Car, Utensils, Dumbbell, Coffee } from 'lucide-react';
+import { useLocale } from '@/components/LocaleProvider';
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
 
 export interface FilterOptions {
   stars: number[];
@@ -19,15 +24,14 @@ interface SearchFiltersProps {
 }
 
 const AMENITIES = [
-  { id: 'wifi', label: 'WiFi', icon: Wifi },
-  { id: 'parking', label: 'Parking', icon: Car },
-  { id: 'restaurant', label: 'Restaurant', icon: Utensils },
-  { id: 'gym', label: 'Gym', icon: Dumbbell },
-  { id: 'breakfast', label: 'Breakfast', icon: Coffee },
+  { id: 'wifi', labelKey: 'sfAmWifi', icon: Wifi },
+  { id: 'parking', labelKey: 'sfAmParking', icon: Car },
+  { id: 'restaurant', labelKey: 'sfAmRestaurant', icon: Utensils },
+  { id: 'gym', labelKey: 'sfAmGym', icon: Dumbbell },
+  { id: 'breakfast', labelKey: 'sfAmBreakfast', icon: Coffee },
 ];
 
 const STAR_OPTIONS = [5, 4, 3, 2, 1];
-const DATA_FILTER_NOTICE = 'Unavailable until verified property data is connected.';
 
 export default function SearchFilters({
   filters,
@@ -37,6 +41,8 @@ export default function SearchFilters({
   onToggle,
   resultCount,
 }: SearchFiltersProps) {
+  const { t } = useLocale();
+  const dataFilterNotice = t('sfDataNotice');
   const priceRange = filters.priceRange;
 
   const toggleStar = (star: number) => {
@@ -74,12 +80,12 @@ export default function SearchFilters({
         className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-zinc-200 hover:border-indigo-300 transition-colors"
       >
         <Filter className="w-4 h-4" />
-        <span className="font-medium">Filters</span>
+        <span className="font-medium">{t('sfFilters')}</span>
         {hasActiveFilters && (
           <span className="w-2 h-2 rounded-full bg-indigo-500" />
         )}
         <span className="text-sm text-zinc-500">
-          {resultCount} results
+          {interpolate(t('sfResults'), { count: resultCount })}
         </span>
       </button>
 
@@ -90,30 +96,30 @@ export default function SearchFilters({
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-bold">Filters</h3>
+              <h3 className="text-lg font-bold">{t('sfFilters')}</h3>
               <button
                 onClick={onClear}
                 className="text-sm text-zinc-500 hover:text-zinc-700"
               >
-                Clear all
+                {t('sfClearAll')}
               </button>
             </div>
 
             <div className="space-y-5">
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                Star, amenity, and price filters stay disabled until verified property data is connected.
+                {t('sfDisabledNotice')}
               </div>
 
               {/* Star Rating */}
               <div>
-                <label className="text-sm font-semibold mb-2 block">Star Rating</label>
+                <label className="text-sm font-semibold mb-2 block">{t('sfStarRating')}</label>
                 <div className="flex flex-wrap gap-2">
                   {STAR_OPTIONS.map((star) => (
                     <button
                       key={star}
                       type="button"
                       disabled
-                      title={DATA_FILTER_NOTICE}
+                      title={dataFilterNotice}
                       onClick={() => toggleStar(star)}
                       className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                         filters.stars.includes(star)
@@ -130,7 +136,7 @@ export default function SearchFilters({
 
               {/* Price Range */}
               <div>
-                <label className="text-sm font-semibold mb-2 block">Price Range (per night)</label>
+                <label className="text-sm font-semibold mb-2 block">{t('sfPriceRange')}</label>
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-200 bg-zinc-50">
@@ -139,11 +145,11 @@ export default function SearchFilters({
                         type="number"
                         value={priceRange[0]}
                         disabled
-                        title={DATA_FILTER_NOTICE}
-                        aria-label="Minimum price"
+                        title={dataFilterNotice}
+                        aria-label={t('sfMinPrice')}
                         onChange={(e) => handlePriceChange(0, parseInt(e.target.value) || 0)}
                         className="w-full bg-transparent outline-none disabled:cursor-not-allowed"
-                        placeholder="Min"
+                        placeholder={t('sfMin')}
                       />
                     </div>
                   </div>
@@ -155,11 +161,11 @@ export default function SearchFilters({
                         type="number"
                         value={priceRange[1]}
                         disabled
-                        title={DATA_FILTER_NOTICE}
-                        aria-label="Maximum price"
+                        title={dataFilterNotice}
+                        aria-label={t('sfMaxPrice')}
                         onChange={(e) => handlePriceChange(1, parseInt(e.target.value) || 0)}
                         className="w-full bg-transparent outline-none disabled:cursor-not-allowed"
-                        placeholder="Max"
+                        placeholder={t('sfMax')}
                       />
                     </div>
                   </div>
@@ -168,7 +174,7 @@ export default function SearchFilters({
 
               {/* Amenities */}
               <div>
-                <label className="text-sm font-semibold mb-2 block">Amenities</label>
+                <label className="text-sm font-semibold mb-2 block">{t('sfAmenities')}</label>
                 <div className="flex flex-wrap gap-2">
                   {AMENITIES.map((amenity) => {
                     const Icon = amenity.icon;
@@ -177,7 +183,7 @@ export default function SearchFilters({
                         key={amenity.id}
                         type="button"
                         disabled
-                        title={DATA_FILTER_NOTICE}
+                        title={dataFilterNotice}
                         onClick={() => toggleAmenity(amenity.id)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                           filters.amenities.includes(amenity.id)
@@ -186,7 +192,7 @@ export default function SearchFilters({
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5" />
-                        <span className="text-sm">{amenity.label}</span>
+                        <span className="text-sm">{t(amenity.labelKey)}</span>
                       </button>
                     );
                   })}
@@ -195,16 +201,16 @@ export default function SearchFilters({
 
               {/* Sort */}
               <div>
-                <label htmlFor="search-sort" className="text-sm font-semibold mb-2 block">Sort By</label>
+                <label htmlFor="search-sort" className="text-sm font-semibold mb-2 block">{t('sfSortBy')}</label>
                 <select
                   id="search-sort"
                   value={filters.sort}
                   onChange={(e) => handleSortChange(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white"
                 >
-                  <option value="name-asc">Name (A-Z)</option>
-                  <option value="name-desc">Name (Z-A)</option>
-                  <option value="city-asc">City (A-Z)</option>
+                  <option value="name-asc">{t('sfSortNameAsc')}</option>
+                  <option value="name-desc">{t('sfSortNameDesc')}</option>
+                  <option value="city-asc">{t('sfSortCityAsc')}</option>
                 </select>
               </div>
             </div>
@@ -214,7 +220,7 @@ export default function SearchFilters({
               onClick={onToggle}
               className="w-full mt-5 px-4 py-2.5 rounded-lg bg-linear-to-r from-indigo-600 to-pink-600 text-white font-semibold shadow-md hover:shadow-lg transition-shadow"
             >
-              Apply Filters
+              {t('sfApply')}
             </button>
           </div>
         )}
