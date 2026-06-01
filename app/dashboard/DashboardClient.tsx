@@ -6,10 +6,16 @@ import AnimatedCounter from '@/components/ui/AnimatedCounter';
 import Reveal from '@/components/ui/Reveal';
 import SuggestionsPanel from '@/components/ui/SuggestionsPanel';
 import { useFavorites, useTrips } from '@/lib/useLocalStorage';
+import { useLocale } from '@/components/LocaleProvider';
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
 
 export default function DashboardClient({ userName }: { userName: string }) {
   const { favorites } = useFavorites();
   const { trips } = useTrips();
+  const { t } = useLocale();
 
   const upcoming = trips.filter((t) => new Date(t.checkIn) > new Date()).length;
 
@@ -17,12 +23,12 @@ export default function DashboardClient({ userName }: { userName: string }) {
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="animate-fade-in mb-10">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-          Welcome back,{' '}
+          {t('dashWelcomeBack')}{' '}
           <span className="bg-linear-to-br from-indigo-600 to-pink-600 bg-clip-text text-transparent">
             {userName}
           </span>
         </h1>
-        <p className="mt-2 text-zinc-600">Your travel command center.</p>
+        <p className="mt-2 text-zinc-600">{t('dashSubtitle')}</p>
       </div>
 
       <SuggestionsPanel />
@@ -35,9 +41,9 @@ export default function DashboardClient({ userName }: { userName: string }) {
               <div className="text-3xl font-bold">
                 <AnimatedCounter value={favorites.length} />
               </div>
-              <div className="text-sm text-zinc-600 mt-1">Favorite hotels</div>
+              <div className="text-sm text-zinc-600 mt-1">{t('dashFavoriteHotels')}</div>
               <div className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-pink-600 group-hover:gap-2 transition-all">
-                Manage <ArrowRight className="w-3 h-3" />
+                {t('dashManage')} <ArrowRight className="w-3 h-3" />
               </div>
             </div>
           </Link>
@@ -50,10 +56,10 @@ export default function DashboardClient({ userName }: { userName: string }) {
                 <AnimatedCounter value={trips.length} />
               </div>
               <div className="text-sm text-zinc-600 mt-1">
-                Saved trips ({upcoming} upcoming)
+                {interpolate(t('dashSavedTrips'), { count: upcoming })}
               </div>
               <div className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-purple-600 group-hover:gap-2 transition-all">
-                View all <ArrowRight className="w-3 h-3" />
+                {t('dashViewAll')} <ArrowRight className="w-3 h-3" />
               </div>
             </div>
           </Link>
@@ -63,9 +69,9 @@ export default function DashboardClient({ userName }: { userName: string }) {
             <div className="p-6 rounded-2xl bg-white border border-zinc-200/60 hover:border-amber-400 transition-colors">
               <BarChart3 className="w-8 h-8 text-amber-500 mb-3" />
               <div className="text-3xl font-bold">5+</div>
-              <div className="text-sm text-zinc-600 mt-1">Price providers compared</div>
+              <div className="text-sm text-zinc-600 mt-1">{t('dashProvidersCompared')}</div>
               <div className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-amber-600 group-hover:gap-2 transition-all">
-                Compare now <ArrowRight className="w-3 h-3" />
+                {t('dashCompareNow')} <ArrowRight className="w-3 h-3" />
               </div>
             </div>
           </Link>
@@ -80,7 +86,7 @@ export default function DashboardClient({ userName }: { userName: string }) {
           >
             <div className="flex items-center gap-3">
               <Search className="w-6 h-6" />
-              <span className="font-semibold">Find a new hotel</span>
+              <span className="font-semibold">{t('dashFindHotel')}</span>
             </div>
             <ArrowRight className="w-5 h-5" />
           </Link>
@@ -90,7 +96,7 @@ export default function DashboardClient({ userName }: { userName: string }) {
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">⚙</span>
-              <span className="font-semibold">Edit preferences</span>
+              <span className="font-semibold">{t('dashEditPrefs')}</span>
             </div>
             <ArrowRight className="w-5 h-5" />
           </Link>

@@ -7,9 +7,14 @@ import Link from 'next/link';
 import { useTrips, SavedTrip } from '@/lib/useLocalStorage';
 import CheaperDates from '@/components/CheaperDates';
 import { PageSkeleton } from '@/components/Skeleton';
+import { useLocale } from '@/components/LocaleProvider';
 import type { CatalogHotel, ProviderRate } from '@/lib/types';
 
 type Rate = ProviderRate;
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
 
 interface AgentResponse {
   hotel: { hotelKey: string; name: string };
@@ -33,6 +38,7 @@ function todayPlus(days: number) {
 
 function TripsInner() {
   const searchParams = useSearchParams();
+  const { t } = useLocale();
   const { trips, addTrip, removeTrip, hydrated } = useTrips();
   const [hotels, setHotels] = useState<CatalogHotel[]>([]);
   const [hotelKey, setHotelKey] = useState(searchParams.get('hotelKey') || '');
@@ -56,14 +62,14 @@ function TripsInner() {
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!hotelKey) return setError('Please select a hotel');
-    if (!checkIn || !checkOut) return setError('Please select dates');
-    if (new Date(checkIn) >= new Date(checkOut)) return setError('Check-in must be before check-out');
+    if (!hotelKey) return setError(t('tripValSelectHotel'));
+    if (!checkIn || !checkOut) return setError(t('tripValSelectDates'));
+    if (new Date(checkIn) >= new Date(checkOut)) return setError(t('tripValDateOrder'));
     if (!Number.isInteger(Number(guests)) || Number(guests) < 1)
-      return setError('Guests must be a positive integer');
+      return setError(t('tripValGuests'));
 
     const hotel = hotels.find((h) => h.hotelKey === hotelKey);
-    if (!hotel) return setError('Hotel not found');
+    if (!hotel) return setError(t('tripValHotelNotFound'));
 
     addTrip({
       hotelKey: hotel.hotelKey,
@@ -93,14 +99,14 @@ function TripsInner() {
       if (!res.ok) throw new Error('Agent recommendation unavailable');
       setAgentResults((prev) => ({ ...prev, [trip.id]: data }));
     } catch {
-      setError('Agent recommendation is unavailable right now.');
+      setError(t('tripAgentUnavailable'));
     } finally {
       setAgentLoading(null);
     }
   };
 
   if (!hydrated) {
-    return <div className="min-h-screen p-8 text-center text-zinc-600">Loading...</div>;
+    return <div className="min-h-screen p-8 text-center text-zinc-600">{t('favLoading')}</div>;
   }
 
   return (
@@ -108,10 +114,10 @@ function TripsInner() {
       {/* Gradient header */}
       <div className="bg-linear-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white py-10 px-4 mb-8">
         <div className="max-w-5xl mx-auto">
-          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">← Home</Link>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">My Trips</h1>
+          <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">← {t('compareHome')}</Link>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">{t('tripTitle')}</h1>
           <p className="text-white/80">
-            Plan future vacations and let our AI agent compare available provider prices.
+            {t('tripIntro')}
           </p>
         </div>
       </div>
@@ -123,17 +129,17 @@ function TripsInner() {
           onSubmit={handleAdd}
           className="bg-white rounded-lg p-6 shadow-md border border-zinc-200 mb-8"
         >
-          <h2 className="text-xl font-bold text-zinc-900 mb-4">Plan a New Trip</h2>
+          <h2 className="text-xl font-bold text-zinc-900 mb-4">{t('tripPlanNew')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label htmlFor="trip-hotel" className="block text-sm font-medium text-zinc-700 mb-1">Hotel</label>
+              <label htmlFor="trip-hotel" className="block text-sm font-medium text-zinc-700 mb-1">{t('tripHotelLabel')}</label>
               <select
                 id="trip-hotel"
                 value={hotelKey}
                 onChange={(e) => setHotelKey(e.target.value)}
                 className="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white text-zinc-900"
               >
-                <option value="">— Select a hotel —</option>
+                <option value="">{t('tripSelectHotelOption')}</option>
                 {hotels.map((h) => (
                   <option key={h.hotelKey} value={h.hotelKey}>
                     {h.name} — {h.city}, {h.country}
@@ -142,7 +148,7 @@ function TripsInner() {
               </select>
             </div>
             <div>
-              <label htmlFor="trip-checkin" className="block text-sm font-medium text-zinc-700 mb-1">Check-in</label>
+              <label htmlFor="trip-checkin" className="block text-sm font-medium text-zinc-700 mb-1">{t('compareCheckIn')}</label>
               <input
                 id="trip-checkin"
                 type="date"
@@ -152,7 +158,7 @@ function TripsInner() {
               />
             </div>
             <div>
-              <label htmlFor="trip-checkout" className="block text-sm font-medium text-zinc-700 mb-1">Check-out</label>
+              <label htmlFor="trip-checkout" className="block text-sm font-medium text-zinc-700 mb-1">{t('compareCheckOut')}</label>
               <input
                 id="trip-checkout"
                 type="date"
@@ -162,7 +168,7 @@ function TripsInner() {
               />
             </div>
             <div>
-              <label htmlFor="trip-guests" className="block text-sm font-medium text-zinc-700 mb-1">Guests</label>
+              <label htmlFor="trip-guests" className="block text-sm font-medium text-zinc-700 mb-1">{t('tripGuests')}</label>
               <input
                 id="trip-guests"
                 type="number"
@@ -173,13 +179,13 @@ function TripsInner() {
               />
             </div>
             <div>
-              <label htmlFor="trip-notes" className="block text-sm font-medium text-zinc-700 mb-1">Notes (optional)</label>
+              <label htmlFor="trip-notes" className="block text-sm font-medium text-zinc-700 mb-1">{t('tripNotes')}</label>
               <input
                 id="trip-notes"
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Anniversary trip, work travel, etc."
+                placeholder={t('tripNotesPlaceholder')}
                 className="w-full border border-zinc-300 rounded-lg px-3 py-2 bg-white text-zinc-900"
               />
             </div>
@@ -190,17 +196,17 @@ function TripsInner() {
             </div>
           )}
           <button type="submit" className="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-            Save Trip
+            {t('tripSave')}
           </button>
         </form>
 
         <h2 className="text-2xl font-bold text-zinc-900 mb-4">
-          Saved Trips ({trips.length})
+          {interpolate(t('tripSavedTrips'), { count: trips.length })}
         </h2>
 
         {trips.length === 0 ? (
           <div className="bg-white rounded-lg p-12 text-center border border-zinc-200">
-            <p className="text-zinc-600">No trips planned yet. Add your first trip above!</p>
+            <p className="text-zinc-600">{t('tripEmpty')}</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -226,20 +232,20 @@ function TripsInner() {
                           onClick={() => removeTrip(trip.id)}
                           className="px-2 py-1 text-red-500 hover:bg-red-50 rounded text-sm"
                         >
-                          Delete
+                          {t('tripDelete')}
                         </button>
                       </div>
                       <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
                         <div>
-                          <div className="text-zinc-500">Check-in</div>
+                          <div className="text-zinc-500">{t('compareCheckIn')}</div>
                           <div className="font-medium text-zinc-900">{trip.checkIn}</div>
                         </div>
                         <div>
-                          <div className="text-zinc-500">Check-out</div>
+                          <div className="text-zinc-500">{t('compareCheckOut')}</div>
                           <div className="font-medium text-zinc-900">{trip.checkOut}</div>
                         </div>
                         <div>
-                          <div className="text-zinc-500">Guests</div>
+                          <div className="text-zinc-500">{t('tripGuests')}</div>
                           <div className="font-medium text-zinc-900">{trip.guests}</div>
                         </div>
                       </div>
@@ -252,7 +258,7 @@ function TripsInner() {
                           disabled={loading}
                           className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-purple-400 text-sm"
                         >
-                          {loading ? 'Agent analyzing...' : result ? '🤖 Re-analyze' : '🤖 Ask AI Agent'}
+                          {loading ? t('tripAgentAnalyzing') : result ? t('tripReanalyze') : t('tripAskAgent')}
                         </button>
                       </div>
                       <CheaperDates hotelKey={trip.hotelKey} checkIn={trip.checkIn} checkOut={trip.checkOut} />
@@ -266,7 +272,7 @@ function TripsInner() {
                           <div className="flex flex-col md:flex-row gap-4">
                             <div className="md:w-1/3 p-4 bg-purple-50 rounded-lg border-2 border-purple-500">
                               <div className="text-xs text-purple-700 uppercase font-bold">
-                                🤖 Agent recommends
+                                {t('tripAgentRecommends')}
                               </div>
                               <div className="text-2xl font-bold text-purple-700 mt-1">
                                 {result.recommended.provider}
@@ -275,18 +281,18 @@ function TripsInner() {
                                 {result.recommended.currency} {result.recommended.total.toFixed(2)}
                               </div>
                               <div className="text-xs text-zinc-500 mt-1">
-                                Score: {((result.recommended.score || 0) * 100).toFixed(0)}% · Basis: {result.recommended.scoreBasis || 'verified-price'}
+                                {interpolate(t('tripScoreBasis'), { score: ((result.recommended.score || 0) * 100).toFixed(0), basis: result.recommended.scoreBasis || 'verified-price' })}
                               </div>
                               <div className="text-xs text-zinc-500 mt-1">
-                                Provider-quality data unavailable
+                                {t('tripProviderQualityUnavailable')}
                               </div>
                             </div>
                             <div className="flex-1">
                               <p className="text-sm text-zinc-700 mb-3">
-                                <strong>Why?</strong> {result.reasoning}
+                                <strong>{t('tripWhy')}</strong> {result.reasoning}
                               </p>
                               <div className="text-xs text-zinc-500 mb-2">
-                                All offers ({result.providerCount}, sorted by verified price score):
+                                {interpolate(t('tripAllOffers'), { count: result.providerCount })}
                               </div>
                               <div className="space-y-1">
                                 {result.ranked.map((r, i) => (
@@ -302,7 +308,7 @@ function TripsInner() {
                                       {i === 0 && '🏆 '}
                                       {r.provider}
                                       <span className="text-xs text-zinc-500 ml-2">
-                                        (score {((r.score || 0) * 100).toFixed(0)}%, provider quality unavailable)
+                                        {interpolate(t('tripRankScore'), { score: ((r.score || 0) * 100).toFixed(0) })}
                                       </span>
                                     </span>
                                     <span className="font-mono">
@@ -313,7 +319,7 @@ function TripsInner() {
                               </div>
                               {result.savingsPct > 0 && (
                                 <p className="mt-3 text-xs text-green-700">
-                                  💰 Spread: ${result.savingsVsExpensive.toFixed(2)} ({result.savingsPct}%) between lowest and highest returned provider
+                                  {interpolate(t('tripSpread'), { amount: result.savingsVsExpensive.toFixed(2), pct: result.savingsPct })}
                                 </p>
                               )}
                             </div>
