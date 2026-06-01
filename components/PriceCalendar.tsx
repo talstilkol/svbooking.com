@@ -1,6 +1,11 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
+
+// Single-letter weekday labels (Sun→Sat) for compact calendar headers.
+const DAY_LABELS_EN = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+const DAY_LABELS_HE = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
 
 interface HeatmapDay {
   date: string;
@@ -21,12 +26,6 @@ function getFirstDayOfWeek(year: number, month: number): number {
   return new Date(year, month, 1).getDay();
 }
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
-
-const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 function priceColor(price: number, min: number, max: number): string {
   if (price <= 0) return 'bg-slate-50 text-slate-300';
@@ -39,6 +38,9 @@ function priceColor(price: number, min: number, max: number): string {
 }
 
 export default function PriceCalendar({ hotelKey, className = '' }: PriceCalendarProps) {
+  const { t, locale } = useLocale();
+  const dateLocale = locale === 'he' ? 'he-IL' : 'en-US';
+  const dayLabels = locale === 'he' ? DAY_LABELS_HE : DAY_LABELS_EN;
   const [loading, setLoading] = useState(false);
   const [heatmap, setHeatmap] = useState<HeatmapDay[]>([]);
   const [hasRealData, setHasRealData] = useState(false);
@@ -109,12 +111,12 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
       >
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-slate-700">Price Calendar</h3>
+            <h3 className="text-sm font-semibold text-slate-700">{t('pcTitle')}</h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              See observed source prices for this hotel
+              {t('pcSubtitle')}
             </p>
           </div>
-          <span className="text-blue-600 text-sm font-medium">View →</span>
+          <span className="text-blue-600 text-sm font-medium">{t('chView')} →</span>
         </div>
       </button>
     );
@@ -125,12 +127,12 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
       {/* Header */}
       <div className="p-4 border-b border-slate-100">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-slate-700">Price Calendar</h3>
+          <h3 className="text-sm font-semibold text-slate-700">{t('pcTitle')}</h3>
           <button
             onClick={() => setExpanded(false)}
             className="text-xs text-slate-500 hover:text-slate-600"
           >
-            Collapse ↑
+            {t('pcCollapse')} ↑
           </button>
         </div>
 
@@ -144,7 +146,7 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
             ←
           </button>
           <span className="text-sm font-medium text-slate-800">
-            {MONTH_NAMES[viewMonth]} {viewYear}
+            {new Date(viewYear, viewMonth, 1).toLocaleDateString(dateLocale, { month: 'long', year: 'numeric' })}
           </span>
           <button
             onClick={() => setMonthOffset((o) => Math.min(5, o + 1))}
@@ -165,15 +167,15 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
         ) : !hasRealData ? (
           <div className="h-48 flex items-center justify-center text-center">
             <div>
-              <p className="text-sm font-medium text-slate-600">Price calendar unavailable</p>
-              <p className="text-xs text-slate-500 mt-1">No verified source observations for this month.</p>
+              <p className="text-sm font-medium text-slate-600">{t('pcUnavailable')}</p>
+              <p className="text-xs text-slate-500 mt-1">{t('pcNoObservations')}</p>
             </div>
           </div>
         ) : (
           <>
             {/* Day headers */}
             <div className="grid grid-cols-7 gap-1 mb-1">
-              {DAY_LABELS.map((d) => (
+              {dayLabels.map((d) => (
                 <div key={d} className="text-center text-[10px] font-medium text-slate-500 py-1">
                   {d}
                 </div>
@@ -204,7 +206,7 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
                     className={`aspect-square rounded-lg flex flex-col items-center justify-center text-[10px] relative transition ${colorClass} ${
                       isPast ? 'opacity-40' : ''
                     } ${isToday ? 'ring-2 ring-blue-500' : ''}`}
-                    title={price > 0 ? `$${price}/night` : 'No data'}
+                    title={price > 0 ? `$${price}${t('chPerNight')}` : t('pcNoData')}
                   >
                     <span className="font-medium">{day}</span>
                     {price > 0 && (
@@ -225,18 +227,18 @@ export default function PriceCalendar({ hotelKey, className = '' }: PriceCalenda
               <div className="flex items-center justify-center gap-3 mt-3 text-[10px] text-slate-500">
                 <span className="flex items-center gap-1">
                   <span className="w-3 h-3 rounded bg-green-100 border border-green-200" />
-                  Cheapest
+                  {t('compareCheapest')}
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-3 h-3 rounded bg-amber-50 border border-amber-200" />
-                  Average
+                  {t('pcAverage')}
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-3 h-3 rounded bg-red-50 border border-red-200" />
-                  Expensive
+                  {t('pcExpensive')}
                 </span>
                 <span>
-                  ${minPrice}–${maxPrice}/night
+                  ${minPrice}–${maxPrice}{t('chPerNight')}
                 </span>
                 {sourceLabel && <span>{sourceLabel}</span>}
               </div>
