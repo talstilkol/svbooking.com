@@ -10,6 +10,7 @@ import SafetyInfo from '@/components/SafetyInfo';
 import FlightDataNotice from '@/components/FlightDataNotice';
 import RatingBadge from '@/components/RatingBadge';
 import DestinationIntel from '@/components/DestinationIntel';
+import { CityHero, CityCompareCta, OtherCitiesHeading } from '@/components/CityLabels';
 
 type Props = {
   params: Promise<{ name: string }>;
@@ -87,23 +88,7 @@ export default async function CityPage({ params }: Props) {
           />
         )}
         <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-          <div className="max-w-5xl mx-auto">
-            <nav className="text-sm text-white/60 mb-2">
-              <Link href="/" className="hover:text-white">Home</Link>
-              {' / '}
-              <Link href="/search" className="hover:text-white">Hotels</Link>
-              {' / '}
-              <span className="text-white">{city}</span>
-            </nav>
-            <h1 className="text-3xl md:text-4xl font-bold drop-shadow-lg">
-              Hotels in {city}
-            </h1>
-            <p className="text-white/80 mt-1">
-              {hotels.length} hotel{hotels.length !== 1 ? 's' : ''} · {country} · Compare prices from available providers
-            </p>
-          </div>
-        </div>
+        <CityHero city={city} country={country} count={hotels.length} />
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-8">
@@ -127,9 +112,7 @@ export default async function CityPage({ params }: Props) {
                 <h2 className="font-bold text-slate-900 truncate">{hotel.name}</h2>
                 <p className="text-sm text-slate-500 mt-0.5">📍 {hotel.city}, {hotel.country}</p>
                 <RatingBadge size="sm" className="mt-1.5" />
-                <p className="text-xs text-blue-600 font-medium mt-2">
-                  Compare prices →
-                </p>
+                <CityCompareCta />
               </div>
             </Link>
           ))}
@@ -149,9 +132,7 @@ export default async function CityPage({ params }: Props) {
         {/* Cross-links to other cities in same country */}
         {country && (
           <div className="mt-12">
-            <h2 className="text-lg font-semibold text-slate-800 mb-4">
-              Other cities in {country}
-            </h2>
+            <OtherCitiesHeading country={country} />
             <div className="flex flex-wrap gap-2">
               {listCities()
                 .filter((c) => {
