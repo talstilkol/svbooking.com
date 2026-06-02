@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const store = new Map<string, unknown>();
+const futureStay = vi.hoisted(() => {
+  const isoDate = (date: Date) => date.toISOString().split('T')[0];
+  const today = new Date();
+  const checkIn = new Date(Date.UTC(today.getUTCFullYear() + 1, today.getUTCMonth(), today.getUTCDate()));
+  const checkOut = new Date(Date.UTC(today.getUTCFullYear() + 1, today.getUTCMonth(), today.getUTCDate() + 2));
+  return { checkIn: isoDate(checkIn), checkOut: isoDate(checkOut) };
+});
 
 vi.mock('@/lib/kv', () => ({
   kv: {
@@ -26,7 +33,7 @@ vi.mock('@/lib/price-cache', () => ({
     freshness: 'live',
   })),
   getCachedHeatmap: vi.fn(async () => ({
-    data: [{ date: '2026-06-01', price: 210 }],
+    data: [{ date: futureStay.checkIn, price: 210 }],
   })),
 }));
 
@@ -59,7 +66,7 @@ describe('GET /api/cheaper-dates', () => {
   });
 
   it('returns calendar heatmap as source observations only', async () => {
-    const response = await GET(request('hotelKey=g187147-d188732&checkIn=2026-06-01&checkOut=2026-06-03&mode=heatmap'));
+    const response = await GET(request(`hotelKey=g187147-d188732&checkIn=${futureStay.checkIn}&checkOut=${futureStay.checkOut}&mode=heatmap`));
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -68,7 +75,7 @@ describe('GET /api/cheaper-dates', () => {
     expect(body.bookingProvider).toBe(false);
     expect(body.dataPolicy).toBe('verified-provider-or-source-observations-only');
     expect(body.heatmap[0]).toEqual(expect.objectContaining({
-      date: '2026-06-01',
+      date: futureStay.checkIn,
       price: 210,
       priceSource: 'xotelo-heatmap',
       bookingProvider: false,
