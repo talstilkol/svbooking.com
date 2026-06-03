@@ -1,5 +1,7 @@
 'use client';
 
+import { useLocale } from '@/components/LocaleProvider';
+
 interface HotelQuickFactsProps {
   hotelKey: string;
   hotelName: string;
@@ -13,22 +15,23 @@ export default function HotelQuickFacts({
   city,
   className = '',
 }: HotelQuickFactsProps) {
-  void hotelName; // accepted for future use (e.g., title heading)
+  const { t } = useLocale();
+  const unavailable = t('hdUnavailable');
   const facts = [
-    { icon: '📍', label: 'City', value: city || 'Unavailable' },
-    { icon: '🔑', label: 'Catalog key', value: hotelKey },
-    { icon: '⭐', label: 'Category', value: 'Unavailable' },
-    { icon: '🏨', label: 'Rooms', value: 'Unavailable' },
-    { icon: '🏗️', label: 'Built', value: 'Unavailable' },
-    { icon: '🔧', label: 'Renovated', value: 'Unavailable' },
-    { icon: '📌', label: 'Distance data', value: 'Unavailable' },
-    { icon: '🕐', label: 'Check-in/out', value: 'Provider site' },
-    { icon: '🌐', label: 'Languages', value: 'Unavailable' },
+    { icon: '📍', label: t('compareCity'), value: city || unavailable },
+    { icon: '🔑', label: t('qfCatalogKey'), value: hotelKey },
+    { icon: '⭐', label: t('qfCategory'), value: unavailable },
+    { icon: '🏨', label: t('qfRooms'), value: unavailable },
+    { icon: '🏗️', label: t('qfBuilt'), value: unavailable },
+    { icon: '🔧', label: t('qfRenovated'), value: unavailable },
+    { icon: '📌', label: t('qfDistanceData'), value: unavailable },
+    { icon: '🕐', label: t('qfCheckInOut'), value: t('qfProviderSite') },
+    { icon: '🌐', label: t('qfLanguages'), value: unavailable },
   ];
 
   return (
     <div className={`bg-white border border-slate-200 rounded-2xl p-5 ${className}`}>
-      <h3 className="text-sm font-bold text-slate-900 mb-3">📋 Quick Facts — {hotelName}</h3>
+      <h3 className="text-sm font-bold text-slate-900 mb-3">📋 {t('qfTitle')} — {hotelName}</h3>
 
       <div className="grid grid-cols-2 gap-2">
         {facts.map((fact) => (
