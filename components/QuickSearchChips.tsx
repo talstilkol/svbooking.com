@@ -1,27 +1,31 @@
+'use client';
+
 import Link from 'next/link';
+import { useLocale } from '@/components/LocaleProvider';
 
 const QUICK_SEARCHES = [
-  { label: 'Beach Hotels', query: 'Bali' },
-  { label: 'City Breaks', query: 'London' },
-  { label: 'Luxury Stays', query: 'Dubai' },
-  { label: 'Budget Friendly', query: 'Bangkok' },
-  { label: 'Romantic', query: 'Paris' },
-  { label: 'Family', query: 'Barcelona' },
-  { label: 'Business', query: 'Tokyo' },
-  { label: 'Adventure', query: 'Phuket' },
+  { labelKey: 'qsBeachHotels', query: 'Bali' },
+  { labelKey: 'qsCityBreaks', query: 'London' },
+  { labelKey: 'qsLuxuryStays', query: 'Dubai' },
+  { labelKey: 'qsBudgetFriendly', query: 'Bangkok' },
+  { labelKey: 'qsRomantic', query: 'Paris' },
+  { labelKey: 'qsFamily', query: 'Barcelona' },
+  { labelKey: 'qsBusiness', query: 'Tokyo' },
+  { labelKey: 'qsAdventure', query: 'Phuket' },
 ];
 
 export default function QuickSearchChips({ className = '' }: { className?: string }) {
+  const { t } = useLocale();
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
-      <span className="text-xs text-slate-500 self-center mr-1">Popular:</span>
+      <span className="text-xs text-slate-500 self-center me-1">{t('qsPopular')}</span>
       {QUICK_SEARCHES.map((s) => (
         <Link
           key={s.query}
           href={`/search?city=${encodeURIComponent(s.query)}`}
           className="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs text-slate-600 hover:border-blue-300 hover:text-blue-600 transition-colors"
         >
-          {s.label}
+          {t(s.labelKey)}
         </Link>
       ))}
     </div>

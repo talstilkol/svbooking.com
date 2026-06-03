@@ -1,16 +1,21 @@
+'use client';
+
+import { useLocale } from '@/components/LocaleProvider';
+
 export default function ProviderLogos({ className = '' }: { className?: string }) {
+  const { t } = useLocale();
   const coverageStates = [
-    'Configured sources only',
-    'Links only when returned',
-    'Missing rates stay unavailable',
+    t('plConfiguredOnly'),
+    t('plLinksReturned'),
+    t('plMissingUnavailable'),
   ];
 
   return (
     <div
       className={`flex flex-wrap items-center gap-2 ${className}`}
-      aria-label="Pricing source coverage policy"
+      aria-label={t('plAriaCoverage')}
     >
-      <span className="text-xs text-slate-500 font-medium mr-1">Rate sources:</span>
+      <span className="text-xs text-slate-500 font-medium me-1">{t('plRateSources')}</span>
       {coverageStates.map((label) => (
         <span
           key={label}

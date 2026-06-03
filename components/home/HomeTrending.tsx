@@ -5,11 +5,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin } from 'lucide-react';
 import Reveal from '@/components/ui/Reveal';
+import { useLocale } from '@/components/LocaleProvider';
 import type { CatalogHotel } from '@/lib/types';
 
 type Hotel = CatalogHotel;
 
 export default function HomeTrending() {
+  const { t } = useLocale();
   const [hotels, setHotels] = useState<Hotel[]>([]);
 
   useEffect(() => {
@@ -28,14 +30,14 @@ export default function HomeTrending() {
       <Reveal>
         <div className="flex justify-between items-end mb-8">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Catalog destinations</h2>
-            <p className="mt-2 text-slate-600">Catalog hotels with provider data when available</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">{t('htCatalogDestinations')}</h2>
+            <p className="mt-2 text-slate-600">{t('htCatalogSubtext')}</p>
           </div>
           <Link
             href="/search"
             className="text-sm font-semibold text-blue-600 hover:underline"
           >
-            View all →
+            {t('dashViewAll')} →
           </Link>
         </div>
       </Reveal>
@@ -62,7 +64,7 @@ export default function HomeTrending() {
                   </div>
                   <h3 className="text-xl font-bold">{h.name}</h3>
                   <div className="mt-3 inline-flex items-center text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                    Compare prices →
+                    {t('comparePrices')} →
                   </div>
                 </div>
               </div>

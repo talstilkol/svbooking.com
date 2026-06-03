@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface SearchSuggestionsProps {
   currentCity?: string;
@@ -10,23 +13,23 @@ interface Suggestion {
   label: string;
   href: string;
   icon: string;
-  detail?: string;
 }
 
 const POPULAR_SEARCHES: Suggestion[] = [
-  { type: 'city', label: 'Paris', href: '/search?city=Paris', icon: '📍', detail: 'Catalog destination' },
-  { type: 'city', label: 'Tokyo', href: '/search?city=Tokyo', icon: '📍', detail: 'Catalog destination' },
-  { type: 'city', label: 'Bangkok', href: '/search?city=Bangkok', icon: '📍', detail: 'Catalog destination' },
-  { type: 'city', label: 'Bali', href: '/search?city=Bali', icon: '📍', detail: 'Catalog destination' },
-  { type: 'city', label: 'Dubai', href: '/search?city=Dubai', icon: '📍', detail: 'Catalog destination' },
-  { type: 'city', label: 'Barcelona', href: '/search?city=Barcelona', icon: '📍', detail: 'Catalog destination' },
-  { type: 'city', label: 'London', href: '/search?city=London', icon: '📍', detail: 'Catalog destination' },
-  { type: 'city', label: 'New York', href: '/search?city=New%20York', icon: '📍', detail: 'Catalog destination' },
-  { type: 'city', label: 'Rome', href: '/search?city=Rome', icon: '📍', detail: 'Catalog destination' },
-  { type: 'city', label: 'Tel Aviv', href: '/search?city=Tel%20Aviv', icon: '📍', detail: 'Catalog destination' },
+  { type: 'city', label: 'Paris', href: '/search?city=Paris', icon: '📍' },
+  { type: 'city', label: 'Tokyo', href: '/search?city=Tokyo', icon: '📍' },
+  { type: 'city', label: 'Bangkok', href: '/search?city=Bangkok', icon: '📍' },
+  { type: 'city', label: 'Bali', href: '/search?city=Bali', icon: '📍' },
+  { type: 'city', label: 'Dubai', href: '/search?city=Dubai', icon: '📍' },
+  { type: 'city', label: 'Barcelona', href: '/search?city=Barcelona', icon: '📍' },
+  { type: 'city', label: 'London', href: '/search?city=London', icon: '📍' },
+  { type: 'city', label: 'New York', href: '/search?city=New%20York', icon: '📍' },
+  { type: 'city', label: 'Rome', href: '/search?city=Rome', icon: '📍' },
+  { type: 'city', label: 'Tel Aviv', href: '/search?city=Tel%20Aviv', icon: '📍' },
 ];
 
 export default function SearchSuggestions({ currentCity, className = '' }: SearchSuggestionsProps) {
+  const { t } = useLocale();
   const suggestions = (currentCity
     ? POPULAR_SEARCHES.filter((s) => !s.label.toLowerCase().includes(currentCity.toLowerCase()))
     : POPULAR_SEARCHES
@@ -34,7 +37,7 @@ export default function SearchSuggestions({ currentCity, className = '' }: Searc
 
   return (
     <div className={className}>
-      <h3 className="text-sm font-semibold text-slate-700 mb-3">🔍 Popular Searches</h3>
+      <h3 className="text-sm font-semibold text-slate-700 mb-3">🔍 {t('ssPopularSearches')}</h3>
       <div className="flex flex-wrap gap-2">
         {suggestions.map((s) => (
           <Link
@@ -47,9 +50,7 @@ export default function SearchSuggestions({ currentCity, className = '' }: Searc
               <p className="text-xs font-medium text-slate-800 group-hover:text-blue-600 transition">
                 {s.label}
               </p>
-              {s.detail && (
-                <p className="text-[9px] text-slate-500">{s.detail}</p>
-              )}
+              <p className="text-[9px] text-slate-500">{t('ssCatalogDestination')}</p>
             </div>
           </Link>
         ))}
