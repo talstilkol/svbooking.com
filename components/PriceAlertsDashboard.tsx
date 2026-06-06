@@ -3,15 +3,19 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { LOCAL_STORAGE_KEYS, readLocalStorageJsonWithFallback, writeLocalStorageJson } from '@/lib/local-storage-keys';
+import { useLocale } from '@/components/LocaleProvider';
 import {
   type NormalizedPriceAlert,
   type StoredPriceAlert,
   normalizeStoredPriceAlerts,
-  priceAlertDeliveryLabel,
-  priceAlertStorageLabel,
 } from '@/lib/price-alert-local';
 
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
+
 export default function PriceAlertsDashboard({ className = '' }: { className?: string }) {
+  const { t } = useLocale();
   const [alerts, setAlerts] = useState<NormalizedPriceAlert[]>([]);
 
   useEffect(() => {
@@ -43,17 +47,31 @@ export default function PriceAlertsDashboard({ className = '' }: { className?: s
 
   if (alerts.length === 0) return null;
 
+  const activeCountLabel = interpolate(
+    t(alerts.length === 1 ? 'paActiveCountSingular' : 'paActiveCountPlural'),
+    { count: alerts.length }
+  );
+  const storageLabel = (alert: NormalizedPriceAlert) => (
+    alert.storage === 'server' ? t('paStorageServer') : t('paStorageLocal')
+  );
+  const deliveryLabel = (alert: NormalizedPriceAlert) => {
+    if (alert.storage !== 'server') return t('paDeliveryLocalUnavailable');
+    return alert.unsubscribeStatus === 'configured'
+      ? t('paDeliveryServerUnsubscribe')
+      : t('paDeliveryServerNoUnsubscribe');
+  };
+
   return (
     <div className={`bg-white rounded-xl border border-slate-200 overflow-hidden ${className}`}>
       <div className="p-4 border-b border-slate-100 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-slate-700">Price Alerts</h3>
+          <h3 className="text-sm font-semibold text-slate-700">{t('paDashboardTitle')}</h3>
           <p className="text-xs text-slate-500">
-            {alerts.length} active alert{alerts.length !== 1 ? 's' : ''}
+            {activeCountLabel}
           </p>
         </div>
         <span className="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full">
-          WATCHING
+          {t('paWatching')}
         </span>
       </div>
 
@@ -74,18 +92,22 @@ export default function PriceAlertsDashboard({ className = '' }: { className?: s
                 {alert.hotelName}
               </Link>
               <p className="text-xs text-slate-500">
-                {alert.city} · Target: {alert.currency} {alert.targetPrice.toFixed(0)}/night
+                {interpolate(t('paTargetLine'), {
+                  city: alert.city,
+                  currency: alert.currency,
+                  price: alert.targetPrice.toFixed(0),
+                })}
               </p>
               <p className="mt-1 text-[11px] text-slate-500">
-                {priceAlertStorageLabel(alert)} · {priceAlertDeliveryLabel(alert)}
+                {storageLabel(alert)} · {deliveryLabel(alert)}
               </p>
             </div>
             <button
               onClick={() => removeAlert(alert.hotelKey)}
               className="text-xs text-red-400 hover:text-red-600 shrink-0"
-              aria-label={`Remove alert for ${alert.hotelName}`}
+              aria-label={interpolate(t('paRemoveAria'), { hotelName: alert.hotelName })}
             >
-              Remove
+              {t('paRemove')}
             </button>
           </div>
         ))}

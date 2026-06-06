@@ -5,7 +5,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const store: Record<string, unknown> = {};
 vi.mock('@/lib/local-storage-keys', () => ({
-  LOCAL_STORAGE_KEYS: { locale: 'svbooking:locale', newsletter: 'svbooking:newsletter' },
+  LOCAL_STORAGE_KEYS: {
+    locale: 'svbooking:locale',
+    newsletter: 'svbooking:newsletter',
+    priceAlerts: 'svbooking:price-alerts',
+  },
   readLocalStorageStringWithFallback: (key: string) => (store[key] as string) ?? null,
   readLocalStorageJsonWithFallback: (key: string, _f: unknown, fallback: unknown) => store[key] ?? fallback,
   writeLocalStorageJson: (key: string, value: unknown) => { store[key] = value; },
@@ -17,6 +21,8 @@ import TrustBadges from '@/components/TrustBadges';
 import Newsletter from '@/components/Newsletter';
 import WhyChooseUs from '@/components/WhyChooseUs';
 import FAQ from '@/components/FAQ';
+import PriceAlert from '@/components/PriceAlert';
+import PriceAlertsDashboard from '@/components/PriceAlertsDashboard';
 
 beforeEach(() => {
   for (const k of Object.keys(store)) delete store[k];
@@ -66,6 +72,61 @@ describe('Newsletter i18n', () => {
     await user.click(screen.getByRole('button', { name: 'HE' }));
     expect(screen.getByRole('button', { name: 'הרשמה' })).toBeInTheDocument(); // Subscribe
     expect(screen.getByText('שמירת העדפות התראות מבצעים מקומית')).toBeInTheDocument();
+  });
+});
+
+describe('Price alert i18n', () => {
+  it('switches hotel detail alert controls to Hebrew', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <PriceAlert
+          hotelKey="g1-d2"
+          hotelName="Le Meurice"
+          city="Paris"
+          checkIn="2026-07-01"
+          checkOut="2026-07-03"
+          currentPrice={300}
+        />
+      </LocaleProvider>
+    );
+
+    expect(screen.getByRole('button', { name: /Set price alert/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+    await user.click(screen.getByRole('button', { name: /הגדרת התראת מחיר/ }));
+
+    expect(screen.getByText('התראת מחיר עבור Le Meurice', { exact: false })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('מחיר יעד ללילה')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'שמירה' })).toBeInTheDocument();
+  });
+
+  it('switches saved alert dashboard copy to Hebrew', async () => {
+    const user = userEvent.setup();
+    store['svbooking:price-alerts'] = [{
+      hotelKey: 'g1-d2',
+      hotelName: 'Le Meurice',
+      city: 'Paris',
+      targetPrice: 250,
+      currency: 'USD',
+      storage: 'local',
+      unsubscribeStatus: 'not-configured',
+    }];
+
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <PriceAlertsDashboard />
+      </LocaleProvider>
+    );
+
+    await screen.findByText('Price Alerts');
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+
+    expect(screen.getByText('התראות מחיר')).toBeInTheDocument();
+    expect(screen.getByText('1 התראה פעילה')).toBeInTheDocument();
+    expect(screen.getByText(/מכשיר מקומי/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'הסרת התראה עבור Le Meurice' })).toBeInTheDocument();
   });
 });
 

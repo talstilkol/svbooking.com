@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useLocalStorage } from '@/lib/useLocalStorage';
 import { LOCAL_STORAGE_KEYS } from '@/lib/local-storage-keys';
+import { useLocale } from '@/components/LocaleProvider';
 import {
   type StoredPriceAlert,
   normalizeStoredPriceAlerts,
-  priceAlertDeliveryLabel,
 } from '@/lib/price-alert-local';
 
 interface LocalAlert extends StoredPriceAlert {
@@ -38,7 +38,12 @@ function localAlertId(hotelKey: string, targetPrice: string, currency: string) {
   return `local-${hotelKey}-${currency}-${targetPrice}`.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase();
 }
 
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
+
 export default function PriceAlert({ hotelKey, hotelName, city, checkIn, checkOut, currentPrice, currency = 'USD' }: PriceAlertProps) {
+  const { t } = useLocale();
   const [alerts, setAlerts] = useLocalStorage<StoredPriceAlert[]>(LOCAL_STORAGE_KEYS.priceAlerts, []);
   const [open, setOpen] = useState(false);
   const [targetPrice, setTargetPrice] = useState(
@@ -48,6 +53,12 @@ export default function PriceAlert({ hotelKey, hotelName, city, checkIn, checkOu
   const [saving, setSaving] = useState(false);
 
   const existingAlert = normalizeStoredPriceAlerts(alerts).find((a) => a.hotelKey === hotelKey);
+  const deliveryLabel = (alert: NonNullable<typeof existingAlert>) => {
+    if (alert.storage !== 'server') return t('paDeliveryLocalUnavailable');
+    return alert.unsubscribeStatus === 'configured'
+      ? t('paDeliveryServerUnsubscribe')
+      : t('paDeliveryServerNoUnsubscribe');
+  };
 
   const saveAlert = async () => {
     if (!targetPrice || isNaN(Number(targetPrice))) return;
@@ -108,13 +119,17 @@ export default function PriceAlert({ hotelKey, hotelName, city, checkIn, checkOu
     return (
       <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
         <span>
-          Alert set: {existingAlert.currency} {existingAlert.targetPrice}/night · {priceAlertDeliveryLabel(existingAlert)}
+          {interpolate(t('paAlertSet'), {
+            currency: existingAlert.currency,
+            price: existingAlert.targetPrice,
+            delivery: deliveryLabel(existingAlert),
+          })}
         </span>
         <button
           onClick={removeAlert}
           className="text-red-500 hover:text-red-600 ml-auto text-xs font-medium"
         >
-          Remove
+          {t('paRemove')}
         </button>
       </div>
     );
@@ -127,15 +142,15 @@ export default function PriceAlert({ hotelKey, hotelName, city, checkIn, checkOu
           onClick={() => setOpen(true)}
           className="flex items-center gap-2 text-sm text-slate-600 hover:text-amber-600 border border-slate-200 hover:border-amber-300 rounded-lg px-3 py-2 transition-colors"
         >
-          🔔 Set price alert
+          🔔 {t('paSetAlert')}
         </button>
       ) : (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
           <h4 className="font-semibold text-amber-800 mb-2 text-sm">
-            🔔 Price alert for {hotelName}
+            🔔 {interpolate(t('paTitle'), { hotelName })}
           </h4>
           <p className="text-xs text-amber-700 mb-3">
-            This watch uses verified provider prices only. Delivery stays local unless account storage and alert delivery are configured.
+            {t('paDescription')}
           </p>
           <div className="flex gap-2 items-center">
             <span className="text-sm text-slate-600">{currency}</span>
@@ -143,7 +158,7 @@ export default function PriceAlert({ hotelKey, hotelName, city, checkIn, checkOu
               type="number"
               value={targetPrice}
               onChange={(e) => setTargetPrice(e.target.value)}
-              placeholder="Target price/night"
+              placeholder={t('paTargetPlaceholder')}
               className="flex-1 border border-amber-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-2 focus:ring-amber-400 outline-none"
             />
             <button
@@ -151,10 +166,11 @@ export default function PriceAlert({ hotelKey, hotelName, city, checkIn, checkOu
               disabled={!targetPrice || saving}
               className="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-40 transition"
             >
-              {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save'}
+              {saving ? t('paSaving') : saved ? `✓ ${t('paSaved')}` : t('paSave')}
             </button>
             <button
               onClick={() => setOpen(false)}
+              aria-label={t('paClose')}
               className="text-slate-500 hover:text-slate-600 text-sm"
             >
               ✕
