@@ -10,7 +10,8 @@ import { getCachedHeatmap, getCachedRates } from '@/lib/price-cache';
 
 describe('cheaper date price intelligence', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.mocked(getCachedHeatmap).mockReset();
+    vi.mocked(getCachedRates).mockReset();
   });
 
   afterEach(() => {
@@ -509,6 +510,8 @@ describe('cheaper date price intelligence', () => {
   });
 
   it('accepts heatmap calendar arrays and daily payloads while normalizing bad today input', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-01T00:00:00.000Z'));
     vi.mocked(getCachedHeatmap)
       .mockResolvedValueOnce([
         { chk_in: '2026-06-04', min_rate: 210 },
