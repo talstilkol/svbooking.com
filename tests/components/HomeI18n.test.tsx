@@ -23,6 +23,8 @@ import WhyChooseUs from '@/components/WhyChooseUs';
 import FAQ from '@/components/FAQ';
 import PriceAlert from '@/components/PriceAlert';
 import PriceAlertsDashboard from '@/components/PriceAlertsDashboard';
+import NotFound from '@/app/not-found';
+import OfflinePage from '@/app/offline/page';
 
 beforeEach(() => {
   for (const k of Object.keys(store)) delete store[k];
@@ -162,5 +164,39 @@ describe('FAQ i18n', () => {
     // Open the coverage question; Hebrew answer keeps interpolated numeric stats.
     await user.click(screen.getByText('בכמה ערים ומלונות אתם מכסים?'));
     expect(screen.getByText(/\d+ מלונות ב‑\d+ ערים ו‑\d+ מדינות/)).toBeInTheDocument();
+  });
+});
+
+describe('Fallback page i18n', () => {
+  it('switches the not-found page to Hebrew', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <NotFound />
+      </LocaleProvider>
+    );
+
+    expect(screen.getByText('Lost in paradise?')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+
+    expect(screen.getByText('הלכתם לאיבוד?')).toBeInTheDocument();
+    expect(screen.getByText('חזרה לדף הבית')).toBeInTheDocument();
+  });
+
+  it('switches the offline page to Hebrew', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <OfflinePage />
+      </LocaleProvider>
+    );
+
+    expect(screen.getByText("You're offline")).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+
+    expect(screen.getByText('אתם במצב לא מקוון')).toBeInTheDocument();
+    expect(screen.getByText('מעבר לדף הבית')).toBeInTheDocument();
   });
 });

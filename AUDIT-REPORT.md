@@ -1,6 +1,6 @@
 # SV Booking Audit Report
 
-**Audit date:** 2026-05-31
+**Audit date:** 2026-06-06
 **Project:** `/Users/tal/my-app`
 **Current local catalog:** 502 hotels, 139 cities, 65 countries
 **Overall status:** locally stable, not production-ready until real deployment env is configured
@@ -20,7 +20,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 185 test files, 1125 tests passed. |
+| `npm test` | PASS | 185 test files, 1127 tests passed. |
 | `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 100% lines, 100% statements, 100% functions, and 100% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 100%, statements 100%, functions 100%, branches 100%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 729 static pages without the previous Edge-runtime static-generation warning. |
