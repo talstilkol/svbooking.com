@@ -58,6 +58,12 @@ const validFiles = {
     'Provider data is shown and display it for comparison purposes.',
   ].join('\n'),
   'components/PriceComparisonNotice.tsx': [
+    'priceComparisonNoticeDesc',
+    'priceComparisonProviderRates',
+    'priceComparisonCheckout',
+    'priceComparisonTerms',
+  ].join('\n'),
+  'lib/i18n.js': [
     'Fees, taxes, cancellation terms, and room details can vary by provider.',
     'Provider-supplied rates',
     'Direct provider checkout',
@@ -119,15 +125,15 @@ describe('legal readiness audit script', () => {
   it('fails when commercial disclosure wiring is removed', async () => {
     const cwd = await createFixture({
       ...validFiles,
-      'components/PriceComparisonNotice.tsx': 'Provider-supplied rates\n',
+      'components/PriceComparisonNotice.tsx': 'priceComparisonProviderRates\n',
       '.github/workflows/ci.yml': 'steps:\n  - run: npm test\n',
     });
 
     const result = runAudit(cwd);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain('components/PriceComparisonNotice.tsx is missing: Fees, taxes, cancellation terms');
-    expect(result.stderr).toContain('components/PriceComparisonNotice.tsx is missing: Direct provider checkout');
+    expect(result.stderr).toContain('components/PriceComparisonNotice.tsx is missing: priceComparisonNoticeDesc');
+    expect(result.stderr).toContain('components/PriceComparisonNotice.tsx is missing: priceComparisonCheckout');
     expect(result.stderr).toContain('.github/workflows/ci.yml is missing: npm run audit:legal-readiness');
   });
 });

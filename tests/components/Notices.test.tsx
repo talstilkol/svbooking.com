@@ -42,6 +42,20 @@ describe('FlightDataNotice', () => {
     const { container } = render(<FlightDataNotice city="X" className="mt-3" />);
     expect(container.firstChild).toHaveClass('mt-3');
   });
+
+  it('switches the flight unavailable notice to Hebrew', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <FlightDataNotice city="Paris" />
+      </LocaleProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+    expect(screen.getByText('נתוני מחירי טיסות עבור Paris')).toBeInTheDocument();
+    expect(screen.getByText(/נתוני מחירי טיסות מאומתים אינם זמינים/)).toBeInTheDocument();
+  });
 });
 
 describe('PriceComparisonNotice', () => {
@@ -52,5 +66,20 @@ describe('PriceComparisonNotice', () => {
     expect(screen.getByText(/Date-specific results/i)).toBeInTheDocument();
     expect(screen.getByText(/Direct provider checkout/i)).toBeInTheDocument();
     expect(screen.getByText(/Terms confirmed off-site/i)).toBeInTheDocument();
+  });
+
+  it('switches the price comparison notice to Hebrew', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <PriceComparisonNotice />
+      </LocaleProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+    expect(screen.getByText('הודעת השוואת מחירים')).toBeInTheDocument();
+    expect(screen.getByText('מחירים שסופקו על ידי ספקים')).toBeInTheDocument();
+    expect(screen.getByText('תנאים מאושרים מחוץ לאתר')).toBeInTheDocument();
   });
 });

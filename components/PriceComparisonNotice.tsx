@@ -1,4 +1,10 @@
+'use client';
+
+import { useLocale } from '@/components/LocaleProvider';
+
 export default function PriceComparisonNotice({ className = '' }: { className?: string }) {
+  const { t } = useLocale();
+
   return (
     <div className={`bg-slate-50 border border-slate-200 rounded-xl p-5 ${className}`}>
       <div className="flex items-start gap-4">
@@ -6,24 +12,22 @@ export default function PriceComparisonNotice({ className = '' }: { className?: 
           <span className="text-2xl" aria-hidden="true">&#128269;</span>
         </div>
         <div>
-          <h3 className="font-semibold text-slate-900 mb-1">Price Comparison Notice</h3>
+          <h3 className="font-semibold text-slate-900 mb-1">{t('priceComparisonNoticeTitle')}</h3>
           <p className="text-sm text-slate-600 leading-relaxed">
-            SV Booking compares rates returned by available providers for the selected dates.
-            Fees, taxes, cancellation terms, and room details can vary by provider and should
-            be confirmed before checkout.
+            {t('priceComparisonNoticeDesc')}
           </p>
           <div className="flex flex-wrap gap-3 mt-3 text-xs text-slate-500">
             <span className="flex items-center gap-1">
-              <span aria-hidden="true">&#10003;</span> Provider-supplied rates
+              <span aria-hidden="true">&#10003;</span> {t('priceComparisonProviderRates')}
             </span>
             <span className="flex items-center gap-1">
-              <span aria-hidden="true">&#10003;</span> Date-specific results
+              <span aria-hidden="true">&#10003;</span> {t('priceComparisonDateSpecific')}
             </span>
             <span className="flex items-center gap-1">
-              <span aria-hidden="true">&#10003;</span> Direct provider checkout
+              <span aria-hidden="true">&#10003;</span> {t('priceComparisonCheckout')}
             </span>
             <span className="flex items-center gap-1">
-              <span aria-hidden="true">&#10003;</span> Terms confirmed off-site
+              <span aria-hidden="true">&#10003;</span> {t('priceComparisonTerms')}
             </span>
           </div>
         </div>

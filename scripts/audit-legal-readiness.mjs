@@ -38,6 +38,7 @@ const [
   termsPage,
   legalContent,
   priceNotice,
+  i18n,
   cookieConsent,
   affiliate,
   clickRoute,
@@ -51,6 +52,7 @@ const [
   readProjectFile('app/terms/page.tsx'),
   readProjectFile('lib/legal-content.ts'),
   readProjectFile('components/PriceComparisonNotice.tsx'),
+  readProjectFile('lib/i18n.js'),
   readProjectFile('components/CookieConsent.tsx'),
   readProjectFile('lib/affiliate.ts'),
   readProjectFile('app/api/click/route.js'),
@@ -94,6 +96,13 @@ requireIncludes(legalContent, 'lib/legal-content.ts', [
 ]);
 
 requireIncludes(priceNotice, 'components/PriceComparisonNotice.tsx', [
+  'priceComparisonNoticeDesc',
+  'priceComparisonProviderRates',
+  'priceComparisonCheckout',
+  'priceComparisonTerms',
+]);
+
+requireIncludes(i18n, 'lib/i18n.js', [
   'Fees, taxes, cancellation terms',
   'Provider-supplied rates',
   'Direct provider checkout',
