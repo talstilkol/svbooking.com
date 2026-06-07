@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
-import Link from 'next/link';
+import RouteErrorState from '@/components/RouteErrorState';
 
 export default function ExploreError({
   error,
@@ -10,40 +9,16 @@ export default function ExploreError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    console.error('Explore page error:', error);
-  }, [error]);
-
   return (
-    <div className="min-h-[70vh] flex items-center justify-center p-8">
-      <div className="max-w-md w-full text-center">
-        <div className="text-7xl mb-6 opacity-80">🗺️</div>
-        <h2 className="text-3xl font-bold text-slate-900 mb-3">
-          Explore failed to load
-        </h2>
-        <p className="text-slate-600 mb-2">
-          We could not load the destinations. Destination data may be temporarily unavailable.
-        </p>
-        {error.digest && (
-          <p className="text-xs text-slate-500 mb-6 font-mono">
-            Error ID: {error.digest}
-          </p>
-        )}
-        <div className="flex justify-center gap-3">
-          <button
-            onClick={reset}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
-          >
-            Try again
-          </button>
-          <Link
-            href="/search"
-            className="px-6 py-3 bg-white text-slate-700 border border-slate-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all font-medium"
-          >
-            Browse Hotels
-          </Link>
-        </div>
-      </div>
-    </div>
+    <RouteErrorState
+      error={error}
+      reset={reset}
+      icon="🗺️"
+      titleKey="routeErrorExploreTitle"
+      descriptionKey="routeErrorExploreDesc"
+      secondaryHref="/search"
+      secondaryLabelKey="routeErrorBrowseHotels"
+      consoleLabel="Explore page error"
+    />
   );
 }
