@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link";
 import dynamic from "next/dynamic";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -119,7 +118,7 @@ export default function RootLayout({
         <RouteProgress />
         <OfflineBanner />
         <Navbar />
-        <ErrorBoundary fallback={<div className="flex-1 flex items-center justify-center p-8 text-center"><div><p className="text-4xl mb-4">Something went wrong</p><Link href="/" className="text-blue-600 underline">Go home</Link></div></div>}>
+        <ErrorBoundary>
         <main id="main-content" className="pt-16 flex-1 pb-14 md:pb-0">{children}</main>
         </ErrorBoundary>
         <Footer />

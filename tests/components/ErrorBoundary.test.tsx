@@ -3,6 +3,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { LocaleProvider } from '@/components/LocaleProvider';
+import LocaleSwitcher from '@/components/LocaleSwitcher';
 
 function ProblemChild({ shouldThrow }: { shouldThrow: boolean }) {
   if (shouldThrow) throw new Error('Test error');
@@ -37,6 +39,23 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
     expect(screen.getByText('Test error')).toBeInTheDocument();
     expect(screen.getByText('Try again')).toBeInTheDocument();
+  });
+
+  it('switches the default error UI to Hebrew', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <ErrorBoundary>
+          <ProblemChild shouldThrow={true} />
+        </ErrorBoundary>
+      </LocaleProvider>
+    );
+
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+    expect(screen.getByText('משהו השתבש')).toBeInTheDocument();
+    expect(screen.getByText('נסה שוב')).toBeInTheDocument();
   });
 
   it('shows custom fallback when provided', () => {

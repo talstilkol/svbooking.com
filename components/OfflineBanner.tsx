@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 
 export default function OfflineBanner() {
+  const { t } = useLocale();
   const [offline, setOffline] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -32,16 +34,14 @@ export default function OfflineBanner() {
         <div className="flex items-center gap-2">
           <span className="text-lg">📡</span>
           <div>
-            <p className="text-sm font-semibold">You&apos;re offline</p>
-            <p className="text-xs opacity-90">
-              Price comparisons require an internet connection. Some cached data may be available.
-            </p>
+            <p className="text-sm font-semibold">{t('offlineTitle')}</p>
+            <p className="text-xs opacity-90">{t('offlineBannerDescription')}</p>
           </div>
         </div>
         <button
           onClick={() => setDismissed(true)}
           className="text-white/70 hover:text-white transition text-lg px-2"
-          aria-label="Dismiss offline notice"
+          aria-label={t('offlineBannerDismiss')}
         >
           ✕
         </button>
