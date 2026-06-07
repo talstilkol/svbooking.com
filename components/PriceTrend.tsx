@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface PricePoint {
   date: string; // YYYY-MM-DD
@@ -16,6 +17,7 @@ interface PriceTrendProps {
 }
 
 export default function PriceTrend({ hotelKey, nights = 1, currency = 'USD' }: PriceTrendProps) {
+  const { t } = useLocale();
   const [points, setPoints] = useState<PricePoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -50,33 +52,36 @@ export default function PriceTrend({ hotelKey, nights = 1, currency = 'USD' }: P
   if (loading) {
     return (
       <div className="h-24 bg-slate-50 rounded-xl animate-pulse flex items-center justify-center">
-        <span className="text-xs text-slate-500">Loading price trend…</span>
+        <span className="text-xs text-slate-500">{t('priceTrendLoading')}</span>
       </div>
     );
   }
 
   if (error || points.length === 0) return null;
 
-  const prices = points.map((p) => p.price).filter((p) => p > 0);
-  if (prices.length === 0) return null;
+  const positivePoints = points
+    .map((point, idx) => ({ point, idx }))
+    .filter(({ point }) => point.price > 0);
+  if (positivePoints.length === 0) return null;
 
+  const prices = positivePoints.map(({ point }) => point.price);
   const min = Math.min(...prices);
   const max = Math.max(...prices);
   const range = max - min || 1;
-  const cheapestIdx = prices.indexOf(min);
+  const cheapestIdx = positivePoints.find(({ point }) => point.price === min)?.idx ?? -1;
   const sourceLabel = points.find((p) => p.priceSourceLabel)?.priceSourceLabel;
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-slate-700">30-day price trend</h3>
+        <h3 className="text-sm font-semibold text-slate-700">{t('priceTrendHeading')}</h3>
         <span className="text-xs text-slate-500">
-          {currency} {min.toFixed(0)} – {max.toFixed(0)}/night
+          {currency} {min.toFixed(0)} – {max.toFixed(0)}/{t('priceTrendPerNight')}
         </span>
       </div>
 
       {/* Bar chart */}
-      <div className="flex items-end gap-1 h-20 relative" role="img" aria-label="Price trend chart">
+      <div className="flex items-end gap-1 h-20 relative" role="img" aria-label={t('priceTrendChartLabel')}>
         {points.map((p, idx) => {
           const heightPct = p.price > 0 ? ((p.price - min) / range) * 70 + 30 : 10;
           const isCheapest = idx === cheapestIdx;
@@ -95,6 +100,7 @@ export default function PriceTrend({ hotelKey, nights = 1, currency = 'USD' }: P
                 </div>
               )}
               <div
+                data-testid="price-trend-bar"
                 style={{ height: `${heightPct}%` }}
                 className={`w-full rounded-t transition-all ${
                   isCheapest
@@ -121,7 +127,7 @@ export default function PriceTrend({ hotelKey, nights = 1, currency = 'USD' }: P
       </div>
 
       <p className="text-xs text-slate-500 mt-2 text-center">
-        Cheapest observed date · Hover bars for exact price{sourceLabel ? ` · ${sourceLabel}` : ''}
+        {t('priceTrendCheapestObserved')} · {t('priceTrendHoverExact')}{sourceLabel ? ` · ${sourceLabel}` : ''}
       </p>
     </div>
   );
