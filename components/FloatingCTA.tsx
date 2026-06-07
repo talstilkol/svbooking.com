@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface FloatingCTAProps {
   hotelName: string;
@@ -19,6 +20,7 @@ export default function FloatingCTA({
   bookingUrl,
   className = '',
 }: FloatingCTAProps) {
+  const { t } = useLocale();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -45,7 +47,9 @@ export default function FloatingCTA({
           <p className="text-sm font-bold text-slate-900">
             {currency} {cheapestPrice.toFixed(0)}
             {provider && (
-              <span className="text-[10px] font-normal text-slate-500 ml-1">via {provider}</span>
+              <span className="text-[10px] font-normal text-slate-500 ml-1">
+                {t('floatingVia')} {provider}
+              </span>
             )}
           </p>
         </div>
@@ -56,7 +60,7 @@ export default function FloatingCTA({
             rel="noopener noreferrer"
             className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition shrink-0"
           >
-            Book Now
+            {t('floatingBookNow')}
           </a>
         ) : (
           <button
@@ -65,7 +69,7 @@ export default function FloatingCTA({
             }}
             className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition shrink-0"
           >
-            See Prices
+            {t('floatingSeePrices')}
           </button>
         )}
       </div>

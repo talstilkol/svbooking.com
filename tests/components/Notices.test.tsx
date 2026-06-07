@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect } from 'vitest';
 import ProviderDataNotice from '@/components/ProviderDataNotice';
 import FlightDataNotice from '@/components/FlightDataNotice';
 import PriceComparisonNotice from '@/components/PriceComparisonNotice';
+import { LocaleProvider } from '@/components/LocaleProvider';
+import LocaleSwitcher from '@/components/LocaleSwitcher';
 
 describe('ProviderDataNotice', () => {
   it('renders the provider name and Unscored badge', () => {
@@ -11,6 +14,20 @@ describe('ProviderDataNotice', () => {
     expect(screen.getByText('Booking.com')).toBeInTheDocument();
     expect(screen.getByText('Unscored')).toBeInTheDocument();
     expect(screen.getByText(/Verified provider-quality data is unavailable/i)).toBeInTheDocument();
+  });
+
+  it('switches provider-quality notice copy to Hebrew', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <ProviderDataNotice provider="Booking.com" />
+      </LocaleProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+    expect(screen.getByText('ללא ציון')).toBeInTheDocument();
+    expect(screen.getByText(/נתוני איכות ספק מאומתים אינם זמינים/)).toBeInTheDocument();
   });
 });
 
