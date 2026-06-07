@@ -7,8 +7,20 @@ const store: Record<string, unknown> = {};
 vi.mock('@/lib/local-storage-keys', () => ({
   LOCAL_STORAGE_KEYS: {
     locale: 'svbooking:locale',
+    favorites: 'svbooking:favorites',
+    trips: 'svbooking:trips',
+    recentlyViewed: 'svbooking:recently-viewed',
+    recentSearches: 'svbooking:recent-searches',
+    onboardingDismissed: 'svbooking:onboarding-dismissed',
     newsletter: 'svbooking:newsletter',
     priceAlerts: 'svbooking:price-alerts',
+  },
+  LEGACY_LOCAL_STORAGE_KEYS: {
+    favorites: 'sv_favorites',
+    trips: 'sv_trips',
+    recentlyViewed: 'sv_recently_viewed',
+    recentSearches: 'sv_recent_searches',
+    recentSearchesUnprefixed: 'recentSearches',
   },
   readLocalStorageStringWithFallback: (key: string) => (store[key] as string) ?? null,
   readLocalStorageJsonWithFallback: (key: string, _f: unknown, fallback: unknown) => store[key] ?? fallback,
@@ -23,6 +35,8 @@ import WhyChooseUs from '@/components/WhyChooseUs';
 import FAQ from '@/components/FAQ';
 import PriceAlert from '@/components/PriceAlert';
 import PriceAlertsDashboard from '@/components/PriceAlertsDashboard';
+import DashboardStats from '@/components/DashboardStats';
+import OnboardingTour from '@/components/OnboardingTour';
 import NotFound from '@/app/not-found';
 import OfflinePage from '@/app/offline/page';
 
@@ -198,5 +212,34 @@ describe('Fallback page i18n', () => {
 
     expect(screen.getByText('אתם במצב לא מקוון')).toBeInTheDocument();
     expect(screen.getByText('מעבר לדף הבית')).toBeInTheDocument();
+  });
+});
+
+describe('Dashboard i18n', () => {
+  it('switches dashboard stats and onboarding copy to Hebrew', async () => {
+    const user = userEvent.setup();
+    store['svbooking:favorites'] = [{ hotelKey: 'g1-d2' }];
+    store['svbooking:trips'] = [];
+    store['svbooking:recently-viewed'] = [];
+    store['svbooking:recent-searches'] = [{ query: 'Paris' }];
+
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <DashboardStats />
+        <OnboardingTour />
+      </LocaleProvider>
+    );
+
+    expect(await screen.findByText('Favorites')).toBeInTheDocument();
+    expect(await screen.findByText(/Getting Started/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+
+    expect(screen.getByText('מועדפים')).toBeInTheDocument();
+    expect(screen.getByText('טיולים שתוכננו')).toBeInTheDocument();
+    expect(screen.getByText(/תחילת עבודה/)).toBeInTheDocument();
+    expect(screen.getByText('2/5 הושלמו')).toBeInTheDocument();
+    expect(screen.getByText(/עיון בקטלוג של \d+ מלונות ב־\d+ ערים/)).toBeInTheDocument();
   });
 });

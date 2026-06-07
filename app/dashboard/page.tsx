@@ -2,6 +2,7 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
+import { useLocale } from '@/components/LocaleProvider';
 import DashboardStats from '@/components/DashboardStats';
 import ActivityFeed from '@/components/ActivityFeed';
 import QuickActions from '@/components/QuickActions';
@@ -14,15 +15,19 @@ import UserPreferences from '@/components/UserPreferences';
 import OnboardingTour from '@/components/OnboardingTour';
 
 export default function DashboardPage() {
+  const { t } = useLocale();
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Gradient header */}
       <div className="bg-linear-to-r from-indigo-600 via-blue-600 to-violet-600 text-white py-10 px-4 mb-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">← Home</Link>
-            <h1 className="text-3xl md:text-4xl font-bold">Dashboard</h1>
-            <p className="text-white/70 mt-1">Your booking command center</p>
+            <Link href="/" className="text-white/70 hover:text-white text-sm mb-3 inline-block transition-colors">
+              ← {t('dashboardHome')}
+            </Link>
+            <h1 className="text-3xl md:text-4xl font-bold">{t('dashboardTitle')}</h1>
+            <p className="text-white/70 mt-1">{t('dashboardCommandCenter')}</p>
           </div>
           <UserPreferences />
         </div>

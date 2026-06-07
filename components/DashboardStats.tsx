@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 import {
   LEGACY_LOCAL_STORAGE_KEYS,
   LOCAL_STORAGE_KEYS,
@@ -16,6 +17,7 @@ interface Stats {
 }
 
 export default function DashboardStats({ className = '' }: { className?: string }) {
+  const { t } = useLocale();
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
@@ -55,11 +57,11 @@ export default function DashboardStats({ className = '' }: { className?: string 
   if (!stats) return null;
 
   const cards = [
-    { icon: '❤️', label: 'Favorites', value: stats.favorites, color: 'from-red-500 to-pink-600' },
-    { icon: '✈️', label: 'Trips Planned', value: stats.trips, color: 'from-blue-500 to-blue-600' },
-    { icon: '🔍', label: 'Searches', value: stats.searches, color: 'from-green-500 to-emerald-600' },
-    { icon: '📊', label: 'Comparisons', value: stats.comparisons, color: 'from-purple-500 to-indigo-600' },
-    { icon: '🔔', label: 'Price Alerts', value: stats.alerts, color: 'from-cyan-500 to-blue-600' },
+    { icon: '❤️', labelKey: 'dashStatFavorites', value: stats.favorites, color: 'from-red-500 to-pink-600' },
+    { icon: '✈️', labelKey: 'dashStatTripsPlanned', value: stats.trips, color: 'from-blue-500 to-blue-600' },
+    { icon: '🔍', labelKey: 'dashStatSearches', value: stats.searches, color: 'from-green-500 to-emerald-600' },
+    { icon: '📊', labelKey: 'dashStatComparisons', value: stats.comparisons, color: 'from-purple-500 to-indigo-600' },
+    { icon: '🔔', labelKey: 'dashStatPriceAlerts', value: stats.alerts, color: 'from-cyan-500 to-blue-600' },
   ];
 
   return (
@@ -67,7 +69,7 @@ export default function DashboardStats({ className = '' }: { className?: string 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {cards.map((card) => (
           <div
-            key={card.label}
+            key={card.labelKey}
             className="relative overflow-hidden rounded-xl p-4 text-white"
           >
             <div className={`absolute inset-0 bg-linear-to-br ${card.color}`} />
@@ -75,7 +77,7 @@ export default function DashboardStats({ className = '' }: { className?: string 
             <div className="relative">
               <span className="text-2xl block mb-1">{card.icon}</span>
               <p className="text-2xl font-bold">{card.value}</p>
-              <p className="text-[10px] opacity-80">{card.label}</p>
+              <p className="text-[10px] opacity-80">{t(card.labelKey)}</p>
             </div>
           </div>
         ))}
