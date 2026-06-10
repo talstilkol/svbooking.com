@@ -349,27 +349,23 @@ describe('cheaper date price intelligence', () => {
   });
 
   it('stops provider fallback batches when the total time budget expires mid-loop', async () => {
-    let nowMs = 1;
     let rateCallCount = 0;
-    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => nowMs);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-01T00:00:00.000Z'));
     vi.mocked(getCachedHeatmap).mockResolvedValue({ data: [] });
     vi.mocked(getCachedRates).mockImplementation(async () => {
       rateCallCount += 1;
       if (rateCallCount > 1) {
-        nowMs = 45_002;
+        vi.setSystemTime(new Date('2026-06-01T00:00:45.002Z'));
       }
       return { rates: [], source: 'provider-registry' };
     });
 
-    try {
-      const result = await findCheaperDates('g187147-d188732', '2026-06-10', '2026-06-12');
+    const result = await findCheaperDates('g187147-d188732', '2026-06-10', '2026-06-12');
 
-      expect(result.timedOut).toBe(true);
-      expect(result.method).toBe('provider-rates-fallback');
-      expect(result.hasRealData).toBe(false);
-    } finally {
-      nowSpy.mockRestore();
-    }
+    expect(result.timedOut).toBe(true);
+    expect(result.method).toBe('provider-rates-fallback');
+    expect(result.hasRealData).toBe(false);
   });
 
   it('reports timeout when the heatmap budget is already exhausted', async () => {

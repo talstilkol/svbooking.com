@@ -37,6 +37,7 @@ import PriceAlert from '@/components/PriceAlert';
 import PriceAlertsDashboard from '@/components/PriceAlertsDashboard';
 import DashboardStats from '@/components/DashboardStats';
 import OnboardingTour from '@/components/OnboardingTour';
+import PopularCitiesClient from '@/components/PopularCitiesClient';
 import NotFound from '@/app/not-found';
 import OfflinePage from '@/app/offline/page';
 
@@ -241,5 +242,33 @@ describe('Dashboard i18n', () => {
     expect(screen.getByText(/תחילת עבודה/)).toBeInTheDocument();
     expect(screen.getByText('2/5 הושלמו')).toBeInTheDocument();
     expect(screen.getByText(/עיון בקטלוג של \d+ מלונות ב־\d+ ערים/)).toBeInTheDocument();
+  });
+});
+
+describe('Popular cities i18n', () => {
+  it('switches the catalog destination heading and hotel counts to Hebrew', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <PopularCitiesClient
+          cities={[
+            { city: 'Paris', count: 2 },
+            { city: 'Rome', count: 1 },
+          ]}
+        />
+      </LocaleProvider>
+    );
+
+    expect(screen.getByText('Featured catalog destinations')).toBeInTheDocument();
+    expect(screen.getByText('2 hotels')).toBeInTheDocument();
+    expect(screen.getByText('1 hotel')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+
+    expect(screen.getByText('יעדים נבחרים בקטלוג')).toBeInTheDocument();
+    expect(screen.getByText('2 מלונות')).toBeInTheDocument();
+    expect(screen.getByText('1 מלון')).toBeInTheDocument();
   });
 });
