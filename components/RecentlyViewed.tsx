@@ -2,16 +2,18 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useLocale } from '@/components/LocaleProvider';
 import { useRecentlyViewed } from '@/lib/useLocalStorage';
 
 export default function RecentlyViewed() {
+  const { t } = useLocale();
   const { items, hydrated } = useRecentlyViewed();
 
   if (!hydrated || items.length === 0) return null;
 
   return (
     <section className="max-w-7xl mx-auto px-4 py-8">
-      <h2 className="text-xl font-bold text-slate-800 mb-4">Recently viewed</h2>
+      <h2 className="text-xl font-bold text-slate-800 mb-4">{t('recentlyViewedHeading')}</h2>
       <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
         {items.map((hotel) => (
           <Link
