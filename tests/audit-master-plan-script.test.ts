@@ -32,7 +32,7 @@ function runAudit(cwd: string) {
 
 const validMasterPlan = [
   '# Plan',
-  '| Acceptance Criteria | `npm test` passes | DONE | 187 files / 1140 tests passed. |',
+  '| Acceptance Criteria | `npm test` passes | DONE | 187 files / 1141 tests passed. |',
   '- [x] Add local evidence gate',
   '- [ ] Configure real deployment env',
   '',
@@ -58,7 +58,7 @@ const validFiles = {
   }),
   '.github/workflows/ci.yml': 'steps:\n  - run: npm run audit:master-plan\n',
   'README.md': 'Run npm run audit:master-plan before release.\n',
-  'AUDIT-REPORT.md': '187 test files, 1140 tests passed. Master-plan honesty audit passed.\n',
+  'AUDIT-REPORT.md': '187 test files, 1141 tests passed. Master-plan honesty audit passed.\n',
 };
 
 describe('master-plan audit script', () => {

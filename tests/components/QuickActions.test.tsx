@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect } from 'vitest';
+import { LocaleProvider } from '@/components/LocaleProvider';
+import LocaleSwitcher from '@/components/LocaleSwitcher';
 import QuickActions from '@/components/QuickActions';
 
 describe('QuickActions', () => {
@@ -29,5 +32,22 @@ describe('QuickActions', () => {
   it('accepts custom className', () => {
     const { container } = render(<QuickActions className="mt-6" />);
     expect(container.firstChild).toHaveClass('mt-6');
+  });
+
+  it('switches action labels and descriptions to Hebrew', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <QuickActions />
+      </LocaleProvider>
+    );
+
+    expect(screen.getByText(/Quick Actions/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+
+    expect(screen.getByText(/פעולות מהירות/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /חיפוש מלונות/ })).toHaveAttribute('href', '/search');
+    expect(screen.getByText(/עיון ב־\d+ מלונות/)).toBeInTheDocument();
   });
 });
