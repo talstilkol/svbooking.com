@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useLocale } from '@/components/LocaleProvider';
 import {
   LEGACY_LOCAL_STORAGE_KEYS,
   LOCAL_STORAGE_KEYS,
@@ -32,16 +33,22 @@ interface RecentSearchRecord {
   timestamp?: number;
 }
 
-function timeAgo(ts: number): string {
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) => (
+    Object.prototype.hasOwnProperty.call(vars, key) ? String(vars[key]) : match
+  ));
+}
+
+function timeAgo(ts: number, t: (key: string) => string, locale: string): string {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t('activityJustNow');
+  if (mins < 60) return interpolate(t(mins === 1 ? 'activityMinuteAgo' : 'activityMinutesAgo'), { count: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return interpolate(t(hours === 1 ? 'activityHourAgo' : 'activityHoursAgo'), { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(ts).toLocaleDateString();
+  if (days < 7) return interpolate(t(days === 1 ? 'activityDayAgo' : 'activityDaysAgo'), { count: days });
+  return new Date(ts).toLocaleDateString(locale);
 }
 
 const ICONS: Record<string, string> = {
@@ -53,6 +60,7 @@ const ICONS: Record<string, string> = {
 };
 
 export default function ActivityFeed({ className = '' }: { className?: string }) {
+  const { locale, t } = useLocale();
   const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
@@ -73,7 +81,7 @@ export default function ActivityFeed({ className = '' }: { className?: string })
           feed.push({
             id: `view-${h.hotelKey}`,
             type: 'view',
-            title: `Viewed ${h.name}`,
+            title: interpolate(t('activityViewed'), { name: h.name }),
             detail: h.city,
             href: `/hotel/${h.hotelKey}`,
             timestamp,
@@ -91,7 +99,7 @@ export default function ActivityFeed({ className = '' }: { className?: string })
           feed.push({
             id: `fav-${h.hotelKey}`,
             type: 'favorite',
-            title: `Favorited ${h.name}`,
+            title: interpolate(t('activityFavorited'), { name: h.name }),
             detail: h.city,
             href: `/hotel/${h.hotelKey}`,
             timestamp,
@@ -103,14 +111,14 @@ export default function ActivityFeed({ className = '' }: { className?: string })
           [LEGACY_LOCAL_STORAGE_KEYS.trips],
           []
         );
-        trips.slice(0, 3).forEach((t: { id: string; hotelName: string; city: string; checkIn: string; createdAt?: string }) => {
-          const timestamp = t.createdAt ? Date.parse(t.createdAt) : 0;
+        trips.slice(0, 3).forEach((trip: { id: string; hotelName: string; city: string; checkIn: string; createdAt?: string }) => {
+          const timestamp = trip.createdAt ? Date.parse(trip.createdAt) : 0;
           if (!Number.isFinite(timestamp) || timestamp <= 0) return;
           feed.push({
-            id: `trip-${t.id}`,
+            id: `trip-${trip.id}`,
             type: 'trip',
-            title: `Planned trip to ${t.hotelName}`,
-            detail: `${t.city} · ${t.checkIn}`,
+            title: interpolate(t('activityPlannedTrip'), { name: trip.hotelName }),
+            detail: `${trip.city} · ${trip.checkIn}`,
             href: '/trips',
             timestamp,
           });
@@ -123,11 +131,12 @@ export default function ActivityFeed({ className = '' }: { className?: string })
         );
         searches.slice(0, 3).forEach((s, i) => {
           if (!s.timestamp) return;
+          const resultCount = s.count ?? s.resultCount ?? 0;
           feed.push({
             id: `search-${s.query}-${i}`,
             type: 'search',
-            title: `Searched "${s.query}"`,
-            detail: `${s.count ?? s.resultCount ?? 0} results`,
+            title: interpolate(t('activitySearched'), { query: s.query }),
+            detail: interpolate(t(resultCount === 1 ? 'activityResultSingular' : 'activityResultPlural'), { count: resultCount }),
             href: `/search?city=${encodeURIComponent(s.query)}`,
             timestamp: s.timestamp,
           });
@@ -141,13 +150,13 @@ export default function ActivityFeed({ className = '' }: { className?: string })
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   if (activities.length === 0) {
     return (
       <div className={`bg-white border border-slate-200 rounded-2xl p-8 text-center ${className}`}>
         <span className="text-3xl block mb-2">📋</span>
-        <p className="text-sm text-slate-500">No activity yet. Start exploring hotels!</p>
+        <p className="text-sm text-slate-500">{t('activityEmpty')}</p>
       </div>
     );
   }
@@ -155,7 +164,7 @@ export default function ActivityFeed({ className = '' }: { className?: string })
   return (
     <div className={`bg-white border border-slate-200 rounded-2xl overflow-hidden ${className}`}>
       <div className="px-5 py-4 border-b border-slate-100">
-        <h3 className="text-sm font-bold text-slate-900">📋 Recent Activity</h3>
+        <h3 className="text-sm font-bold text-slate-900">📋 {t('activityRecent')}</h3>
       </div>
       <div className="divide-y divide-slate-50">
         {activities.map((a) => (
@@ -167,7 +176,7 @@ export default function ActivityFeed({ className = '' }: { className?: string })
                   <p className="text-xs font-medium text-slate-800 truncate">{a.title}</p>
                   <p className="text-[10px] text-slate-500">{a.detail}</p>
                 </div>
-                <span className="text-[10px] text-slate-500 shrink-0">{timeAgo(a.timestamp)}</span>
+                <span className="text-[10px] text-slate-500 shrink-0">{timeAgo(a.timestamp, t, locale)}</span>
               </Link>
             ) : (
               <div className="flex items-center gap-3">
@@ -176,7 +185,7 @@ export default function ActivityFeed({ className = '' }: { className?: string })
                   <p className="text-xs font-medium text-slate-800 truncate">{a.title}</p>
                   <p className="text-[10px] text-slate-500">{a.detail}</p>
                 </div>
-                <span className="text-[10px] text-slate-500 shrink-0">{timeAgo(a.timestamp)}</span>
+                <span className="text-[10px] text-slate-500 shrink-0">{timeAgo(a.timestamp, t, locale)}</span>
               </div>
             )}
           </div>
