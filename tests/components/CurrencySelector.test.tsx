@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 
 // Deterministic storage mock (avoids Node 22 built-in localStorage conflict)
 const mockStore: Record<string, unknown> = {};
@@ -17,26 +17,38 @@ vi.mock('@/lib/local-storage-keys', () => ({
 
 import CurrencySelector, { CURRENCIES } from '@/components/CurrencySelector';
 
+beforeEach(() => {
+  for (const key of Object.keys(mockStore)) delete mockStore[key];
+});
+
+async function renderCurrencySelector(ui = <CurrencySelector />) {
+  const rendered = render(ui);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  return rendered;
+}
+
 describe('CurrencySelector', () => {
-  it('renders a labeled currency select', () => {
-    render(<CurrencySelector />);
+  it('renders a labeled currency select', async () => {
+    await renderCurrencySelector();
     expect(screen.getByLabelText('Select currency')).toBeInTheDocument();
   });
 
-  it('renders all 8 supported currencies', () => {
-    render(<CurrencySelector />);
+  it('renders all 8 supported currencies', async () => {
+    await renderCurrencySelector();
     const options = screen.getAllByRole('option');
     expect(options).toHaveLength(8);
     expect(CURRENCIES).toHaveLength(8);
   });
 
-  it('defaults to USD', () => {
-    render(<CurrencySelector />);
+  it('defaults to USD', async () => {
+    await renderCurrencySelector();
     expect(screen.getByLabelText('Select currency')).toHaveValue('USD');
   });
 
-  it('includes EUR, GBP, and JPY options', () => {
-    render(<CurrencySelector />);
+  it('includes EUR, GBP, and JPY options', async () => {
+    await renderCurrencySelector();
     expect(screen.getByRole('option', { name: /USD/ })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /EUR/ })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /GBP/ })).toBeInTheDocument();
@@ -45,14 +57,14 @@ describe('CurrencySelector', () => {
 
   it('updates the selected value on change', async () => {
     const user = userEvent.setup();
-    render(<CurrencySelector />);
+    await renderCurrencySelector();
     const select = screen.getByLabelText('Select currency');
     await user.selectOptions(select, 'EUR');
     expect(select).toHaveValue('EUR');
   });
 
-  it('accepts custom className', () => {
-    render(<CurrencySelector className="w-32" />);
+  it('accepts custom className', async () => {
+    await renderCurrencySelector(<CurrencySelector className="w-32" />);
     expect(screen.getByLabelText('Select currency')).toHaveClass('w-32');
   });
 });
