@@ -20,6 +20,7 @@ describe('Newsletter', () => {
   it('renders the signup form', () => {
     render(<Newsletter />);
     expect(screen.getByLabelText(/Email address for deal alerts/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Email address')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Subscribe/i })).toBeInTheDocument();
   });
 

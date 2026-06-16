@@ -9,30 +9,63 @@ export interface Suggestion {
   priority: number; // higher = more important
 }
 
+type Translate = (key: string) => string;
+
+const DEFAULT_COPY: Record<string, string> = {
+  suggestionTripStartsOneDay: 'Your {hotelName} trip starts in 1 day',
+  suggestionTripStartsDays: 'Your {hotelName} trip starts in {days} days',
+  suggestionRefreshPricesDesc: 'Re-run the AI agent to refresh available provider prices.',
+  suggestionCheckNow: 'Check now',
+  suggestionSetHomeCityTitle: 'Set {city} as your home city?',
+  suggestionSetHomeCityDesc: "You've favorited {count} hotels there. Save it for faster searches.",
+  suggestionOpenProfile: 'Open profile',
+  suggestionPlanStayTitle: 'Plan a stay at {hotelName}?',
+  suggestionPlanStayDesc: "You favorited it but haven't planned a trip yet.",
+  suggestionPlanTrip: 'Plan trip',
+  suggestionTravelFromTitle: 'Looking to travel from {city}?',
+  suggestionComparePricesDesc: 'Compare provider-returned prices for your favorite destinations when verified rates are available.',
+  suggestionCompareHotels: 'Compare hotels',
+};
+
+function interpolate(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key) => (
+    Object.prototype.hasOwnProperty.call(values, key) ? String(values[key]) : match
+  ));
+}
+
+function copy(t: Translate, key: string, values: Record<string, string | number> = {}): string {
+  return interpolate(t(key), values);
+}
+
 export function buildSuggestions({
   favorites,
   trips,
   prefsHomeCity,
+  t = (key) => DEFAULT_COPY[key as keyof typeof DEFAULT_COPY],
 }: {
   favorites: FavoriteHotel[];
   trips: SavedTrip[];
   prefsHomeCity?: string;
+  t?: Translate;
 }): Suggestion[] {
   const out: Suggestion[] = [];
 
   // 1. Trips starting soon → re-check prices
   const now = Date.now();
   const sevenDays = 7 * 24 * 60 * 60 * 1000;
-  trips.forEach((t) => {
-    const ms = new Date(t.checkIn).getTime() - now;
+  trips.forEach((trip) => {
+    const ms = new Date(trip.checkIn).getTime() - now;
     if (ms > 0 && ms < sevenDays) {
       const days = Math.ceil(ms / (24 * 60 * 60 * 1000));
       out.push({
-        id: `recheck-${t.id}`,
+        id: `recheck-${trip.id}`,
         kind: 'check_prices',
-        title: `Your ${t.hotelName} trip starts in ${days} day${days !== 1 ? 's' : ''}`,
-        description: `Re-run the AI agent to refresh available provider prices.`,
-        action: { label: 'Check now', href: `/trips#${t.id}` },
+        title: copy(t, days === 1 ? 'suggestionTripStartsOneDay' : 'suggestionTripStartsDays', {
+          hotelName: trip.hotelName,
+          days,
+        }),
+        description: copy(t, 'suggestionRefreshPricesDesc'),
+        action: { label: copy(t, 'suggestionCheckNow'), href: `/trips#${trip.id}` },
         priority: 10 - days,
       });
     }
@@ -54,9 +87,9 @@ export function buildSuggestions({
       out.push({
         id: `home-${topCity}`,
         kind: 'home_city',
-        title: `Set ${topCity} as your home city?`,
-        description: `You've favorited ${topCount} hotels there. Save it for faster searches.`,
-        action: { label: 'Open profile', href: '/profile' },
+        title: copy(t, 'suggestionSetHomeCityTitle', { city: topCity }),
+        description: copy(t, 'suggestionSetHomeCityDesc', { count: topCount }),
+        action: { label: copy(t, 'suggestionOpenProfile'), href: '/profile' },
         priority: 5,
       });
     }
@@ -69,9 +102,9 @@ export function buildSuggestions({
       out.push({
         id: `plan-${f.hotelKey}`,
         kind: 'plan_trip',
-        title: `Plan a stay at ${f.name}?`,
-        description: `You favorited it but haven't planned a trip yet.`,
-        action: { label: 'Plan trip', href: `/trips?hotelKey=${encodeURIComponent(f.hotelKey)}` },
+        title: copy(t, 'suggestionPlanStayTitle', { hotelName: f.name }),
+        description: copy(t, 'suggestionPlanStayDesc'),
+        action: { label: copy(t, 'suggestionPlanTrip'), href: `/trips?hotelKey=${encodeURIComponent(f.hotelKey)}` },
         priority: 3,
       });
     }
@@ -82,9 +115,9 @@ export function buildSuggestions({
     out.push({
       id: `compare-home`,
       kind: 'compare',
-      title: `Looking to travel from ${prefsHomeCity}?`,
-      description: `Compare provider-returned prices for your favorite destinations when verified rates are available.`,
-      action: { label: 'Compare hotels', href: '/compare' },
+      title: copy(t, 'suggestionTravelFromTitle', { city: prefsHomeCity }),
+      description: copy(t, 'suggestionComparePricesDesc'),
+      action: { label: copy(t, 'suggestionCompareHotels'), href: '/compare' },
       priority: 2,
     });
   }

@@ -112,6 +112,26 @@ describe('buildSuggestions', () => {
     ]);
   });
 
+  it('uses the provided translator for personalized suggestion copy', () => {
+    const copy: Record<string, string> = {
+      suggestionTripStartsDays: 'הנסיעה שלך ל{hotelName} מתחילה בעוד {days} ימים ({missing})',
+      suggestionRefreshPricesDesc: 'רענון מחירי ספקים זמינים.',
+      suggestionCheckNow: 'בדיקה עכשיו',
+    };
+    const suggestions = buildSuggestions({
+      favorites: [],
+      trips: [trip()],
+      t: (key) => copy[key] ?? key,
+    });
+
+    expect(suggestions[0]).toMatchObject({
+      kind: 'check_prices',
+      title: 'הנסיעה שלך לLe Meurice מתחילה בעוד 3 ימים ({missing})',
+      description: 'רענון מחירי ספקים זמינים.',
+      action: { label: 'בדיקה עכשיו', href: '/trips#trip-paris' },
+    });
+  });
+
   it('returns at most four suggestions and avoids home-city prompts when already configured', () => {
     const suggestions = buildSuggestions({
       favorites: [
