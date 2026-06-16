@@ -104,8 +104,8 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
       <body className="min-h-full flex flex-col bg-linear-to-b from-sky-50 via-white to-amber-50/30">
-        <ToastProvider>
         <LocaleProvider>
+        <ToastProvider>
         {/* Skip to main content — accessibility */}
         <a
           href="#main-content"
@@ -129,8 +129,8 @@ export default function RootLayout({
         <CookieConsent />
         <PerformanceMonitor />
         <ServiceWorkerRegistration />
-        </LocaleProvider>
         </ToastProvider>
+        </LocaleProvider>
         <Analytics />
         <SpeedInsights />
       </body>

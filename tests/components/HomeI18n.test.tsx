@@ -38,6 +38,8 @@ import PriceAlertsDashboard from '@/components/PriceAlertsDashboard';
 import DashboardStats from '@/components/DashboardStats';
 import OnboardingTour from '@/components/OnboardingTour';
 import PopularCitiesClient from '@/components/PopularCitiesClient';
+import HotelCard from '@/components/HotelCard';
+import { ToastProvider } from '@/components/Toast';
 import NotFound from '@/app/not-found';
 import OfflinePage from '@/app/offline/page';
 
@@ -89,6 +91,36 @@ describe('Newsletter i18n', () => {
     await user.click(screen.getByRole('button', { name: 'HE' }));
     expect(screen.getByRole('button', { name: 'הרשמה' })).toBeInTheDocument(); // Subscribe
     expect(screen.getByText('שמירת העדפות התראות מבצעים מקומית')).toBeInTheDocument();
+  });
+});
+
+describe('Hotel card i18n', () => {
+  it('switches favorite controls, actions, and toast close label to Hebrew', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <ToastProvider>
+          <LocaleSwitcher />
+          <HotelCard
+            hotel={{
+              hotelKey: 'g187147-d188728',
+              name: 'Le Meurice',
+              city: 'Paris',
+              country: 'France',
+              image: '/img.jpg',
+            }}
+          />
+        </ToastProvider>
+      </LocaleProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+
+    expect(screen.getByRole('link', { name: /צפייה במחירים/ })).toHaveAttribute('href', '/hotel/g187147-d188728');
+    expect(screen.getByRole('link', { name: /תכנון נסיעה/ })).toHaveAttribute('href', '/trips?hotelKey=g187147-d188728');
+    await user.click(screen.getByRole('button', { name: 'הוספה למועדפים' }));
+    expect(await screen.findByText('Le Meurice נוסף למועדפים')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'סגירה' })).toBeInTheDocument();
   });
 });
 

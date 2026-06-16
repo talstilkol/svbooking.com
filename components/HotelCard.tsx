@@ -5,13 +5,19 @@ import Image from 'next/image';
 import { useFavorites } from '@/lib/useLocalStorage';
 import { useToast } from '@/components/Toast';
 import RatingBadge from '@/components/RatingBadge';
+import { useLocale } from '@/components/LocaleProvider';
 
 import type { CatalogHotel } from '@/lib/types';
 export type { CatalogHotel } from '@/lib/types';
 
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
+
 export default function HotelCard({ hotel }: { hotel: CatalogHotel }) {
   const { isFavorite, toggleFavorite, hydrated } = useFavorites();
   const { showToast } = useToast();
+  const { t } = useLocale();
   const fav = hydrated && isFavorite(hotel.hotelKey);
 
   return (
@@ -19,8 +25,13 @@ export default function HotelCard({ hotel }: { hotel: CatalogHotel }) {
       <Link href={`/hotel/${hotel.hotelKey}`} className="relative block">
         <Image src={hotel.image} alt={hotel.name} width={400} height={192} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
         <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(hotel); showToast(fav ? `Removed ${hotel.name} from favorites` : `Added ${hotel.name} to favorites`, 'success'); }}
-          aria-label={fav ? 'Remove from favorites' : 'Add to favorites'}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFavorite(hotel);
+            showToast(interpolate(fav ? t('hotelCardRemovedToast') : t('hotelCardAddedToast'), { name: hotel.name }), 'success');
+          }}
+          aria-label={fav ? t('hotelCardRemoveFavorite') : t('hotelCardAddFavorite')}
           className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-md hover:scale-110 transition"
         >
           <span className={`text-2xl ${fav ? 'text-red-500' : 'text-zinc-400'}`}>
@@ -41,13 +52,13 @@ export default function HotelCard({ hotel }: { hotel: CatalogHotel }) {
             href={`/hotel/${hotel.hotelKey}`}
             className="flex-1 text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition"
           >
-            See prices
+            {t('hotelCardSeePrices')}
           </Link>
           <Link
             href={`/trips?hotelKey=${hotel.hotelKey}`}
             className="flex-1 text-center px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 text-sm font-medium transition"
           >
-            Plan trip
+            {t('hotelCardPlanTrip')}
           </Link>
         </div>
       </div>

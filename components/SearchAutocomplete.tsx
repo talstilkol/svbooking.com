@@ -210,7 +210,7 @@ export default function SearchAutocomplete() {
                       <div className="font-medium text-slate-900 truncate">{hotel.name}</div>
                       <div className="text-xs text-slate-500">{hotel.city}, {hotel.country}</div>
                     </div>
-                    <span className="ml-auto text-xs text-blue-600 font-medium shrink-0">Compare →</span>
+                    <span className="ml-auto text-xs text-blue-600 font-medium shrink-0">{t('searchAutoCompareAction')} →</span>
                   </button>
                 );
               })}

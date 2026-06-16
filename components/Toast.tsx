@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react';
 import { hashId } from '@/lib/utils/hashId';
+import { useLocale } from '@/components/LocaleProvider';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -38,6 +39,7 @@ const COLORS: Record<ToastType, string> = {
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { t } = useLocale();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const counterRef = useRef(0);
 
@@ -72,7 +74,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <button
               onClick={() => dismiss(toast.id)}
               className="text-current opacity-50 hover:opacity-100 text-xs ml-2"
-              aria-label="Dismiss"
+              aria-label={t('toastDismiss')}
             >
               ✕
             </button>
