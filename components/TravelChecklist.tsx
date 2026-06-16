@@ -7,22 +7,23 @@ import {
   readLocalStorageJsonWithFallback,
   writeLocalStorageJson,
 } from '@/lib/local-storage-keys';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface ChecklistItem {
   id: string;
-  label: string;
+  label?: string;
   checked: boolean;
 }
 
-const DEFAULT_ITEMS: Omit<ChecklistItem, 'checked'>[] = [
-  { id: 'passport', label: 'Check passport validity' },
-  { id: 'insurance', label: 'Travel insurance' },
-  { id: 'flights', label: 'Book flights' },
-  { id: 'hotel', label: 'Compare hotel prices' },
-  { id: 'transport', label: 'Airport transfer' },
-  { id: 'currency', label: 'Exchange currency' },
-  { id: 'packing', label: 'Pack essentials' },
-  { id: 'documents', label: 'Print confirmations' },
+const CHECKLIST_ITEMS = [
+  { id: 'passport', labelKey: 'tcPassport' },
+  { id: 'insurance', labelKey: 'tcInsurance' },
+  { id: 'flights', labelKey: 'tcFlights' },
+  { id: 'hotel', labelKey: 'tcHotel' },
+  { id: 'transport', labelKey: 'tcTransport' },
+  { id: 'currency', labelKey: 'tcCurrency' },
+  { id: 'packing', labelKey: 'tcPacking' },
+  { id: 'documents', labelKey: 'tcDocuments' },
 ];
 
 interface TravelChecklistProps {
@@ -30,7 +31,21 @@ interface TravelChecklistProps {
   className?: string;
 }
 
+function normalizeChecklistItems(stored: unknown): ChecklistItem[] {
+  const storedItems = Array.isArray(stored) ? stored : [];
+  const checkedById = new Map(
+    storedItems
+      .filter((item): item is ChecklistItem => Boolean(item && typeof item.id === 'string'))
+      .map((item) => [item.id, Boolean(item.checked)])
+  );
+  return CHECKLIST_ITEMS.map((item) => ({
+    id: item.id,
+    checked: Boolean(checkedById.get(item.id)),
+  }));
+}
+
 export default function TravelChecklist({ hotelKey, className = '' }: TravelChecklistProps) {
+  const { t } = useLocale();
   const storageKey = getTravelChecklistStorageKey(hotelKey);
   const legacyStorageKey = getLegacyTravelChecklistStorageKey(hotelKey);
   const [items, setItems] = useState<ChecklistItem[]>([]);
@@ -40,13 +55,13 @@ export default function TravelChecklist({ hotelKey, className = '' }: TravelChec
     let cancelled = false;
     queueMicrotask(() => {
       if (cancelled) return;
-      const defaults = DEFAULT_ITEMS.map((i) => ({ ...i, checked: false }));
+      const defaults = normalizeChecklistItems(null);
       const stored = readLocalStorageJsonWithFallback<ChecklistItem[]>(
         storageKey,
         [legacyStorageKey],
         defaults
       );
-      setItems(Array.isArray(stored) ? stored : defaults);
+      setItems(normalizeChecklistItems(stored));
     });
     return () => {
       cancelled = true;
@@ -63,6 +78,10 @@ export default function TravelChecklist({ hotelKey, className = '' }: TravelChec
 
   const checkedCount = items.filter((i) => i.checked).length;
   const progress = items.length > 0 ? (checkedCount / items.length) * 100 : 0;
+  const labelFor = (id: string) => {
+    const item = CHECKLIST_ITEMS.find((candidate) => candidate.id === id);
+    return item ? t(item.labelKey) : id;
+  };
 
   if (!expanded) {
     return (
@@ -72,9 +91,9 @@ export default function TravelChecklist({ hotelKey, className = '' }: TravelChec
       >
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-slate-700">✅ Travel Checklist</h3>
+            <h3 className="text-sm font-semibold text-slate-700">✅ {t('tcHeading')}</h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              {checkedCount}/{items.length} items completed
+              {t('tcItemsCompleted').replace('{checked}', String(checkedCount)).replace('{total}', String(items.length))}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -84,7 +103,7 @@ export default function TravelChecklist({ hotelKey, className = '' }: TravelChec
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <span className="text-blue-600 text-sm font-medium">Open →</span>
+            <span className="text-blue-600 text-sm font-medium">{t('tcOpen')} →</span>
           </div>
         </div>
       </button>
@@ -95,16 +114,16 @@ export default function TravelChecklist({ hotelKey, className = '' }: TravelChec
     <div className={`bg-white rounded-xl border border-slate-200 p-5 ${className}`}>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-slate-700">✅ Travel Checklist</h3>
+          <h3 className="text-sm font-semibold text-slate-700">✅ {t('tcHeading')}</h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            {checkedCount} of {items.length} done
+            {t('tcDoneCount').replace('{checked}', String(checkedCount)).replace('{total}', String(items.length))}
           </p>
         </div>
         <button
           onClick={() => setExpanded(false)}
           className="text-xs text-slate-500 hover:text-slate-600"
         >
-          Collapse ↑
+          {t('tcCollapse')} ↑
         </button>
       </div>
 
@@ -140,7 +159,7 @@ export default function TravelChecklist({ hotelKey, className = '' }: TravelChec
                   : 'text-slate-700'
               }`}
             >
-              {item.label}
+              {labelFor(item.id)}
             </span>
           </label>
         ))}
@@ -148,7 +167,7 @@ export default function TravelChecklist({ hotelKey, className = '' }: TravelChec
 
       {progress === 100 && (
         <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center">
-          <p className="text-sm font-medium text-green-700">Checklist completed on this device.</p>
+          <p className="text-sm font-medium text-green-700">{t('tcCompleted')}</p>
         </div>
       )}
     </div>
