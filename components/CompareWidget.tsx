@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { LOCAL_STORAGE_KEYS, readLocalStorageJsonWithFallback, writeLocalStorageJson } from '@/lib/local-storage-keys';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface CompareItem {
   hotelKey: string;
@@ -12,6 +13,10 @@ interface CompareItem {
 }
 
 const MAX_COMPARE = 4;
+
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
 
 export function useCompareList() {
   const [items, setItems] = useState<CompareItem[]>([]);
@@ -57,6 +62,7 @@ export function useCompareList() {
 export default function CompareWidget({ className = '' }: { className?: string }) {
   const { items, remove, clear } = useCompareList();
   const [minimized, setMinimized] = useState(false);
+  const { t } = useLocale();
 
   if (items.length === 0) return null;
 
@@ -73,7 +79,9 @@ export default function CompareWidget({ className = '' }: { className?: string }
           className="w-full flex items-center justify-between px-4 py-3 bg-blue-600 text-white hover:bg-blue-700 transition"
         >
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold">📊 Compare ({items.length}/{MAX_COMPARE})</span>
+            <span className="text-sm font-bold">
+              📊 {interpolate(t('compareWidgetTitle'), { count: items.length, max: MAX_COMPARE })}
+            </span>
           </div>
           <svg
             className={`w-4 h-4 transition-transform ${minimized ? 'rotate-180' : ''}`}
@@ -104,7 +112,7 @@ export default function CompareWidget({ className = '' }: { className?: string }
                 <button
                   onClick={() => remove(item.hotelKey)}
                   className="text-slate-500 hover:text-red-500 transition text-xs p-1"
-                  aria-label={`Remove ${item.name} from compare`}
+                  aria-label={interpolate(t('compareWidgetRemoveAria'), { name: item.name })}
                 >
                   ✕
                 </button>
@@ -116,13 +124,13 @@ export default function CompareWidget({ className = '' }: { className?: string }
                 href={compareUrl}
                 className="flex-1 text-center px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition"
               >
-                Compare Now →
+                {t('compareWidgetNow')} →
               </Link>
               <button
                 onClick={clear}
                 className="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 transition"
               >
-                Clear
+                {t('compareWidgetClear')}
               </button>
             </div>
           </div>
