@@ -4,6 +4,7 @@ import { useCallback, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useFavorites, useTrips } from '@/lib/useLocalStorage';
 import DealCard from './DealCard';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'error';
@@ -183,6 +184,7 @@ function formatTimestamp(iso: string): string {
 }
 
 export default function AgentDashboard() {
+  const { t } = useLocale();
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [topDeals, setTopDeals] = useState<TopDeal[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -463,6 +465,16 @@ export default function AgentDashboard() {
     : health?.status === 'healthy' ? 'bg-emerald-500' : health?.status === 'degraded' ? 'bg-amber-500' : 'bg-red-500';
   const readyCandidateCount = discoveredStats?.readyToApprove || 0;
   const topOpsBlockers = (opsScorecard?.blockers || []).slice(0, 3);
+  const statusLabel = (status?: string | null) => {
+    if (status === 'healthy') return t('agentStatusHealthy');
+    if (status === 'degraded') return t('agentStatusDegraded');
+    if (status === 'partial') return t('agentStatusPartial');
+    if (status === 'warning') return t('agentStatusWarning');
+    if (status === 'blocked') return t('agentStatusBlocked');
+    if (status === 'critical') return t('agentStatusCritical');
+    if (status === 'error') return t('agentStatusError');
+    return status || t('agentStatusUnavailable');
+  };
 
   return (
     <div className="space-y-8">
@@ -470,9 +482,9 @@ export default function AgentDashboard() {
       <div className="bg-white border border-zinc-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="font-semibold text-zinc-900">Production Readiness</h3>
+            <h3 className="font-semibold text-zinc-900">{t('agentProductionReadiness')}</h3>
             {opsScorecard?.checkedAt && (
-              <p className="text-xs text-zinc-500 mt-0.5">Last checked: {formatTimestamp(opsScorecard.checkedAt)}</p>
+              <p className="text-xs text-zinc-500 mt-0.5">{t('agentLastChecked')}: {formatTimestamp(opsScorecard.checkedAt)}</p>
             )}
           </div>
           <button
@@ -480,38 +492,38 @@ export default function AgentDashboard() {
             disabled={loading.ops}
             className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
           >
-            {loading.ops ? 'Loading...' : 'Refresh'}
+            {loading.ops ? t('agentLoading') : t('agentRefresh')}
           </button>
         </div>
         {restricted.ops ? (
-          <p className="text-sm text-zinc-500">Production readiness metrics require an authorized admin session.</p>
+          <p className="text-sm text-zinc-500">{t('agentProductionRestricted')}</p>
         ) : opsScorecard ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <div className="rounded-md bg-zinc-50 px-3 py-2">
-                <p className="text-[10px] font-medium text-zinc-600 uppercase">Score</p>
+                <p className="text-[10px] font-medium text-zinc-600 uppercase">{t('agentScore')}</p>
                 <p className="text-lg font-semibold text-zinc-900">{opsScorecard.score}</p>
               </div>
               <div className={`rounded-md px-3 py-2 ${statusTone(opsScorecard.status)}`}>
-                <p className="text-[10px] font-medium uppercase">Status</p>
-                <p className="text-lg font-semibold capitalize">{opsScorecard.status}</p>
+                <p className="text-[10px] font-medium uppercase">{t('agentStatus')}</p>
+                <p className="text-lg font-semibold capitalize">{statusLabel(opsScorecard.status)}</p>
               </div>
               <div className={`rounded-md px-3 py-2 ${statusTone(opsAlerts?.status)}`}>
-                <p className="text-[10px] font-medium uppercase">Alerts</p>
+                <p className="text-[10px] font-medium uppercase">{t('agentAlerts')}</p>
                 <p className="text-lg font-semibold">{opsAlerts?.summary.total ?? 0}</p>
               </div>
               <div className="rounded-md bg-zinc-50 px-3 py-2">
-                <p className="text-[10px] font-medium text-zinc-600 uppercase">Global parity</p>
+                <p className="text-[10px] font-medium text-zinc-600 uppercase">{t('agentGlobalParity')}</p>
                 <p className="text-lg font-semibold text-zinc-900">
-                  {opsScorecard.productTruth?.globalParityReady ? 'Ready' : 'Blocked'}
+                  {opsScorecard.productTruth?.globalParityReady ? t('agentReady') : t('agentBlocked')}
                 </p>
               </div>
             </div>
             {opsAlerts && (
               <div className="flex flex-wrap gap-2 text-xs text-zinc-600">
-                <span className="rounded bg-red-50 px-2 py-1 text-red-700">Critical {opsAlerts.summary.critical}</span>
-                <span className="rounded bg-amber-50 px-2 py-1 text-amber-700">Warning {opsAlerts.summary.warning}</span>
-                <span className="rounded bg-zinc-100 px-2 py-1 text-zinc-600">Info {opsAlerts.summary.info}</span>
+                <span className="rounded bg-red-50 px-2 py-1 text-red-700">{t('agentCritical')} {opsAlerts.summary.critical}</span>
+                <span className="rounded bg-amber-50 px-2 py-1 text-amber-700">{t('agentWarning')} {opsAlerts.summary.warning}</span>
+                <span className="rounded bg-zinc-100 px-2 py-1 text-zinc-600">{t('agentInfo')} {opsAlerts.summary.info}</span>
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -520,16 +532,16 @@ export default function AgentDashboard() {
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium text-zinc-900">{domain.label}</p>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded capitalize ${statusTone(domain.status)}`}>
-                      {domain.status}
+                      {statusLabel(domain.status)}
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-500 mt-1">Score {domain.score}</p>
+                  <p className="text-xs text-zinc-500 mt-1">{t('agentScore')} {domain.score}</p>
                 </div>
               ))}
             </div>
             {topOpsBlockers.length > 0 && (
               <div className="rounded-md bg-red-50 px-3 py-2">
-                <p className="text-xs font-medium text-red-700 mb-1">Top blockers</p>
+                <p className="text-xs font-medium text-red-700 mb-1">{t('agentTopBlockers')}</p>
                 <ul className="space-y-1">
                   {topOpsBlockers.map((blocker) => (
                     <li key={`${blocker.domain}:${blocker.blocker}`} className="text-xs text-red-700">
@@ -541,7 +553,7 @@ export default function AgentDashboard() {
             )}
           </div>
         ) : (
-          <p className="text-sm text-zinc-500">{loading.ops ? 'Loading readiness metrics...' : 'Readiness metrics unavailable.'}</p>
+          <p className="text-sm text-zinc-500">{loading.ops ? t('agentReadinessLoading') : t('agentReadinessUnavailable')}</p>
         )}
       </div>
 
@@ -550,30 +562,30 @@ export default function AgentDashboard() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full ${statusColor} ${!health && !restricted.health ? 'animate-pulse' : ''}`} />
-            <h3 className="font-semibold text-zinc-900">System Health</h3>
+            <h3 className="font-semibold text-zinc-900">{t('agentSystemHealth')}</h3>
           </div>
           <div className="flex items-center gap-3">
             {health?.checkedAt && (
-              <span className="text-xs text-zinc-400">Last checked: {formatTimestamp(health.checkedAt)}</span>
+              <span className="text-xs text-zinc-400">{t('agentLastChecked')}: {formatTimestamp(health.checkedAt)}</span>
             )}
               <button
               onClick={fetchHealth}
               disabled={loading.health}
               className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
             >
-              {loading.health ? 'Checking...' : 'Refresh'}
+              {loading.health ? t('agentChecking') : t('agentRefresh')}
             </button>
           </div>
         </div>
         {restricted.health ? (
-          <p className="text-sm text-zinc-500">Operational health checks require an authorized admin session.</p>
+          <p className="text-sm text-zinc-500">{t('agentHealthRestricted')}</p>
         ) : health && (
           <div className="space-y-2">
             {Object.entries(health.checks).map(([key, check]) => (
               <div key={key} className="flex items-center justify-between text-sm">
                 <span className="text-zinc-600">{key}</span>
                 <span className={check.ok ? 'text-emerald-600' : 'text-red-500'}>
-                  {check.ok ? `OK${check.latencyMs ? ` (${check.latencyMs}ms)` : ''}` : check.error || 'Failed'}
+                  {check.ok ? `${t('agentOk')}${check.latencyMs ? ` (${check.latencyMs}ms)` : ''}` : check.error || t('agentFailed')}
                 </span>
               </div>
             ))}
@@ -589,17 +601,17 @@ export default function AgentDashboard() {
       {/* Pricing Providers */}
       <div className="bg-white border border-zinc-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-zinc-900">Pricing Providers</h3>
+          <h3 className="font-semibold text-zinc-900">{t('agentPricingProviders')}</h3>
             <button
               onClick={fetchProviders}
               disabled={loading.providers}
               className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
             >
-            {loading.providers ? 'Loading...' : 'Refresh'}
+            {loading.providers ? t('agentLoading') : t('agentRefresh')}
           </button>
         </div>
         {restricted.providers ? (
-          <p className="text-sm text-zinc-500">Provider operations require an authorized admin session.</p>
+          <p className="text-sm text-zinc-500">{t('agentProviderRestricted')}</p>
         ) : providers.length > 0 ? (
           <div className="space-y-3">
             {providers.map((p) => (
@@ -614,22 +626,22 @@ export default function AgentDashboard() {
                       #{p.priority}
                     </span>
                     {!p.configured && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-500">Not configured</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-500">{t('agentNotConfigured')}</span>
                     )}
                     {p.consecutiveErrors >= 5 && (
                       <button
                         onClick={() => resetProviderBreaker(p.id)}
                         className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-600 hover:bg-red-200"
                       >
-                        Circuit open — Reset
+                        {t('agentCircuitOpenReset')}
                       </button>
                     )}
                   </div>
                   {p.configured && (
                     <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500 flex-wrap">
-                      <span>Today: {p.callsToday}{p.dailyLimit > 0 ? `/${p.dailyLimit}` : ''}</span>
-                      <span>Month: {p.callsThisMonth}{p.monthlyLimit > 0 ? `/${p.monthlyLimit}` : ''}</span>
-                      {p.errors > 0 && <span className="text-amber-600">Errors: {p.errors}</span>}
+                      <span>{t('agentToday')}: {p.callsToday}{p.dailyLimit > 0 ? `/${p.dailyLimit}` : ''}</span>
+                      <span>{t('agentMonth')}: {p.callsThisMonth}{p.monthlyLimit > 0 ? `/${p.monthlyLimit}` : ''}</span>
+                      {p.errors > 0 && <span className="text-amber-600">{t('agentErrors')}: {p.errors}</span>}
                       {p.p50LatencyMs !== null && (
                         <span className={p.p50LatencyMs > 5000 ? 'text-red-500' : p.p50LatencyMs > 2000 ? 'text-amber-600' : 'text-emerald-600'}>
                           p50: {p.p50LatencyMs}ms
@@ -637,11 +649,11 @@ export default function AgentDashboard() {
                       )}
                       {p.successRatePct !== null && (
                         <span className={p.successRatePct < 50 ? 'text-red-500' : p.successRatePct < 80 ? 'text-amber-600' : 'text-emerald-600'}>
-                          {p.successRatePct}% success
+                          {p.successRatePct}% {t('agentSuccess')}
                         </span>
                       )}
                       {p.hasPreFlightCheck && (
-                        <span className="text-blue-500" title="This provider skips requests it cannot handle">pre-flight</span>
+                        <span className="text-blue-500" title={t('agentPreflightTitle')}>{t('agentPreflight')}</span>
                       )}
                     </div>
                   )}
@@ -660,7 +672,7 @@ export default function AgentDashboard() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-zinc-500">{loading.providers ? 'Loading providers...' : 'Provider status unavailable.'}</p>
+          <p className="text-sm text-zinc-500">{loading.providers ? t('agentProvidersLoading') : t('agentProviderStatusUnavailable')}</p>
         )}
       </div>
 
