@@ -162,6 +162,22 @@ interface CandidateReviewSummary {
   dataPolicy?: string;
 }
 
+const BACKGROUND_AGENT_COPY_KEYS: Record<string, { label: string; desc: string }> = {
+  'provider-manager': { label: 'agentBgProviderManagerLabel', desc: 'agentBgProviderManagerDesc' },
+  'health-monitor': { label: 'agentBgHealthMonitorLabel', desc: 'agentBgHealthMonitorDesc' },
+  enrichment: { label: 'agentBgEnrichmentLabel', desc: 'agentBgEnrichmentDesc' },
+  discovery: { label: 'agentBgDiscoveryLabel', desc: 'agentBgDiscoveryDesc' },
+  'bulk-discovery': { label: 'agentBgBulkDiscoveryLabel', desc: 'agentBgBulkDiscoveryDesc' },
+  'osm-scanner': { label: 'agentBgOsmScannerLabel', desc: 'agentBgOsmScannerDesc' },
+  'xotelo-discovery': { label: 'agentBgXoteloDiscoveryLabel', desc: 'agentBgXoteloDiscoveryDesc' },
+  'price-cache': { label: 'agentBgPriceCacheLabel', desc: 'agentBgPriceCacheDesc' },
+  'deal-scanner': { label: 'agentBgDealScannerLabel', desc: 'agentBgDealScannerDesc' },
+  'poi-cache': { label: 'agentBgPoiCacheLabel', desc: 'agentBgPoiCacheDesc' },
+  'travel-guide-cache': { label: 'agentBgTravelGuideLabel', desc: 'agentBgTravelGuideDesc' },
+  'events-cache': { label: 'agentBgEventsCacheLabel', desc: 'agentBgEventsCacheDesc' },
+  orchestrator: { label: 'agentBgOrchestratorLabel', desc: 'agentBgOrchestratorDesc' },
+};
+
 function isAuthRestricted(response: Response): boolean {
   return response.status === 401 || response.status === 403;
 }
@@ -489,6 +505,14 @@ export default function AgentDashboard() {
     if (status === 'stale') return t('agentStale');
     return status;
   };
+  const backgroundAgentLabel = (agent: BackgroundAgent) => {
+    const copy = BACKGROUND_AGENT_COPY_KEYS[agent.name];
+    return copy ? t(copy.label) : agent.label;
+  };
+  const backgroundAgentDescription = (agent: BackgroundAgent) => {
+    const copy = BACKGROUND_AGENT_COPY_KEYS[agent.name];
+    return copy ? t(copy.desc) : agent.desc;
+  };
   const recommendationTypeLabel = (type: string) => {
     if (type === 'timing_suggestion') return t('agentRecommendationTiming');
     if (type === 'new_deal') return t('agentRecommendationNewDeal');
@@ -738,7 +762,7 @@ export default function AgentDashboard() {
                 <span className="text-xl">{agent.icon}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-zinc-900">{agent.label}</span>
+                    <span className="text-sm font-medium text-zinc-900">{backgroundAgentLabel(agent)}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                       agent.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
                       agent.status === 'running' ? 'bg-blue-100 text-blue-700' :
@@ -753,7 +777,7 @@ export default function AgentDashboard() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-zinc-500 mt-0.5">{agent.desc}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">{backgroundAgentDescription(agent)}</p>
                   {agent.completedAt && (
                     <p className="text-[10px] text-zinc-400 mt-0.5">
                       {t('agentLastRun')}: {formatTimestamp(agent.completedAt, locale, t)}

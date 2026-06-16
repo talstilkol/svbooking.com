@@ -183,6 +183,12 @@ describe('AgentDashboard localized operational panels', () => {
 
     await user.click(screen.getByRole('button', { name: 'HE' }));
 
+    expect(await screen.findByText('סורק מבצעים')).toBeInTheDocument();
+    expect(
+      screen.getByText('סורק מלונות מהקטלוג לאיתור מועמדי מבצע שהוחזרו מספקים')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Deal Scanner')).not.toBeInTheDocument();
+    expect(screen.queryByText('Scans provider-returned rates')).not.toBeInTheDocument();
     expect(await screen.findByText('טרם רץ')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'הרצה' })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'תור מועמדי קטלוג' })).toBeInTheDocument();
