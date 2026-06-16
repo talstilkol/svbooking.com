@@ -475,6 +475,20 @@ export default function AgentDashboard() {
     if (status === 'error') return t('agentStatusError');
     return status || t('agentStatusUnavailable');
   };
+  const agentRunStatusLabel = (status: string) => {
+    if (status === 'completed') return t('agentRunStatusCompleted');
+    if (status === 'running') return t('agentRunStatusRunning');
+    if (status === 'error') return t('agentRunStatusError');
+    if (status === 'never-run') return t('agentRunStatusNeverRun');
+    return status;
+  };
+  const candidateStatusLabel = (status: string) => {
+    if (status === 'pending') return t('agentPending');
+    if (status === 'approved') return t('agentApproved');
+    if (status === 'rejected') return t('agentRejected');
+    if (status === 'stale') return t('agentStale');
+    return status;
+  };
 
   return (
     <div className="space-y-8">
@@ -679,26 +693,26 @@ export default function AgentDashboard() {
       {/* Background Agents */}
       <div className="bg-white border border-zinc-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-zinc-900">Background Agents</h3>
+          <h3 className="font-semibold text-zinc-900">{t('agentBackgroundAgents')}</h3>
           <div className="flex items-center gap-3">
             <button
               onClick={fetchBgAgents}
               disabled={bgLoading}
               className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
             >
-              {bgLoading ? 'Loading...' : 'Refresh'}
+              {bgLoading ? t('agentLoading') : t('agentRefresh')}
             </button>
             <button
               onClick={() => triggerAgent('orchestrate')}
               disabled={runningAgent !== null || restricted.agents}
               className="text-sm px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {runningAgent === 'orchestrate' ? 'Running...' : 'Run All'}
+              {runningAgent === 'orchestrate' ? t('agentRunning') : t('agentRunAll')}
             </button>
           </div>
         </div>
         {restricted.agents ? (
-          <p className="text-sm text-zinc-500">Background agent operations require an authorized admin session.</p>
+          <p className="text-sm text-zinc-500">{t('agentBackgroundRestricted')}</p>
         ) : bgAgents.length > 0 ? (
           <div className="space-y-3">
             {bgAgents.map((agent) => (
@@ -713,7 +727,7 @@ export default function AgentDashboard() {
                       agent.status === 'error' ? 'bg-red-100 text-red-700' :
                       'bg-zinc-200 text-zinc-500'
                     }`}>
-                      {agent.status === 'never-run' ? 'Never run' : agent.status}
+                      {agentRunStatusLabel(agent.status)}
                     </span>
                     {agent.elapsedMs != null && agent.status !== 'never-run' && (
                       <span className="text-[10px] text-zinc-400">
@@ -724,11 +738,11 @@ export default function AgentDashboard() {
                   <p className="text-xs text-zinc-500 mt-0.5">{agent.desc}</p>
                   {agent.completedAt && (
                     <p className="text-[10px] text-zinc-400 mt-0.5">
-                      Last run: {formatTimestamp(agent.completedAt)}
+                      {t('agentLastRun')}: {formatTimestamp(agent.completedAt)}
                     </p>
                   )}
                   {agent.error && (
-                    <p className="text-[10px] text-red-500 mt-0.5 truncate">Error: {agent.error}</p>
+                    <p className="text-[10px] text-red-500 mt-0.5 truncate">{t('agentErrorLabel')}: {agent.error}</p>
                   )}
                 </div>
                 {agent.name !== 'orchestrator' && (
@@ -737,14 +751,14 @@ export default function AgentDashboard() {
                     disabled={runningAgent !== null}
                     className="text-xs px-2 py-1 text-blue-600 hover:bg-blue-50 rounded disabled:opacity-50"
                   >
-                    {runningAgent === agent.name ? 'Running...' : 'Run'}
+                    {runningAgent === agent.name ? t('agentRunning') : t('agentRun')}
                   </button>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-zinc-500">{bgLoading ? 'Loading agents...' : 'Agent status unavailable.'}</p>
+          <p className="text-sm text-zinc-500">{bgLoading ? t('agentAgentsLoading') : t('agentAgentStatusUnavailable')}</p>
         )}
       </div>
 
@@ -753,15 +767,15 @@ export default function AgentDashboard() {
         <div className="bg-white border border-zinc-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="font-semibold text-zinc-900">Catalog Candidate Queue</h3>
+              <h3 className="font-semibold text-zinc-900">{t('agentCatalogCandidateQueue')}</h3>
               {restricted.discovered ? (
-                <p className="text-xs text-zinc-500 mt-0.5">Admin access required</p>
+                <p className="text-xs text-zinc-500 mt-0.5">{t('agentAdminAccessRequired')}</p>
               ) : discoveredStats && (
                 <p className="text-xs text-zinc-500 mt-0.5">
-                  {discoveredStats.total} candidates
-                  {typeof discoveredStats.pending === 'number' && `, ${discoveredStats.pending} pending`}
+                  {discoveredStats.total} {discoveredStats.total === 1 ? t('agentCandidate') : t('agentCandidates')}
+                  {typeof discoveredStats.pending === 'number' && `, ${discoveredStats.pending} ${t('agentPending')}`}
                   {readyCandidateCount > 0 && (
-                    <span className="text-emerald-600 font-medium"> ({readyCandidateCount} ready)</span>
+                    <span className="text-emerald-600 font-medium"> ({readyCandidateCount} {t('agentReadyLower')})</span>
                   )}
                 </p>
               )}
@@ -772,29 +786,29 @@ export default function AgentDashboard() {
                 value={candidateStatusFilter}
                 onChange={(event) => setCandidateStatusFilter(event.target.value)}
                 className="text-xs border border-zinc-200 rounded-lg px-2 py-1 bg-white text-zinc-700"
-                aria-label="Candidate status filter"
+                aria-label={t('agentCandidateStatusFilter')}
               >
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="stale">Stale</option>
-                <option value="all">All</option>
+                <option value="pending">{t('agentPending')}</option>
+                <option value="approved">{t('agentApproved')}</option>
+                <option value="rejected">{t('agentRejected')}</option>
+                <option value="stale">{t('agentStale')}</option>
+                <option value="all">{t('agentAll')}</option>
               </select>
               <select
                 value={candidateFlagFilter}
                 onChange={(event) => setCandidateFlagFilter(event.target.value)}
                 className="text-xs border border-zinc-200 rounded-lg px-2 py-1 bg-white text-zinc-700"
-                aria-label="Candidate issue filter"
+                aria-label={t('agentCandidateIssueFilter')}
               >
-                <option value="all">All flags</option>
-                <option value="duplicate">Duplicate</option>
-                <option value="missing-provenance">Missing provenance</option>
+                <option value="all">{t('agentAllFlags')}</option>
+                <option value="duplicate">{t('agentDuplicate')}</option>
+                <option value="missing-provenance">{t('agentMissingProvenance')}</option>
               </select>
               <button
                 onClick={fetchDiscovered}
                 className="text-sm text-blue-600 hover:text-blue-700"
               >
-                Refresh
+                {t('agentRefresh')}
               </button>
               {discoveredStats && readyCandidateCount > 0 && (
                 <button
@@ -802,46 +816,46 @@ export default function AgentDashboard() {
                   disabled={addingHotel !== null}
                   className="text-sm px-3 py-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
                 >
-                  {addingHotel === 'all' ? 'Approving...' : `Approve ${readyCandidateCount} Ready`}
+                  {addingHotel === 'all' ? t('agentApproving') : t('agentApproveReady').replace('{count}', String(readyCandidateCount))}
                 </button>
               )}
             </div>
             )}
           </div>
           {restricted.discovered ? (
-            <p className="text-sm text-zinc-500">Discovered catalog operations require an authorized admin session.</p>
+            <p className="text-sm text-zinc-500">{t('agentDiscoveredRestricted')}</p>
           ) : (
           <>
           {discoveredStats && (
             <div className="mb-4 space-y-3">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                 <div className="rounded-md bg-emerald-50 px-3 py-2">
-                  <p className="text-[10px] font-medium text-emerald-700 uppercase">Ready</p>
+                  <p className="text-[10px] font-medium text-emerald-700 uppercase">{t('agentReady')}</p>
                   <p className="text-lg font-semibold text-emerald-800">{readyCandidateCount}</p>
                 </div>
                 <div className="rounded-md bg-amber-50 px-3 py-2">
-                  <p className="text-[10px] font-medium text-amber-700 uppercase">Missing source</p>
+                  <p className="text-[10px] font-medium text-amber-700 uppercase">{t('agentMissingSource')}</p>
                   <p className="text-lg font-semibold text-amber-800">{discoveredStats.missingProvenance || 0}</p>
                 </div>
                 <div className="rounded-md bg-red-50 px-3 py-2">
-                  <p className="text-[10px] font-medium text-red-700 uppercase">Duplicate</p>
+                  <p className="text-[10px] font-medium text-red-700 uppercase">{t('agentDuplicate')}</p>
                   <p className="text-lg font-semibold text-red-800">{discoveredStats.duplicate || 0}</p>
                 </div>
                 <div className="rounded-md bg-zinc-50 px-3 py-2">
-                  <p className="text-[10px] font-medium text-zinc-600 uppercase">No location</p>
+                  <p className="text-[10px] font-medium text-zinc-600 uppercase">{t('agentNoLocation')}</p>
                   <p className="text-lg font-semibold text-zinc-800">{discoveredStats.missingLocation || 0}</p>
                 </div>
                 <div className="rounded-md bg-zinc-50 px-3 py-2">
-                  <p className="text-[10px] font-medium text-zinc-600 uppercase">Blocked</p>
+                  <p className="text-[10px] font-medium text-zinc-600 uppercase">{t('agentBlocked')}</p>
                   <p className="text-lg font-semibold text-zinc-800">{discoveredStats.blockedPending || 0}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-zinc-500">
                 <p>
-                  Sources: {(discoveredStats.bySource || []).slice(0, 4).map((bucket) => `${bucket.value} ${bucket.count}`).join(', ') || 'unavailable'}
+                  {t('agentSources')}: {(discoveredStats.bySource || []).slice(0, 4).map((bucket) => `${bucket.value} ${bucket.count}`).join(', ') || t('agentStatusUnavailable')}
                 </p>
                 <p>
-                  Cities: {(discoveredStats.byCity || []).slice(0, 4).map((bucket) => `${bucket.value} ${bucket.count}`).join(', ') || 'unavailable'}
+                  {t('agentCities')}: {(discoveredStats.byCity || []).slice(0, 4).map((bucket) => `${bucket.value} ${bucket.count}`).join(', ') || t('agentStatusUnavailable')}
                 </p>
               </div>
             </div>
@@ -854,21 +868,21 @@ export default function AgentDashboard() {
                     <span className="text-sm font-medium text-zinc-900 truncate">{hotel.name}</span>
                     {hotel.stars ? <span className="text-[10px] text-amber-500">{'*'.repeat(hotel.stars)}</span> : null}
                     {hotel.status !== 'pending' && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{hotel.status}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{candidateStatusLabel(hotel.status)}</span>
                     )}
                     {hotel.alreadyInCatalog ? (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-500">In catalog</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-500">{t('agentInCatalog')}</span>
                     ) : (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">New</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">{t('agentNew')}</span>
                     )}
                     {hotel.missingProvenance && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Missing source</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{t('agentMissingSource')}</span>
                     )}
                     {hotel.missingLocation && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-600">No location</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-600">{t('agentNoLocation')}</span>
                     )}
                     {hotel.duplicate && !hotel.alreadyInCatalog && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700">Duplicate</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700">{t('agentDuplicate')}</span>
                     )}
                   </div>
                   <p className="text-xs text-zinc-500">
@@ -883,21 +897,21 @@ export default function AgentDashboard() {
                       disabled={addingHotel !== null || hotel.missingProvenance || hotel.missingLocation || hotel.duplicate}
                       className="text-xs px-2 py-1 text-emerald-600 hover:bg-emerald-50 rounded disabled:opacity-50"
                     >
-                      {addingHotel === hotel.id ? 'Working...' : 'Approve'}
+                      {addingHotel === hotel.id ? t('agentWorking') : t('agentApprove')}
                     </button>
                     <button
                       onClick={() => reviewCandidate(hotel, 'reject')}
                       disabled={addingHotel !== null}
                       className="text-xs px-2 py-1 text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
                     >
-                      Reject
+                      {t('agentReject')}
                     </button>
                     <button
                       onClick={() => reviewCandidate(hotel, 'stale')}
                       disabled={addingHotel !== null}
                       className="text-xs px-2 py-1 text-zinc-500 hover:bg-zinc-100 rounded disabled:opacity-50"
                     >
-                      Stale
+                      {t('agentStale')}
                     </button>
                   </div>
                 )}
@@ -905,7 +919,7 @@ export default function AgentDashboard() {
             ))}
             {discoveredHotels.length > 20 && (
               <p className="text-xs text-zinc-400 text-center py-1">
-                + {discoveredHotels.length - 20} more hotels
+                {t('agentMoreHotels').replace('{count}', String(discoveredHotels.length - 20))}
               </p>
             )}
           </div>
