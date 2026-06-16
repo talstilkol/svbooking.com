@@ -446,7 +446,7 @@ export default function AgentDashboard() {
     setAvailLoading(true);
     setAvailability(null);
     try {
-      const params = new URLSearchParams({ hotelKey: availHotel, checkIn: availCheckIn, checkOut: availCheckOut });
+      const params = new URLSearchParams({ hotelKey: availHotel, checkIn: availCheckIn, checkOut: availCheckOut, locale });
       const res = await fetch(`/api/agents/availability?${params}`);
       const data = await res.json();
       if (!res.ok) throw new Error('Availability unavailable');

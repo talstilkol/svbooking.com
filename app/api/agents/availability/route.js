@@ -3,32 +3,45 @@ import { getCachedRates } from '@/lib/price-cache';
 import { getVerifiedRateObservations } from '@/lib/cheaper-dates';
 import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 import { ValidationError, errorResponse, parseDate } from '@/lib/validation';
+import { getDictionary, resolveLocale } from '@/lib/i18n';
 
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 const availabilityLimiter = rateLimit({ namespace: 'agents-availability', limit: 10, window: 60, failOpen: false });
 
-function buildUnavailableResponse({ hotel, hotelKey, checkIn, checkOut }) {
+function fillTemplate(template, values) {
+  return String(template || '').replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key) => (
+    values[key] === undefined || values[key] === null ? match : String(values[key])
+  ));
+}
+
+function buildAvailabilityCopy({ locale, acceptLanguage }) {
+  const resolved = resolveLocale({ locale, acceptLanguage }).code;
+  const dictionary = getDictionary(resolved);
+  return (key, values = {}) => fillTemplate(dictionary[key] || key, values);
+}
+
+function buildUnavailableResponse({ hotel, hotelKey, checkIn, checkOut, t }) {
   return {
     hotel: { name: hotel.name, city: hotel.city, country: hotel.country, hotelKey },
     dates: { checkIn, checkOut },
     results: [{
-      provider: 'provider-returned availability',
+      provider: t('availabilityProviderReturnedLabel'),
       status: 'unavailable',
       available: false,
       deepLink: null,
-      note: 'SV Booking does not construct booking-site links without a provider-returned URL.',
+      note: t('availabilityNoConstructedLinksNote'),
     }],
-    summary: `Provider-returned availability links are unavailable for ${hotel.name}.`,
+    summary: t('availabilityUnavailableSummary', { hotelName: hotel.name }),
     bookingLinks: [],
     sourcePolicy: 'provider-returned-deep-links-only',
-    note: 'Use Compare to request provider-returned prices. Booking links are shown only when a configured pricing provider returns a verified deepLink.',
+    note: t('availabilityUnavailableActionNote'),
   };
 }
 
-function buildProviderLinkResponse({ hotel, hotelKey, checkIn, checkOut, rates }) {
+function buildProviderLinkResponse({ hotel, hotelKey, checkIn, checkOut, rates, t }) {
   const ratesWithLinks = rates.filter((rate) => rate.deepLink);
   if (ratesWithLinks.length === 0) {
-    return buildUnavailableResponse({ hotel, hotelKey, checkIn, checkOut });
+    return buildUnavailableResponse({ hotel, hotelKey, checkIn, checkOut, t });
   }
 
   return {
@@ -43,12 +56,15 @@ function buildProviderLinkResponse({ hotel, hotelKey, checkIn, checkOut, rates }
       currency: rate.currency,
       freshness: rate.freshness,
       lastCheckedAt: rate.lastCheckedAt,
-      note: 'Provider returned a booking link with a verified price observation.',
+      note: t('availabilityProviderLinkNote'),
     })),
-    summary: `${ratesWithLinks.length} provider-returned booking link(s) are available for ${hotel.name}.`,
+    summary: t(
+      ratesWithLinks.length === 1 ? 'availabilityProviderLinkSummaryOne' : 'availabilityProviderLinkSummaryMany',
+      { count: ratesWithLinks.length, hotelName: hotel.name }
+    ),
     bookingLinks: ratesWithLinks.map((rate) => ({ provider: rate.provider, url: rate.deepLink })),
     sourcePolicy: 'provider-returned-deep-links-only',
-    note: 'Booking links are shown only when a configured pricing provider returns a verified deepLink.',
+    note: t('availabilityProviderLinkPolicyNote'),
   };
 }
 
@@ -59,6 +75,10 @@ export async function GET(request) {
     const hotelKey = searchParams.get('hotelKey');
     const checkIn = searchParams.get('checkIn');
     const checkOut = searchParams.get('checkOut');
+    const t = buildAvailabilityCopy({
+      locale: searchParams.get('locale') || undefined,
+      acceptLanguage: request.headers.get('accept-language') || '',
+    });
 
     if (!hotelKey || !checkIn || !checkOut) {
       throw new ValidationError('hotelKey, checkIn, and checkOut are required');
@@ -94,7 +114,7 @@ export async function GET(request) {
     const rates = getVerifiedRateObservations(result);
 
     return Response.json(
-      buildProviderLinkResponse({ hotel, hotelKey, checkIn, checkOut, rates }),
+      buildProviderLinkResponse({ hotel, hotelKey, checkIn, checkOut, rates, t }),
       { headers: NO_STORE_HEADERS }
     );
   } catch (err) {

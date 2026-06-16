@@ -56,6 +56,27 @@ describe('GET /api/agents/availability', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it('localizes unavailable availability copy without constructing booking links', async () => {
+    const response = await GET(request('hotelKey=g187147-d188728&checkIn=2027-06-01&checkOut=2027-06-03&locale=he'));
+    const body = await response.json();
+    const serialized = JSON.stringify(body);
+
+    expect(response.status).toBe(200);
+    expect(body.sourcePolicy).toBe('provider-returned-deep-links-only');
+    expect(body.bookingLinks).toEqual([]);
+    expect(body.results[0]).toMatchObject({
+      provider: 'זמינות שהוחזרה מספק',
+      status: 'unavailable',
+      available: false,
+      deepLink: null,
+      note: 'SV Booking לא בונה קישורי אתרי הזמנה ללא URL שהוחזר מספק.',
+    });
+    expect(body.summary).toContain('קישורי זמינות שהוחזרו מספקים אינם זמינים עבור Le Meurice');
+    expect(body.note).toContain('קישורי הזמנה מוצגים רק כאשר ספק מחירים מוגדר מחזיר deepLink מאומת');
+    expect(serialized).not.toContain('booking.com/searchresults');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('returns provider booking links only when a verified provider deep link exists', async () => {
     vi.mocked(getCachedRates).mockResolvedValueOnce({
       rates: [{

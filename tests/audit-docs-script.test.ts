@@ -146,7 +146,7 @@ const validPlan = [
 const validAuditReport = [
   '# Audit Report',
   'Current local catalog: 1 hotels, 1 cities, 1 countries.',
-  '195 test files, 1177 tests passed.',
+  '195 test files, 1178 tests passed.',
   '78 Playwright tests passed.',
   'Go-live readiness remains blocked without real deployment env.',
   'Worktree is clean before release.',
