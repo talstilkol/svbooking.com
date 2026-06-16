@@ -67,13 +67,15 @@ const navbar = [
 ].join('\n');
 
 const accessibilityPanel = [
+  'import { useLocale } from "@/components/LocaleProvider";',
+  'const { t } = useLocale();',
   "const panelId = 'accessibility-settings-panel';",
   "const headingId = 'accessibility-settings-title';",
-  '<button aria-expanded={open} aria-controls={panelId}>Open</button>',
+  "<button aria-label={t('accessibilitySettings')} aria-expanded={open} aria-controls={panelId}>Open</button>",
   '<div aria-hidden="true" />',
   '<div role="dialog" aria-modal="true" aria-labelledby={headingId}>',
-  '  <h3 id={headingId}>Accessibility</h3>',
-  '  <button aria-label="Close accessibility settings">Close</button>',
+  "  <h3 id={headingId}>{t('accessibilityTitle')}</h3>",
+  "  <button aria-label={t('accessibilityClose')}>Close</button>",
   '</div>',
   '',
 ].join('\n');

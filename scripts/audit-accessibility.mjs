@@ -111,7 +111,10 @@ requireIncludes(accessibilityPanel, 'components/AccessibilityPanel.tsx', [
   'aria-labelledby={headingId}',
   'id={headingId}',
   'aria-hidden="true"',
-  'Close accessibility settings',
+  "useLocale",
+  "t('accessibilitySettings')",
+  "t('accessibilityTitle')",
+  "t('accessibilityClose')",
 ]);
 
 const providerInfo = await readProjectFile('components/ProviderInfo.tsx');

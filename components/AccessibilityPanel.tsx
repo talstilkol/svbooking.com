@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Accessibility, Minus, Plus, X } from 'lucide-react';
+import { useLocale } from '@/components/LocaleProvider';
 import {
   LEGACY_LOCAL_STORAGE_KEYS,
   LOCAL_STORAGE_KEYS,
@@ -8,9 +10,14 @@ import {
   writeLocalStorageJson,
 } from '@/lib/local-storage-keys';
 
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`));
+}
+
 export default function AccessibilityPanel() {
   const panelId = 'accessibility-settings-panel';
   const headingId = 'accessibility-settings-title';
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [fontSize, setFontSize] = useState(100);
   const [highContrast, setHighContrast] = useState(false);
@@ -64,24 +71,12 @@ export default function AccessibilityPanel() {
       <button
         onClick={() => setOpen(!open)}
         className="fixed bottom-20 md:bottom-4 right-4 z-40 w-10 h-10 bg-slate-800 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-slate-700 transition text-sm"
-        aria-label="Accessibility settings"
+        aria-label={t('accessibilitySettings')}
         aria-expanded={open}
         aria-controls={panelId}
-        title="Accessibility settings"
+        title={t('accessibilitySettings')}
       >
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9.31a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-          />
-        </svg>
+        <Accessibility className="w-5 h-5" aria-hidden="true" />
       </button>
 
       {/* Panel */}
@@ -96,28 +91,28 @@ export default function AccessibilityPanel() {
             className="fixed bottom-36 md:bottom-20 right-4 z-50 bg-white rounded-xl shadow-2xl border border-slate-200 w-72 p-5"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 id={headingId} className="text-sm font-semibold text-slate-800">Accessibility</h3>
+              <h3 id={headingId} className="text-sm font-semibold text-slate-800">{t('accessibilityTitle')}</h3>
               <button
                 onClick={() => setOpen(false)}
                 className="text-slate-400 hover:text-slate-600"
-                aria-label="Close accessibility settings"
+                aria-label={t('accessibilityClose')}
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
             {/* Font size */}
             <div className="mb-4">
               <label className="text-xs font-medium text-slate-600 block mb-2">
-                Text size: {fontSize}%
+                {interpolate(t('accessibilityTextSize'), { size: fontSize })}
               </label>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setFontSize(Math.max(80, fontSize - 10))}
                   className="w-8 h-8 rounded bg-slate-100 text-slate-700 flex items-center justify-center hover:bg-slate-200 text-lg font-bold"
-                  aria-label="Decrease font size"
+                  aria-label={t('accessibilityDecreaseFont')}
                 >
-                  A
+                  <Minus className="w-4 h-4" aria-hidden="true" />
                 </button>
                 <input
                   type="range"
@@ -127,21 +122,21 @@ export default function AccessibilityPanel() {
                   value={fontSize}
                   onChange={(e) => setFontSize(Number(e.target.value))}
                   className="flex-1 accent-blue-600"
-                  aria-label="Font size"
+                  aria-label={t('accessibilityFontSize')}
                 />
                 <button
                   onClick={() => setFontSize(Math.min(150, fontSize + 10))}
                   className="w-8 h-8 rounded bg-slate-100 text-slate-700 flex items-center justify-center hover:bg-slate-200 text-xl font-bold"
-                  aria-label="Increase font size"
+                  aria-label={t('accessibilityIncreaseFont')}
                 >
-                  A
+                  <Plus className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
             </div>
 
             {/* High contrast */}
             <label className="flex items-center justify-between py-2 cursor-pointer">
-              <span className="text-sm text-slate-700">High contrast</span>
+              <span className="text-sm text-slate-700">{t('accessibilityHighContrast')}</span>
               <button
                 role="switch"
                 aria-checked={highContrast}
@@ -160,7 +155,7 @@ export default function AccessibilityPanel() {
 
             {/* Reduced motion */}
             <label className="flex items-center justify-between py-2 cursor-pointer">
-              <span className="text-sm text-slate-700">Reduce motion</span>
+              <span className="text-sm text-slate-700">{t('accessibilityReduceMotion')}</span>
               <button
                 role="switch"
                 aria-checked={reducedMotion}
@@ -186,7 +181,7 @@ export default function AccessibilityPanel() {
               }}
               className="w-full mt-3 py-2 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg transition"
             >
-              Reset to defaults
+              {t('accessibilityReset')}
             </button>
           </div>
         </>
