@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import RatingBadge from '@/components/RatingBadge';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface Deal {
   hotel: {
@@ -23,8 +24,10 @@ interface Deal {
 }
 
 export default function DealCard({ deal }: { deal: Deal }) {
+  const { t } = useLocale();
   const currency = deal.currency || 'USD';
-  const sourceLabel = deal.bestProvider ? `via ${deal.bestProvider}` : deal.priceSourceLabel || 'Provider unavailable';
+  const sourceLabel = deal.bestProvider ? `${t('dealViaProvider')} ${deal.bestProvider}` : deal.priceSourceLabel || t('dealProviderUnavailable');
+  const nightWord = deal.nights === 1 ? t('dealNight') : t('dealNights');
   return (
     <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-blue-200 transition-all group">
       <Link href={`/hotel/${deal.hotel.hotelKey}`} className="block relative">
@@ -37,7 +40,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
         <div className="absolute top-2 right-2 px-2.5 py-1 bg-emerald-600 text-white text-xs font-bold rounded-lg shadow">
-          {currency} {deal.pricePerNight.toFixed(0)}/night
+          {currency} {deal.pricePerNight.toFixed(0)}/{t('dealNightShort')}
         </div>
       </Link>
       <div className="p-4">
@@ -54,14 +57,14 @@ export default function DealCard({ deal }: { deal: Deal }) {
               {currency} {deal.bestPrice.toFixed(0)}
             </p>
             <p className="text-xs text-zinc-500">
-              {deal.nights} night{deal.nights !== 1 ? 's' : ''} · {sourceLabel}
+              {deal.nights} {nightWord} · {sourceLabel}
             </p>
           </div>
           <Link
             href={`/hotel/${deal.hotel.hotelKey}`}
             className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
-            See prices →
+            {t('dealSeePrices')} →
           </Link>
         </div>
       </div>

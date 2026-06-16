@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getTimeRemaining, getDaysUntil } from '@/lib/time-remaining';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface CountdownDealProps {
   checkIn: string;
@@ -9,6 +10,7 @@ interface CountdownDealProps {
 }
 
 export default function CountdownDeal({ checkIn, className = '' }: CountdownDealProps) {
+  const { t } = useLocale();
   const [timeLeft, setTimeLeft] = useState<{
     days: number;
     hours: number;
@@ -58,10 +60,10 @@ export default function CountdownDeal({ checkIn, className = '' }: CountdownDeal
           }`}
         >
           {isUrgent
-            ? 'Check-in is very close'
+            ? t('countdownUrgent')
             : isNearby
-            ? 'Your dates are coming up'
-            : 'Check-in approaching'}
+            ? t('countdownNearby')
+            : t('countdownApproaching')}
         </p>
         <div className="flex items-center gap-3 mt-1">
           <div className="text-center">
@@ -72,7 +74,7 @@ export default function CountdownDeal({ checkIn, className = '' }: CountdownDeal
             >
               {timeLeft.days}
             </span>
-            <span className="text-[10px] text-slate-500 block">days</span>
+            <span className="text-[10px] text-slate-500 block">{t('countdownDays')}</span>
           </div>
           <span className="text-slate-300">:</span>
           <div className="text-center">
@@ -83,7 +85,7 @@ export default function CountdownDeal({ checkIn, className = '' }: CountdownDeal
             >
               {timeLeft.hours}
             </span>
-            <span className="text-[10px] text-slate-500 block">hrs</span>
+            <span className="text-[10px] text-slate-500 block">{t('countdownHours')}</span>
           </div>
           <span className="text-slate-300">:</span>
           <div className="text-center">
@@ -94,13 +96,13 @@ export default function CountdownDeal({ checkIn, className = '' }: CountdownDeal
             >
               {timeLeft.minutes}
             </span>
-            <span className="text-[10px] text-slate-500 block">min</span>
+            <span className="text-[10px] text-slate-500 block">{t('countdownMinutes')}</span>
           </div>
         </div>
       </div>
       {isUrgent && (
         <span className="px-2 py-1 bg-red-600 text-white text-[10px] font-bold rounded-full">
-          DATE SOON
+          {t('countdownDateSoon')}
         </span>
       )}
     </div>

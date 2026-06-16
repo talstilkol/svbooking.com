@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect } from 'vitest';
 import DealCard from '@/components/DealCard';
+import { LocaleProvider } from '@/components/LocaleProvider';
+import LocaleSwitcher from '@/components/LocaleSwitcher';
 
 const DEAL = {
   hotel: { hotelKey: 'g1-d2', name: 'Le Meurice', city: 'Paris', country: 'France', image: '/img.jpg' },
@@ -37,5 +40,21 @@ describe('DealCard', () => {
     render(<DealCard deal={DEAL} />);
     const links = screen.getAllByRole('link');
     expect(links.every((l) => l.getAttribute('href') === '/hotel/g1-d2')).toBe(true);
+  });
+
+  it('switches price labels and provider unavailable state to Hebrew', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <DealCard deal={{ ...DEAL, bestProvider: null }} />
+      </LocaleProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+
+    expect(screen.getByText('USD 350/לילה')).toBeInTheDocument();
+    expect(screen.getByText(/2 לילות · ספק לא זמין/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /צפייה במחירים/ })).toHaveAttribute('href', '/hotel/g1-d2');
   });
 });
