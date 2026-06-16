@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface PriceBreakdownProps {
   pricePerNight: number;
@@ -17,11 +18,13 @@ export default function PriceBreakdown({
   currency = '$',
   className = '',
 }: PriceBreakdownProps) {
+  const { t } = useLocale();
   const [showDetails, setShowDetails] = useState(false);
 
   const subtotal = pricePerNight * nights;
   const total = Math.round(subtotal);
   const perNightTotal = nights > 0 ? Math.round(subtotal / nights) : 0;
+  const nightWord = nights === 1 ? t('dealNight') : t('dealNights');
 
   if (nights <= 0 || pricePerNight <= 0) return null;
 
@@ -35,16 +38,16 @@ export default function PriceBreakdown({
           <span className="text-lg">💰</span>
           <div className="text-left">
             <p className="text-sm font-semibold text-slate-900">
-              {currency}{total} total
+              {t('pbTotalLine').replace('{amount}', `${currency}${total}`)}
             </p>
             <p className="text-xs text-slate-500">
-              {currency}{perNightTotal}/night avg · {nights} night{nights !== 1 ? 's' : ''}
-              {provider ? ` via ${provider}` : ''}
+              {currency}{perNightTotal}/{t('dealNightShort')} {t('pbAvg')} · {nights} {nightWord}
+              {provider ? ` ${t('pbVia').replace('{provider}', provider)}` : ''}
             </p>
           </div>
         </div>
         <span className="text-xs text-blue-600 font-medium">
-          {showDetails ? 'Hide' : 'See breakdown'}
+          {showDetails ? t('pbHide') : t('pbSeeBreakdown')}
         </span>
       </button>
 
@@ -53,30 +56,29 @@ export default function PriceBreakdown({
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-slate-600">
-              {currency}{Math.round(pricePerNight)} × {nights} night{nights !== 1 ? 's' : ''}
+              {currency}{Math.round(pricePerNight)} × {nights} {nightWord}
               </span>
               <span className="text-slate-900 font-medium">{currency}{total}</span>
             </div>
 
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Taxes and provider fees</span>
-              <span className="text-slate-500 font-medium">Provider total only</span>
+              <span className="text-slate-600">{t('pbTaxesFees')}</span>
+              <span className="text-slate-500 font-medium">{t('pbProviderTotalOnly')}</span>
             </div>
 
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600">Room-level fees</span>
-              <span className="text-slate-500 font-medium">Unavailable</span>
+              <span className="text-slate-600">{t('pbRoomFees')}</span>
+              <span className="text-slate-500 font-medium">{t('hdUnavailable')}</span>
             </div>
           </div>
 
           <div className="border-t border-slate-200 pt-3">
             <div className="flex justify-between">
-              <span className="font-bold text-slate-900">Total</span>
+              <span className="font-bold text-slate-900">{t('pbTotalLabel')}</span>
               <span className="font-bold text-slate-900 text-lg">{currency}{total}</span>
             </div>
             <p className="text-[10px] text-slate-500 mt-1">
-              This is the provider-reported total returned for the selected dates. A line-item
-              tax and fee breakdown is unavailable in SV Booking.
+              {t('pbDisclaimer')}
             </p>
           </div>
 
@@ -84,8 +86,7 @@ export default function PriceBreakdown({
             <div className="bg-blue-50 rounded-lg p-3 flex items-start gap-2">
               <span className="text-sm">ℹ️</span>
               <p className="text-xs text-blue-700">
-                Final price will be confirmed on {provider}&apos;s website.
-                Taxes and fees may differ based on your location.
+                {t('pbProviderNote').replace('{provider}', provider)}
               </p>
             </div>
           )}

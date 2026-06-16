@@ -1,5 +1,7 @@
 'use client';
 
+import { useLocale } from '@/components/LocaleProvider';
+
 interface TimelineStep {
   label: string;
   description: string;
@@ -22,28 +24,31 @@ export default function BookingTimeline({
   hasSaved = false,
   className = '',
 }: BookingTimelineProps) {
+  const { t } = useLocale();
   const steps: TimelineStep[] = [
     {
-      label: 'Search',
-      description: 'Find your hotel',
+      label: t('btSearch'),
+      description: t('btFindHotel'),
       icon: '🔍',
       status: 'complete',
     },
     {
-      label: 'Compare',
-      description: checkIn && checkOut ? `${checkIn} to ${checkOut}` : 'Select dates to compare',
+      label: t('btCompare'),
+      description: checkIn && checkOut
+        ? t('btCompareDates').replace('{checkIn}', checkIn).replace('{checkOut}', checkOut)
+        : t('btSelectDates'),
       icon: '📊',
       status: hasCompared ? 'complete' : checkIn ? 'active' : 'upcoming',
     },
     {
-      label: 'Save',
-      description: hasSaved ? 'Saved to trips' : 'Save to trip planner',
+      label: t('btSave'),
+      description: hasSaved ? t('btSaved') : t('btSaveToPlanner'),
       icon: '💾',
       status: hasSaved ? 'complete' : hasCompared ? 'active' : 'upcoming',
     },
     {
-      label: 'Book',
-      description: 'Book on provider site',
+      label: t('btBook'),
+      description: t('btBookProvider'),
       icon: '✈️',
       status: 'upcoming',
     },
@@ -51,7 +56,7 @@ export default function BookingTimeline({
 
   return (
     <div className={`bg-white rounded-xl border border-slate-200 p-5 ${className}`}>
-      <h3 className="text-sm font-semibold text-slate-700 mb-4">Your Booking Journey</h3>
+      <h3 className="text-sm font-semibold text-slate-700 mb-4">{t('btJourney')}</h3>
       <div className="flex items-start">
         {steps.map((step, idx) => (
           <div key={step.label} className="flex-1 relative">
