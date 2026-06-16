@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface SafetyInfoProps {
   city: string;
@@ -25,6 +26,7 @@ function hasSafetyData(data: SafetyData | null): data is SafetyData {
 }
 
 export default function SafetyInfo({ city, className = '' }: SafetyInfoProps) {
+  const { t } = useLocale();
   const [data, setData] = useState<SafetyData | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -51,7 +53,7 @@ export default function SafetyInfo({ city, className = '' }: SafetyInfoProps) {
     <div className={`bg-white border border-slate-200 rounded-2xl p-5 ${className}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-bold text-slate-900">Safety in {city}</h3>
+          <h3 className="text-sm font-bold text-slate-900">{t('safetyHeading').replace('{city}', city)}</h3>
           {data && (
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
               Wikivoyage
@@ -64,7 +66,7 @@ export default function SafetyInfo({ city, className = '' }: SafetyInfoProps) {
         <div className="space-y-3">
           {Array.isArray(data.tips) && data.tips.length > 0 && (
             <div>
-              <h4 className="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Tips</h4>
+              <h4 className="text-[10px] text-slate-500 uppercase font-bold mb-1.5">{t('safetyTips')}</h4>
               <ul className="space-y-1">
                 {data.tips.map((tip) => (
                   <li key={tip} className="text-xs text-slate-600 flex items-start gap-1.5">
@@ -78,7 +80,7 @@ export default function SafetyInfo({ city, className = '' }: SafetyInfoProps) {
 
           {Array.isArray(data.areas) && data.areas.length > 0 && (
             <div>
-              <h4 className="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Areas</h4>
+              <h4 className="text-[10px] text-slate-500 uppercase font-bold mb-1.5">{t('safetyAreas')}</h4>
               <div className="space-y-1">
                 {data.areas.map((area) => (
                   <div key={area.name} className="flex items-center gap-2 text-xs">
@@ -97,13 +99,13 @@ export default function SafetyInfo({ city, className = '' }: SafetyInfoProps) {
             <div className="grid grid-cols-2 gap-2">
               {data.vaccinations && (
                 <div className="p-2 bg-slate-50 rounded-lg">
-                  <p className="text-[10px] text-slate-500">Vaccinations</p>
+                  <p className="text-[10px] text-slate-500">{t('safetyVaccinations')}</p>
                   <p className="text-xs text-slate-700 font-medium">{data.vaccinations}</p>
                 </div>
               )}
               {data.waterSafety && (
                 <div className="p-2 bg-slate-50 rounded-lg">
-                  <p className="text-[10px] text-slate-500">Water</p>
+                  <p className="text-[10px] text-slate-500">{t('safetyWater')}</p>
                   <p className="text-xs text-slate-700 font-medium">{data.waterSafety}</p>
                 </div>
               )}
@@ -112,7 +114,7 @@ export default function SafetyInfo({ city, className = '' }: SafetyInfoProps) {
         </div>
       ) : (
         <p className="text-sm text-slate-500">
-          {loaded ? 'Verified safety guidance is unavailable for this city.' : 'Checking verified safety guidance...'}
+          {loaded ? t('safetyUnavailable') : t('safetyChecking')}
         </p>
       )}
     </div>

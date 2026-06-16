@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface HotelAmenitiesProps {
   hotelKey: string;
@@ -13,6 +14,7 @@ interface AmenityItem {
 }
 
 export default function HotelAmenities({ hotelKey, className = '' }: HotelAmenitiesProps) {
+  const { t } = useLocale();
   const [liveAmenities, setLiveAmenities] = useState<AmenityItem[] | null>(null);
   const [source, setSource] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -40,10 +42,10 @@ export default function HotelAmenities({ hotelKey, className = '' }: HotelAmenit
   return (
     <div className={className}>
       <div className="flex items-center gap-2 mb-3">
-        <h3 className="font-semibold text-slate-800 text-sm">Hotel Amenities</h3>
+        <h3 className="font-semibold text-slate-800 text-sm">{t('hotelAmenitiesHeading')}</h3>
         {liveAmenities && (
           <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
-            {source === 'osm-cache' ? 'OSM cached' : 'OSM source'}
+            {source === 'osm-cache' ? t('hotelAmenitiesOsmCached') : t('hotelAmenitiesOsmSource')}
           </span>
         )}
       </div>
@@ -61,7 +63,7 @@ export default function HotelAmenities({ hotelKey, className = '' }: HotelAmenit
         </div>
       ) : (
         <p className="text-sm text-slate-500">
-          {loaded ? 'Verified amenity data is unavailable for this property.' : 'Checking verified amenity data...'}
+          {loaded ? t('hotelAmenitiesUnavailable') : t('hotelAmenitiesChecking')}
         </p>
       )}
     </div>

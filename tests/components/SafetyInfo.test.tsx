@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import SafetyInfo from '@/components/SafetyInfo';
+import { LocaleProvider } from '@/components/LocaleProvider';
+import LocaleSwitcher from '@/components/LocaleSwitcher';
 
 function mockGuide(data: unknown) {
   return vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ data }) });
@@ -10,10 +13,13 @@ function mockGuide(data: unknown) {
 afterEach(() => vi.restoreAllMocks());
 
 describe('SafetyInfo', () => {
-  it('renders the city heading', () => {
+  it('renders the city heading', async () => {
     vi.stubGlobal('fetch', mockGuide(null));
     render(<SafetyInfo city="Bangkok" />);
     expect(screen.getByText('Safety in Bangkok')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Verified safety guidance is unavailable for this city.')).toBeInTheDocument();
+    });
   });
 
   it('shows a Wikivoyage badge and tips when data is available', async () => {
@@ -38,5 +44,23 @@ describe('SafetyInfo', () => {
     render(<SafetyInfo city="Nowhere" />);
     await waitFor(() => expect(screen.getByText('Safety in Nowhere')).toBeInTheDocument());
     expect(screen.queryByText('Wikivoyage')).toBeNull();
+  });
+
+  it('switches heading and unavailable disclosure to Hebrew', async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal('fetch', mockGuide(null));
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <SafetyInfo city="Nowhere" />
+      </LocaleProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+
+    expect(screen.getByText('בטיחות בNowhere')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('הנחיות בטיחות מאומתות אינן זמינות עבור עיר זו.')).toBeInTheDocument();
+    });
   });
 });

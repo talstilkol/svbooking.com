@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface LocalEventsProps {
   city: string;
@@ -23,6 +24,7 @@ function hasEvents(value: unknown): value is LocalEvent[] {
 }
 
 export default function LocalEvents({ city, className = '' }: LocalEventsProps) {
+  const { t } = useLocale();
   const [annualEvents, setAnnualEvents] = useState<LocalEvent[] | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<LocalEvent[] | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -60,7 +62,7 @@ export default function LocalEvents({ city, className = '' }: LocalEventsProps) 
       {hasAnnual && annualEvents && (
         <>
           <div className="flex items-center gap-2 mb-3">
-            <h3 className="text-sm font-bold text-slate-900">Events in {city}</h3>
+            <h3 className="text-sm font-bold text-slate-900">{t('localEventsHeading').replace('{city}', city)}</h3>
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
               Wikivoyage
             </span>
@@ -92,9 +94,9 @@ export default function LocalEvents({ city, className = '' }: LocalEventsProps) 
       {hasUpcoming && upcomingEvents && (
         <div className={hasAnnual ? 'mt-4 pt-4 border-t border-slate-100' : ''}>
           <div className="flex items-center gap-2 mb-3">
-            <h3 className="text-sm font-bold text-slate-900">Upcoming Events</h3>
+            <h3 className="text-sm font-bold text-slate-900">{t('localEventsUpcomingHeading')}</h3>
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">
-              Live
+              {t('localEventsProviderBadge')}
             </span>
           </div>
 
@@ -124,7 +126,7 @@ export default function LocalEvents({ city, className = '' }: LocalEventsProps) 
                       rel="noopener noreferrer"
                       className="text-[10px] text-blue-600 hover:underline mt-1 inline-block"
                     >
-                      Event details
+                      {t('localEventsDetails')}
                     </a>
                   )}
                 </div>
@@ -136,7 +138,7 @@ export default function LocalEvents({ city, className = '' }: LocalEventsProps) 
 
       {!hasAnnual && !hasUpcoming && (
         <p className="text-sm text-slate-500">
-          {loaded ? `Verified event data is unavailable for ${city}.` : 'Checking verified event data...'}
+          {loaded ? t('localEventsUnavailable').replace('{city}', city) : t('localEventsChecking')}
         </p>
       )}
     </div>
