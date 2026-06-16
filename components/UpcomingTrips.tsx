@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useLocale } from '@/components/LocaleProvider';
 import {
   LEGACY_LOCAL_STORAGE_KEYS,
   LOCAL_STORAGE_KEYS,
@@ -35,7 +36,20 @@ function nightsBetween(checkIn: string, checkOut: string): number {
   ));
 }
 
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) => (
+    Object.prototype.hasOwnProperty.call(vars, key) ? String(vars[key]) : match
+  ));
+}
+
+function timingLabel(days: number, t: (key: string) => string): string {
+  if (days === 0) return t('upcomingTripsToday');
+  if (days === 1) return t('upcomingTripsTomorrow');
+  return interpolate(t('upcomingTripsDays'), { days });
+}
+
 export default function UpcomingTrips({ className = '' }: { className?: string }) {
+  const { t } = useLocale();
   const [trips, setTrips] = useState<Trip[]>([]);
 
   useEffect(() => {
@@ -64,12 +78,12 @@ export default function UpcomingTrips({ className = '' }: { className?: string }
     return (
       <div className={`bg-white border border-slate-200 rounded-2xl p-6 text-center ${className}`}>
         <span className="text-3xl block mb-2">✈️</span>
-        <p className="text-sm text-slate-500 mb-3">No upcoming trips</p>
+        <p className="text-sm text-slate-500 mb-3">{t('upcomingTripsEmpty')}</p>
         <Link
           href="/trips"
           className="text-xs text-blue-600 font-medium hover:text-blue-700"
         >
-          Plan a trip →
+          {t('upcomingTripsPlan')} →
         </Link>
       </div>
     );
@@ -78,9 +92,9 @@ export default function UpcomingTrips({ className = '' }: { className?: string }
   return (
     <div className={`bg-white border border-slate-200 rounded-2xl overflow-hidden ${className}`}>
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-900">✈️ Upcoming Trips</h3>
+        <h3 className="text-sm font-bold text-slate-900">✈️ {t('upcomingTripsTitle')}</h3>
         <Link href="/trips" className="text-[10px] text-blue-600 font-medium hover:text-blue-700">
-          View all →
+          {t('upcomingTripsViewAll')} →
         </Link>
       </div>
 
@@ -89,6 +103,8 @@ export default function UpcomingTrips({ className = '' }: { className?: string }
           const days = daysUntil(trip.checkIn);
           const nights = nightsBetween(trip.checkIn, trip.checkOut);
           const isUrgent = days <= 7;
+          const nightWord = t(nights === 1 ? 'upcomingTripsNightSingular' : 'upcomingTripsNightPlural');
+          const guestWord = t(trip.guests === 1 ? 'upcomingTripsGuestSingular' : 'upcomingTripsGuestPlural');
 
           return (
             <Link
@@ -108,12 +124,18 @@ export default function UpcomingTrips({ className = '' }: { className?: string }
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-slate-800 truncate">{trip.hotelName}</p>
                 <p className="text-[10px] text-slate-500">
-                  {trip.city} · {nights} night{nights !== 1 ? 's' : ''} · {trip.guests} guest{trip.guests !== 1 ? 's' : ''}
+                  {interpolate(t('upcomingTripsSummary'), {
+                    city: trip.city,
+                    nights,
+                    nightWord,
+                    guests: trip.guests,
+                    guestWord,
+                  })}
                 </p>
               </div>
               <div className="text-right shrink-0">
                 <p className={`text-xs font-bold ${isUrgent ? 'text-red-600' : 'text-slate-700'}`}>
-                  {days === 0 ? 'Today!' : days === 1 ? 'Tomorrow' : `${days} days`}
+                  {timingLabel(days, t)}
                 </p>
                 <p className="text-[9px] text-slate-500">{trip.checkIn}</p>
               </div>
