@@ -3,10 +3,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { CatalogHotel } from '@/lib/types';
+import { useLocale } from '@/components/LocaleProvider';
 
 type Hotel = CatalogHotel;
 
 export default function BookPage() {
+  const { t } = useLocale();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [hotel, setHotel] = useState<Hotel | null>(null);
@@ -21,52 +23,52 @@ export default function BookPage() {
     const controller = new AbortController();
     fetch(`/api/compare?hotelKey=${encodeURIComponent(id)}`, { signal: controller.signal }).then(r => r.json()).then(d => {
       const h = d.hotel || (d.hotels || []).find((x: Hotel) => x.hotelKey === id);
-      if (h) setHotel(h); else setError('Hotel not found');
-    }).catch((err) => { if (err instanceof Error && err.name !== 'AbortError') setError('Failed to load'); });
+      if (h) setHotel(h); else setError(t('bookHotelNotFound'));
+    }).catch((err) => { if (err instanceof Error && err.name !== 'AbortError') setError(t('bookFailedLoad')); });
     return () => controller.abort();
-  }, [id]);
+  }, [id, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setError(''); setSaving(true);
-    if (!checkIn || !checkOut) { setError('Please select dates'); setSaving(false); return; }
-    if (new Date(checkIn) >= new Date(checkOut)) { setError('Check-in must be before check-out'); setSaving(false); return; }
+    if (!checkIn || !checkOut) { setError(t('bookSelectDates')); setSaving(false); return; }
+    if (new Date(checkIn) >= new Date(checkOut)) { setError(t('bookDateOrder')); setSaving(false); return; }
     try {
       const res = await fetch('/api/me/trips', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ hotelKey: id, hotelName: hotel?.name, city: hotel?.city, country: hotel?.country, image: hotel?.image, checkIn, checkOut, guests, notes }) });
       if (!res.ok) throw new Error('Trip save failed');
       router.push('/trips');
-    } catch { setError('Trip could not be saved right now.'); }
+    } catch { setError(t('bookSaveFailed')); }
     finally { setSaving(false); }
   };
 
-  if (error && !hotel) return <div className="min-h-screen p-8 text-center"><p className="text-red-600 mb-4">{error}</p><Link href="/search" className="text-blue-600 underline">Browse hotels</Link></div>;
-  if (!hotel) return <div className="min-h-screen p-8 text-center">Loading...</div>;
+  if (error && !hotel) return <div className="min-h-screen p-8 text-center"><p className="text-red-600 mb-4">{error}</p><Link href="/search" className="text-blue-600 underline">{t('bookBrowseHotels')}</Link></div>;
+  if (!hotel) return <div className="min-h-screen p-8 text-center">{t('bookLoading')}</div>;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
-      <Link href={`/compare?hotelKey=${id}`} className="text-blue-600 hover:underline text-sm mb-4 inline-block">← Back to compare</Link>
+      <Link href={`/compare?hotelKey=${id}`} className="text-blue-600 hover:underline text-sm mb-4 inline-block">← {t('bookBackCompare')}</Link>
       <div className="animate-fade-in">
-        <h1 className="text-3xl font-bold mb-2">Plan trip: {hotel.name}</h1>
+        <h1 className="text-3xl font-bold mb-2">{t('bookPlanTrip')}: {hotel.name}</h1>
         <p className="text-zinc-600 mb-6">{hotel.city}, {hotel.country}</p>
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 border border-zinc-200 space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Check-in</label>
-            <input type="date" value={checkIn} onChange={e => setCheckIn(e.target.value)} required className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white" />
+            <label htmlFor="book-check-in" className="block text-sm font-medium mb-1">{t('bookCheckIn')}</label>
+            <input id="book-check-in" type="date" value={checkIn} onChange={e => setCheckIn(e.target.value)} required className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Check-out</label>
-            <input type="date" value={checkOut} onChange={e => setCheckOut(e.target.value)} required className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white" />
+            <label htmlFor="book-check-out" className="block text-sm font-medium mb-1">{t('bookCheckOut')}</label>
+            <input id="book-check-out" type="date" value={checkOut} onChange={e => setCheckOut(e.target.value)} required className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Guests</label>
-            <input type="number" min={1} max={20} value={guests} onChange={e => setGuests(Number(e.target.value))} className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white" />
+            <label htmlFor="book-guests" className="block text-sm font-medium mb-1">{t('bookGuests')}</label>
+            <input id="book-guests" type="number" min={1} max={20} value={guests} onChange={e => setGuests(Number(e.target.value))} className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Notes (optional)</label>
-            <textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={280} rows={3} className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white" />
+            <label htmlFor="book-notes" className="block text-sm font-medium mb-1">{t('bookNotesOptional')}</label>
+            <textarea id="book-notes" value={notes} onChange={e => setNotes(e.target.value)} maxLength={280} rows={3} className="w-full border border-zinc-300 rounded-lg px-4 py-2 bg-white" />
           </div>
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <button type="submit" disabled={saving} className="w-full py-3 rounded-xl bg-linear-to-r from-indigo-600 to-pink-600 text-white font-semibold disabled:opacity-50">
-            {saving ? 'Saving...' : 'Save trip'}
+            {saving ? t('bookSaving') : t('bookSaveTrip')}
           </button>
         </form>
       </div>
