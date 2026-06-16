@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface Alternative {
   checkIn: string;
@@ -34,6 +35,7 @@ interface Props {
 }
 
 export default function CheaperDates({ hotelKey, checkIn, checkOut }: Props) {
+  const { t } = useLocale();
   const [result, setResult] = useState<CheaperDatesResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,20 +54,20 @@ export default function CheaperDates({ hotelKey, checkIn, checkOut }: Props) {
         `/api/cheaper-dates?hotelKey=${hotelKey}&checkIn=${checkIn}&checkOut=${checkOut}`
       );
       const data = await res.json();
-      if (!res.ok || data.error) throw new Error('Cheaper date search unavailable');
+      if (!res.ok || data.error) throw new Error(t('cheaperDatesSearchUnavailable'));
       setResult(data);
       setExpanded(true);
     } catch {
-      setError('Cheaper date search is unavailable right now.');
+      setError(t('cheaperDatesSearchUnavailableNow'));
     } finally {
       setLoading(false);
     }
   };
 
   const tabs = [
-    { key: 'near' as const, label: '±3 Days' },
-    { key: 'week' as const, label: '±1 Week' },
-    { key: 'month' as const, label: '±1 Month' },
+    { key: 'near' as const, label: t('cheaperDatesTabNear') },
+    { key: 'week' as const, label: t('cheaperDatesTabWeek') },
+    { key: 'month' as const, label: t('cheaperDatesTabMonth') },
   ];
 
   const currentAlternatives = result?.alternatives[activeTab] || [];
@@ -78,7 +80,7 @@ export default function CheaperDates({ hotelKey, checkIn, checkOut }: Props) {
         disabled={loading}
         className="px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
       >
-        {loading ? 'Searching...' : expanded ? 'Hide Cheaper Dates' : 'Find Cheaper Dates'}
+        {loading ? t('cheaperDatesSearching') : expanded ? t('cheaperDatesHide') : t('cheaperDatesFind')}
       </button>
 
       {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
@@ -88,7 +90,7 @@ export default function CheaperDates({ hotelKey, checkIn, checkOut }: Props) {
           {result.hasRealData === false && (
             <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
               <p className="text-slate-700 text-sm">
-                Cheaper-date intelligence is unavailable until provider or source observations exist for these dates.
+                {t('cheaperDatesUnavailable')}
               </p>
             </div>
           )}
@@ -96,17 +98,22 @@ export default function CheaperDates({ hotelKey, checkIn, checkOut }: Props) {
           {result.cheapestOverall && result.cheapestOverall.savingsPct > 0 && (
             <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
               <p className="text-emerald-800 font-semibold text-sm">
-                Lowest observed: Save {result.cheapestOverall.savingsPct}% (${result.cheapestOverall.savings.toFixed(0)})
+                {t('cheaperDatesLowestObserved')
+                  .replace('{pct}', String(result.cheapestOverall.savingsPct))
+                  .replace('{amount}', result.cheapestOverall.savings.toFixed(0))}
               </p>
               <p className="text-emerald-700 text-sm">
-                {result.cheapestOverall.checkIn} → {result.cheapestOverall.checkOut} · ${result.cheapestOverall.price.toFixed(0)} · {result.cheapestOverall.provider || result.cheapestOverall.priceSourceLabel || 'Provider unavailable'}
+                {result.cheapestOverall.checkIn} → {result.cheapestOverall.checkOut} · ${result.cheapestOverall.price.toFixed(0)} · {result.cheapestOverall.provider || result.cheapestOverall.priceSourceLabel || t('dealProviderUnavailable')}
               </p>
             </div>
           )}
 
           {result.originalPrice && (
             <p className="text-sm text-zinc-600 mb-3">
-              Original: ${result.originalPrice.toFixed(0)} for {result.originalDates.nights} nights
+              {t('cheaperDatesOriginal')
+                .replace('{amount}', result.originalPrice.toFixed(0))
+                .replace('{nights}', String(result.originalDates.nights))
+                .replace('{nightWord}', result.originalDates.nights === 1 ? t('dealNight') : t('dealNights'))}
             </p>
           )}
 
@@ -127,7 +134,7 @@ export default function CheaperDates({ hotelKey, checkIn, checkOut }: Props) {
           </div>
 
           {cheaperOptions.length === 0 ? (
-            <p className="text-sm text-zinc-500">No cheaper alternatives found in this range.</p>
+            <p className="text-sm text-zinc-500">{t('cheaperDatesNoAlternatives')}</p>
           ) : (
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {cheaperOptions.slice(0, 5).map((alt, i) => (
@@ -139,7 +146,7 @@ export default function CheaperDates({ hotelKey, checkIn, checkOut }: Props) {
                     <p className="text-sm font-medium text-zinc-900">
                       {alt.checkIn} → {alt.checkOut}
                     </p>
-                    <p className="text-xs text-zinc-500">{alt.provider || alt.priceSourceLabel || 'Provider unavailable'}</p>
+                    <p className="text-xs text-zinc-500">{alt.provider || alt.priceSourceLabel || t('dealProviderUnavailable')}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-zinc-900">${alt.price.toFixed(0)}</p>
