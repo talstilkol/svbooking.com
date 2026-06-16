@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import type { ReactElement } from 'react';
 import NearbyAttractions from '@/components/NearbyAttractions';
 
 function mockPois(items: unknown[]) {
@@ -9,10 +10,18 @@ function mockPois(items: unknown[]) {
 
 afterEach(() => vi.restoreAllMocks());
 
+async function renderAndFlush(ui: ReactElement) {
+  const rendered = render(ui);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  return rendered;
+}
+
 describe('NearbyAttractions', () => {
-  it('shows a loading skeleton with the heading initially', () => {
+  it('shows a loading skeleton with the heading initially', async () => {
     vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {}))); // never resolves
-    render(<NearbyAttractions city="Paris" />);
+    await renderAndFlush(<NearbyAttractions city="Paris" />);
     expect(screen.getByText('Nearby Attractions')).toBeInTheDocument();
   });
 

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ReactElement } from 'react';
 
 const mockStore: Record<string, unknown> = {};
 vi.mock('@/lib/local-storage-keys', () => ({
@@ -22,9 +23,17 @@ beforeEach(() => {
   document.documentElement.dir = 'ltr';
 });
 
+async function renderWithLocaleProvider(ui: ReactElement) {
+  const rendered = render(ui);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  return rendered;
+}
+
 describe('Footer i18n', () => {
-  it('renders English footer content by default', () => {
-    render(
+  it('renders English footer content by default', async () => {
+    await renderWithLocaleProvider(
       <LocaleProvider>
         <Footer />
       </LocaleProvider>
@@ -38,7 +47,7 @@ describe('Footer i18n', () => {
 
   it('switches footer content to Hebrew via the locale switcher', async () => {
     const user = userEvent.setup();
-    render(
+    await renderWithLocaleProvider(
       <LocaleProvider>
         <LocaleSwitcher />
         <Footer />

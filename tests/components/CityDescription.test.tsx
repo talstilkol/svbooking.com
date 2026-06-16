@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import CityDescription from '@/components/CityDescription';
 
@@ -9,10 +9,17 @@ function mockCity(payload: unknown, ok = true) {
 
 afterEach(() => vi.restoreAllMocks());
 
+async function flushClientEffects() {
+  await act(async () => {
+    await Promise.resolve();
+  });
+}
+
 describe('CityDescription', () => {
-  it('renders nothing until data arrives', () => {
-    vi.stubGlobal('fetch', mockCity(null));
+  it('renders nothing until data arrives', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
     const { container } = render(<CityDescription city="Paris" />);
+    await flushClientEffects();
     expect(container.firstChild).toBeNull();
   });
 
@@ -37,6 +44,7 @@ describe('CityDescription', () => {
   it('renders nothing when the API has no extract', async () => {
     vi.stubGlobal('fetch', mockCity({}));
     const { container } = render(<CityDescription city="Nowhere" />);
+    await flushClientEffects();
     await waitFor(() => expect(container.firstChild).toBeNull());
   });
 });

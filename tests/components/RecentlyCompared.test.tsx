@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ReactElement } from 'react';
 
 const store: Record<string, unknown> = {};
 vi.mock('@/lib/local-storage-keys', () => ({
@@ -14,6 +15,14 @@ import RecentlyCompared, { addToRecentlyCompared } from '@/components/RecentlyCo
 beforeEach(() => { for (const k of Object.keys(store)) delete store[k]; });
 
 const KEY = 'svbooking:recently-compared';
+
+async function renderAndFlush(ui: ReactElement) {
+  const rendered = render(ui);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  return rendered;
+}
 
 describe('addToRecentlyCompared', () => {
   it('prepends a hotel with a timestamp', () => {
@@ -43,8 +52,8 @@ describe('addToRecentlyCompared', () => {
 });
 
 describe('RecentlyCompared component', () => {
-  it('renders nothing when nothing has been compared', () => {
-    const { container } = render(<RecentlyCompared />);
+  it('renders nothing when nothing has been compared', async () => {
+    const { container } = await renderAndFlush(<RecentlyCompared />);
     expect(container.firstChild).toBeNull();
   });
 });

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ReactElement } from 'react';
 
 // Deterministic storage mock (avoids Node 22 built-in localStorage conflict)
 const mockStore: Record<string, unknown> = {};
@@ -33,9 +34,17 @@ function Probe() {
   );
 }
 
+async function renderWithLocaleProvider(ui: ReactElement) {
+  const rendered = render(ui);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  return rendered;
+}
+
 describe('LocaleProvider', () => {
-  it('defaults to English with ltr direction', () => {
-    render(
+  it('defaults to English with ltr direction', async () => {
+    await renderWithLocaleProvider(
       <LocaleProvider>
         <Probe />
       </LocaleProvider>
@@ -44,8 +53,8 @@ describe('LocaleProvider', () => {
     expect(screen.getByTestId('dir')).toHaveTextContent('ltr');
   });
 
-  it('translates a known dictionary key', () => {
-    render(
+  it('translates a known dictionary key', async () => {
+    await renderWithLocaleProvider(
       <LocaleProvider>
         <Probe />
       </LocaleProvider>
@@ -61,8 +70,8 @@ describe('LocaleProvider', () => {
 });
 
 describe('LocaleSwitcher', () => {
-  it('renders a button per supported locale', () => {
-    render(
+  it('renders a button per supported locale', async () => {
+    await renderWithLocaleProvider(
       <LocaleProvider>
         <LocaleSwitcher />
       </LocaleProvider>
@@ -73,7 +82,7 @@ describe('LocaleSwitcher', () => {
 
   it('switches to Hebrew, sets RTL and aria-pressed, and persists', async () => {
     const user = userEvent.setup();
-    render(
+    await renderWithLocaleProvider(
       <LocaleProvider>
         <LocaleSwitcher />
         <Probe />
@@ -92,7 +101,7 @@ describe('LocaleSwitcher', () => {
 
   it('translates dictionary keys into Hebrew after switching', async () => {
     const user = userEvent.setup();
-    render(
+    await renderWithLocaleProvider(
       <LocaleProvider>
         <LocaleSwitcher />
         <Probe />
@@ -110,7 +119,7 @@ describe('Navbar translations', () => {
       const { t } = useLocale();
       return <span data-testid="nav-search">{t('navSearch')}</span>;
     }
-    render(
+    await renderWithLocaleProvider(
       <LocaleProvider>
         <LocaleSwitcher />
         <NavProbe />

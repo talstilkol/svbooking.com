@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { ReactElement } from 'react';
 
 const store: Record<string, unknown> = {};
 vi.mock('@/lib/local-storage-keys', () => ({
@@ -56,9 +57,17 @@ beforeEach(() => {
   document.documentElement.dir = 'ltr';
 });
 
+async function renderWithLocaleProvider(ui: ReactElement) {
+  const rendered = render(ui);
+  await act(async () => {
+    await Promise.resolve();
+  });
+  return rendered;
+}
+
 describe('LegalDocument', () => {
-  it('renders the English document by default with no disclaimer', () => {
-    render(
+  it('renders the English document by default with no disclaimer', async () => {
+    await renderWithLocaleProvider(
       <LocaleProvider>
         <LocaleSwitcher />
         <LegalDocument en={en} he={he} />
@@ -69,8 +78,8 @@ describe('LegalDocument', () => {
     expect(screen.queryByText(/הנוסח באנגלית מחייב/)).not.toBeInTheDocument();
   });
 
-  it('parses **bold** into <strong> and `code` into <code>', () => {
-    render(
+  it('parses **bold** into <strong> and `code` into <code>', async () => {
+    await renderWithLocaleProvider(
       <LocaleProvider>
         <LegalDocument en={en} he={he} />
       </LocaleProvider>
@@ -81,8 +90,8 @@ describe('LegalDocument', () => {
     expect(code.tagName).toBe('CODE');
   });
 
-  it('renders list items and the trailing paragraph', () => {
-    render(
+  it('renders list items and the trailing paragraph', async () => {
+    await renderWithLocaleProvider(
       <LocaleProvider>
         <LegalDocument en={en} he={he} />
       </LocaleProvider>
@@ -94,7 +103,7 @@ describe('LegalDocument', () => {
 
   it('switches to the Hebrew document and shows the convenience-translation disclaimer', async () => {
     const user = userEvent.setup();
-    render(
+    await renderWithLocaleProvider(
       <LocaleProvider>
         <LocaleSwitcher />
         <LegalDocument en={en} he={he} />
