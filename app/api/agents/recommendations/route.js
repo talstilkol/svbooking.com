@@ -4,6 +4,12 @@ import { getClientIp, rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { addDays } from '@/lib/utils/date';
 import { assertSameOrigin } from '@/lib/request-origin';
 import { errorResponse } from '@/lib/validation';
+import {
+  formatLocalizedCurrency,
+  formatLocalizedDate,
+  getDictionary,
+  resolveLocale,
+} from '@/lib/i18n';
 
 const recommendationsLimiter = rateLimit({
   namespace: 'agents-recommendations',
@@ -12,6 +18,21 @@ const recommendationsLimiter = rateLimit({
   failOpen: false,
 });
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
+
+function fillTemplate(template, values) {
+  return String(template || '').replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key) => (
+    values[key] === undefined || values[key] === null ? match : String(values[key])
+  ));
+}
+
+function buildRecommendationCopy({ locale, acceptLanguage }) {
+  const resolved = resolveLocale({ locale, acceptLanguage }).code;
+  const dictionary = getDictionary(resolved);
+  const t = (key, values = {}) => fillTemplate(dictionary[key] || key, values);
+  const money = (amount) => formatLocalizedCurrency(amount, resolved, 'USD') || `$${Number(amount || 0).toFixed(0)}`;
+  const date = (value) => formatLocalizedDate(value, resolved, { year: undefined }) || value;
+  return { t, money, date };
+}
 
 async function checkPriceForHotel(hotelKey, checkIn, checkOut) {
   try {
@@ -35,7 +56,11 @@ export async function POST(request) {
     if (!success) return rateLimitResponse(reset);
 
     const body = await request.json();
-    const { favorites = [], trips = [] } = body;
+    const { favorites = [], trips = [], locale } = body;
+    const copy = buildRecommendationCopy({
+      locale,
+      acceptLanguage: request.headers.get('accept-language') || '',
+    });
 
     const recommendations = [];
     const today = new Date().toISOString().split('T')[0];
@@ -92,10 +117,14 @@ export async function POST(request) {
         const savingsPct = Math.round(((current.price.total - alt.price.total) / current.price.total) * 100);
         recommendations.push({
           type: 'timing_suggestion',
-          title: `Returned-rate difference: ${savingsPct}% for ${hotel.name}`,
-          description: `The alternate dates currently return $${(current.price.total - alt.price.total).toFixed(0)} less (${alt.altCheckIn} to ${alt.altCheckOut})`,
+          title: copy.t('recTimingTitle', { percent: savingsPct, hotelName: hotel.name }),
+          description: copy.t('recTimingDescription', {
+            amount: copy.money(current.price.total - alt.price.total),
+            checkIn: copy.date(alt.altCheckIn),
+            checkOut: copy.date(alt.altCheckOut),
+          }),
           hotel,
-          action: { label: 'Compare Dates', href: `/compare?hotelKey=${hotel.hotelKey}&checkIn=${alt.altCheckIn}&checkOut=${alt.altCheckOut}` },
+          action: { label: copy.t('recCompareDates'), href: `/compare?hotelKey=${hotel.hotelKey}&checkIn=${alt.altCheckIn}&checkOut=${alt.altCheckOut}` },
           priority: savingsPct >= 20 ? 'high' : 'medium',
         });
       }
@@ -120,10 +149,13 @@ export async function POST(request) {
 
       recommendations.push({
         type: 'new_deal',
-        title: `${hotel.name} from $${price.total.toFixed(0)}/2 nights`,
-        description: `Your favorited hotel in ${hotel.city} is available via ${price.provider} — check if it fits your schedule`,
+        title: copy.t('recNewDealTitle', { hotelName: hotel.name, amount: copy.money(price.total) }),
+        description: copy.t('recNewDealDescription', {
+          city: hotel.city,
+          provider: price.provider,
+        }),
         hotel,
-        action: { label: 'View Deal', href: `/compare?hotelKey=${hotel.hotelKey}&checkIn=${favCheckIn}&checkOut=${favCheckOut}` },
+        action: { label: copy.t('recViewDeal'), href: `/compare?hotelKey=${hotel.hotelKey}&checkIn=${favCheckIn}&checkOut=${favCheckOut}` },
         priority: 'medium',
       });
     });
@@ -141,10 +173,14 @@ export async function POST(request) {
           const suggest = hotelsInCountry[0];
           recommendations.push({
             type: 'similar_hotel',
-            title: `Discover ${suggest.name}`,
-            description: `Since you like hotels in ${country}, check out ${suggest.name} in ${suggest.city}`,
+            title: copy.t('recSimilarTitle', { hotelName: suggest.name }),
+            description: copy.t('recSimilarDescription', {
+              country,
+              hotelName: suggest.name,
+              city: suggest.city,
+            }),
             hotel: suggest,
-            action: { label: 'Explore', href: `/compare?hotelKey=${suggest.hotelKey}&checkIn=${favCheckIn}&checkOut=${favCheckOut}` },
+            action: { label: copy.t('recExplore'), href: `/compare?hotelKey=${suggest.hotelKey}&checkIn=${favCheckIn}&checkOut=${favCheckOut}` },
             priority: 'low',
           });
         }

@@ -159,6 +159,16 @@ describe('AgentDashboard localized operational panels', () => {
     expect(
       screen.getByText('פעולות קטלוג שהתגלו דורשות סשן מנהל מורשה.')
     ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'מבצעי ספקים שנמצאו' })).toBeInTheDocument();
+    expect(await screen.findByText('עדיין לא נסרקו מבצעים.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'סוכן זמינות מלונות' })).toBeInTheDocument();
+    expect(screen.getByLabelText('בחירת מלון')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'בדיקת זמינות' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'סקירת מקורות מידע' })).toBeInTheDocument();
+    expect(screen.getByText('מחירי מלונות מספקים זמינים')).toBeInTheDocument();
+    expect(
+      screen.getByText('הוסיפו מועדפים או שמרו טיולים כדי לקבל המלצות מותאמות אישית.')
+    ).toBeInTheDocument();
   });
 
   it('localizes background-agent and candidate-queue controls when admin data is available', async () => {

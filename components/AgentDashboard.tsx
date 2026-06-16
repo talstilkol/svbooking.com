@@ -173,18 +173,18 @@ function statusTone(status?: string): string {
   return 'bg-zinc-100 text-zinc-600';
 }
 
-function formatTimestamp(iso: string): string {
+function formatTimestamp(iso: string, locale: string, t: (key: string) => string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins} min ago`;
+  if (mins < 1) return t('agentTimestampJustNow');
+  if (mins < 60) return t('agentTimestampMinutesAgo').replace('{count}', String(mins));
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  if (hrs < 24) return t('agentTimestampHoursAgo').replace('{count}', String(hrs));
+  return new Date(iso).toLocaleDateString(locale || 'en', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 export default function AgentDashboard() {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [topDeals, setTopDeals] = useState<TopDeal[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -251,13 +251,13 @@ export default function AgentDashboard() {
       const res = await fetch('/api/agents/recommendations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ favorites, trips }),
+        body: JSON.stringify({ favorites, trips, locale }),
       });
       const data = await res.json();
       setRecommendations(data.recommendations || []);
     } catch (err) { console.warn('AgentDashboard: recommendations fetch failed', err); setRecommendations([]); }
     setLoading((l) => ({ ...l, recs: false }));
-  }, [favorites, trips]);
+  }, [favorites, trips, locale]);
 
   const fetchProviders = async () => {
     setLoading((l) => ({ ...l, providers: true }));
@@ -489,6 +489,24 @@ export default function AgentDashboard() {
     if (status === 'stale') return t('agentStale');
     return status;
   };
+  const recommendationTypeLabel = (type: string) => {
+    if (type === 'timing_suggestion') return t('agentRecommendationTiming');
+    if (type === 'new_deal') return t('agentRecommendationNewDeal');
+    if (type === 'similar_hotel') return t('agentRecommendationSimilarHotel');
+    return type.replace(/_/g, ' ');
+  };
+  const dataSources = [
+    { name: 'Xotelo', desc: t('agentSourceXoteloDesc'), type: t('agentSourcePricing'), icon: '💰' },
+    { name: 'Open-Meteo', desc: t('agentSourceOpenMeteoDesc'), type: t('agentSourceWeather'), icon: '🌤️' },
+    { name: 'OpenStreetMap Overpass', desc: t('agentSourceOverpassDesc'), type: t('agentSourceDiscovery'), icon: '🗺️' },
+    { name: 'Nominatim', desc: t('agentSourceNominatimDesc'), type: t('agentSourceGeocoding'), icon: '📍' },
+    { name: 'Wikidata SPARQL', desc: t('agentSourceWikidataDesc'), type: t('agentSourceEnrichment'), icon: '🔗' },
+    { name: 'Wikipedia', desc: t('agentSourceWikipediaDesc'), type: t('agentSourceContent'), icon: '📖' },
+    { name: 'Open Exchange Rates', desc: t('agentSourceExchangeDesc'), type: t('agentSourceCurrency'), icon: '💱' },
+    { name: 'IP-API', desc: t('agentSourceIpApiDesc'), type: t('agentSourceGeolocation'), icon: '🌐' },
+    { name: 'Nager.Date', desc: t('agentSourceNagerDesc'), type: t('agentSourceHolidays'), icon: '📅' },
+    { name: 'REST Countries', desc: t('agentSourceCountriesDesc'), type: t('agentSourceReference'), icon: '🏳️' },
+  ];
 
   return (
     <div className="space-y-8">
@@ -498,7 +516,7 @@ export default function AgentDashboard() {
           <div>
             <h3 className="font-semibold text-zinc-900">{t('agentProductionReadiness')}</h3>
             {opsScorecard?.checkedAt && (
-              <p className="text-xs text-zinc-500 mt-0.5">{t('agentLastChecked')}: {formatTimestamp(opsScorecard.checkedAt)}</p>
+              <p className="text-xs text-zinc-500 mt-0.5">{t('agentLastChecked')}: {formatTimestamp(opsScorecard.checkedAt, locale, t)}</p>
             )}
           </div>
           <button
@@ -580,7 +598,7 @@ export default function AgentDashboard() {
           </div>
           <div className="flex items-center gap-3">
             {health?.checkedAt && (
-              <span className="text-xs text-zinc-400">{t('agentLastChecked')}: {formatTimestamp(health.checkedAt)}</span>
+              <span className="text-xs text-zinc-400">{t('agentLastChecked')}: {formatTimestamp(health.checkedAt, locale, t)}</span>
             )}
               <button
               onClick={fetchHealth}
@@ -738,7 +756,7 @@ export default function AgentDashboard() {
                   <p className="text-xs text-zinc-500 mt-0.5">{agent.desc}</p>
                   {agent.completedAt && (
                     <p className="text-[10px] text-zinc-400 mt-0.5">
-                      {t('agentLastRun')}: {formatTimestamp(agent.completedAt)}
+                      {t('agentLastRun')}: {formatTimestamp(agent.completedAt, locale, t)}
                     </p>
                   )}
                   {agent.error && (
@@ -931,24 +949,24 @@ export default function AgentDashboard() {
       {/* Top Deals */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-zinc-900">Top Deals Found</h3>
+          <h3 className="text-xl font-bold text-zinc-900">{t('agentTopDealsFound')}</h3>
           <div className="flex items-center gap-3">
             {dealsScannedAt && (
-              <span className="text-xs text-zinc-400">Last scanned: {formatTimestamp(dealsScannedAt)}</span>
+              <span className="text-xs text-zinc-400">{t('dealsLastScanned')} {formatTimestamp(dealsScannedAt, locale, t)}</span>
             )}
             <button
               onClick={fetchDeals}
               disabled={loading.deals}
               className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
             >
-              {loading.deals ? 'Scanning...' : 'Scan Again'}
+              {loading.deals ? t('dealsScanningShort') : t('agentScanAgain')}
             </button>
           </div>
         </div>
         {loading.deals ? (
           <div className="text-center py-8">
             <div className="inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-zinc-500 mt-2">Scanning hotels for deals...</p>
+            <p className="text-sm text-zinc-500 mt-2">{t('dealsScanningLong')}</p>
           </div>
         ) : topDeals.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -970,7 +988,7 @@ export default function AgentDashboard() {
             ))}
           </div>
         ) : (
-          <p className="text-zinc-500 text-center py-4">No deals scanned yet.</p>
+          <p className="text-zinc-500 text-center py-4">{t('agentNoDealsScanned')}</p>
         )}
       </div>
 
@@ -978,7 +996,7 @@ export default function AgentDashboard() {
       {recommendations.length > 0 && (
         <div>
           <h3 className="text-xl font-bold text-zinc-900 mb-4">
-            Personalized Recommendations
+            {t('agentPersonalizedRecommendations')}
           </h3>
           <div className="space-y-3">
             {recommendations.map((rec, i) => (
@@ -1000,7 +1018,7 @@ export default function AgentDashboard() {
                       rec.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
                       'bg-zinc-100 text-zinc-600'
                     }`}>
-                      {rec.type.replace('_', ' ')}
+                      {recommendationTypeLabel(rec.type)}
                     </span>
                   </div>
                   <p className="font-medium text-zinc-900 text-sm mt-1">{rec.title}</p>
@@ -1020,32 +1038,32 @@ export default function AgentDashboard() {
 
       {/* Availability Checker Agent */}
       <div className="bg-white border border-zinc-200 rounded-lg p-6">
-        <h3 className="font-semibold text-zinc-900 mb-4">Hotel Availability Agent</h3>
+        <h3 className="font-semibold text-zinc-900 mb-4">{t('agentHotelAvailabilityAgent')}</h3>
         <p className="text-sm text-zinc-500 mb-4">
-          Checks booking sites directly (no API) to verify a hotel is available for your dates.
+          {t('agentAvailabilityDescription')}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
           <select
-            aria-label="Select hotel"
+            aria-label={t('agentSelectHotel')}
             value={availHotel}
             onChange={(e) => setAvailHotel(e.target.value)}
             className="border border-zinc-300 rounded-lg px-3 py-2 text-sm"
           >
-            <option value="">Select hotel...</option>
+            <option value="">{t('agentSelectHotelPlaceholder')}</option>
             {hotels.map((h) => (
               <option key={h.hotelKey} value={h.hotelKey}>{h.name} ({h.city})</option>
             ))}
           </select>
           <input
             type="date"
-            aria-label="Check-in date"
+            aria-label={t('agentCheckInDate')}
             value={availCheckIn}
             onChange={(e) => setAvailCheckIn(e.target.value)}
             className="border border-zinc-300 rounded-lg px-3 py-2 text-sm"
           />
           <input
             type="date"
-            aria-label="Check-out date"
+            aria-label={t('agentCheckOutDate')}
             value={availCheckOut}
             min={availCheckIn}
             onChange={(e) => setAvailCheckOut(e.target.value)}
@@ -1056,7 +1074,7 @@ export default function AgentDashboard() {
             disabled={availLoading || !availHotel || !availCheckIn || !availCheckOut}
             className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 disabled:opacity-50"
           >
-            {availLoading ? 'Checking...' : 'Check Availability'}
+            {availLoading ? t('agentCheckingAvailability') : t('agentCheckAvailability')}
           </button>
         </div>
 
@@ -1068,13 +1086,13 @@ export default function AgentDashboard() {
                 <div key={i} className="flex items-center justify-between p-2 bg-zinc-50 rounded text-sm">
                   <span className="font-medium text-zinc-700">{r.provider}</span>
                   <span className={r.available ? 'text-emerald-600' : 'text-zinc-400'}>
-                    {r.available ? 'Reachable' : r.note}
+                    {r.available ? t('agentReachable') : r.note}
                   </span>
                 </div>
               ))}
             </div>
             <div className="mt-3 pt-3 border-t border-zinc-200">
-              <p className="text-xs text-zinc-500 mb-2">Provider-returned booking links:</p>
+              <p className="text-xs text-zinc-500 mb-2">{t('agentProviderBookingLinks')}</p>
               {availability.bookingLinks?.length ? (
                 <div className="flex flex-wrap gap-2">
                   {availability.bookingLinks.map((link, i) => (
@@ -1091,7 +1109,7 @@ export default function AgentDashboard() {
                 </div>
               ) : (
                 <p className="text-xs text-zinc-500">
-                  Provider-returned booking links are unavailable until a configured pricing source returns a verified link.
+                  {t('agentBookingLinksUnavailable')}
                 </p>
               )}
               {availability.note && (
@@ -1104,23 +1122,12 @@ export default function AgentDashboard() {
 
       {/* Data Sources Overview */}
       <div className="bg-white border border-zinc-200 rounded-lg p-6">
-        <h3 className="font-semibold text-zinc-900 mb-4">Data Sources Overview</h3>
+        <h3 className="font-semibold text-zinc-900 mb-4">{t('agentDataSourcesOverview')}</h3>
         <p className="text-sm text-zinc-500 mb-4">
-          External data sources used by SVBooking. Availability depends on configured credentials and source uptime.
+          {t('agentDataSourcesDescription')}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {[
-            { name: 'Xotelo', desc: 'Hotel pricing from available providers', type: 'Pricing', icon: '💰', endpoint: '/api/compare' },
-            { name: 'Open-Meteo', desc: '7-day weather forecast', type: 'Weather', icon: '🌤️', endpoint: '/api/weather' },
-            { name: 'OpenStreetMap Overpass', desc: 'Hotel discovery from public map data', type: 'Discovery', icon: '🗺️', endpoint: '/api/catalog/discover-osm' },
-            { name: 'Nominatim', desc: 'Hotel geocoding & address lookup', type: 'Geocoding', icon: '📍', endpoint: '/api/catalog/discover-osm?source=nominatim' },
-            { name: 'Wikidata SPARQL', desc: 'TripAdvisor/Booking IDs crossref', type: 'Enrichment', icon: '🔗', endpoint: '/api/catalog/discover' },
-            { name: 'Wikipedia', desc: 'City descriptions & images', type: 'Content', icon: '📖', endpoint: '/api/city-info' },
-            { name: 'Open Exchange Rates', desc: 'Currency rates when the provider is configured', type: 'Currency', icon: '💱', endpoint: '/api/exchange-rates' },
-            { name: 'IP-API', desc: 'Visitor geolocation & currency', type: 'Geolocation', icon: '🌐', endpoint: '/api/geo' },
-            { name: 'Nager.Date', desc: 'Public holiday reference data', type: 'Holidays', icon: '📅', endpoint: '/api/holidays' },
-            { name: 'REST Countries', desc: 'Country metadata, currencies, languages', type: 'Reference', icon: '🏳️', endpoint: '' },
-          ].map((source) => (
+          {dataSources.map((source) => (
             <div
               key={source.name}
               className="flex items-start gap-3 p-3 bg-zinc-50 rounded-lg"
@@ -1140,7 +1147,7 @@ export default function AgentDashboard() {
 
       {favorites.length === 0 && trips.length === 0 && (
         <div className="text-center py-6 text-zinc-500">
-          <p>Add favorites or save trips to get personalized recommendations.</p>
+          <p>{t('agentEmptyRecommendations')}</p>
         </div>
       )}
     </div>
