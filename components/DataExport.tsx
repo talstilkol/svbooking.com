@@ -8,6 +8,7 @@ import {
   removeLocalStorageKeys,
   writeLocalStorageExportData,
 } from '@/lib/local-storage-keys';
+import { useLocale } from '@/components/LocaleProvider';
 
 function downloadJson(data: Record<string, unknown>) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -22,6 +23,7 @@ function downloadJson(data: Record<string, unknown>) {
 }
 
 export default function DataExport({ className = '' }: { className?: string }) {
+  const { t } = useLocale();
   const [exporting, setExporting] = useState(false);
   const [exported, setExported] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -50,10 +52,10 @@ export default function DataExport({ className = '' }: { className?: string }) {
 
       downloadJson(data);
       setExported(true);
-      setStatus('Export includes local device data and available account data.');
+      setStatus(t('dataExportStatus'));
       setTimeout(() => setExported(false), 3000);
     } catch {
-      setStatus('Export could not be completed right now.');
+      setStatus(t('dataExportFailed'));
     } finally {
       setExporting(false);
     }
@@ -73,17 +75,17 @@ export default function DataExport({ className = '' }: { className?: string }) {
 
         writeLocalStorageExportData(localData);
 
-        setStatus('Local backup imported. Refreshing...');
+        setStatus(t('dataImportStatus'));
         window.setTimeout(() => window.location.reload(), 500);
       } catch {
-        setStatus('Invalid file format.');
+        setStatus(t('dataInvalidFile'));
       }
     };
     reader.readAsText(file);
   };
 
   const clearAllData = async () => {
-    if (!confirm('This will delete all your saved data (favorites, trips, searches, etc.). Continue?')) return;
+    if (!window.confirm(t('dataClearConfirm'))) return;
     setClearing(true);
     setStatus('');
 
@@ -96,16 +98,16 @@ export default function DataExport({ className = '' }: { className?: string }) {
       });
 
       if (!accountRes.ok && accountRes.status !== 401) {
-        setStatus('Local data was cleared. Account data deletion could not be verified.');
+        setStatus(t('dataClearAccountUnverified'));
         return;
       }
 
       setStatus(accountRes.ok
-        ? 'Local and account data deleted. Refreshing...'
-        : 'Local data deleted. Sign in to delete account data.');
+        ? t('dataClearAllStatus')
+        : t('dataClearLocalStatus'));
       window.setTimeout(() => window.location.reload(), 700);
     } catch {
-      setStatus('Local data was cleared. Account data deletion could not be verified.');
+      setStatus(t('dataClearAccountUnverified'));
     } finally {
       setClearing(false);
     }
@@ -116,11 +118,11 @@ export default function DataExport({ className = '' }: { className?: string }) {
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
           <Database className="h-4 w-4" />
-          Your data
+          {t('dataYourData')}
         </h3>
         <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700">
           <ShieldCheck className="h-3.5 w-3.5" />
-          no-store
+          {t('dataNoStore')}
         </span>
       </div>
 
@@ -132,11 +134,11 @@ export default function DataExport({ className = '' }: { className?: string }) {
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50 transition"
           >
             <Download className="h-4 w-4" />
-            {exported ? 'Downloaded' : exporting ? 'Exporting...' : 'Export data'}
+            {exported ? t('dataDownloaded') : exporting ? t('dataExporting') : t('dataExportData')}
           </button>
           <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition cursor-pointer">
             <Upload className="h-4 w-4" />
-            Import local backup
+            {t('dataImportLocalBackup')}
             <input
               type="file"
               accept=".json"
@@ -147,7 +149,7 @@ export default function DataExport({ className = '' }: { className?: string }) {
         </div>
 
         <p className="text-[10px] text-slate-500">
-          Export includes local device records and signed-in account records when available. Import restores local-device records only.
+          {t('dataExportNote')}
         </p>
 
         <button
@@ -156,7 +158,7 @@ export default function DataExport({ className = '' }: { className?: string }) {
           className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition font-medium disabled:opacity-50"
         >
           <Trash2 className="h-4 w-4" />
-          {clearing ? 'Clearing...' : 'Clear all data'}
+          {clearing ? t('dataClearing') : t('dataClearAllData')}
         </button>
 
         {status && (
