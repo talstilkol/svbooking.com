@@ -284,4 +284,25 @@ describe('health APIs', () => {
     expect(getRates).toHaveBeenCalledTimes(10);
     expect(getHeatmap).toHaveBeenCalledTimes(10);
   });
+
+  it('localizes expensive agent health probe suggestions when locale is provided', async () => {
+    vi.stubEnv('ADMIN_API_SECRET', 'admin-health-secret');
+    vi.mocked(getRates).mockRejectedValueOnce(new Error('rates down'));
+    const request = new Request('http://localhost:3000/api/agents/health-check?locale=he', {
+      headers: {
+        'x-forwarded-for': '198.51.100.11',
+        Authorization: 'Bearer admin-health-secret',
+      },
+    });
+
+    const response = await getAgentHealth(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.status).toBe('error');
+    expect(body.checks.xoteloRates.error).toBe('הבדיקה אינה זמינה');
+    expect(body.suggestions).toContain(
+      'נקודת הקצה של מחירי Xotelo אינה זמינה - ייתכן שהשוואת מחירים לא תהיה זמינה'
+    );
+  });
 });

@@ -233,10 +233,10 @@ export default function AgentDashboard() {
   const { favorites } = useFavorites();
   const { trips } = useTrips();
 
-  const fetchHealth = async () => {
+  const fetchHealth = useCallback(async () => {
     setLoading((l) => ({ ...l, health: true }));
     try {
-      const res = await fetch('/api/admin/agents/health-check');
+      const res = await fetch(`/api/admin/agents/health-check?${new URLSearchParams({ locale })}`);
       if (isAuthRestricted(res)) {
         setHealth(null);
         setRestricted((r) => ({ ...r, health: true }));
@@ -247,7 +247,7 @@ export default function AgentDashboard() {
       setRestricted((r) => ({ ...r, health: false }));
     } catch (err) { console.warn('AgentDashboard: health fetch failed', err); setHealth(null); }
     finally { setLoading((l) => ({ ...l, health: false })); }
-  };
+  }, [locale]);
 
   const fetchDeals = async () => {
     setLoading((l) => ({ ...l, deals: true }));
@@ -459,12 +459,15 @@ export default function AgentDashboard() {
     queueMicrotask(() => {
       fetchDeals();
       fetchHotels();
-      fetchHealth();
       fetchProviders();
       fetchOpsDashboard();
       fetchBgAgents();
     });
   }, []);
+
+  useEffect(() => {
+    queueMicrotask(fetchHealth);
+  }, [fetchHealth]);
 
   useEffect(() => {
     queueMicrotask(fetchRecommendations);

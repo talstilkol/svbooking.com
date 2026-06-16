@@ -4,11 +4,24 @@ import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 import { verifyAdminAuth } from '@/lib/admin-auth';
 import { addDays } from '@/lib/utils/date';
 import { recordProviderUptimeEvent } from '@/lib/provider-observability';
+import { getDictionary, resolveLocale } from '@/lib/i18n';
 
 const healthCheckLimiter = rateLimit({ namespace: 'agents-health-check', limit: 10, window: 60, failOpen: false });
 const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' };
 
-async function timedCall({ providerId, providerName, operation, fn }) {
+function fillTemplate(template, values) {
+  return String(template || '').replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key) => (
+    values[key] === undefined || values[key] === null ? match : String(values[key])
+  ));
+}
+
+function buildHealthCopy({ locale, acceptLanguage }) {
+  const resolved = resolveLocale({ locale, acceptLanguage }).code;
+  const dictionary = getDictionary(resolved);
+  return (key, values = {}) => fillTemplate(dictionary[key] || key, values);
+}
+
+async function timedCall({ providerId, providerName, operation, fn, t }) {
   const start = Date.now();
   try {
     await fn();
@@ -33,7 +46,7 @@ async function timedCall({ providerId, providerName, operation, fn }) {
       latencyMs,
       source: 'agents-health-check',
     });
-    return { ok: false, latencyMs, error: 'Probe unavailable' };
+    return { ok: false, latencyMs, error: t('agentHealthProbeUnavailable') };
   }
 }
 
@@ -41,6 +54,12 @@ export async function GET(request) {
   try {
     const auth = verifyAdminAuth(request);
     if (!auth.authorized) return auth.response;
+
+    const url = new URL(request.url);
+    const t = buildHealthCopy({
+      locale: url.searchParams.get('locale') || undefined,
+      acceptLanguage: request.headers.get('accept-language') || '',
+    });
 
     const ip = getClientIp(request);
     const { success, reset } = await healthCheckLimiter.check(ip);
@@ -57,12 +76,14 @@ export async function GET(request) {
         providerName: 'Xotelo',
         operation: 'rates-health-probe',
         fn: () => getRates({ hotelKey: testHotel.hotelKey, checkIn, checkOut }),
+        t,
       }),
       timedCall({
         providerId: 'xotelo',
         providerName: 'Xotelo',
         operation: 'heatmap-health-probe',
         fn: () => getHeatmap({ hotelKey: testHotel.hotelKey, checkOut }),
+        t,
       }),
     ]);
 
@@ -85,19 +106,19 @@ export async function GET(request) {
 
     const suggestions = [];
     if (ratesCheck.latencyMs > 2000) {
-      suggestions.push(`Xotelo rates API is slow (${ratesCheck.latencyMs}ms) — consider adding response caching`);
+      suggestions.push(t('agentHealthRatesSlow', { latencyMs: ratesCheck.latencyMs }));
     }
     if (heatmapCheck.latencyMs > 2000) {
-      suggestions.push(`Xotelo heatmap API is slow (${heatmapCheck.latencyMs}ms) — consider adding response caching`);
+      suggestions.push(t('agentHealthHeatmapSlow', { latencyMs: heatmapCheck.latencyMs }));
     }
     if (!ratesCheck.ok) {
-      suggestions.push('Xotelo rates endpoint is down — price comparison features may be unavailable');
+      suggestions.push(t('agentHealthRatesDown'));
     }
     if (!heatmapCheck.ok) {
-      suggestions.push('Xotelo heatmap endpoint is down — cheaper dates feature may be unavailable');
+      suggestions.push(t('agentHealthHeatmapDown'));
     }
     if (catalogIssues.length > 0) {
-      suggestions.push(`${catalogIssues.length} catalog issue(s) found — check hotel data integrity`);
+      suggestions.push(t('agentHealthCatalogIssues', { count: catalogIssues.length }));
     }
 
     const allOk = ratesCheck.ok && heatmapCheck.ok && catalogCheck.ok;
@@ -119,7 +140,10 @@ export async function GET(request) {
       status: 'error',
       checkedAt: new Date().toISOString(),
       checks: {},
-      suggestions: ['Health check unavailable'],
+      suggestions: [buildHealthCopy({
+        locale: new URL(request.url).searchParams.get('locale') || undefined,
+        acceptLanguage: request.headers.get('accept-language') || '',
+      })('agentHealthUnavailable')],
     }, { status: 500, headers: NO_STORE_HEADERS });
   }
 }
