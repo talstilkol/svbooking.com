@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface DeepLinkProps {
   hotelKey: string;
@@ -17,6 +18,7 @@ export default function DeepLink({
   checkOut,
   className = '',
 }: DeepLinkProps) {
+  const { t } = useLocale();
   const [copied, setCopied] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
 
@@ -48,16 +50,16 @@ export default function DeepLink({
         onClick={() => setShowPanel(!showPanel)}
         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 text-sm font-medium transition"
       >
-        🔗 Get Link
+        🔗 {t('deepLinkGetLink')}
       </button>
 
       {showPanel && (
         <div className="mt-2 bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-          <h4 className="text-xs font-semibold text-slate-500 uppercase">Shareable Links</h4>
+          <h4 className="text-xs font-semibold text-slate-500 uppercase">{t('deepLinkHeading')}</h4>
 
           {[
-            { label: 'Hotel page', url: urls.hotelPage },
-            { label: 'Full comparison', url: urls.compare },
+            { label: t('deepLinkHotelPage'), url: urls.hotelPage },
+            { label: t('deepLinkFullComparison'), url: urls.compare },
           ].map((link) => (
             <div key={link.label} className="flex items-center gap-2">
               <span className="text-xs text-slate-500 w-24 shrink-0">{link.label}:</span>
@@ -71,7 +73,7 @@ export default function DeepLink({
                 onClick={() => copyUrl(link.url)}
                 className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition shrink-0"
               >
-                {copied ? '✓' : 'Copy'}
+                {copied ? '✓' : t('shareCopy')}
               </button>
             </div>
           ))}

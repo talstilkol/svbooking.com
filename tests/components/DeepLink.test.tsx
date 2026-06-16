@@ -3,6 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import DeepLink from '@/components/DeepLink';
+import { LocaleProvider } from '@/components/LocaleProvider';
+import LocaleSwitcher from '@/components/LocaleSwitcher';
 
 describe('DeepLink', () => {
   it('renders Get Link button', () => {
@@ -77,5 +79,23 @@ describe('DeepLink', () => {
     await waitFor(() => {
       expect(screen.getAllByText('✓').length).toBeGreaterThanOrEqual(1);
     });
+  });
+
+  it('switches link panel labels to Hebrew', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <DeepLink hotelKey="g1-d2" hotelName="Test Hotel" />
+      </LocaleProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+    await user.click(screen.getByText(/קבלת קישור/));
+
+    expect(screen.getByText('קישורים לשיתוף')).toBeInTheDocument();
+    expect(screen.getByText('עמוד המלון:')).toBeInTheDocument();
+    expect(screen.getByText('השוואה מלאה:')).toBeInTheDocument();
+    expect(screen.getAllByText('העתקה')).toHaveLength(2);
   });
 });

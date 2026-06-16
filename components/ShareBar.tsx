@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface ShareBarProps {
   url: string;
@@ -41,13 +42,15 @@ const PLATFORMS = [
     name: 'Email',
     icon: '📧',
     color: 'bg-slate-600 hover:bg-slate-700',
-    getUrl: (url: string, title: string) =>
-      `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`Check this out: ${url}`)}`,
+    getUrl: (url: string, title: string, body: string) =>
+      `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`,
   },
 ];
 
 export default function ShareBar({ url, title, className = '' }: ShareBarProps) {
+  const { t } = useLocale();
   const [copied, setCopied] = useState(false);
+  const emailBody = t('shareEmailBody').replace('{url}', url);
 
   const copyLink = async () => {
     try {
@@ -59,16 +62,16 @@ export default function ShareBar({ url, title, className = '' }: ShareBarProps) 
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <span className="text-xs text-slate-500 font-medium">Share:</span>
+      <span className="text-xs text-slate-500 font-medium">{t('shareLabel')}</span>
 
       {PLATFORMS.map((p) => (
         <a
           key={p.name}
-          href={p.getUrl(url, title)}
+          href={p.getUrl(url, title, emailBody)}
           target="_blank"
           rel="noopener noreferrer"
           className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm transition ${p.color}`}
-          aria-label={`Share on ${p.name}`}
+          aria-label={t('shareOnPlatform').replace('{platform}', p.name)}
           title={p.name}
         >
           {p.icon}
@@ -78,8 +81,8 @@ export default function ShareBar({ url, title, className = '' }: ShareBarProps) 
       <button
         onClick={copyLink}
         className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-sm transition"
-        aria-label="Copy link"
-        title="Copy link"
+        aria-label={t('copyLinkLabel')}
+        title={t('copyLinkLabel')}
       >
         {copied ? '✓' : '🔗'}
       </button>

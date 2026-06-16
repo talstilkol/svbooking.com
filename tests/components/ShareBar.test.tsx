@@ -3,6 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import ShareBar from '@/components/ShareBar';
+import { LocaleProvider } from '@/components/LocaleProvider';
+import LocaleSwitcher from '@/components/LocaleSwitcher';
 
 const URL = 'https://svbooking.com/hotel/g1-d2';
 const TITLE = 'Le Meurice';
@@ -56,5 +58,21 @@ describe('ShareBar', () => {
   it('accepts custom className', () => {
     const { container } = render(<ShareBar url={URL} title={TITLE} className="mt-3" />);
     expect(container.firstChild).toHaveClass('mt-3');
+  });
+
+  it('switches visible and accessible labels to Hebrew', async () => {
+    const user = userEvent.setup();
+    render(
+      <LocaleProvider>
+        <LocaleSwitcher />
+        <ShareBar url={URL} title={TITLE} />
+      </LocaleProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'HE' }));
+
+    expect(screen.getByText('שיתוף:')).toBeInTheDocument();
+    expect(screen.getByLabelText('שיתוף ב-WhatsApp')).toHaveAttribute('href', expect.stringContaining('wa.me'));
+    expect(screen.getByLabelText('העתקת קישור')).toBeInTheDocument();
   });
 });

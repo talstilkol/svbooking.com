@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 import type { ProviderRate } from '@/lib/types';
 
 type Rate = ProviderRate;
@@ -24,6 +25,7 @@ export default function ComparisonSummary({
   cheapest,
   savingsPct,
 }: ComparisonSummaryProps) {
+  const { t } = useLocale();
   const [copied, setCopied] = useState(false);
 
   if (!cheapest || rates.length === 0) return null;
@@ -31,18 +33,19 @@ export default function ComparisonSummary({
   const nights = Math.ceil(
     (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)
   );
+  const nightWord = nights === 1 ? t('summaryNight') : t('summaryNights');
 
   const summary = [
     `${hotelName} (${city})`,
-    `${checkIn} to ${checkOut} (${nights} night${nights !== 1 ? 's' : ''})`,
+    `${checkIn} ${t('summaryDateRangeTo')} ${checkOut} (${nights} ${nightWord})`,
     ``,
-    `Lowest returned price: ${cheapest.currency} ${cheapest.total.toFixed(2)} on ${cheapest.provider}`,
-    savingsPct > 0 ? `Returned-provider difference: ${savingsPct}% vs highest returned option` : '',
+    `${t('summaryLowestReturnedPrice')}: ${cheapest.currency} ${cheapest.total.toFixed(2)} ${t('summaryOnProvider')} ${cheapest.provider}`,
+    savingsPct > 0 ? t('summaryProviderDifference').replace('{pct}', String(savingsPct)) : '',
     ``,
-    `All prices:`,
+    `${t('summaryAllPrices')}:`,
     ...rates.map((r, i) => `${i === 0 ? '  * ' : '    '}${r.provider}: ${r.currency} ${r.total.toFixed(2)}`),
     ``,
-    `Found on SV Booking — svbooking.com`,
+    t('summaryFoundOn'),
   ]
     .filter(Boolean)
     .join('\n');
@@ -66,7 +69,7 @@ export default function ComparisonSummary({
           : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
       }`}
     >
-      {copied ? '✓ Summary copied to clipboard!' : '📋 Copy price summary'}
+      {copied ? `✓ ${t('summaryCopied')}` : `📋 ${t('summaryCopyButton')}`}
     </button>
   );
 }

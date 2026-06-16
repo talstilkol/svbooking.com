@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from '@/components/LocaleProvider';
 
 interface ShareModalProps {
   url: string;
@@ -60,6 +61,7 @@ export default function ShareModal({
   description,
   className = '',
 }: ShareModalProps) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -92,7 +94,7 @@ export default function ShareModal({
         className={`inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 text-sm font-medium transition ${className}`}
       >
         <span aria-hidden="true">↗</span>
-        Share
+        {t('shareAction')}
       </button>
 
       {open && (
@@ -105,9 +107,10 @@ export default function ShareModal({
             {/* Header */}
             <div className="p-5 border-b border-slate-100">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-slate-800">Share</h3>
+                <h3 className="text-lg font-semibold text-slate-800">{t('shareDialogTitle')}</h3>
                 <button
                   onClick={() => setOpen(false)}
+                  aria-label={t('shareClose')}
                   className="text-slate-500 hover:text-slate-600 text-xl"
                 >
                   ✕
@@ -150,7 +153,7 @@ export default function ShareModal({
                       : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
                 >
-                  {copied ? '✓ Copied!' : 'Copy'}
+                  {copied ? `✓ ${t('shareCopied')}` : t('shareCopy')}
                 </button>
               </div>
             </div>
