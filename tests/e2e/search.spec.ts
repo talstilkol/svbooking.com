@@ -1,26 +1,30 @@
 import { test, expect } from '@playwright/test';
 
+function visibleShowingSummary(page: import('@playwright/test').Page, pattern: RegExp) {
+  return page.locator('p', { hasText: pattern }).filter({ visible: true }).first();
+}
+
 test.describe('Search page', () => {
   test('lists hotels from catalog', async ({ page }) => {
     await page.goto('/search');
     // Flexible: matches any "Showing X–Y of Z hotels" regardless of catalog size
-    await expect(page.getByText(/Showing\s+\d+[–-]\d+\s+of\s+\d+\s+hotels/i)).toBeVisible({ timeout: 10_000 });
+    await expect(visibleShowingSummary(page, /Showing\s+\d+[–-]\d+\s+of\s+\d+\s+hotels/i)).toBeVisible({ timeout: 10_000 });
     // At least one hotel card heading renders (catalog is populated)
     await expect(page.locator('[data-testid="hotel-card"] h2, .grid h2').first()).toBeVisible();
   });
 
   test('filter by country chip', async ({ page }) => {
     await page.goto('/search');
-    await expect(page.getByText(/Showing/i)).toBeVisible({ timeout: 10_000 });
+    await expect(visibleShowingSummary(page, /Showing/i)).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: 'France', exact: true }).click();
     // France count is dynamic — just verify filter narrows results and label appears
-    await expect(page.getByText(/Showing\s+\d+[–-]\d+\s+of\s+\d+\s+hotels\s+in\s+France/i)).toBeVisible();
+    await expect(visibleShowingSummary(page, /Showing\s+\d+[–-]\d+\s+of\s+\d+\s+hotels\s+in\s+France/i)).toBeVisible();
   });
 
   test('filter by URL param', async ({ page }) => {
     await page.goto('/search?city=Tokyo');
     // Tokyo count is dynamic — just verify some results appear
-    await expect(page.getByText(/Showing\s+\d+[–-]\d+\s+of\s+\d+\s+hotels/i)).toBeVisible({ timeout: 10_000 });
+    await expect(visibleShowingSummary(page, /Showing\s+\d+[–-]\d+\s+of\s+\d+\s+hotels/i)).toBeVisible({ timeout: 10_000 });
   });
 
   test('map view exposes accessible location provenance', async ({ page }) => {
@@ -45,14 +49,14 @@ test.describe('Search page', () => {
 
   test('favorite toggle persists in localStorage', async ({ page }) => {
     await page.goto('/search?city=Tokyo');
-    await expect(page.getByText(/Showing\s+\d+[–-]\d+\s+of/i)).toBeVisible({ timeout: 10_000 });
+    await expect(visibleShowingSummary(page, /Showing\s+\d+[–-]\d+\s+of/i)).toBeVisible({ timeout: 10_000 });
     const favBtn = page.getByRole('button', { name: /add to favorites/i }).first();
     await favBtn.click();
     // Toast appears
     await expect(page.getByText(/added .* to favorites/i)).toBeVisible({ timeout: 3000 });
     // Reload and verify localStorage persisted
     await page.reload();
-    await expect(page.getByText(/Showing/i)).toBeVisible({ timeout: 10_000 });
+    await expect(visibleShowingSummary(page, /Showing/i)).toBeVisible({ timeout: 10_000 });
     const stored = await page.evaluate(() => localStorage.getItem('svbooking:favorites'));
     expect(stored).toBeTruthy();
     expect(JSON.parse(stored as string).length).toBeGreaterThan(0);
