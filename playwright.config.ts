@@ -2,14 +2,17 @@ import { defineConfig } from '@playwright/test';
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3456';
 const useExistingServer = Boolean(process.env.PLAYWRIGHT_BASE_URL);
-const webServerEnv = Object.fromEntries(
-  Object.entries(process.env).filter(([key, value]) => (
-    typeof value === 'string' &&
-    key !== 'NO_COLOR' &&
-    key !== 'FORCE_COLOR' &&
-    key !== 'NODE_OPTIONS'
-  )),
-) as Record<string, string>;
+const webServerEnv = {
+  ...Object.fromEntries(
+    Object.entries(process.env).filter(([key, value]) => (
+      typeof value === 'string' &&
+      key !== 'NO_COLOR' &&
+      key !== 'FORCE_COLOR' &&
+      key !== 'NODE_OPTIONS'
+    )),
+  ),
+  KINDE_ISSUER_URL: process.env.KINDE_ISSUER_URL || 'https://auth.svbooking.test',
+} as Record<string, string>;
 
 export default defineConfig({
   testDir: './tests/e2e',
