@@ -60,6 +60,30 @@ describe('catalog media action ledger script', () => {
     expect(result.stdout).not.toContain('"approvedLicense":true');
   });
 
+  it('filters the media review queue by city and reason', () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        '--disable-warning=MODULE_TYPELESS_PACKAGE_JSON',
+        SCRIPT,
+        '--format=csv',
+        '--city=Berlin',
+        '--reason=reused-across-cities',
+      ],
+      {
+        cwd: process.cwd(),
+        encoding: 'utf8',
+        stdio: 'pipe',
+      },
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Berlin; Tallinn; Vilnius');
+    expect(result.stdout).toContain('reused-across-cities');
+    expect(result.stdout).not.toContain('Barcelona; Ibiza; Palma de Mallorca');
+    expect(result.stdout).not.toContain('"approvedLicense":true');
+  });
+
   it('audits that the media review queue matches catalog media readiness', () => {
     const result = spawnSync(process.execPath, ['--disable-warning=MODULE_TYPELESS_PACKAGE_JSON', AUDIT_SCRIPT], {
       cwd: process.cwd(),

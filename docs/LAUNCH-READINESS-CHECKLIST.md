@@ -59,8 +59,10 @@ Rules for media completion:
 3. Prefer hotel-specific official/partner media when licensed; otherwise use city-specific media only when the page is city-level and the source license is approved.
 4. Keep `replacementRequired: true` until a replacement or approval is verified.
 5. Use `npm run catalog:media:ledger:summary` to review the six reused-image priority sources first.
-6. Use `npm run catalog:media:ledger:csv` when the media/legal review needs a tabular queue.
-7. Re-run `npm run catalog:media:ledger`, `npm run audit:catalog-media-ledger`, and `npm run audit:production` after each batch.
+6. Use `npm run catalog:media:ledger:priority-csv` for the reused-source review queue.
+7. Use `npm run catalog:media:ledger:csv` when the full media/legal review needs a tabular queue.
+8. Use `node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/catalog-media-action-ledger.mjs --format=csv --city=Berlin` to focus review on a specific city.
+9. Re-run `npm run catalog:media:ledger`, `npm run audit:catalog-media-ledger`, and `npm run audit:production` after each batch.
 
 ## 5. Deployment Verification Flow
 

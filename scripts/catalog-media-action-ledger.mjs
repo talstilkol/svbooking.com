@@ -68,9 +68,17 @@ const ledger = buildCatalogMediaActionLedger();
 const format = argValue('format', 'json');
 const limit = parseLimit();
 const priorityOnly = hasFlag('priority-only');
-const items = (priorityOnly
-  ? ledger.items.filter((item) => item.reasons.includes('reused-across-cities'))
-  : ledger.items).slice(0, limit || undefined);
+const cityFilter = argValue('city');
+const reasonFilter = argValue('reason');
+const normalizedCityFilter = cityFilter ? cityFilter.trim().toLowerCase() : null;
+const items = ledger.items
+  .filter((item) => !priorityOnly || item.reasons.includes('reused-across-cities'))
+  .filter((item) => !reasonFilter || item.reasons.includes(reasonFilter))
+  .filter((item) => (
+    !normalizedCityFilter ||
+    item.cities.some((city) => String(city).trim().toLowerCase() === normalizedCityFilter)
+  ))
+  .slice(0, limit || undefined);
 
 if (!FORMAT_VALUES.has(format)) {
   console.error(`Unsupported format: ${format}. Use json, summary, or csv.`);

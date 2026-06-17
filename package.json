@@ -27,6 +27,7 @@
     "catalog:media:ledger": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/catalog-media-action-ledger.mjs",
     "catalog:media:ledger:summary": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/catalog-media-action-ledger.mjs --format=summary --priority-only",
     "catalog:media:ledger:csv": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/catalog-media-action-ledger.mjs --format=csv",
+    "catalog:media:ledger:priority-csv": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/catalog-media-action-ledger.mjs --format=csv --priority-only",
     "audit:docs": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-docs.mjs",
     "audit:master-plan": "node scripts/audit-master-plan.mjs",
     "audit:env": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-env-contract.mjs",
