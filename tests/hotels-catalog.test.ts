@@ -68,6 +68,7 @@ describe('hotels-catalog', () => {
 
     it('does not approve malformed catalog or image provenance', () => {
       expect(getStaticCatalogItemProvenance({ hotelKey: 'not-a-source-key' }).status).toBe('missing-source-key');
+      expect(getStaticCatalogItemProvenance({}).externalIds).toEqual({});
       expect(getStaticCatalogImageProvenance({ image: '' })).toMatchObject({
         status: 'missing-image-source-url',
         approvedLicense: false,
@@ -80,6 +81,14 @@ describe('hotels-catalog', () => {
         approvedLicense: false,
       });
       expect(buildStaticCatalogProvenanceLedger({ hotels: null as unknown as typeof HOTELS })).toEqual([]);
+      expect(buildStaticCatalogProvenanceLedger({ hotels: [{}] as unknown as typeof HOTELS })).toEqual([
+        expect.objectContaining({
+          hotelKey: null,
+          name: null,
+          city: null,
+          country: null,
+        }),
+      ]);
     });
   });
 

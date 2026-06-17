@@ -209,8 +209,11 @@ describe('price cache', () => {
 
   it('uses provider source fallback and base-rate totals without inventing tax data', async () => {
     vi.mocked(getHotelRates).mockResolvedValueOnce({
-      rates: [{ rate: 88, currency: 'cad' }],
-      currency: 'not-a-currency',
+      rates: [
+        { rate: 88, currency: 'cad' },
+        { rate: 99 },
+      ],
+      currency: '',
       provider: 'unknown',
       source: 'Provider Source',
     });
@@ -232,6 +235,13 @@ describe('price cache', () => {
         source: 'Provider Source',
         total: 88,
         currency: 'CAD',
+        taxesIncluded: null,
+      }),
+      expect.objectContaining({
+        provider: 'Provider Source',
+        source: 'Provider Source',
+        total: 99,
+        currency: 'USD',
         taxesIncluded: null,
       }),
     ]);

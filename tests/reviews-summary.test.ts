@@ -181,6 +181,32 @@ describe('getReviewSummary', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 
+  it('does not invent review snippets when the provider only returns aggregate ratings', async () => {
+    const reviewsModule = await import('@/lib/reviews/google-places');
+    const fetchSpy = vi.spyOn(reviewsModule, 'fetchGooglePlacesReviews').mockResolvedValueOnce({
+      rating: 4.1,
+      count: 42,
+    } as Awaited<ReturnType<typeof fetchGooglePlacesReviews>>);
+
+    const s = await getReviewSummary(SAMPLE_KEY, {
+      env: asEnv({
+        REVIEWS_PROVIDER_NAME: 'google-places',
+        REVIEWS_PROVIDER_LICENSED: 'true',
+        GOOGLE_PLACES_API_KEY: 'unit-test-google-places-key',
+      }),
+    });
+
+    expect(s).toMatchObject({
+      available: true,
+      source: 'google-places',
+      rating: 4.1,
+      count: 42,
+      reviews: [],
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    fetchSpy.mockRestore();
+  });
+
   it('falls back to unavailable when the provider fetch fails', async () => {
     const fetchImpl = vi.fn().mockRejectedValue(new Error('network'));
     const s = await getReviewSummary(SAMPLE_KEY, {

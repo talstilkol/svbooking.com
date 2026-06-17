@@ -194,6 +194,18 @@ describe('ops scorecard', () => {
     expect(JSON.stringify(scorecard)).not.toContain('svbooking-ops-alert-scorecard-0001');
   });
 
+  it('keeps the catalog media action ledger nullable when no ledger is available', () => {
+    const scorecard = buildOpsScorecard({
+      now: new Date('2026-05-14T12:00:00.000Z'),
+      catalogMediaQuality: {
+        ...healthyCatalogMediaQuality,
+        actionLedger: null as unknown as typeof healthyCatalogMediaQuality.actionLedger,
+      },
+    });
+
+    expect(scorecard.domains.find((domain) => domain.id === 'catalog-media-quality')?.actionLedger).toBeNull();
+  });
+
   it('surfaces reused catalog media as a scorecard blocker instead of hiding audit warnings', () => {
     const mediaQuality = buildCatalogMediaQuality();
 
