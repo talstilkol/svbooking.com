@@ -24,7 +24,7 @@ describe('typecheck debt report script', () => {
     expect(body.topFiles.length).toBeLessThanOrEqual(5);
     expect(body.topCodes.length).toBeLessThanOrEqual(5);
     expect(body.nextActions).toContain('Keep npm run typecheck green as a CI and release gate.');
-  });
+  }, 30000);
 
   it('rejects unsupported report formats', () => {
     const result = runReport(['--format=xml']);

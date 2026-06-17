@@ -3,7 +3,7 @@ import type { ReactElement } from 'react';
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const FIXED_NOW = new Date('2026-06-16T00:00:00.000+03:00');
+const FIXED_NOW = new Date('2026-06-16T23:00:00.000+03:00');
 const mockStore: Record<string, unknown> = {};
 
 vi.mock('@/lib/local-storage-keys', () => ({
