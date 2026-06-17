@@ -148,7 +148,7 @@ describe('ops alert delivery events', () => {
     ]);
 
     expect(await getOpsAlertDeliveryEvents({ limit: -10 })).toHaveLength(1);
-    expect(await getOpsAlertDeliveryEvents({ limit: 'not-a-number' })).toHaveLength(3);
+    expect(await getOpsAlertDeliveryEvents({ limit: 'not-a-number' as unknown as number })).toHaveLength(3);
     expect(await getOpsAlertDeliveryEvents({ limit: 999 })).toHaveLength(3);
 
     const [malformed] = await getOpsAlertDeliveryEvents({ limit: 1 });

@@ -237,10 +237,12 @@ describe('cheaper date price intelligence', () => {
     });
 
     const result = await findCheaperDates('g187147-d188732', '2026-06-10', '2026-06-12');
+    const nearAlternatives = result.alternatives.near as Array<{ price: number }>;
+    const weekAlternatives = result.alternatives.week as Array<{ price: number }>;
 
     expect(result.method).toBe('heatmap-source-observations');
-    expect(result.alternatives.near[0].price).toBe(500);
-    expect(result.alternatives.week[0].price).toBe(300);
+    expect(nearAlternatives[0].price).toBe(500);
+    expect(weekAlternatives[0].price).toBe(300);
     expect(result.cheapestOverall).toEqual(expect.objectContaining({
       price: 180,
       pricePerNight: 90,

@@ -25,6 +25,15 @@ const healthyCatalogMediaQuality = {
     maxReuseCitiesPerImage: 2,
     licensedImageSourceMetadata: true,
   },
+  reusedImages: [],
+  actionLedger: null as unknown as {
+    totalItems: number;
+    totalHotels: number;
+    reusedImageSources: number;
+    unapprovedImageSources: number;
+    missingOrInvalidImageItems: number;
+    maxReuseCities: number;
+  },
   blockers: [],
   nextActions: [],
 };
@@ -65,9 +74,9 @@ describe('health APIs', () => {
     vi.stubEnv('ADMIN_API_SECRET', 'admin-secret-health');
 
     const response = await getHealth();
-    const body = await response.json();
+    const body = await response!.json();
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(body.service).toBe('sv-booking');
     expect(body.ready).toBe(true);
@@ -296,9 +305,9 @@ describe('health APIs', () => {
     });
 
     const response = await getAgentHealth(request);
-    const body = await response.json();
+    const body = await response!.json();
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
     expect(body.status).toBe('error');
     expect(body.checks.xoteloRates.error).toBe('הבדיקה אינה זמינה');
     expect(body.suggestions).toContain(

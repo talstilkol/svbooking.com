@@ -193,6 +193,7 @@ describe('admin audit log', () => {
         method: 'GET',
       }),
       action: 'admin.audit.read',
+      resource: null,
     });
 
     expect(event).toMatchObject({
@@ -213,6 +214,7 @@ describe('admin audit log', () => {
       }),
       actor: '',
       action: 'admin.audit.blank-actor',
+      resource: null,
     });
     expect(blankActorEvent?.actor).toBe('admin-identity');
   });

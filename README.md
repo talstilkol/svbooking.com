@@ -159,8 +159,11 @@ npm run release:state
 
 Run every `npm run audit:*` script before release. `npm audit --audit-level=moderate` contacts the npm registry and sends dependency metadata; run it only in an environment where that disclosure is approved.
 Run `npm run release:state:strict` after staging or committing intended changes; it fails while the worktree still has uncommitted or untracked paths.
-Run `npm run catalog:media:ledger` to print the exact catalog media replacement or license-approval queue without approving any image automatically.
+Run `npm run launch:readiness:report` for a short read-only summary of current production blockers; it does not replace `npm run audit:production:strict`. Run `npm run audit:launch-readiness-report` to verify that the report remains parseable and does not print secret values.
+Run `npm run typecheck` as a CI and release gate. Use `npm run typecheck:debt:report` only as a read-only summary if the gate regresses.
+Run `npm run catalog:media:ledger` to print the exact catalog media replacement or license-approval queue without approving any image automatically. Use `npm run catalog:media:ledger:summary` for the reused-media priority queue and `npm run catalog:media:ledger:csv` for operational review.
 After deployment, run `SITE_URL=https://your-deployment.example npm run smoke:deployment`; add `ADMIN_API_SECRET` for authenticated admin smoke checks and set `SMOKE_RUN_CRON=1` with `CRON_SECRET` only when you intentionally want the cron route executed.
+Use `docs/LAUNCH-READINESS-CHECKLIST.md` as the execution checklist for the current production blockers, especially deployment env, catalog media approval, licensed reviews, alert delivery, push readiness, and post-deploy smoke evidence.
 
 ## Data Rules
 

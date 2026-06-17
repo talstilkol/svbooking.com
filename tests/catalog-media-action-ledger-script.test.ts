@@ -22,6 +22,44 @@ describe('catalog media action ledger script', () => {
     expect(JSON.stringify(body)).not.toContain('"approvedLicense":true');
   });
 
+  it('prints a short priority summary for reused catalog media', () => {
+    const result = spawnSync(
+      process.execPath,
+      ['--disable-warning=MODULE_TYPELESS_PACKAGE_JSON', SCRIPT, '--format=summary', '--priority-only'],
+      {
+        cwd: process.cwd(),
+        encoding: 'utf8',
+        stdio: 'pipe',
+      },
+    );
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Catalog media action ledger');
+    expect(result.stdout).toContain('priorityReusedSources: 6');
+    expect(result.stdout).toContain('shownItems: 6');
+    expect(result.stdout).toContain('reasons=license-approval-required+reused-across-cities');
+    expect(result.stdout).not.toContain('"approvedLicense":true');
+  });
+
+  it('prints CSV for operational media review without adding approvals', () => {
+    const result = spawnSync(
+      process.execPath,
+      ['--disable-warning=MODULE_TYPELESS_PACKAGE_JSON', SCRIPT, '--format=csv', '--priority-only', '--limit=2'],
+      {
+        cwd: process.cwd(),
+        encoding: 'utf8',
+        stdio: 'pipe',
+      },
+    );
+
+    expect(result.status).toBe(0);
+    const lines = result.stdout.trim().split('\n');
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toContain('"sourceUrl","sourceHost","licenseStatus"');
+    expect(lines[1]).toContain('license-approval-required; reused-across-cities');
+    expect(result.stdout).not.toContain('"approvedLicense":true');
+  });
+
   it('audits that the media review queue matches catalog media readiness', () => {
     const result = spawnSync(process.execPath, ['--disable-warning=MODULE_TYPELESS_PACKAGE_JSON', AUDIT_SCRIPT], {
       cwd: process.cwd(),

@@ -49,8 +49,12 @@ describe('hotels-catalog', () => {
         expect(entry.catalogItem.sourceUrl).toBeNull();
         expect(entry.catalogItem.sourceUrlStatus).toBe('not-stored');
         expect(entry.catalogItem.dataPolicy).toContain('identity-only');
-        expect(entry.catalogItem.externalIds.tripadvisorLocationId).toMatch(/^\d+$/);
-        expect(entry.catalogItem.externalIds.tripadvisorHotelId).toMatch(/^\d+$/);
+      const externalIds = entry.catalogItem.externalIds as {
+        tripadvisorLocationId?: string;
+        tripadvisorHotelId?: string;
+      };
+      expect(externalIds.tripadvisorLocationId).toMatch(/^\d+$/);
+      expect(externalIds.tripadvisorHotelId).toMatch(/^\d+$/);
 
         expect(entry.image.status).toBe('source-metadata-available');
         expect(entry.image.source).toBe('unsplash-image-url');
@@ -245,7 +249,7 @@ describe('hotels-catalog', () => {
 
   describe('addDiscoveredHotel', () => {
     it('rejects malformed and duplicate catalog entries', () => {
-      expect(addDiscoveredHotel(null)).toBe(false);
+      expect(addDiscoveredHotel(null as unknown as Parameters<typeof addDiscoveredHotel>[0])).toBe(false);
       expect(addDiscoveredHotel({
         hotelKey: 'not-a-tripadvisor-key',
         name: 'Le Meurice',

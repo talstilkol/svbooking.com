@@ -54,7 +54,7 @@ vi.mock('@/lib/rate-limit', () => ({
 describe('destination intelligence API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getSummary).mockResolvedValue(null);
+    vi.mocked(getSummary).mockResolvedValue(null as unknown as Awaited<ReturnType<typeof getSummary>>);
     vi.mocked(getForecast).mockResolvedValue({
       daily: [
         {
@@ -64,21 +64,23 @@ describe('destination intelligence API', () => {
           rainChance: 5,
           weather: 'Clear sky',
           icon: 'sun',
-          code: 0,
         },
       ],
       timezone: 'Europe/Paris',
-      units: 'celsius',
-      lat: 48.8566,
-      lon: 2.3522,
     });
     vi.mocked(countryToCode).mockReturnValue('FR');
     vi.mocked(getHolidaysInRange).mockResolvedValue([]);
     vi.mocked(getUpcomingHolidays).mockResolvedValue([]);
-    vi.mocked(getExchangeRates).mockResolvedValue(null);
+    vi.mocked(getExchangeRates).mockResolvedValue(null as unknown as Awaited<ReturnType<typeof getExchangeRates>>);
     vi.mocked(getCurrencySymbol).mockImplementation((code: string) => code);
     vi.mocked(fetchJsonWithTimeout).mockRejectedValue(new Error('daylight unavailable'));
-    vi.mocked(getHotelsByCity).mockReturnValue([{ hotelKey: 'g1-d2', name: 'Le Meurice' }]);
+    vi.mocked(getHotelsByCity).mockReturnValue([{
+      hotelKey: 'g1-d2',
+      name: 'Le Meurice',
+      city: 'Paris',
+      country: 'France',
+      image: 'https://images.example/le-meurice.jpg',
+    }]);
   });
 
   it('reports only sources that were actually available for the response', async () => {

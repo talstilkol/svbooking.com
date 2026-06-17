@@ -91,6 +91,15 @@ const healthyCatalogMediaQuality = {
     maxReuseCitiesPerImage: 2,
     licensedImageSourceMetadata: true,
   },
+  reusedImages: [],
+  actionLedger: null as unknown as {
+    totalItems: number;
+    totalHotels: number;
+    reusedImageSources: number;
+    unapprovedImageSources: number;
+    missingOrInvalidImageItems: number;
+    maxReuseCities: number;
+  },
   blockers: [],
   nextActions: [],
 };
@@ -119,7 +128,8 @@ describe('health readiness edge cases', () => {
       OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-secret-health-0001',
       NEXT_PUBLIC_PUSH_PUBLIC_KEY: 'svbooking-public-push-health-0001',
       PUSH_PRIVATE_KEY: 'svbooking-private-push-health-0001',
-    };
+      NODE_ENV: 'production',
+    } as unknown as NodeJS.ProcessEnv;
 
     const snapshot = buildHealthSnapshot({
       env,

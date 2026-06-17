@@ -53,6 +53,15 @@ const healthyCatalogMediaQuality = {
     maxReuseCitiesPerImage: 2,
     licensedImageSourceMetadata: true,
   },
+  reusedImages: [],
+  actionLedger: null as unknown as {
+    totalItems: number;
+    totalHotels: number;
+    reusedImageSources: number;
+    unapprovedImageSources: number;
+    missingOrInvalidImageItems: number;
+    maxReuseCities: number;
+  },
   blockers: [],
   nextActions: [],
 };

@@ -24,6 +24,15 @@ const healthyCatalogMediaQuality = {
     maxReuseCitiesPerImage: 2,
     licensedImageSourceMetadata: true,
   },
+  reusedImages: [],
+  actionLedger: {
+    totalItems: 0,
+    totalHotels: 2,
+    reusedImageSources: 0,
+    unapprovedImageSources: 0,
+    missingOrInvalidImageItems: 0,
+    maxReuseCities: 2,
+  },
   blockers: [],
   nextActions: [],
 };
@@ -191,8 +200,8 @@ describe('ops scorecard', () => {
     expect(mediaQuality.status).toBe('partial');
     expect(mediaQuality.current.reusedImages).toBeGreaterThan(0);
     expect(mediaQuality.current.unapprovedImageSources).toBeGreaterThan(0);
-    expect(mediaQuality.blockers.some((blocker) => blocker.includes('Catalog image reused across'))).toBe(true);
-    expect(mediaQuality.blockers.some((blocker) => blocker.includes('require approved license metadata or replacement'))).toBe(true);
+    expect(mediaQuality.blockers.some((blocker) => typeof blocker === 'string' && blocker.includes('Catalog image reused across'))).toBe(true);
+    expect(mediaQuality.blockers.some((blocker) => typeof blocker === 'string' && blocker.includes('require approved license metadata or replacement'))).toBe(true);
     expect(mediaQuality.target.licensedImageSourceMetadata).toBe(true);
     expect(mediaQuality.actionLedger.totalItems).toBeGreaterThan(0);
     expect(mediaQuality.actionLedger.reusedImageSources).toBe(mediaQuality.current.reusedImages);
@@ -203,7 +212,7 @@ describe('ops scorecard', () => {
     const defaultLedger = buildCatalogMediaActionLedger();
     const malformedLedger = buildCatalogMediaActionLedger({
       hotels: null,
-    } as Parameters<typeof buildCatalogMediaActionLedger>[0]);
+    } as unknown as Parameters<typeof buildCatalogMediaActionLedger>[0]);
     const image = 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80';
     const ledger = buildCatalogMediaActionLedger({
       hotels: [
@@ -245,7 +254,7 @@ describe('ops scorecard', () => {
       hotelCount: 3,
       reasons: ['license-approval-required', 'reused-across-cities'],
     });
-    expect(ledger.items[0].hotels.map((hotel) => hotel.hotelKey)).toEqual(['g1-d2', 'g1-d1', 'g1-d3']);
+    expect(ledger.items[0].hotels.map((hotel: { hotelKey: string }) => hotel.hotelKey)).toEqual(['g1-d2', 'g1-d1', 'g1-d3']);
   });
 
   it('tracks missing, malformed, and unsafe media in the catalog media action ledger', () => {
@@ -285,10 +294,16 @@ describe('ops scorecard', () => {
       hotels: [
         {
           image: '',
+          hotelKey: 'unknown/unavailable',
+          name: 'unknown/unavailable',
+          city: 'unknown/unavailable',
+          country: 'unknown/unavailable',
         },
         {
           hotelKey: 'unknown/unavailable',
+          name: 'unknown/unavailable',
           city: 'unknown/unavailable',
+          country: 'unknown/unavailable',
           image: 'unknown/unavailable',
         },
       ],
@@ -320,6 +335,7 @@ describe('ops scorecard', () => {
         hotelKey: 'g1-d1',
         name: 'Licensed Media Hotel',
         city: 'Paris',
+        country: 'France',
         image,
       }],
       provenanceLedger: [{
@@ -347,14 +363,16 @@ describe('ops scorecard', () => {
     const missingMetadata = buildCatalogMediaQuality({
       hotels: [{
         hotelKey: 'g1-d1',
+        name: 'Missing Metadata Hotel',
         city: 'Paris',
+        country: 'France',
         image,
       }],
       provenanceLedger: [{ image: { status: 'missing-image-source-url' } }],
     } as Parameters<typeof buildCatalogMediaQuality>[0]);
     const malformed = buildCatalogMediaQuality({
       hotels: null,
-    } as Parameters<typeof buildCatalogMediaQuality>[0]);
+    } as unknown as Parameters<typeof buildCatalogMediaQuality>[0]);
 
     expect(missingMetadata.status).toBe('partial');
     expect(missingMetadata.current.missingImageSourceMetadata).toBe(1);
@@ -377,12 +395,17 @@ describe('ops scorecard', () => {
     const mediaQuality = buildCatalogMediaQuality({
       hotels: [
         {
+          hotelKey: 'unknown/unavailable',
           name: 'unknown/unavailable',
           city: 'unknown/unavailable',
+          country: 'unknown/unavailable',
           image: 'http://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80',
         },
         {
+          hotelKey: 'unknown/unavailable',
+          name: 'unknown/unavailable',
           city: 'unknown/unavailable',
+          country: 'unknown/unavailable',
           image: 'https://images.unsplash.com/photo-1560969184-10fe8719e047',
         },
       ],

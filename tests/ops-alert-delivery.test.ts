@@ -120,7 +120,7 @@ describe('ops alert delivery', () => {
         OPS_ALERT_WEBHOOK_SECRET: 'svbooking-ops-alert-secret-0001',
       } as unknown as NodeJS.ProcessEnv,
       fetchImpl: async (_url, init) => {
-        calls.push({ init: init || {} });
+        calls.push({ init: init || {}, url: 'https://ops.svbooking.com/hook' });
         return new Response('{}', { status: 202 });
       },
     });

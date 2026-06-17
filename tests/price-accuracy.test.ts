@@ -22,6 +22,12 @@ vi.mock('@/lib/rate-limit', () => ({
 import { GET, POST } from '@/app/api/price-accuracy/route';
 import { getPriceAccuracyMetrics, recordPriceMismatch, recordPriceObservation } from '@/lib/price-accuracy';
 
+type ProviderAccuracyStats = {
+  observations: number;
+  mismatches: number;
+  mismatchRate: number | null;
+};
+
 function post(body: Record<string, unknown>, headers: Record<string, string> = {}) {
   return new Request('http://localhost:3000/api/price-accuracy', {
     method: 'POST',
@@ -136,7 +142,7 @@ describe('price accuracy ledger', () => {
       provider: '',
       quotedTotal: 'not-a-number',
       currency: 'EUR',
-      taxesIncluded: true,
+      taxesIncluded: true as unknown as null,
       source: 'click',
     });
     const mismatch = await recordPriceMismatch({
@@ -191,14 +197,15 @@ describe('price accuracy ledger', () => {
 
     const capped = await getPriceAccuracyMetrics({ days: 60 });
     const defaulted = await getPriceAccuracyMetrics({ days: 'not-a-number' as unknown as number });
+    const byProvider = capped.byProvider as Record<string, ProviderAccuracyStats>;
 
     expect(capped.days).toBe(30);
     expect(capped.observations).toBe(2);
     expect(capped.mismatches).toBe(2);
     expect(capped.mismatchRate).toBe(1);
-    expect(capped.byProvider['Booking.com']).toMatchObject({ observations: 1, mismatches: 0, mismatchRate: 0 });
-    expect(capped.byProvider.unknown).toMatchObject({ observations: 1, mismatches: 1, mismatchRate: 1 });
-    expect(capped.byProvider.Expedia).toMatchObject({ observations: 0, mismatches: 1, mismatchRate: null });
+    expect(byProvider['Booking.com']).toMatchObject({ observations: 1, mismatches: 0, mismatchRate: 0 });
+    expect(byProvider.unknown).toMatchObject({ observations: 1, mismatches: 1, mismatchRate: 1 });
+    expect(byProvider.Expedia).toMatchObject({ observations: 0, mismatches: 1, mismatchRate: null });
     expect(defaulted.days).toBe(7);
   });
 });

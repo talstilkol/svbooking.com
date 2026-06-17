@@ -46,6 +46,18 @@ Optional enrichment capabilities:
 
 ## Go-Live Gate
 
+Run a read-only blocker snapshot before the full gate:
+
+```bash
+npm run launch:readiness:report
+npm run audit:launch-readiness-report
+npm run catalog:media:ledger:summary
+```
+
+`launch:readiness:report` summarizes the same production blockers as the strict readiness audit without printing secret values. It is not a replacement for `audit:production:strict`.
+`audit:launch-readiness-report` verifies that the report remains parseable and does not print secret values.
+`catalog:media:ledger:summary` shows the reused-media priority queue before the full catalog media ledger is reviewed.
+
 Run these before production deployment:
 
 ```bash

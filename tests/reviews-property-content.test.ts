@@ -70,6 +70,7 @@ describe('reviews and property content APIs', () => {
     vi.mocked(fetchGooglePlacesReviews).mockResolvedValueOnce({
       rating: 4.7,
       count: 18,
+      reviews: [],
     });
 
     const summary = await getReviewSummary('g1-d1', {

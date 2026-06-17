@@ -61,9 +61,9 @@ afterEach(() => {
 describe('enrichment agent', () => {
   it('persists booking slugs returned as a Wikidata enrichment Map', async () => {
     const res = await GET(new Request('http://localhost:3000/api/agents/auto/enrichment'));
-    const body = await res.json();
+    const body = await res!.json();
 
-    expect(res.status).toBe(200);
+    expect(res!.status).toBe(200);
     expect(enrichFromWikidata).toHaveBeenCalledWith(['301497']);
     expect(body.result.bookingLinksFound).toBe(1);
     expect(kv.setWithTTL).toHaveBeenCalledWith(

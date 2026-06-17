@@ -51,6 +51,7 @@ describe('POST /api/agents/recommendations', () => {
       name: 'Source Hotel',
       city: 'Paris',
       country: 'France',
+      image: 'https://example.com/hotel.jpg',
     });
     vi.mocked(getCachedRates).mockResolvedValue({
       rates: [{ name: 'Booking.com', rate: 120, tax: 20 }],

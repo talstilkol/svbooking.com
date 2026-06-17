@@ -105,7 +105,7 @@ describe('agent readiness metadata', () => {
 
     const status = await runAgent(AGENT_NAMES.HEALTH_MONITOR, async () => ({ checked: true }));
     const stored = await getAgentStatus(AGENT_NAMES.HEALTH_MONITOR);
-    const allStatuses = await getAllAgentStatuses();
+    const allStatuses = await getAllAgentStatuses() as Record<string, unknown>;
     const history = await getAgentHistory(AGENT_NAMES.HEALTH_MONITOR);
 
     expect(status).toMatchObject({

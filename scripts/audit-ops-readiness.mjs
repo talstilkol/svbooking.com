@@ -52,6 +52,7 @@ for (const scriptName of [
   'audit:api-errors',
   'audit:cron-cache',
   'audit:coverage',
+  'audit:launch-readiness-report',
   'audit:ops',
   'audit:production',
   'audit:production:strict',
@@ -146,6 +147,8 @@ await requireFile('lib/reviews.js');
 await requireFile('lib/property-content.js');
 await requireFile('lib/i18n.js');
 await requireFile('scripts/audit-production-readiness.mjs');
+await requireFile('scripts/launch-readiness-report.mjs');
+await requireFile('scripts/audit-launch-readiness-report.mjs');
 await requireFile('scripts/release-state.mjs');
 await requireFile('scripts/audit-docs.mjs');
 await requireFile('scripts/audit-master-plan.mjs');
@@ -228,6 +231,7 @@ requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm run audit:privacy',
   'npm run audit:alerts',
   'npm run audit:production',
+  'npm run audit:launch-readiness-report',
   'npm run release:state:strict',
   'npm run lint',
   'npm test',

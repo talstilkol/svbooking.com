@@ -49,10 +49,12 @@ async function loadCatalogSnapshot() {
   }
 }
 
-const [readme, masterPlan, auditReport, packageRaw, ci] = await Promise.all([
+const [readme, masterPlan, auditReport, runbook, launchChecklist, packageRaw, ci] = await Promise.all([
   readProjectFile('README.md'),
   readProjectFile('MASTER-PLAN.md'),
   readProjectFile('AUDIT-REPORT.md'),
+  readProjectFile('PRODUCTION-RUNBOOK.md'),
+  readProjectFile('docs/LAUNCH-READINESS-CHECKLIST.md'),
   readProjectFile('package.json'),
   readProjectFile('.github/workflows/ci.yml'),
 ]);
@@ -116,7 +118,13 @@ requireIncludes(readme, 'README.md', [
   'npm run audit:cron-cache',
   'npm run audit:coverage',
   'npm run audit:rum',
+  'npm run launch:readiness:report',
+  'npm run audit:launch-readiness-report',
+  'npm run typecheck:debt:report',
   'npm run catalog:media:ledger',
+  'npm run catalog:media:ledger:summary',
+  'npm run catalog:media:ledger:csv',
+  'docs/LAUNCH-READINESS-CHECKLIST.md',
   'npm audit',
   'dependency metadata',
   'npm run release:state',
@@ -127,6 +135,7 @@ requireIncludes(masterPlan, 'MASTER-PLAN.md', [
   'Release hygiene',
   'Strict readiness fails without admin, cron, Redis, Kinde, partner-provider env, approved catalog media, licensed reviews, alert delivery, unsubscribe, ops delivery, and push keys',
   'Never use invented secrets',
+  'npm run launch:readiness:report',
   'Checked Backlog Re-Audit',
   'Unfinished Launch Task Queue',
   'FAKED | None identified',
@@ -139,6 +148,23 @@ requireIncludes(auditReport, 'AUDIT-REPORT.md', [
   'Worktree is clean',
   'audit:release-deletions',
   'Master-plan honesty audit',
+]);
+
+requireIncludes(runbook, 'PRODUCTION-RUNBOOK.md', [
+  'npm run launch:readiness:report',
+  'npm run catalog:media:ledger:summary',
+  'It is not a replacement for `audit:production:strict`',
+]);
+
+requireIncludes(launchChecklist, 'docs/LAUNCH-READINESS-CHECKLIST.md', [
+  `${catalog.hotels} hotel`,
+  `${catalog.cities} cities`,
+  `${catalog.countries} countries`,
+  'npm run catalog:media:ledger:summary',
+  'npm run catalog:media:ledger:csv',
+  'npm run launch:readiness:report',
+  'Do not set `approvedLicense: true` unless the source/license approval is real',
+  'productionReady: false',
 ]);
 
 requireIncludes(packageRaw, 'package.json', [
@@ -159,7 +185,12 @@ requireIncludes(packageRaw, 'package.json', [
   '"audit:cron-cache"',
   '"audit:coverage"',
   '"audit:rum"',
+  '"launch:readiness:report"',
+  '"audit:launch-readiness-report"',
+  '"typecheck:debt:report"',
   '"catalog:media:ledger"',
+  '"catalog:media:ledger:summary"',
+  '"catalog:media:ledger:csv"',
   '"test:coverage"',
   '"release:state"',
   '"release:state:strict"',
@@ -195,6 +226,7 @@ requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm run audit:cron-cache',
   'npm run audit:coverage',
   'npm run audit:rum',
+  'npm run audit:launch-readiness-report',
   'npm run audit:release-deletions',
   'npm run release:state:strict',
 ]);

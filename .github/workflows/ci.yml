@@ -152,8 +152,14 @@ jobs:
       - name: Production env readiness report
         run: npm run audit:production
 
+      - name: Launch readiness report audit
+        run: npm run audit:launch-readiness-report
+
       - name: Lint
         run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
 
       - name: Unit and API tests
         run: npm test

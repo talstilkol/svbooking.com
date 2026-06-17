@@ -45,6 +45,8 @@ import {
   jitteredTTL,
 } from '@/lib/price-cache';
 
+type HotelRatesResult = Awaited<ReturnType<typeof getHotelRates>>;
+
 describe('price cache', () => {
   beforeEach(async () => {
     const mod = await import('@/lib/kv') as Record<string, unknown>;
@@ -104,7 +106,7 @@ describe('price cache', () => {
   });
 
   it('coalesces concurrent live requests for the same cache key', async () => {
-    let resolveRates: ((value: unknown) => void) | undefined;
+    let resolveRates: ((value: HotelRatesResult) => void) | undefined;
     vi.mocked(getHotelRates).mockImplementationOnce(() => new Promise((resolve) => {
       resolveRates = resolve;
     }) as ReturnType<typeof getHotelRates>);
@@ -179,7 +181,7 @@ describe('price cache', () => {
       currency: 'US',
       provider: 'Provider Fallback',
       taxesIncluded: true,
-    });
+    } as unknown as HotelRatesResult);
 
     const result = await getCachedRates({
       hotelKey: 'g1-d1',
@@ -237,9 +239,11 @@ describe('price cache', () => {
 
   it('normalizes empty provider results without seeding latest-rate cache entries', async () => {
     vi.mocked(getHotelRates).mockResolvedValueOnce({
-      rates: null,
+      rates: null as unknown as unknown[],
       currency: 'invalid',
-    });
+      source: 'none',
+      provider: 'none',
+    } as HotelRatesResult);
 
     const result = await getCachedRates({
       hotelKey: 'g1-d1',
@@ -276,6 +280,7 @@ describe('price cache', () => {
       }],
       provider: 'unknown',
       source: 'unknown',
+      currency: 'USD',
     });
 
     const result = await getCachedRates({

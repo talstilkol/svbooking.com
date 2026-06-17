@@ -7,7 +7,7 @@ The app is locally healthy but not production-ready until real deployment config
 | Area | Score | Current status |
 | --- | ---: | --- |
 | Determinism and no-fabrication guardrails | 9/10 | `Math.random()` and unapproved UUID randomness are blocked by scans/audits; this is still not a formal proof that every future data path has complete provenance. |
-| Local build/test health | 10/10 | Lint, unit/API tests, build, and E2E are expected release gates. |
+| Local build/test health | 10/10 | Lint, typecheck, unit/API tests, build, and E2E are expected release gates. |
 | Coverage depth | 10/10 | `npm run audit:coverage` now enforces 100% `lib` coverage across lines, statements, functions, and branches. |
 | Security guardrails | 8/10 | Admin bearer auth, CSRF checks, HTML-safety, storage, privacy, alert, public API URL safety, and no-store audits are wired; production enforcement still depends on real env and deployment verification. |
 | Catalog quality | 6/10 | 502 curated hotels across 139 cities and 65 countries; clears the local floor, still far below market-scale coverage; reused catalog imagery is now tracked as an ops scorecard blocker. |
@@ -16,6 +16,113 @@ The app is locally healthy but not production-ready until real deployment config
 | Mobile retention | 5/10 | PWA/offline shell, local alerts, and audited RUM/Web Vitals wiring exist; push delivery env and provider are not configured. |
 | Production readiness | 4/10 | Strict readiness fails without admin, cron, Redis, Kinde, partner-provider env, approved catalog media, licensed reviews, alert delivery, unsubscribe, ops delivery, and push keys. |
 | Release hygiene | 10/10 | The worktree is clean; keep generated/cache artifacts out of commits. |
+
+## Next Execution Master Plan
+
+Snapshot date: 2026-06-17.
+
+This continuation plan is based on the latest local state, the clean release-state report, the current master-plan audit, the production-readiness audit output, and the latest commits. The recent work mainly completed localization and hydration-test cleanup across product widgets and agent surfaces. The next work should focus on production proof, not more local scaffolding.
+
+### Reviewed Previous Work
+
+| Evidence | Current finding | Meaning |
+| --- | --- | --- |
+| Latest commits | Recent commits localized upcoming trips, accessibility, compare, hotel-card toast, suggestion, and agent health surfaces, plus component hydration cleanup. | The active local track has been UI/i18n hardening and test stability. |
+| `npm run release:state` | Clean worktree, 0 changed paths before this plan update. | There was no unfinished local code change to rescue before planning. |
+| `npm run audit:master-plan` | Passed before this update. | The existing plan/accountability ledger is internally consistent. |
+| `npm run audit:production` | `productionReady: false`. | The blocker is deployment configuration, licensed/approved providers, media approval, alert delivery, push, and production evidence. |
+| Catalog media audit state | 112 image sources need approved license metadata or replacement; 6 reused image sources remain. | Media provenance is a concrete launch blocker, not a visual polish task. |
+| Current local catalog | 502 hotels, 139 cities, 65 countries. | Good local floor, still not market-scale inventory. |
+
+### Execution Logic
+
+1. Do not mark production tasks done from local code alone.
+2. Keep unavailable states until real provider, license, or secret evidence exists.
+3. Run narrow verification immediately after each work package.
+4. Do not expand catalog or claim parity until durable KV, provider observations, and review workflows have production evidence.
+5. Keep `Math.random()` and unapproved UUID randomness forbidden in all new work.
+
+### Phase 0 - Preserve The Local Baseline
+
+| Work package | Owner | Done criteria | Verification |
+| --- | --- | --- | --- |
+| Freeze the current local truth | Code | Plan, README, audit report, and runbook remain aligned after any edits. | `npm run audit:docs`, `npm run audit:master-plan` |
+| Keep release hygiene clean | Code | Only intentional files are changed; generated artifacts stay out. | `npm run release:state`, `git status --short` |
+| Re-run fast safety gates after planning changes | Code | No docs/audit drift introduced by roadmap edits. | `npm run audit:master-plan`, `npm run release:state` |
+
+### Phase 1 - Production Environment Proof
+
+| Work package | Owner | Done criteria | Verification |
+| --- | --- | --- | --- |
+| Configure required deployment secrets | Human/operator | Real values exist in deployment for admin, cron, Upstash Redis, Kinde, and one complete partner pricing provider env group. | Deployment `npm run audit:production:strict` no longer fails for required env. |
+| Configure durable KV | Human/operator + code verification | `/api/health` reports persistent cache instead of memory fallback. | Deployed health check plus `SITE_URL=... npm run smoke:deployment` |
+| Configure Kinde production auth | Human/operator + code verification | Protected account/dashboard routes work with real login and admin allowlist. | Manual login smoke plus admin route smoke with `ADMIN_API_SECRET` only where required. |
+| Configure one approved pricing provider | Human/operator | At least one partner provider returns verified rates without fabricated fallback. | Provider route smoke, provider uptime ledger, compare API response provenance. |
+
+### Phase 2 - Launch Blockers With Concrete Artifacts
+
+| Work package | Owner | Done criteria | Verification |
+| --- | --- | --- | --- |
+| Resolve catalog media licensing | Human/operator + code | Reused/unapproved catalog images are replaced or approved with source/license metadata. | `npm run catalog:media:ledger`, `npm run audit:catalog-media-ledger`, `npm run audit:production:strict` |
+| Configure licensed review/property provider | Human/operator + code | Review/property APIs use licensed provider data only when `REVIEWS_PROVIDER_LICENSED` and provider key are valid. | Review/property API smoke; unavailable state remains when provider is absent. |
+| Configure price alert delivery | Human/operator + code | Triggered alerts deliver sanitized webhook payloads and deterministic unsubscribe tokens. | Price-alert delivery tests plus deployed smoke against configured webhook. |
+| Configure ops alert delivery | Human/operator + code | Critical/warning ops alerts deliver sanitized webhook payloads. | `/api/ops/alerts/evaluate` with cron auth and delivery-event inspection. |
+| Configure push readiness | Human/operator + code | Push keys are configured with an approved provider and health reports push readiness. | `/api/health`, PWA audit, manual install/push smoke. |
+
+### Phase 3 - Deployed Runtime Verification
+
+| Work package | Owner | Done criteria | Verification |
+| --- | --- | --- | --- |
+| Run strict production gate in deployment | Human/operator | Strict production readiness passes with real deployment env. | `npm run audit:production:strict` in deployment. |
+| Run deployment smoke | Human/operator | Public APIs, protected admin APIs, unavailable states, and optional cron checks behave correctly. | `SITE_URL=https://... npm run smoke:deployment` |
+| Verify cron routes | Human/operator | Orchestrate, price-alert evaluation, and ops-alert evaluation run only with real `CRON_SECRET`. | Deployed cron responses plus event ledgers. |
+| Capture RUM/Core Web Vitals proof | Human/operator | Top routes have production route/device evidence. | Vercel Analytics/Speed Insights evidence and `npm run audit:rum` locally. |
+| Configure external monitoring | Human/operator | Uptime, provider latency, cache durability, alert delivery, price mismatch, catalog provenance, and RUM are monitored outside the app. | External monitor report plus ops scorecard evidence. |
+
+### Phase 4 - Growth After Launch Safety
+
+| Work package | Owner | Done criteria | Verification |
+| --- | --- | --- | --- |
+| Scale catalog through candidate workflow | Code + human review | Discovery writes candidates only; admin approval promotes verified hotels. | Candidate queue review, duplicate/provenance summaries, `npm run audit:provenance` |
+| Build provider coverage evidence | Code + operations | City/country/date/provider coverage comes from verified price observations only. | `/api/agents/providers/coverage`, provider observation ledgers. |
+| Extend localization only with approved copy | Code + content | Hebrew/English remain product-ready; Arabic/French/Spanish stay QA-only until approved. | `npm run audit:i18n`, E2E RTL/LTR checks. |
+| Capture legal/commercial signoff | Human/operator | Partner terms, affiliate/legal review, and licensed content display approval are stored outside code. | Release evidence linked from runbook or deployment checklist. |
+| Run competitor parity review | Human/operator + code | Weekly source review compares inventory, freshness, mobile, reviews, alerts, handoff, and Israel coverage. | Ops scorecard parity section plus dated external evidence. |
+
+### Recommended Command Flow
+
+Use this order because each stage answers a different risk:
+
+```bash
+npm run launch:readiness:report
+npm run release:state
+npm run audit:master-plan
+npm run audit:docs
+npm run audit:guardrails
+npm run audit:provenance
+npm run audit:catalog-media-ledger
+npm run audit:production
+```
+
+Before release or deployment candidate:
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run test:coverage
+npm run audit:coverage
+npm run build
+npm run test:e2e
+npm run release:state:strict
+```
+
+After deployment configuration:
+
+```bash
+npm run audit:production:strict
+SITE_URL=https://your-deployment.example npm run smoke:deployment
+```
 
 ## Accountability Audit
 

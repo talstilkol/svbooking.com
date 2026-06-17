@@ -38,6 +38,11 @@ import {
   upsertCandidate,
 } from '@/lib/catalog-candidates';
 
+type CandidateListItem = {
+  id: string;
+  status: string;
+};
+
 describe('catalog candidate queue', () => {
   beforeEach(async () => {
     const mod = await import('@/lib/kv') as Record<string, unknown>;
@@ -120,6 +125,7 @@ describe('catalog candidate queue', () => {
       name: 'Le Meurice',
       city: 'Paris',
       country: 'France',
+      image: 'https://images.example/le-meurice.jpg',
     });
 
     const queued = await upsertCandidate({
@@ -463,13 +469,13 @@ describe('catalog candidate queue', () => {
       missingProvenance: false,
       duplicate: false,
     });
-    expect(all.map((candidate) => candidate.status)).toEqual(['pending', 'rejected', 'stale']);
+    expect(all.map((candidate: CandidateListItem) => candidate.status)).toEqual(['pending', 'rejected', 'stale']);
   });
 
   it('builds a deterministic review summary for duplicate and provenance dashboards', async () => {
     vi.mocked(findHotel).mockImplementation((hotelKey) => (
       hotelKey === 'g1-d503'
-        ? { hotelKey, name: 'Existing Candidate', city: 'Paris', country: 'France' }
+        ? { hotelKey, name: 'Existing Candidate', city: 'Paris', country: 'France', image: 'https://images.example/existing.jpg' }
         : null
     ));
 
@@ -549,7 +555,7 @@ describe('catalog candidate queue', () => {
   });
 
   it('summarizes raw review edge states without inventing missing metadata', () => {
-    expect(buildCandidateReviewSummary(null)).toMatchObject({
+    expect(buildCandidateReviewSummary(null as unknown as Parameters<typeof buildCandidateReviewSummary>[0])).toMatchObject({
       total: 0,
       pending: 0,
       approved: 0,
@@ -664,7 +670,7 @@ describe('catalog candidate queue', () => {
 
     const candidates = await listCandidates({ status: 'pending' });
 
-    expect(candidates.map((candidate) => candidate.id)).toEqual([
+    expect(candidates.map((candidate: CandidateListItem) => candidate.id)).toEqual([
       newer.candidate.id,
       older.candidate.id,
     ]);
@@ -726,7 +732,7 @@ describe('catalog candidate queue', () => {
     expect(merged.existing).toBe(true);
     expect(merged.candidate.createdAt).toBeTruthy();
     expect(merged.candidate.provenance.sources).toEqual(['wikidata', 'osm']);
-    expect(listed.map((candidate) => candidate.id)).toEqual([
+    expect(listed.map((candidate: CandidateListItem) => candidate.id)).toEqual([
       merged.candidate.id,
       companion.candidate.id,
     ]);
@@ -755,7 +761,7 @@ describe('catalog candidate queue', () => {
     });
 
     const listed = await listCandidates({ status: 'pending' });
-    const candidate = listed.find((entry) => entry.id === queued.candidate.id);
+    const candidate = listed.find((entry: CandidateListItem) => entry.id === queued.candidate.id);
 
     expect(candidate).toMatchObject({
       id: queued.candidate.id,
@@ -816,7 +822,7 @@ describe('catalog candidate queue', () => {
 
     const listed = await listCandidates({ status: 'pending' });
 
-    expect(listed.map((candidate) => candidate.id)).toEqual(['raw-sort-a', 'raw-sort-b']);
+    expect(listed.map((candidate: CandidateListItem) => candidate.id)).toEqual(['raw-sort-a', 'raw-sort-b']);
   });
 
   it('marks candidates stale and reports missing review targets without promotion', async () => {
