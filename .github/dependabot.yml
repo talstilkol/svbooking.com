@@ -22,8 +22,23 @@ updates:
           - "eslint-config-next"
         update-types:
           - "patch"
+      vitest-tooling:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+        update-types:
+          - "patch"
+      tailwind-tooling:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+        update-types:
+          - "patch"
     ignore:
       - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "eslint"
         update-types:
           - "version-update:semver-major"
     labels:

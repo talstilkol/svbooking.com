@@ -33,7 +33,7 @@ This continuation plan is based on the latest local state, the clean release-sta
 | `npm run audit:production` | `productionReady: false`. | The blocker is deployment configuration, licensed/approved providers, media approval, alert delivery, push, and production evidence. |
 | Catalog media audit state | 112 image sources need approved license metadata or replacement; 6 reused image sources remain. | Media provenance is a concrete launch blocker, not a visual polish task. |
 | Current local catalog | 502 hotels, 139 cities, 65 countries. | Good local floor, still not market-scale inventory. |
-| Latest main CI | GitHub Actions run `27742868319` passed on commit `ba8fd211cb9178091946a4d943aad4f57eb0f073` after the dependency queue was merged. | Main is green after the Kinde, React, Next, Node types, and Playwright dependency updates. The current workflow-runtime update still needs its own CI run after merge. |
+| Latest main CI | GitHub Actions run `27743304417` passed on commit `58d0fffef3060b1f2ebd9fc4a3c0ecc0a765b3ec` after the GitHub Actions runtime update. | Main is green after the Kinde, React, Next, Node types, Playwright, and workflow-runtime updates. |
 
 ### Execution Logic
 
@@ -45,7 +45,7 @@ This continuation plan is based on the latest local state, the clean release-sta
 
 ### Phase 0A - Dependency Maintenance Queue
 
-The June 18, 2026 dependency queue is closed. Dependabot has been reconfigured to group React and Next patch updates, ignore `@types/node` semver-major updates, and track GitHub Actions updates separately.
+The first June 18, 2026 dependency queue is closed. Dependabot has been reconfigured to group React, Next, Vitest, and Tailwind patch updates, ignore `@types/node` and `eslint` semver-major updates, and track GitHub Actions updates separately.
 
 | PR | Dependency change | Decision | Required verification |
 | --- | --- | --- | --- |
@@ -55,9 +55,13 @@ The June 18, 2026 dependency queue is closed. Dependabot has been reconfigured t
 | #9 | `@types/node` 20.19.40 -> 20.19.43 | DONE - merged as a low-risk patch. Keep semver-major Node types blocked unless the project intentionally moves the type baseline. | CI `Verify` passed |
 | #10 | `@playwright/test` 1.59.1 -> 1.61.0 | DONE - merged after the full Playwright suite passed. | CI `Verify` passed |
 | Security advisory follow-up | `@babel/core` low advisory | Fixed by lockfile update to `@babel/core` 7.29.7; GitHub Dependabot alert #4 is fixed. Keep `npm audit --audit-level=moderate` in the release gate. | `npm audit --audit-level=moderate`, CI dependency audit |
-| GitHub Actions runtime | `actions/checkout` and `actions/setup-node` v4 -> v6 | IN PROGRESS - update workflow actions to their Node 24 runtime and let Dependabot maintain future action updates. | `npm run audit:master-plan`, YAML parse, CI `Verify` |
+| GitHub Actions runtime | `actions/checkout` and `actions/setup-node` v4 -> v6 | DONE - updated workflow actions to their Node 24 runtime and added Dependabot tracking for future action updates. | `npm run audit:master-plan`, YAML parse, CI `Verify` passed |
+| #11 | `eslint` 9.39.4 -> 10.5.0 | BLOCKED - do not merge. CI fails in `react/display-name` because the current Next ESLint plugin stack is not compatible with ESLint 10. Dependabot now ignores `eslint` semver-major updates. | Revisit only after `eslint-config-next` supports the target ESLint major |
+| #12/#15 | `vitest` and `@vitest/coverage-v8` 4.1.6 -> 4.1.9 | PENDING - treat as one test-toolchain patch, not two independent updates. Merge only after both are aligned or Dependabot recreates them as the `vitest-tooling` group. | CI `Verify`, `npm test`, `npm run audit:coverage` |
+| #13 | `tailwindcss` 4.3.0 -> 4.3.1 | PENDING - low-risk CSS tool patch, but still wait for CI because it can affect build output. | CI `Verify`, `npm run build` |
+| #14 | `lucide-react` 1.14.0 -> 1.21.0 | PENDING - UI icon package minor update. Merge only if build/E2E stay green and no visual/icon import break appears. | CI `Verify`, `npm run build`, `npm run test:e2e` |
 
-This keeps update PRs aligned with runtime packages, avoids opening a Node 25 types PR while CI is pinned to Node 22, and prevents GitHub Actions runtime deprecation warnings from returning unnoticed.
+This keeps update PRs aligned with runtime packages, avoids opening Node 25 types or ESLint 10 PRs while the project is not ready for those majors, and prevents GitHub Actions runtime deprecation warnings from returning unnoticed.
 
 ### Phase 0 - Preserve The Local Baseline
 
