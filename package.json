@@ -68,7 +68,7 @@
     "test:e2e:install": "playwright install chromium"
   },
   "dependencies": {
-    "@kinde-oss/kinde-auth-nextjs": "^2.12.1",
+    "@kinde-oss/kinde-auth-nextjs": "^2.12.2",
     "@upstash/redis": "^1.38.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
