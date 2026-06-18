@@ -7,9 +7,27 @@ updates:
       time: "08:00"
       timezone: "Asia/Jerusalem"
     open-pull-requests-limit: 5
+    groups:
+      react-runtime:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+        update-types:
+          - "patch"
+      next-runtime:
+        patterns:
+          - "next"
+          - "@next/*"
+          - "eslint-config-next"
+        update-types:
+          - "patch"
+    ignore:
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
     labels:
       - "dependencies"
       - "security"
     commit-message:
       prefix: "deps"
-

@@ -19,7 +19,7 @@ The app is locally healthy but not production-ready until real deployment config
 
 ## Next Execution Master Plan
 
-Snapshot date: 2026-06-17.
+Snapshot date: 2026-06-18.
 
 This continuation plan is based on the latest local state, the clean release-state report, the current master-plan audit, the production-readiness audit output, and the latest commits. The recent work mainly completed localization and hydration-test cleanup across product widgets and agent surfaces. The next work should focus on production proof, not more local scaffolding.
 
@@ -33,6 +33,7 @@ This continuation plan is based on the latest local state, the clean release-sta
 | `npm run audit:production` | `productionReady: false`. | The blocker is deployment configuration, licensed/approved providers, media approval, alert delivery, push, and production evidence. |
 | Catalog media audit state | 112 image sources need approved license metadata or replacement; 6 reused image sources remain. | Media provenance is a concrete launch blocker, not a visual polish task. |
 | Current local catalog | 502 hotels, 139 cities, 65 countries. | Good local floor, still not market-scale inventory. |
+| Latest main CI | GitHub Actions run `27688446431` passed on commit `7498b71027a34a20004386206d1cb865e2a8b876`. | Main is green after the coverage, protected-route E2E, and search-summary E2E fixes; remaining dependency PR failures are stale until rebased or recreated. |
 
 ### Execution Logic
 
@@ -41,6 +42,20 @@ This continuation plan is based on the latest local state, the clean release-sta
 3. Run narrow verification immediately after each work package.
 4. Do not expand catalog or claim parity until durable KV, provider observations, and review workflows have production evidence.
 5. Keep `Math.random()` and unapproved UUID randomness forbidden in all new work.
+
+### Phase 0A - Dependency Maintenance Queue
+
+The open dependency PRs should be handled after the green `main` baseline, one risk class at a time.
+
+| PR | Dependency change | Decision | Required verification |
+| --- | --- | --- | --- |
+| #2 | `@kinde-oss/kinde-auth-nextjs` 2.12.1 -> 2.12.2 | Rebase or recreate, then merge if CI passes. This is a semver patch with a CJS interop fix, but auth flows must stay covered. | `npm run typecheck`, `npm run lint`, `npm run test:e2e`, CI `Verify` |
+| #3 + #4 | `react`, `react-dom`, and `@types/react` 19.2.4/19.2.14 -> 19.2.7/19.2.17 | Treat as one React runtime update. Do not merge only one side unless the other is immediately included. | `npm run typecheck`, `npm test`, `npm run build`, `npm run test:e2e`, CI `Verify` |
+| #5 | `next` 16.2.6 -> 16.2.9 | Run after the React runtime update. This is still a framework patch, so any code change around Next APIs must first check the local Next 16 docs. | `npm run typecheck`, `npm run lint`, `npm test`, `npm run audit:coverage`, `npm run build`, `npm run test:e2e`, CI `Verify` |
+| #6 | `@types/node` 20.19.40 -> 25.9.3 | Do not merge as-is. CI runs Node 22, so the sane maintenance target is Node 22 types, not Node 25 types. Close or replace with a controlled `@types/node` 22 update. | `npm run typecheck`, `npm test`, CI `Verify` |
+| Security advisory follow-up | Low `@babel/core` advisory if still open in GitHub Dependabot alerts | Verify against current alerts and the lockfile; update only through real dependency resolution, not manual lockfile guessing. | `npm audit --audit-level=moderate` in an approved network environment |
+
+Dependabot is configured to group patch-level React and Next ecosystem updates and to ignore `@types/node` semver-major updates. This keeps update PRs aligned with the runtime and avoids opening a Node 25 types PR while CI is pinned to Node 22.
 
 ### Phase 0 - Preserve The Local Baseline
 
