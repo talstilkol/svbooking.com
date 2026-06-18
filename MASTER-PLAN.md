@@ -33,7 +33,7 @@ This continuation plan is based on the latest local state, the clean release-sta
 | `npm run audit:production` | `productionReady: false`. | The blocker is deployment configuration, licensed/approved providers, media approval, alert delivery, push, and production evidence. |
 | Catalog media audit state | 112 image sources need approved license metadata or replacement; 6 reused image sources remain. | Media provenance is a concrete launch blocker, not a visual polish task. |
 | Current local catalog | 502 hotels, 139 cities, 65 countries. | Good local floor, still not market-scale inventory. |
-| Latest main CI | GitHub Actions run `27688446431` passed on commit `7498b71027a34a20004386206d1cb865e2a8b876`; new CI is running after dependency-plan and lockfile commits. | Main was green after the coverage, protected-route E2E, and search-summary E2E fixes; the current dependency maintenance commits must wait for the new CI result before further merges. |
+| Latest main CI | GitHub Actions run `27742868319` passed on commit `ba8fd211cb9178091946a4d943aad4f57eb0f073` after the dependency queue was merged. | Main is green after the Kinde, React, Next, Node types, and Playwright dependency updates. The current workflow-runtime update still needs its own CI run after merge. |
 
 ### Execution Logic
 
@@ -45,18 +45,19 @@ This continuation plan is based on the latest local state, the clean release-sta
 
 ### Phase 0A - Dependency Maintenance Queue
 
-The open dependency PRs should be handled after the green `main` baseline, one risk class at a time. Dependabot has been reconfigured to group React and Next patch updates and to ignore `@types/node` semver-major updates.
+The June 18, 2026 dependency queue is closed. Dependabot has been reconfigured to group React and Next patch updates, ignore `@types/node` semver-major updates, and track GitHub Actions updates separately.
 
 | PR | Dependency change | Decision | Required verification |
 | --- | --- | --- | --- |
-| #2 | `@kinde-oss/kinde-auth-nextjs` 2.12.1 -> 2.12.2 | Rebase or recreate, then merge only if CI passes. This is a semver patch with a CJS interop fix, but auth flows must stay covered. | `npm run typecheck`, `npm run lint`, `npm run test:e2e`, CI `Verify` |
-| #7 | `react`, `react-dom`, and `@types/react` 19.2.4/19.2.14 -> 19.2.7/19.2.17 | Treat as the React runtime patch. This replaces the old split PRs and avoids mismatched React/React DOM versions. | `npm run typecheck`, `npm test`, `npm run build`, `npm run test:e2e`, CI `Verify` |
-| #8 | `next`, `@next/bundle-analyzer`, and `eslint-config-next` 16.2.6 -> 16.2.9 | Run after the React runtime update. This is still a framework patch, so any code change around Next APIs must first check the local Next 16 docs. | `npm run typecheck`, `npm run lint`, `npm test`, `npm run audit:coverage`, `npm run build`, `npm run test:e2e`, CI `Verify` |
-| #9 | `@types/node` 20.19.40 -> 20.19.43 | Accept as a low-risk patch if CI passes. Keep semver-major Node types blocked unless the project intentionally moves the type baseline. | `npm run typecheck`, `npm test`, CI `Verify` |
-| #10 | `@playwright/test` 1.59.1 -> 1.61.0 | Treat as E2E infrastructure, not a passive dev dependency. Merge only after the full Playwright suite passes. | `npm run test:e2e`, CI `Verify` |
+| #2 | `@kinde-oss/kinde-auth-nextjs` 2.12.1 -> 2.12.2 | DONE - merged after CI passed. Auth flows remain covered by the release gate. | CI `Verify` passed |
+| #7 | `react`, `react-dom`, and `@types/react` 19.2.4/19.2.14 -> 19.2.7/19.2.17 | DONE - merged as the React runtime patch group. | CI `Verify` passed |
+| #8 | `next`, `@next/bundle-analyzer`, and `eslint-config-next` 16.2.6 -> 16.2.9 | DONE - merged after the React runtime update. Any future Next API/code change must still check the local Next 16 docs first. | CI `Verify` passed |
+| #9 | `@types/node` 20.19.40 -> 20.19.43 | DONE - merged as a low-risk patch. Keep semver-major Node types blocked unless the project intentionally moves the type baseline. | CI `Verify` passed |
+| #10 | `@playwright/test` 1.59.1 -> 1.61.0 | DONE - merged after the full Playwright suite passed. | CI `Verify` passed |
 | Security advisory follow-up | `@babel/core` low advisory | Fixed by lockfile update to `@babel/core` 7.29.7; GitHub Dependabot alert #4 is fixed. Keep `npm audit --audit-level=moderate` in the release gate. | `npm audit --audit-level=moderate`, CI dependency audit |
+| GitHub Actions runtime | `actions/checkout` and `actions/setup-node` v4 -> v6 | IN PROGRESS - update workflow actions to their Node 24 runtime and let Dependabot maintain future action updates. | `npm run audit:master-plan`, YAML parse, CI `Verify` |
 
-This keeps update PRs aligned with runtime packages and avoids opening a Node 25 types PR while CI is pinned to Node 22.
+This keeps update PRs aligned with runtime packages, avoids opening a Node 25 types PR while CI is pinned to Node 22, and prevents GitHub Actions runtime deprecation warnings from returning unnoticed.
 
 ### Phase 0 - Preserve The Local Baseline
 
