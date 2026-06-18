@@ -33,7 +33,7 @@ This continuation plan is based on the latest local state, the clean release-sta
 | `npm run audit:production` | `productionReady: false`. | The blocker is deployment configuration, licensed/approved providers, media approval, alert delivery, push, and production evidence. |
 | Catalog media audit state | 112 image sources need approved license metadata or replacement; 6 reused image sources remain. | Media provenance is a concrete launch blocker, not a visual polish task. |
 | Current local catalog | 502 hotels, 139 cities, 65 countries. | Good local floor, still not market-scale inventory. |
-| Latest main CI | GitHub Actions run `27688446431` passed on commit `7498b71027a34a20004386206d1cb865e2a8b876`. | Main is green after the coverage, protected-route E2E, and search-summary E2E fixes; remaining dependency PR failures are stale until rebased or recreated. |
+| Latest main CI | GitHub Actions run `27688446431` passed on commit `7498b71027a34a20004386206d1cb865e2a8b876`; new CI is running after dependency-plan and lockfile commits. | Main was green after the coverage, protected-route E2E, and search-summary E2E fixes; the current dependency maintenance commits must wait for the new CI result before further merges. |
 
 ### Execution Logic
 
@@ -45,17 +45,18 @@ This continuation plan is based on the latest local state, the clean release-sta
 
 ### Phase 0A - Dependency Maintenance Queue
 
-The open dependency PRs should be handled after the green `main` baseline, one risk class at a time.
+The open dependency PRs should be handled after the green `main` baseline, one risk class at a time. Dependabot has been reconfigured to group React and Next patch updates and to ignore `@types/node` semver-major updates.
 
 | PR | Dependency change | Decision | Required verification |
 | --- | --- | --- | --- |
-| #2 | `@kinde-oss/kinde-auth-nextjs` 2.12.1 -> 2.12.2 | Rebase or recreate, then merge if CI passes. This is a semver patch with a CJS interop fix, but auth flows must stay covered. | `npm run typecheck`, `npm run lint`, `npm run test:e2e`, CI `Verify` |
-| #3 + #4 | `react`, `react-dom`, and `@types/react` 19.2.4/19.2.14 -> 19.2.7/19.2.17 | Treat as one React runtime update. Do not merge only one side unless the other is immediately included. | `npm run typecheck`, `npm test`, `npm run build`, `npm run test:e2e`, CI `Verify` |
-| #5 | `next` 16.2.6 -> 16.2.9 | Run after the React runtime update. This is still a framework patch, so any code change around Next APIs must first check the local Next 16 docs. | `npm run typecheck`, `npm run lint`, `npm test`, `npm run audit:coverage`, `npm run build`, `npm run test:e2e`, CI `Verify` |
-| #6 | `@types/node` 20.19.40 -> 25.9.3 | Do not merge as-is. CI runs Node 22, so the sane maintenance target is Node 22 types, not Node 25 types. Close or replace with a controlled `@types/node` 22 update. | `npm run typecheck`, `npm test`, CI `Verify` |
-| Security advisory follow-up | Low `@babel/core` advisory if still open in GitHub Dependabot alerts | Verify against current alerts and the lockfile; update only through real dependency resolution, not manual lockfile guessing. | `npm audit --audit-level=moderate` in an approved network environment |
+| #2 | `@kinde-oss/kinde-auth-nextjs` 2.12.1 -> 2.12.2 | Rebase or recreate, then merge only if CI passes. This is a semver patch with a CJS interop fix, but auth flows must stay covered. | `npm run typecheck`, `npm run lint`, `npm run test:e2e`, CI `Verify` |
+| #7 | `react`, `react-dom`, and `@types/react` 19.2.4/19.2.14 -> 19.2.7/19.2.17 | Treat as the React runtime patch. This replaces the old split PRs and avoids mismatched React/React DOM versions. | `npm run typecheck`, `npm test`, `npm run build`, `npm run test:e2e`, CI `Verify` |
+| #8 | `next`, `@next/bundle-analyzer`, and `eslint-config-next` 16.2.6 -> 16.2.9 | Run after the React runtime update. This is still a framework patch, so any code change around Next APIs must first check the local Next 16 docs. | `npm run typecheck`, `npm run lint`, `npm test`, `npm run audit:coverage`, `npm run build`, `npm run test:e2e`, CI `Verify` |
+| #9 | `@types/node` 20.19.40 -> 20.19.43 | Accept as a low-risk patch if CI passes. Keep semver-major Node types blocked unless the project intentionally moves the type baseline. | `npm run typecheck`, `npm test`, CI `Verify` |
+| #10 | `@playwright/test` 1.59.1 -> 1.61.0 | Treat as E2E infrastructure, not a passive dev dependency. Merge only after the full Playwright suite passes. | `npm run test:e2e`, CI `Verify` |
+| Security advisory follow-up | `@babel/core` low advisory | Fixed by lockfile update to `@babel/core` 7.29.7; GitHub Dependabot alert #4 is fixed. Keep `npm audit --audit-level=moderate` in the release gate. | `npm audit --audit-level=moderate`, CI dependency audit |
 
-Dependabot is configured to group patch-level React and Next ecosystem updates and to ignore `@types/node` semver-major updates. This keeps update PRs aligned with the runtime and avoids opening a Node 25 types PR while CI is pinned to Node 22.
+This keeps update PRs aligned with runtime packages and avoids opening a Node 25 types PR while CI is pinned to Node 22.
 
 ### Phase 0 - Preserve The Local Baseline
 
