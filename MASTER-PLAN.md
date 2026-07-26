@@ -33,7 +33,8 @@ This continuation plan is based on the latest local state, dependency-queue revi
 | `npm run audit:production` | `productionReady: false`. | The blocker is deployment configuration, licensed/approved providers, media approval, alert delivery, push, and production evidence. |
 | Catalog media audit state | 112 image sources need approved license metadata or replacement; 6 reused image sources remain. | Media provenance is a concrete launch blocker, not a visual polish task. |
 | Current local catalog | 502 hotels, 139 cities, 65 countries. | Good local floor, still not market-scale inventory. |
-| Latest main state reviewed | Main reached `bc31dcf9ca00bdbc983aa964b51a5b4cb20fe02d` after merging Dependabot PR #21 for `undici` 7.28.0. | The high-severity `undici` advisory that blocked the July PR queue is resolved; the refreshed CI result must still be captured after this plan update is pushed. |
+| Latest main state reviewed | Main reached `8a82b975cb1b342945237185ebd2841269c800bb` after the July security fix and the refreshed Dependabot queue were merged. | The production dependency audit is clean and the dependency queue is closed. |
+| Latest combined main CI | GitHub Actions run `30214521084` passed on `8a82b975cb1b342945237185ebd2841269c800bb`. | The final combined state passed both Actions v7, all audits, lint, typecheck, 200/1200 tests, 100% coverage, build, Playwright installation, 78 E2E tests, and the strict release-state gate. |
 
 ### Execution Logic
 
@@ -45,7 +46,7 @@ This continuation plan is based on the latest local state, dependency-queue revi
 
 ### Phase 0A - Dependency Maintenance Queue
 
-The first June 18, 2026 dependency queue is closed. A second queue was reviewed on July 26, 2026. PR #21 was merged first because its `undici` fix removed the common CI blocker. TypeScript and ESLint semver-major updates remain intentionally blocked until their framework/tooling compatibility work is scheduled.
+The first June 18, 2026 dependency queue is closed. The second queue was reviewed and closed on July 26, 2026. PR #21 was merged first because its `undici` fix removed the common CI blocker. The remaining patch/minor and GitHub Actions updates were rebased, individually verified, and merged. TypeScript and ESLint semver-major updates remain intentionally blocked until their framework/tooling compatibility work is scheduled.
 
 | PR | Dependency change | Decision | Required verification |
 | --- | --- | --- | --- |
@@ -62,17 +63,19 @@ The first June 18, 2026 dependency queue is closed. A second queue was reviewed 
 | #14 | `lucide-react` 1.14.0 -> 1.21.0 | DONE - merged after build and E2E stayed green. | CI `Verify` passed; main CI `27744638631` passed |
 | #18 | `@vitejs/plugin-react` 6.0.1 -> 6.0.2 | DONE - merged after CI passed on the rebased branch. | CI `Verify` passed; main CI `27745031330` passed |
 | #19 | `framer-motion` 12.38.0 -> 12.40.0 | DONE - merged after Dependabot rebased the branch on top of #18 and the refreshed `Verify` passed. | CI `Verify` passed; main CI `27745383482` passed |
-| #20 | `typescript` 5.9.3 -> 6.0.3 | BLOCKED - do not merge as routine maintenance. This is a compiler major and needs a dedicated migration after the current Next/tooling stack declares compatibility. Dependabot now ignores TypeScript semver-major updates. | Dedicated migration branch, local Next docs, typecheck, build, full test suite |
+| #20 | `typescript` 5.9.3 -> 6.0.3 | BLOCKED/CLOSED - not merged. This is a compiler major and needs a dedicated migration after the current Next/tooling stack declares compatibility. Dependabot now ignores TypeScript semver-major updates. | Dedicated migration branch, local Next docs, typecheck, build, full test suite |
 | #21 | `undici` 7.26.0 -> 7.28.0 | DONE - merged first because it fixes the high-severity advisory that caused every refreshed dependency PR to fail its audit step. | PR patch reviewed; `Verify` passed before merge |
-| #22 | `actions/checkout` 6 -> 7 | PENDING - previous failure was caused by the shared `undici` audit blocker. Rebase and require fresh `Verify` before merge. | Rebased CI `Verify` |
-| #23 | `@playwright/test` 1.61.0 -> 1.61.1 | PENDING - patch update; rebase after the security-gate commit and require fresh `Verify`. | Rebased CI `Verify`, Playwright suite |
-| #24 | `@vitejs/plugin-react` 6.0.2 -> 6.0.3 | PENDING - patch update; rebase after the security-gate commit and require fresh `Verify`. | Rebased CI `Verify`, build/tests |
-| #25 | `framer-motion` 12.40.0 -> 12.41.0 | PENDING - patch update; rebase after the security-gate commit and require fresh `Verify`. | Rebased CI `Verify`, E2E |
-| #26 | `actions/setup-node` 6 -> 7 | PENDING - previous failure was caused by the shared `undici` audit blocker. Rebase and require fresh `Verify` before merge. | Rebased CI `Verify` |
+| #22 | `actions/checkout` 6 -> 7 | DONE - rebased after the security fix and merged after the refreshed workflow completed successfully with checkout v7. | Rebased CI `Verify` passed |
+| #26 | `actions/setup-node` 6 -> 7 | DONE - rebased after the security fix and merged after the refreshed workflow completed successfully with setup-node v7. | Rebased CI `Verify` passed |
+| #29 | `framer-motion` 12.40.0 -> 12.42.2 | DONE - replacement for superseded #25; scoped dependency/lockfile diff merged after refreshed verification. | Rebased CI `Verify` passed; combined local E2E passed |
+| #30 | `@playwright/test` 1.61.0 -> 1.62.0 | DONE - replacement for superseded #23; Node 20+ engine remains compatible with the Node 22 baseline. | Rebased CI `Verify` passed; Chromium v1234 and 78 E2E tests passed locally |
+| #31 | `@kinde-oss/kinde-auth-nextjs` 2.12.2 -> 2.13.0 | DONE - scoped auth SDK update, including Kinde SDK transitive updates, merged only after the full auth/release gate passed. | Rebased CI `Verify` passed; combined lint/typecheck/tests/build/E2E passed |
+| #32 | `lucide-react` 1.21.0 -> 1.27.0 | DONE - scoped icon-library update merged after the full UI and accessibility gates passed. | Rebased CI `Verify` passed; combined local UI E2E passed |
+| #33 | `@vitejs/plugin-react` 6.0.2 -> 6.0.4 | DONE - replacement for superseded #24 and first low-risk patch merged after the security-gate commit. | Rebased CI `Verify` passed; main CI `30214208768` passed |
 | July production dependency audit | `next`, `postcss`, `sharp`, `js-yaml`, and transitive lockfile patches | DONE locally - non-breaking audit fixes are applied, PostCSS resolves to 8.5.23, and the Next image path resolves to `sharp` 0.35.3. CI remains scoped to production dependencies. | Production audit reports 0 vulnerabilities; dependency tree, build, runtime image optimization, 200/1200 tests, 100% coverage, and 78 E2E tests pass |
 | Development-tooling advisory | `brace-expansion` through ESLint 9/minimatch 3 | BLOCKED - full audit remains a reporting check. A global override to `brace-expansion` 5 is incompatible with minimatch 3, and npm's proposed ESLint 10 change is breaking. | Revisit when the Next ESLint stack supports ESLint 10; keep full audit result documented |
 
-This keeps update PRs aligned with runtime packages, avoids opening unsupported Node types, TypeScript, or ESLint majors, and prevents GitHub Actions runtime deprecation warnings from returning unnoticed.
+There are no open dependency PRs after this queue. This keeps updates aligned with runtime packages, avoids opening unsupported Node types, TypeScript, or ESLint majors, and prevents GitHub Actions runtime deprecation warnings from returning unnoticed.
 
 ### Phase 0 - Preserve The Local Baseline
 
