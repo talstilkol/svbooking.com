@@ -166,6 +166,9 @@ requireIncludes(launchChecklist, 'docs/LAUNCH-READINESS-CHECKLIST.md', [
   'npm run catalog:media:ledger:priority-csv',
   'npm run launch:readiness:report',
   'Do not set `approvedLicense: true` unless the source/license approval is real',
+  'A direct CDN URL alone is not license evidence',
+  'Every catalog image has real evidence or a licensed replacement',
+  'Keep secret values and provider credentials outside the repository',
   'productionReady: false',
 ]);
 

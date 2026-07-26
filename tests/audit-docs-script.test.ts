@@ -191,6 +191,9 @@ const validLaunchChecklist = [
   'Run npm run launch:readiness:report before deployment review.',
   'Run npm run audit:launch-readiness-report before deployment review.',
   'Do not set `approvedLicense: true` unless the source/license approval is real.',
+  'A direct CDN URL alone is not license evidence.',
+  'Every catalog image has real evidence or a licensed replacement.',
+  'Keep secret values and provider credentials outside the repository.',
   '',
 ].join('\n');
 

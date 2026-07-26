@@ -1,6 +1,6 @@
 # SV Booking Launch Readiness Checklist
 
-Snapshot date: 2026-06-17.
+Snapshot date: 2026-07-26.
 
 This checklist turns the master plan into an execution queue. It is intentionally evidence-based: do not mark an item complete from local code alone when the item requires deployment secrets, licensed providers, legal approval, or production runtime proof.
 
@@ -8,9 +8,11 @@ This checklist turns the master plan into an execution queue. It is intentionall
 
 | Area | Current state | Required next proof |
 | --- | --- | --- |
-| Worktree | Clean before the master-plan update; now only planning docs are expected to be changed. | `npm run release:state` before staging or deployment. |
-| Master plan | `npm run audit:master-plan` passed after the continuation plan was added. | Keep the plan, README, runbook, and audit report aligned. |
+| Worktree | Clean on `main` at `c0bc862` before this checklist refresh. | `npm run release:state` before staging or deployment. |
+| Master plan | Dependency queue closed; `npm run audit:master-plan` passed. | Keep the plan, README, runbook, and audit report aligned. |
 | Docs | `npm run audit:docs` passed with 502 hotels, 139 cities, 65 countries. | Re-run after docs or route/env changes. |
+| CI | GitHub CI run `30214749136` passed on `c0bc862`; 200 test files, 1200 tests, 100% coverage, 729 static pages, and 78 Playwright tests were verified in the completed dependency cycle. | Capture a new green CI run for every release candidate. |
+| Dependencies | No open dependency PRs or Dependabot alerts; production audit reports 0 vulnerabilities. The remaining 9 high findings are dev-only ESLint 9 transitive debt and the available automatic fix is breaking. | Keep production audit blocking; handle ESLint 10 as a separate migration. |
 | Production readiness | `npm run audit:production` reports `productionReady: false`. | Run `npm run audit:production:strict` only in a configured deployment env. |
 | Catalog media | 112 media actions across 502 hotel references; 6 image sources are reused across too many cities. | Replace or approve media with real source/license metadata. |
 
@@ -58,13 +60,29 @@ Rules for media completion:
 2. Do not use generated or placeholder images as hotel evidence.
 3. Prefer hotel-specific official/partner media when licensed; otherwise use city-specific media only when the page is city-level and the source license is approved.
 4. Keep `replacementRequired: true` until a replacement or approval is verified.
-5. Use `npm run catalog:media:ledger:summary` to review the six reused-image priority sources first.
-6. Use `npm run catalog:media:ledger:priority-csv` for the reused-source review queue.
-7. Use `npm run catalog:media:ledger:csv` when the full media/legal review needs a tabular queue.
-8. Use `node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/catalog-media-action-ledger.mjs --format=csv --city=Berlin` to focus review on a specific city.
-9. Re-run `npm run catalog:media:ledger`, `npm run audit:catalog-media-ledger`, and `npm run audit:production` after each batch.
+5. A direct CDN URL alone is not license evidence and must not be transformed or guessed into a public source-page URL.
+6. Use `npm run catalog:media:ledger:summary` to review the six reused-image priority sources first.
+7. Use `npm run catalog:media:ledger:priority-csv` for the reused-source review queue.
+8. Use `npm run catalog:media:ledger:csv` when the full media/legal review needs a tabular queue.
+9. Use `node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/catalog-media-action-ledger.mjs --format=csv --city=Berlin` to focus review on a specific city.
+10. Re-run `npm run catalog:media:ledger`, `npm run audit:catalog-media-ledger`, and `npm run audit:production` after each batch.
 
-## 5. Deployment Verification Flow
+## 5. External Evidence Contract
+
+Keep secret values and provider credentials outside the repository. The release record may contain only secret names, configured/not-configured status, test results, and links to access-controlled evidence.
+
+| Evidence area | Required record | Completion rule |
+| --- | --- | --- |
+| Deployment env | Environment name, deployment URL, configured env names, health output, and operator/date. | Required env groups are configured and strict readiness passes without printing values. |
+| Catalog media | Exact current CDN URL, verified public source page, photographer/owner, license name and URL, verification date, allowed display scope, approver/date, and replacement URL when rejected. | Every catalog image has real evidence or a licensed replacement; CDN identifiers are never treated as attribution. |
+| Pricing/reviews providers | Provider name, contract/license reference, enabled environment, response provenance sample, and operator/date. | At least one pricing provider and the review/property provider pass deployed smoke with licensed data. |
+| Alerts/push | Approved provider, configured env names, sanitized delivery event, unsubscribe proof where applicable, and operator/date. | Price, ops, and push delivery checks pass without exposing payload secrets or personal data. |
+| Legal/commercial | Access-controlled links to partner terms, affiliate review, content-display approval, and named approver/date. | Every required approval exists outside code and is linked from the release record. |
+| Production runtime | Deployment commit, green CI run, strict readiness output, deployment smoke output, cron authorization proof, RUM evidence, and operator/date. | All proof belongs to the same release candidate and production environment. |
+
+Unknown or unavailable evidence remains NOT DONE. Never infer approval from a reachable URL, an existing env name, or a successful local test.
+
+## 6. Deployment Verification Flow
 
 Use this order because each step depends on the previous proof.
 
@@ -106,7 +124,7 @@ Only run cron smoke intentionally:
 SITE_URL=https://your-deployment.example SMOKE_RUN_CRON=1 npm run smoke:deployment
 ```
 
-## 6. Typecheck Gate
+## 7. Typecheck Gate
 
 `npm run typecheck` is now green and wired into CI. Treat it as a release gate.
 
@@ -124,7 +142,7 @@ Rules:
 3. Prefer updating test fixtures to match runtime contracts instead of weakening production types.
 4. After each batch, run `npm run typecheck` and the focused tests for the touched files.
 
-## 7. Status Rules
+## 8. Status Rules
 
 | Status | Meaning |
 | --- | --- |
