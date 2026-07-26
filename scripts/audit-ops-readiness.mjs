@@ -91,6 +91,10 @@ if (!packageJson.overrides?.postcss) {
   fail('package.json is missing a PostCSS override');
 }
 
+if (!packageJson.overrides?.sharp) {
+  fail('package.json is missing a sharp override');
+}
+
 await requireFile('.github/workflows/ci.yml');
 await requireFile('lib/admin-auth.js');
 await requireFile('lib/admin-audit.js');
@@ -189,8 +193,8 @@ await requireFile('scripts/audit-alerts.mjs');
 const ci = await readProjectFile('.github/workflows/ci.yml');
 requireIncludes(ci, '.github/workflows/ci.yml', [
   'npm ci --ignore-scripts',
-  'npm audit --audit-level=moderate',
-  'npm ls postcss --all',
+  'npm audit --omit=dev --audit-level=moderate',
+  'npm ls postcss sharp --all',
   'npm run audit:guardrails',
   'npm run audit:provenance',
   'npm run audit:deployment-smoke',

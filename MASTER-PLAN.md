@@ -19,21 +19,21 @@ The app is locally healthy but not production-ready until real deployment config
 
 ## Next Execution Master Plan
 
-Snapshot date: 2026-06-18.
+Snapshot date: 2026-07-26.
 
-This continuation plan is based on the latest local state, the clean release-state report, the current master-plan audit, the production-readiness audit output, and the latest commits. The recent work mainly completed localization and hydration-test cleanup across product widgets and agent surfaces. The next work should focus on production proof, not more local scaffolding.
+This continuation plan is based on the latest local state, dependency-queue review, production-readiness audit output, and current launch blockers. The July continuation fixed the actionable production dependency advisory, separated the blocking production audit from transparent development-tooling reporting, and returned focus to production proof rather than more local scaffolding.
 
 ### Reviewed Previous Work
 
 | Evidence | Current finding | Meaning |
 | --- | --- | --- |
 | Latest commits | Recent commits localized upcoming trips, accessibility, compare, hotel-card toast, suggestion, and agent health surfaces, plus component hydration cleanup. | The active local track has been UI/i18n hardening and test stability. |
-| `npm run release:state` | Clean worktree, 0 changed paths before this plan update. | There was no unfinished local code change to rescue before planning. |
+| `npm run release:state` | Clean worktree before the July dependency continuation. | There was no unfinished local code change to rescue before dependency maintenance. |
 | `npm run audit:master-plan` | Passed before this update. | The existing plan/accountability ledger is internally consistent. |
 | `npm run audit:production` | `productionReady: false`. | The blocker is deployment configuration, licensed/approved providers, media approval, alert delivery, push, and production evidence. |
 | Catalog media audit state | 112 image sources need approved license metadata or replacement; 6 reused image sources remain. | Media provenance is a concrete launch blocker, not a visual polish task. |
 | Current local catalog | 502 hotels, 139 cities, 65 countries. | Good local floor, still not market-scale inventory. |
-| Latest main CI | GitHub Actions run `27745383482` passed on commit `9099b4893d5ade01a28b72a74bbf74c6c21bfe66` after the `framer-motion` update. | Main is green after the Kinde, React, Next, Node types, Playwright, workflow-runtime, Vitest, Tailwind, Lucide, Vite React plugin, and Framer Motion updates. |
+| Latest main state reviewed | Main reached `bc31dcf9ca00bdbc983aa964b51a5b4cb20fe02d` after merging Dependabot PR #21 for `undici` 7.28.0. | The high-severity `undici` advisory that blocked the July PR queue is resolved; the refreshed CI result must still be captured after this plan update is pushed. |
 
 ### Execution Logic
 
@@ -45,7 +45,7 @@ This continuation plan is based on the latest local state, the clean release-sta
 
 ### Phase 0A - Dependency Maintenance Queue
 
-The first June 18, 2026 dependency queue is closed. Dependabot has been reconfigured to group React, Next, Vitest, and Tailwind patch updates, ignore `@types/node` and `eslint` semver-major updates, and track GitHub Actions updates separately. There are no open dependency PRs after merging the green queue.
+The first June 18, 2026 dependency queue is closed. A second queue was reviewed on July 26, 2026. PR #21 was merged first because its `undici` fix removed the common CI blocker. TypeScript and ESLint semver-major updates remain intentionally blocked until their framework/tooling compatibility work is scheduled.
 
 | PR | Dependency change | Decision | Required verification |
 | --- | --- | --- | --- |
@@ -54,7 +54,7 @@ The first June 18, 2026 dependency queue is closed. Dependabot has been reconfig
 | #8 | `next`, `@next/bundle-analyzer`, and `eslint-config-next` 16.2.6 -> 16.2.9 | DONE - merged after the React runtime update. Any future Next API/code change must still check the local Next 16 docs first. | CI `Verify` passed |
 | #9 | `@types/node` 20.19.40 -> 20.19.43 | DONE - merged as a low-risk patch. Keep semver-major Node types blocked unless the project intentionally moves the type baseline. | CI `Verify` passed |
 | #10 | `@playwright/test` 1.59.1 -> 1.61.0 | DONE - merged after the full Playwright suite passed. | CI `Verify` passed |
-| Security advisory follow-up | `@babel/core` low advisory | Fixed by lockfile update to `@babel/core` 7.29.7; GitHub Dependabot alert #4 is fixed. Keep `npm audit --audit-level=moderate` in the release gate. | `npm audit --audit-level=moderate`, CI dependency audit |
+| Security advisory follow-up | `@babel/core` low advisory | Fixed by lockfile update to `@babel/core` 7.29.7; GitHub Dependabot alert #4 is fixed. Keep the production dependency audit in the release gate and the full audit as a reporting check. | `npm audit --omit=dev --audit-level=moderate`, full audit report |
 | GitHub Actions runtime | `actions/checkout` and `actions/setup-node` v4 -> v6 | DONE - updated workflow actions to their Node 24 runtime and added Dependabot tracking for future action updates. | `npm run audit:master-plan`, YAML parse, CI `Verify` passed |
 | #11 | `eslint` 9.39.4 -> 10.5.0 | BLOCKED - do not merge. CI fails in `react/display-name` because the current Next ESLint plugin stack is not compatible with ESLint 10. Dependabot now ignores `eslint` semver-major updates. | Revisit only after `eslint-config-next` supports the target ESLint major |
 | #16 | `vitest` and `@vitest/coverage-v8` 4.1.6 -> 4.1.9 | DONE - merged after Dependabot recreated the two test-toolchain patches as the `vitest-tooling` group. | CI `Verify` passed; main CI `27743957302` passed |
@@ -62,8 +62,17 @@ The first June 18, 2026 dependency queue is closed. Dependabot has been reconfig
 | #14 | `lucide-react` 1.14.0 -> 1.21.0 | DONE - merged after build and E2E stayed green. | CI `Verify` passed; main CI `27744638631` passed |
 | #18 | `@vitejs/plugin-react` 6.0.1 -> 6.0.2 | DONE - merged after CI passed on the rebased branch. | CI `Verify` passed; main CI `27745031330` passed |
 | #19 | `framer-motion` 12.38.0 -> 12.40.0 | DONE - merged after Dependabot rebased the branch on top of #18 and the refreshed `Verify` passed. | CI `Verify` passed; main CI `27745383482` passed |
+| #20 | `typescript` 5.9.3 -> 6.0.3 | BLOCKED - do not merge as routine maintenance. This is a compiler major and needs a dedicated migration after the current Next/tooling stack declares compatibility. Dependabot now ignores TypeScript semver-major updates. | Dedicated migration branch, local Next docs, typecheck, build, full test suite |
+| #21 | `undici` 7.26.0 -> 7.28.0 | DONE - merged first because it fixes the high-severity advisory that caused every refreshed dependency PR to fail its audit step. | PR patch reviewed; `Verify` passed before merge |
+| #22 | `actions/checkout` 6 -> 7 | PENDING - previous failure was caused by the shared `undici` audit blocker. Rebase and require fresh `Verify` before merge. | Rebased CI `Verify` |
+| #23 | `@playwright/test` 1.61.0 -> 1.61.1 | PENDING - patch update; rebase after the security-gate commit and require fresh `Verify`. | Rebased CI `Verify`, Playwright suite |
+| #24 | `@vitejs/plugin-react` 6.0.2 -> 6.0.3 | PENDING - patch update; rebase after the security-gate commit and require fresh `Verify`. | Rebased CI `Verify`, build/tests |
+| #25 | `framer-motion` 12.40.0 -> 12.41.0 | PENDING - patch update; rebase after the security-gate commit and require fresh `Verify`. | Rebased CI `Verify`, E2E |
+| #26 | `actions/setup-node` 6 -> 7 | PENDING - previous failure was caused by the shared `undici` audit blocker. Rebase and require fresh `Verify` before merge. | Rebased CI `Verify` |
+| July production dependency audit | `next`, `postcss`, `sharp`, `js-yaml`, and transitive lockfile patches | DONE locally - non-breaking audit fixes are applied, PostCSS resolves to 8.5.23, and the Next image path resolves to `sharp` 0.35.3. CI remains scoped to production dependencies. | Production audit reports 0 vulnerabilities; dependency tree, build, runtime image optimization, 200/1200 tests, 100% coverage, and 78 E2E tests pass |
+| Development-tooling advisory | `brace-expansion` through ESLint 9/minimatch 3 | BLOCKED - full audit remains a reporting check. A global override to `brace-expansion` 5 is incompatible with minimatch 3, and npm's proposed ESLint 10 change is breaking. | Revisit when the Next ESLint stack supports ESLint 10; keep full audit result documented |
 
-This keeps update PRs aligned with runtime packages, avoids opening Node 25 types or ESLint 10 PRs while the project is not ready for those majors, and prevents GitHub Actions runtime deprecation warnings from returning unnoticed.
+This keeps update PRs aligned with runtime packages, avoids opening unsupported Node types, TypeScript, or ESLint majors, and prevents GitHub Actions runtime deprecation warnings from returning unnoticed.
 
 ### Phase 0 - Preserve The Local Baseline
 
@@ -181,7 +190,8 @@ This section is the source of truth for what is complete versus only locally sca
 | Agent cron auth | DONE | Cron-protected routes and `CRON_SECRET` gate are wired and audited. |
 | Production cron execution | NOT DONE | Cron routes are not verified in a real deployment with real `CRON_SECRET` and persistent KV. |
 | Ops monitoring endpoints | PARTIAL | `/api/health`, `/api/ops/scorecard`, `/api/ops/alerts`, provider uptime, price accuracy, alert history, and audited RUM wiring exist; real external monitoring and webhook delivery are not configured. |
-| Dependency audit | DONE | `npm audit --audit-level=moderate` passed in an approved network environment. |
+| Production dependency audit | DONE | `npm audit --omit=dev --audit-level=moderate` reports 0 vulnerabilities after the July lockfile, PostCSS, Next, and `sharp` remediation. |
+| Full development dependency audit | BLOCKED | `brace-expansion` remains through ESLint 9/minimatch 3; the compatible fix requires a future ESLint major migration, so the full audit is reported but does not replace the production gate. |
 | `audit:production:strict` in deployment | NOT DONE | No deployment env proof has been provided. |
 | No stale removed-route docs | DONE | `npm run audit:docs` rejects removed legacy route names, old database claims, and old catalog-size claims. |
 | Unknown data shown explicitly | PARTIAL | Covered for many surfaces and audited, but requires continued enforcement as new integrations are added. |
@@ -230,7 +240,8 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Accountability | Agent cron auth | DONE | Cron auth gate is wired and audited. |
 | Accountability | Production cron execution | NOT DONE | Not verified in deployment with real `CRON_SECRET` and persistent KV. |
 | Accountability | Ops monitoring endpoints | PARTIAL | Endpoints and RUM wiring audit exist; external monitoring/webhook delivery is not configured. |
-| Accountability | Dependency audit | DONE | Approved network `npm audit` returned 0 vulnerabilities. |
+| Accountability | Production dependency audit | DONE | Approved-network `npm audit --omit=dev --audit-level=moderate` reports 0 vulnerabilities. |
+| Accountability | Full development dependency audit | BLOCKED | The remaining advisory is development-only through ESLint 9; no compatible non-breaking upstream fix is currently available. |
 | Accountability | `audit:production:strict` in deployment | NOT DONE | No deployment proof has been provided. |
 | Accountability | No stale removed-route docs | DONE | Docs audit blocks stale route/architecture claims. |
 | Accountability | Unknown data shown explicitly | PARTIAL | Covered for many surfaces; must be kept as integrations expand. |
@@ -254,16 +265,16 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Stabilization Priority | Keep unknown data unavailable/not configured | PARTIAL | Local behavior exists; future integrations need continuous enforcement. |
 | Stabilization Priority | Run agent cron routes only with `CRON_SECRET` | DONE | Cron auth checks are wired and audited. |
 | Stabilization Priority | Monitor health, scorecard, alerts, uptime, price accuracy, alert delivery | PARTIAL | Local endpoints and RUM wiring audit exist; external monitoring and webhook delivery are not configured. |
-| Stabilization Priority | Keep dependency auditing in approved network env | DONE | `npm audit --audit-level=moderate` was run with network access and passed. |
+| Stabilization Priority | Keep production dependency auditing in approved network env | DONE | CI blocks on `npm audit --omit=dev --audit-level=moderate`; the full audit remains a documented reporting check. |
 | Acceptance Criteria | `npm run lint` passes | DONE | Passed locally. |
-| Acceptance Criteria | `npm test` passes | DONE | 198 files / 1189 tests passed. |
+| Acceptance Criteria | `npm test` passes | DONE | 200 files / 1200 tests passed. |
 | Acceptance Criteria | `npm run test:coverage` runs and trend is reviewed | DONE | Coverage was generated and reviewed; ratchet was raised. |
 | Acceptance Criteria | `npm run audit:coverage` passes | DONE | Passed at 100% lines, statements, functions, and branches. |
 | Acceptance Criteria | `npm run build` passes | DONE | Next.js build passed with 729 static pages. |
 | Acceptance Criteria | `npm run test:e2e` passes | DONE | 78 Playwright tests passed. |
 | Acceptance Criteria | Every non-strict `npm run audit:*` passes | DONE | All non-strict audit scripts passed locally. |
 | Acceptance Criteria | `audit:production:strict` passes in deployment | NOT DONE | No deployment env proof exists. |
-| Acceptance Criteria | `npm audit --audit-level=moderate` has no moderate vulnerabilities | DONE | Approved network audit reported 0 vulnerabilities. |
+| Acceptance Criteria | `npm audit --omit=dev --audit-level=moderate` has no moderate vulnerabilities | DONE | Approved-network production audit reported 0 vulnerabilities. |
 | Acceptance Criteria | README and plan contain current catalog count | DONE | Docs audit checks 502 hotels, 139 cities, 65 countries. |
 | Acceptance Criteria | No removed-route or stale architecture docs | DONE | Docs audit blocks stale claims. |
 | Backlog P0 | Configure real deployment env | NOT DONE | Requires real secrets. |
@@ -410,7 +421,7 @@ These are the remaining tasks required to complete the full plan. Items blocked 
 - `npm run test:e2e` passes.
 - Every `npm run audit:*` script passes except `audit:production:strict` in intentionally unconfigured local shells.
 - `npm run audit:production:strict` passes in the deployment environment before launch.
-- `npm audit --audit-level=moderate` reports no dependency vulnerabilities in an approved network environment.
+- `npm audit --omit=dev --audit-level=moderate` reports no production dependency vulnerabilities in an approved network environment; the full audit result is reviewed and documented separately.
 - README and plan contain the current catalog count: 502 hotels, 139 cities, 65 countries.
 - No documentation references removed listing/booking API routes, old database architecture, old 15-hotel coverage, or unsupported no-auth/no-rate-limit claims.
 

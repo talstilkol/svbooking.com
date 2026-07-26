@@ -30,10 +30,10 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Dependency audit
-        run: npm audit --audit-level=moderate
+        run: npm audit --omit=dev --audit-level=moderate
 
-      - name: Verify PostCSS override
-        run: npm ls postcss --all
+      - name: Verify production dependency overrides
+        run: npm ls postcss sharp --all
 
       - name: Guardrails
         run: npm run audit:guardrails

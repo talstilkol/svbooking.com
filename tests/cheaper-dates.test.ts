@@ -190,7 +190,8 @@ describe('cheaper date price intelligence', () => {
     vi.mocked(getCachedHeatmap).mockImplementation(async ({ checkOut }) => {
       const target = new Date(`${checkOut}T00:00:00Z`);
       target.setUTCDate(target.getUTCDate() - 2);
-      return { data: [{ date: target.toISOString().slice(0, 10), price: 120 }] };
+      const date = target.toISOString().slice(0, 10);
+      return { data: [{ date, price: 0 }, { date, price: 120 }] };
     });
 
     const result = await findCheaperDates('g187147-d188732', '2026-06-10', '2026-06-12');
@@ -371,10 +372,10 @@ describe('cheaper date price intelligence', () => {
   });
 
   it('reports timeout when the heatmap budget is already exhausted', async () => {
-    let nowMs = 1;
-    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => nowMs);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-01T00:00:00.000Z'));
     vi.mocked(getCachedRates).mockImplementation(async () => {
-      nowMs = 45_002;
+      vi.setSystemTime(new Date('2026-06-01T00:00:45.001Z'));
       return {
         rates: [],
         source: 'provider-registry',
@@ -382,16 +383,12 @@ describe('cheaper date price intelligence', () => {
     });
     vi.mocked(getCachedHeatmap).mockResolvedValue({ data: [{ date: '2026-06-09', price: 120 }] });
 
-    try {
-      const result = await findCheaperDates('g187147-d188732', '2026-06-10', '2026-06-12');
+    const result = await findCheaperDates('g187147-d188732', '2026-06-10', '2026-06-12');
 
-      expect(result.timedOut).toBe(true);
-      expect(result.method).toBe('unavailable');
-      expect(result.hasRealData).toBe(false);
-      expect(getCachedHeatmap).not.toHaveBeenCalled();
-    } finally {
-      nowSpy.mockRestore();
-    }
+    expect(result.timedOut).toBe(true);
+    expect(result.method).toBe('unavailable');
+    expect(result.hasRealData).toBe(false);
+    expect(getCachedHeatmap).not.toHaveBeenCalled();
   });
 
   it('returns unavailable immediately when the hotel key is missing', async () => {

@@ -20,7 +20,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | Check | Result | Evidence |
 | --- | ---: | --- |
 | `npm run lint` | PASS | ESLint completed with no reported errors. |
-| `npm test` | PASS | 198 test files, 1189 tests passed. |
+| `npm test` | PASS | 200 test files, 1200 tests passed. |
 | `npm run test:coverage` | PASS | Coverage command runs with `@vitest/coverage-v8`; current `lib` coverage is 100% lines, 100% statements, 100% functions, and 100% branches. |
 | `npm run audit:coverage` | PASS | Coverage ratchet prevents regression below the current floors: lines 100%, statements 100%, functions 100%, branches 100%. |
 | `npm run build` | PASS | Next.js 16.2.6 compiled and generated 729 static pages without the previous Edge-runtime static-generation warning. |
@@ -48,9 +48,10 @@ The remaining blockers are not code placeholders to fill in locally:
 | `npm run audit:production` | PASS with blockers | Reports missing required deployment env names and catalog media blockers; does not print secret values. |
 | `npm run audit:production:strict` | EXPECTED FAIL locally | Blocks go-live because required admin/cron/Redis/Kinde env, a complete partner pricing provider env group, approved catalog media quality, licensed reviews, alert delivery, ops delivery, and push keys are missing. |
 | `npm run release:state` | PASS | Reports a clean worktree with 0 changed paths. |
-| `npm ls postcss --all` | PASS | Installed tree resolves to `postcss@8.5.14`. |
+| `npm ls postcss sharp --all` | PASS | Installed tree resolves to `postcss@8.5.23` and `sharp@0.35.3`. |
 | `git diff --check` | PASS | No whitespace errors. |
-| `npm audit --audit-level=moderate` | PASS | Approved network audit reported 0 dependency vulnerabilities. |
+| `npm audit --omit=dev --audit-level=moderate` | PASS | Approved-network production dependency audit reported 0 vulnerabilities. |
+| `npm audit --audit-level=moderate` | KNOWN DEV DEBT | Reports 9 high findings through ESLint 9/minimatch 3/`brace-expansion`; npm offers only the breaking ESLint 10 upgrade. |
 
 ## Current Scores
 
@@ -194,7 +195,8 @@ Do not go live until all of these are true:
 - `npm run lint`, `npm test`, `npm run test:coverage`, `npm run build`, and `npm run test:e2e` pass.
 - `npm run audit:coverage` passes.
 - Every non-strict `npm run audit:*` script passes.
-- `npm audit --audit-level=moderate` has passed in an approved environment.
+- `npm audit --omit=dev --audit-level=moderate` has passed in an approved environment.
+- The full `npm audit --audit-level=moderate` result is reviewed and the current ESLint 9 development-only advisory remains explicitly documented until a compatible major migration is available.
 - The worktree is clean and `npm run release:state:strict` passes.
 - `Math.random()` remains forbidden everywhere in code.
 - No fake hotel, review, price, provider, urgency, availability, or production-readiness data has been added.

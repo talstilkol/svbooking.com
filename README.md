@@ -157,7 +157,7 @@ npm run catalog:media:ledger
 npm run release:state
 ```
 
-Run every `npm run audit:*` script before release. `npm audit --audit-level=moderate` contacts the npm registry and sends dependency metadata; run it only in an environment where that disclosure is approved.
+Run every `npm run audit:*` script before release. `npm audit --omit=dev --audit-level=moderate` is the blocking production-dependency gate. Run the full `npm audit --audit-level=moderate` as a reporting check; the current ESLint 9 toolchain retains a known `brace-expansion` development-only advisory until a compatible ESLint major upgrade is available. Both commands contact the npm registry and send dependency metadata, so run them only in an environment where that disclosure is approved.
 Run `npm run release:state:strict` after staging or committing intended changes; it fails while the worktree still has uncommitted or untracked paths.
 Run `npm run launch:readiness:report` for a short read-only summary of current production blockers; it does not replace `npm run audit:production:strict`. Run `npm run audit:launch-readiness-report` to verify that the report remains parseable and does not print secret values.
 Run `npm run typecheck` as a CI and release gate. Use `npm run typecheck:debt:report` only as a read-only summary if the gate regresses.
