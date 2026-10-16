@@ -112,6 +112,26 @@ function sortCatalogByPriority(hotels = HOTELS, popularity = {}) {
 }
 
 /**
+ * Automatic cohort rotation that advances on ANY cron cadence.
+ *
+ * Vercel Hobby (ADR-001) allows one run per day, so an hour-based rotation
+ * (`floor(hour / 8)`) would pin a daily 06:00 run to cohort 0 forever and
+ * never warm cohorts >= 1. Instead the index advances by one per UTC day and
+ * by one per 8-hour slot inside the day, so:
+ *   - 1 run/day  (Hobby): day d -> cohort d, day d+1 -> cohort d+1, ... (full cycle in totalCohorts days)
+ *   - 3 runs/day (Pro):   06:00 -> d, 14:00 -> d+1, 22:00 -> d+2
+ * `cohortOffset` lets a second scheduled run on the same day take the next cohort.
+ * Deterministic: same clock -> same cohort (no randomness).
+ */
+export function defaultCohortIndex(totalCohorts, cohortOffset = 0, now = new Date()) {
+  const total = Math.max(1, Math.floor(totalCohorts) || 1);
+  const dayNumber = Math.floor(now.getTime() / 86400000);
+  const slot = Math.floor(now.getUTCHours() / 8);
+  const offset = Number.isFinite(cohortOffset) && cohortOffset > 0 ? Math.floor(cohortOffset) : 0;
+  return (dayNumber + slot + offset) % total;
+}
+
+/**
  * Select catalog hotels for pre-warming with cohort rotation.
  * Each cron run picks a different slice of the sorted catalog so that
  * over N runs/day, the entire catalog gets covered.
@@ -119,9 +139,12 @@ function sortCatalogByPriority(hotels = HOTELS, popularity = {}) {
  * @param {Object} opts
  * @param {Array} opts.hotels - Full catalog
  * @param {number} opts.limit - Hotels per run
- * @param {number} opts.cohort - Cohort index (0-based), defaults to hour-based rotation
+ * @param {number} opts.cohort - Explicit cohort index (0-based). -1 = automatic rotation (see defaultCohortIndex)
+ * @param {object} opts.popularity - hotelKey -> request count
+ * @param {number} opts.cohortOffset - Added to the automatic cohort (lets a second daily run warm the next cohort)
+ * @param {Date} opts.now - Clock for the automatic rotation (tests)
  */
-export function selectPriorityCatalogHotels(hotels = HOTELS, limit = DEFAULT_CATALOG_DATED_HOTEL_LIMIT, cohort = -1, popularity = {}) {
+export function selectPriorityCatalogHotels(hotels = HOTELS, limit = DEFAULT_CATALOG_DATED_HOTEL_LIMIT, cohort = -1, popularity = {}, cohortOffset = 0, now = new Date()) {
   const sorted = sortCatalogByPriority(hotels, popularity);
   if (limit >= sorted.length) return sorted;
 
@@ -139,7 +162,7 @@ export function selectPriorityCatalogHotels(hotels = HOTELS, limit = DEFAULT_CAT
 
   // Determine cohort: how many full cohorts fit in the remaining catalog
   const totalCohorts = Math.max(1, Math.ceil(remaining.length / cohortSlots));
-  const cohortIndex = cohort >= 0 ? cohort % totalCohorts : Math.floor(new Date().getUTCHours() / 8) % totalCohorts;
+  const cohortIndex = cohort >= 0 ? cohort % totalCohorts : defaultCohortIndex(totalCohorts, cohortOffset, now);
   const offset = cohortIndex * cohortSlots;
 
   // Fill cohort slots from remaining hotels (wrap around)
@@ -157,6 +180,8 @@ export function buildCatalogDatedRateWorkItems({
   limit = DEFAULT_CATALOG_DATED_HOTEL_LIMIT,
   cohort = -1,
   popularity = {},
+  cohortOffset = 0,
+  now = new Date(),
 } = {}) {
   const baseDate = today || new Date().toISOString().split('T')[0];
 
@@ -180,7 +205,7 @@ export function buildCatalogDatedRateWorkItems({
   );
   const expandedOffsets = [...new Set([...baseOffsets, ...POPULAR_EXTRA_OFFSETS])].sort((a, b) => a - b);
 
-  return selectPriorityCatalogHotels(hotels, limit, cohort, popularity).flatMap((hotel) => {
+  return selectPriorityCatalogHotels(hotels, limit, cohort, popularity, cohortOffset, now).flatMap((hotel) => {
     const isPopular = popularKeys.has(hotel.hotelKey);
     const offsets = isPopular ? expandedOffsets : baseOffsets;
 
@@ -382,10 +407,12 @@ async function runPriceCache({
   catalogLimit = DEFAULT_CATALOG_DATED_HOTEL_LIMIT,
   heatmapLimit = DEFAULT_HEATMAP_HOTEL_LIMIT,
   cohort = -1,
+  cohortOffset = 0,
 } = {}) {
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
   const popularity = await getHotelPopularity();
-  const catalogDated = buildCatalogDatedRateWorkItems({ today, limit: catalogLimit, cohort, popularity });
+  const catalogDated = buildCatalogDatedRateWorkItems({ today, limit: catalogLimit, cohort, popularity, cohortOffset, now });
   const alertDated = await collectActiveAlertRateWorkItems();
   const datedWorkItems = dedupeBy([...alertDated, ...catalogDated], rateWorkItemKey);
   const heatmapWorkItems = dedupeBy(buildHeatmapWorkItems({ today, limit: heatmapLimit }), heatmapWorkItemKey);
@@ -396,8 +423,7 @@ async function runPriceCache({
     prewarmHeatmaps(heatmapWorkItems),
   ]);
 
-  // Resolve actual cohort index for reporting.
-  // With 3 daily runs (every 8 hours), rotate through cohorts automatically.
+  // Resolve actual cohort index for reporting (same rule as selectPriorityCatalogHotels).
   const hasPopularity = Object.keys(popularity).length > 0;
   const alwaysWarmCount = hasPopularity ? Math.min(ALWAYS_WARM_TOP_N, Math.floor(catalogLimit * 0.3), HOTELS.length) : 0;
   const cohortSlots = catalogLimit - alwaysWarmCount;
@@ -405,7 +431,7 @@ async function runPriceCache({
   const totalCohorts = Math.max(1, Math.ceil(remainingHotels / cohortSlots));
   const resolvedCohort = cohort >= 0
     ? cohort % totalCohorts
-    : Math.floor(new Date().getUTCHours() / 8) % totalCohorts;
+    : defaultCohortIndex(totalCohorts, cohortOffset, now);
 
   return {
     mode: 'dated-provider-rates-plus-heatmap-price-sources',
@@ -442,9 +468,15 @@ export async function GET(request) {
       MAX_HEATMAP_HOTEL_LIMIT
     );
     const cohort = searchParams.has('cohort') ? Number(searchParams.get('cohort')) : -1;
+    const cohortOffset = searchParams.has('cohortOffset') ? Number(searchParams.get('cohortOffset')) : 0;
     const status = await runAgent(
       AGENT_NAMES.PRICE_CACHE,
-      () => runPriceCache({ catalogLimit, heatmapLimit, cohort: Number.isFinite(cohort) ? cohort : -1 })
+      () => runPriceCache({
+        catalogLimit,
+        heatmapLimit,
+        cohort: Number.isFinite(cohort) ? cohort : -1,
+        cohortOffset: Number.isFinite(cohortOffset) && cohortOffset > 0 ? cohortOffset : 0,
+      })
     );
     return Response.json(status, { headers: NO_STORE_HEADERS });
   } catch (err) {
