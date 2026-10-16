@@ -245,7 +245,7 @@ Legend: DONE means real, working, and locally verified. FAKED means simulated, e
 | Accountability | Agent cron auth | DONE | Cron auth gate is wired and audited. |
 | Accountability | Production cron execution | NOT DONE | Not verified in deployment with real `CRON_SECRET` and persistent KV. |
 | Accountability | Ops monitoring endpoints | PARTIAL | Endpoints and RUM wiring audit exist; external monitoring/webhook delivery is not configured. |
-| Accountability | Production dependency audit | DONE | Approved-network `npm audit --omit=dev --audit-level=moderate` reports 0 vulnerabilities as of 2026-10-16 (0 critical / 0 high / 0 moderate), after the October 2026 security dependency queue; it was red from 2026-07-26 to 2026-10-16 (1 critical / 3 high / 1 moderate). |
+| Accountability | Production dependency audit | DONE | Approved-network `npm audit --omit=dev --audit-level=moderate` reports 0 vulnerabilities as of 2026-10-16 (0 critical / 0 high / 0 moderate), after the October 2026 security dependency queue; the gate was green at the 2026-07-26 audit, turned red at an unrecorded date between 2026-07-26 and 2026-10-09 (when the `next` 16.4.0 advisory PR was opened), and measured 1 critical / 3 high / 1 moderate when re-checked on 2026-10-16. |
 | Accountability | Full development dependency audit | BLOCKED | The remaining advisory is development-only through ESLint 9; no compatible non-breaking upstream fix is currently available. |
 | Accountability | `audit:production:strict` in deployment | NOT DONE | No deployment proof has been provided. |
 | Accountability | No stale removed-route docs | DONE | Docs audit blocks stale route/architecture claims. |
