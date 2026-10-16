@@ -2,19 +2,19 @@
   "crons": [
     {
       "path": "/api/agents/auto/orchestrate",
-      "schedule": "0 2,10,18 * * *"
+      "schedule": "0 6 * * *"
     },
     {
       "path": "/api/agents/auto/price-cache?cohort=1",
-      "schedule": "0 5,13,21 * * *"
+      "schedule": "0 7 * * *"
     },
     {
       "path": "/api/price-alerts/evaluate",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/ops/alerts/evaluate",
-      "schedule": "15 */6 * * *"
+      "schedule": "15 8 * * *"
     }
   ]
 }
