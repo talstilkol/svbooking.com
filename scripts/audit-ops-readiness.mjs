@@ -589,7 +589,9 @@ requireIncludes(vercelConfig, 'vercel.json', [
   '/api/agents/auto/orchestrate',
   '/api/price-alerts/evaluate',
   '/api/ops/alerts/evaluate',
-  '0 */6 * * *',
+  // Vercel Hobby (ADR-001) allows only once-per-day crons; the price-alert evaluator runs daily at 08:00 UTC.
+  // A 6-hourly cadence needs Vercel Pro (owner decision) - restore '0 */6 * * *' here and in vercel.json then.
+  '0 8 * * *',
 ]);
 
 const priceAlertsRoute = await readProjectFile('app/api/price-alerts/route.js');
