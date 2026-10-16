@@ -5,7 +5,7 @@
       "schedule": "0 6 * * *"
     },
     {
-      "path": "/api/agents/auto/price-cache?cohort=1",
+      "path": "/api/agents/auto/price-cache?cohortOffset=1",
       "schedule": "0 7 * * *"
     },
     {
@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/ops/alerts/evaluate",
-      "schedule": "15 8 * * *"
+      "schedule": "0 9 * * *"
     }
   ]
 }

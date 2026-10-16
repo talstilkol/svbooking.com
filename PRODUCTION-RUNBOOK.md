@@ -120,11 +120,14 @@ This audit is not legal approval. Partner terms, affiliate/legal review, and lic
 
 ## Cron Verification
 
-`vercel.json` must include:
+`vercel.json` must include (Vercel Hobby, per ADR-001: cron jobs may run at most once per day, and Hobby delivers a job anywhere inside its scheduled hour, so jobs that must not overlap get **different hours**):
 
-- `/api/agents/auto/orchestrate` daily
-- `/api/price-alerts/evaluate` every 6 hours
-- `/api/ops/alerts/evaluate` every 6 hours offset from price alerts
+- `/api/agents/auto/orchestrate` daily (06:00 UTC) — includes the automatic price-cache run; the cohort advances one per UTC day (`defaultCohortIndex`), so every catalog cohort is warmed within `totalCohorts` days
+- `/api/agents/auto/price-cache?cohortOffset=1` daily (07:00 UTC) — warms the next cohort on the same day
+- `/api/price-alerts/evaluate` daily (08:00 UTC)
+- `/api/ops/alerts/evaluate` daily (09:00 UTC) — a separate hour from the price-alert evaluator, which can process up to 1,000 users sequentially
+
+A 6-hourly alert cadence (`0 */6 * * *`) requires Vercel Pro — an owner decision; until then `scripts/audit-ops-readiness.mjs` verifies the daily schedule above.
 
 After deployment, verify:
 

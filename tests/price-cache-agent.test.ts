@@ -53,7 +53,7 @@ vi.mock('@/lib/kv', () => {
   };
 });
 
-import { GET, buildCatalogDatedRateWorkItems, selectPriorityCatalogHotels } from '@/app/api/agents/auto/price-cache/route';
+import { GET, buildCatalogDatedRateWorkItems, defaultCohortIndex, selectPriorityCatalogHotels } from '@/app/api/agents/auto/price-cache/route';
 import { getCachedHeatmap, getCachedRates } from '@/lib/price-cache';
 import { PRICE_ALERT_USER_INDEX_KEY, userDataKey } from '@/lib/user-data';
 
@@ -94,6 +94,54 @@ describe('price cache agent', () => {
     // Most popular hotel (g3-d1) should appear first in both cohorts
     expect(cohort0[0].hotelKey).toBe('g3-d1');
     expect(cohort1[0].hotelKey).toBe('g3-d1');
+  });
+
+  it('rotates the automatic cohort by UTC day so a once-a-day cron reaches every cohort', () => {
+    // Hobby cadence: one run per day at 06:00 UTC -> consecutive days hit consecutive cohorts.
+    const total = 7;
+    const seen = new Set<number>();
+    for (let day = 0; day < total; day++) {
+      const now = new Date(Date.UTC(2026, 9, 16 + day, 6, 0, 0));
+      seen.add(defaultCohortIndex(total, 0, now));
+    }
+    expect(seen.size).toBe(total);
+    // Two consecutive days differ by exactly one cohort (mod total).
+    const d0 = defaultCohortIndex(total, 0, new Date(Date.UTC(2026, 9, 16, 6)));
+    const d1 = defaultCohortIndex(total, 0, new Date(Date.UTC(2026, 9, 17, 6)));
+    expect((d0 + 1) % total).toBe(d1);
+  });
+
+  it('keeps the 8-hour slot rotation for a 3-runs-a-day (Pro) cadence', () => {
+    const total = 9;
+    const base = defaultCohortIndex(total, 0, new Date(Date.UTC(2026, 9, 16, 6)));
+    expect(defaultCohortIndex(total, 0, new Date(Date.UTC(2026, 9, 16, 14)))).toBe((base + 1) % total);
+    expect(defaultCohortIndex(total, 0, new Date(Date.UTC(2026, 9, 16, 22)))).toBe((base + 2) % total);
+  });
+
+  it('cohortOffset moves a second same-day run to the next cohort; negative/NaN offsets are ignored', () => {
+    const total = 5;
+    const now = new Date(Date.UTC(2026, 9, 16, 7));
+    const base = defaultCohortIndex(total, 0, now);
+    expect(defaultCohortIndex(total, 1, now)).toBe((base + 1) % total);
+    expect(defaultCohortIndex(total, -3, now)).toBe(base);
+    expect(defaultCohortIndex(total, Number.NaN, now)).toBe(base);
+    expect(defaultCohortIndex(0, 0, now)).toBe(0); // totalCohorts is clamped to >= 1
+  });
+
+  it('automatic rotation in selectPriorityCatalogHotels is deterministic for a fixed clock and changes with the day', () => {
+    // 4 hotels, limit 2, no popularity -> 2 cohorts of 2 hotels.
+    const day0 = new Date(Date.UTC(2026, 9, 16, 6));
+    const day1 = new Date(Date.UTC(2026, 9, 17, 6));
+    const a = selectPriorityCatalogHotels(mockedHotels, 2, -1, {}, 0, day0).map((h) => h.hotelKey);
+    const aAgain = selectPriorityCatalogHotels(mockedHotels, 2, -1, {}, 0, day0).map((h) => h.hotelKey);
+    const b = selectPriorityCatalogHotels(mockedHotels, 2, -1, {}, 0, day1).map((h) => h.hotelKey);
+    const offset = selectPriorityCatalogHotels(mockedHotels, 2, -1, {}, 1, day0).map((h) => h.hotelKey);
+    expect(aAgain).toEqual(a);
+    expect(b).not.toEqual(a);
+    expect([...a, ...b].sort()).toEqual(mockedHotels.map((h) => h.hotelKey).sort()); // two days cover the catalog
+    expect(offset).toEqual(b); // same-day run with cohortOffset=1 == tomorrow's automatic cohort
+    // Explicit cohort is unchanged by the clock.
+    expect(selectPriorityCatalogHotels(mockedHotels, 2, 1, {}, 0, day0)).toEqual(selectPriorityCatalogHotels(mockedHotels, 2, 1, {}, 0, day1));
   });
 
   it('without popularity data skips always-warm tier', () => {
