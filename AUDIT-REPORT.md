@@ -50,7 +50,7 @@ The remaining blockers are not code placeholders to fill in locally:
 | `npm run release:state` | PASS | Reports a clean worktree with 0 changed paths. |
 | `npm ls postcss sharp --all` | PASS | Installed tree resolves to `postcss@8.5.23` and `sharp@0.35.3`. |
 | `git diff --check` | PASS | No whitespace errors. |
-| `npm audit --omit=dev --audit-level=moderate` | PASS | Approved-network production dependency audit reported 0 vulnerabilities. |
+| `npm audit --omit=dev --audit-level=moderate` | PASS | Approved-network production dependency audit reported 0 vulnerabilities on 2026-10-16 (`npm audit --omit=dev`: 0 critical / 0 high / 0 moderate) after the October 2026 security dependency queue in MASTER-PLAN.md (`next` 16.4.0, `sharp` 0.35.5, `nanoid` 3.3.20, `source-map-js` 1.2.2, `baseline-browser-mapping` 2.11.22). From 2026-07-26 to 2026-10-16 this step was red on `main` with 1 critical / 3 high / 1 moderate. |
 | `npm audit --audit-level=moderate` | KNOWN DEV DEBT | Reports 9 high findings through ESLint 9/minimatch 3/`brace-expansion`; npm offers only the breaking ESLint 10 upgrade. |
 
 ## Current Scores
